@@ -1,9 +1,11 @@
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../common/images.dart';
 import '../../../common/widget/toster.dart';
 import '../controller/auth_controller.dart';
+import 'package:flutter/gestures.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -11,13 +13,13 @@ class Login extends StatefulWidget {
   @override
   State<Login> createState() => _LoginState();
 }
-
 class _LoginState extends State<Login> {
   final AuthController authController = Get.put(AuthController());
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
   final List<TextEditingController> _otpControllers = List.generate(6, (index) => TextEditingController());
   final List<FocusNode> _otpFocusNodes = List.generate(6, (index) => FocusNode());
+  bool isTermsAccepted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -62,11 +64,11 @@ class _LoginState extends State<Login> {
                 ),
               ),
             ),
-          ),        ],
+          ),
+        ],
       ),
     );
   }
-
   Widget _buildPhoneScreen() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -75,8 +77,8 @@ class _LoginState extends State<Login> {
           children: [
             Image.asset(
               Images.logo,
-              width: 120,
-              height: 120,
+              width: 110,
+              height: 110,
               fit: BoxFit.contain,
             ),
           ],
@@ -97,7 +99,7 @@ class _LoginState extends State<Login> {
             color: Colors.grey.shade600,
           ),
         ),
-        SizedBox(height: 40),
+        SizedBox(height: 20),
         Container(
           height: 55,
           decoration: BoxDecoration(
@@ -126,7 +128,88 @@ class _LoginState extends State<Login> {
             ),
           ),
         ),
+        SizedBox(height: 20),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+
+          children: [
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  isTermsAccepted = !isTermsAccepted;
+                });
+              },
+              child: Container(
+                width: 15,
+                height: 15,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: AppColor.primary,
+                    width: 2,
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                  color: isTermsAccepted ? AppColor.primary : Colors.white,
+                ),
+                child: isTermsAccepted
+                    ? Align(
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.check,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                )
+                    : null,
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: RichText(
+                  text: TextSpan(
+                    text: "By continuing, you agree to our ",
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 13,
+                      fontFamily: GoogleFonts.montserrat().fontFamily,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: "Terms & Conditions",
+                        style: TextStyle(
+                          color: AppColor.primary,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: GoogleFonts.montserrat().fontFamily,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            // Add navigation to Terms & Conditions
+                          },
+                      ),
+                      TextSpan(text: " and "),
+                      TextSpan(
+                        text: "Privacy Policy",
+                        style: TextStyle(
+                          color: AppColor.primary,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: GoogleFonts.montserrat().fontFamily,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            // Add navigation to Privacy Policy
+                          },
+                      ),
+                      TextSpan(text: "."),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         SizedBox(height: 30),
+
         SizedBox(
           width: double.infinity,
           height: 50,
@@ -134,10 +217,14 @@ class _LoginState extends State<Login> {
             onPressed: authController.isLoading.value
                 ? null
                 : () {
+              if (!isTermsAccepted) {
+                SnackBarHelper.showError("Please accept Terms & Conditions");
+                return;
+              }
               if (phoneController.text.length == 10) {
                 authController.sendOtp(phoneController.text);
               } else {
-                SnackBarHelper.showError('Please enter valid phone number'); // Using custom snackbar
+                SnackBarHelper.showError('Please enter valid phone number');
               }
             },
             style: ElevatedButton.styleFrom(
@@ -187,7 +274,7 @@ class _LoginState extends State<Login> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(6, (index) {
             return SizedBox(
-              width: 45, // Slightly smaller width
+              width: 45,
               height: 55,
               child: TextField(
                 controller: _otpControllers[index],
@@ -232,6 +319,53 @@ class _LoginState extends State<Login> {
           }),
         ),
 
+        // Auto-fill OTP display
+        Obx(() => authController.autoFilledOtp.value.isNotEmpty
+            ? Column(
+          children: [
+            SizedBox(height: 15),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColor.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColor.primary),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Auto-detected OTP: ${authController.autoFilledOtp.value}',
+                    style: TextStyle(
+                      color: AppColor.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      _fillAutoDetectedOtp(authController.autoFilledOtp.value);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.primary,
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    ),
+                    child: Text(
+                      'Use This',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 10),
+          ],
+        )
+            : SizedBox()),
+
         SizedBox(height: 20),
         Obx(() => authController.canResend.value
             ? TextButton(
@@ -255,6 +389,9 @@ class _LoginState extends State<Login> {
           ),
         ),
         ),
+
+
+
         SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
@@ -267,7 +404,7 @@ class _LoginState extends State<Login> {
               if (enteredOtp.length == 6) {
                 authController.verifyOtp(enteredOtp);
               } else {
-                SnackBarHelper.showError('Please enter 6-digit OTP'); // Using custom snackbar
+                SnackBarHelper.showError('Please enter 6-digit OTP');
               }
             },
             style: ElevatedButton.styleFrom(
@@ -329,6 +466,15 @@ class _LoginState extends State<Login> {
     FocusScope.of(context).requestFocus(_otpFocusNodes[0]);
   }
 
+  void _fillAutoDetectedOtp(String autoOtp) {
+    if (autoOtp.length == 6) {
+      for (int i = 0; i < 6; i++) {
+        _otpControllers[i].text = autoOtp[i];
+      }
+      _updateOtpController();
+      FocusScope.of(context).unfocus();
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -339,8 +485,13 @@ class _LoginState extends State<Login> {
         });
       }
     });
-  }
 
+    ever(authController.autoFilledOtp, (String autoOtp) {
+      if (autoOtp.isNotEmpty && autoOtp.length == 6) {
+        _fillAutoDetectedOtp(autoOtp);
+      }
+    });
+  }
   @override
   void dispose() {
     phoneController.dispose();

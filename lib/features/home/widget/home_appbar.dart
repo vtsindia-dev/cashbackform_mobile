@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
+import '../../drawer/screen/drawer.dart';
 import '../controller/homecontroller.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final HomeController controller;
+  final GlobalKey<ScaffoldState> scaffoldKey;
 
-  const HomeAppBar({super.key, required this.controller});
+  const HomeAppBar({super.key, required this.controller, required this.scaffoldKey});
 
   @override
   Size get preferredSize => const Size.fromHeight(80);
@@ -62,7 +64,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   child: Center(
                     child: _buildIconButton(
                       image: Images.profile,
-                      onTap: () {},
+                      onTap: () {
+                        scaffoldKey.currentState?.openDrawer();
+                      },
                     ),
                   ),
                 ),

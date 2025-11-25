@@ -173,7 +173,7 @@ class _DashboardState extends State<Dashboard> {
                             child: Transform.scale(
                               scale: 0.5 + 0.5 * _menuAnimationValue,
                               child: _buildPlotMenuItem(
-                                Images.profile,
+                                  Images.plotMarketplace,
                                 "Plot Marketplace",
                                     () => _onPlotMenuItemTap(0),
                                 alignment: Alignment.bottomLeft,
@@ -191,7 +191,7 @@ class _DashboardState extends State<Dashboard> {
                             child: Transform.scale(
                               scale: 0.5 + 0.5 * Curves.elasticOut.transform(_menuAnimationValue),
                               child: _buildPlotMenuItem(
-                                Images.profile,
+                                Images.GiooPlots,
                                 "GIOO Plots",
                                     () => _onPlotMenuItemTap(1),
                                 alignment: Alignment.topCenter,
@@ -209,7 +209,7 @@ class _DashboardState extends State<Dashboard> {
                             child: Transform.scale(
                               scale: 0.5 + 0.5 * _menuAnimationValue,
                               child: _buildPlotMenuItem(
-                                Images.profile,
+                                Images.syndicatePlots,
                                 "Syndicate Plots",
                                     () => _onPlotMenuItemTap(2),
                                 alignment: Alignment.bottomRight,
@@ -236,7 +236,7 @@ class _DashboardState extends State<Dashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Images.home, "Home", 0),
-              _buildNavItem(Images.cart, "Service", 1, isCart: false),
+              _buildNavItem(Images.service, "Service", 1, isCart: false),
               const SizedBox(width: 40),
               _buildNavItem(Images.materialStore, "Material", 2),
               _buildNavItem(Images.profile, "Menu", 3),

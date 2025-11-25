@@ -9,10 +9,19 @@ class Images {
   static const String plot = 'assets/images/plot.png';
   static const String profile = 'assets/images/Profile.png';
   static const String materialStore = 'assets/images/material-store.png';
-  static const String cart = 'assets/images/cart.png';
   static const String loader = 'assets/images/farms-loader.gif';
   static const String notification = 'assets/images/notification.png';
   static const String appbarBg = 'assets/images/Appbar-bg.png';
   static const String price = 'assets/images/price.png';
   static const String squareFeet = 'assets/images/square-Feet.png';
+  static const String GiooPlots = 'assets/images/GIOO-plots.png';
+  static const String syndicatePlots = 'assets/images/syndicate-plots.png';
+  static const String plotMarketplace = 'assets/images/plot-properties.png';
+  static const String aboutUs = 'assets/images/about-us.png';
+  static const String contactUs = 'assets/images/contact-us.png';
+  static const String customerSupport = 'assets/images/customer-support.png';
+  static const String productEnquiry = 'assets/images/product-enquiry.png';
+  static const String service = 'assets/images/services.png';
+  static const String delete = 'assets/images/delete.png';
+  static const String logout = 'assets/images/logout.png';
 }

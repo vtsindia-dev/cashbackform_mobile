@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../common/widget/loader.dart';
 import '../../Properties/widget/property_card.dart';
+import '../../drawer/screen/drawer.dart';
 import '../../service/widget/service_card.dart';
 import '../controller/homecontroller.dart';
 import '../widget/featured_product.dart';
@@ -15,6 +16,7 @@ import '../widget/top_professional_service.dart';
 
 class Home extends StatelessWidget {
   Home({super.key});
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +24,9 @@ class Home extends StatelessWidget {
       init: HomeController(),
       builder: (controller) {
         return Scaffold(
-          appBar: HomeAppBar(controller: controller),
-
+          key: scaffoldKey,
+          drawer: const CustomDrawer(),
+          appBar: HomeAppBar(controller: controller, scaffoldKey: scaffoldKey),
           body: controller.isLoading
               ? const Center(child: GifLoader(message: "Loading...", size: 100))
               : SingleChildScrollView(
