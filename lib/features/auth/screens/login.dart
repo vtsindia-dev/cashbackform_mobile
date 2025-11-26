@@ -2,6 +2,7 @@ import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pinput/pinput.dart';
 import '../../../common/images.dart';
 import '../../../common/widget/toster.dart';
 import '../controller/auth_controller.dart';
@@ -13,12 +14,9 @@ class Login extends StatefulWidget {
   @override
   State<Login> createState() => _LoginState();
 }
+
 class _LoginState extends State<Login> {
   final AuthController authController = Get.put(AuthController());
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController otpController = TextEditingController();
-  final List<TextEditingController> _otpControllers = List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = List.generate(6, (index) => FocusNode());
   bool isTermsAccepted = false;
 
   @override
@@ -69,6 +67,7 @@ class _LoginState extends State<Login> {
       ),
     );
   }
+
   Widget _buildPhoneScreen() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -109,29 +108,62 @@ class _LoginState extends State<Login> {
               width: 2,
             ),
           ),
-          child: Focus(
-            onFocusChange: (hasFocus) {
-              setState(() {});
-            },
-            child: TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'Phone Number',
-                prefixIcon: Icon(Icons.phone, color: AppColor.primary),
-                prefixText: '+91 ',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-                labelStyle: TextStyle(color: AppColor.primary),
-                isDense: true,
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: authController.phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    prefixIcon: Icon(Icons.phone, color: AppColor.primary),
+                    prefixText: '+91 ',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                    labelStyle: TextStyle(color: AppColor.primary),
+                    isDense: true,
+                  ),
+                ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    authController.getPhoneNumberHint();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.primary,
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Auto-fill',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+        SizedBox(height: 10),
+        Text(
+          'Tap "Auto-fill" to use your device\'s phone number',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade600,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+
         SizedBox(height: 20),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
-
           children: [
             GestureDetector(
               onTap: () {
@@ -155,7 +187,7 @@ class _LoginState extends State<Login> {
                   alignment: Alignment.center,
                   child: Icon(
                     Icons.check,
-                    size: 16,
+                    size: 10,
                     color: Colors.white,
                   ),
                 )
@@ -184,7 +216,6 @@ class _LoginState extends State<Login> {
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            // Add navigation to Terms & Conditions
                           },
                       ),
                       TextSpan(text: " and "),
@@ -197,7 +228,6 @@ class _LoginState extends State<Login> {
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            // Add navigation to Privacy Policy
                           },
                       ),
                       TextSpan(text: "."),
@@ -209,7 +239,6 @@ class _LoginState extends State<Login> {
           ],
         ),
         SizedBox(height: 30),
-
         SizedBox(
           width: double.infinity,
           height: 50,
@@ -221,8 +250,9 @@ class _LoginState extends State<Login> {
                 SnackBarHelper.showError("Please accept Terms & Conditions");
                 return;
               }
-              if (phoneController.text.length == 10) {
-                authController.sendOtp(phoneController.text);
+              String phone = authController.phoneController.text.trim();
+              if (phone.length == 10) {
+                authController.sendOtp(phone);
               } else {
                 SnackBarHelper.showError('Please enter valid phone number');
               }
@@ -248,8 +278,26 @@ class _LoginState extends State<Login> {
       ],
     );
   }
-
   Widget _buildOtpScreen() {
+    final defaultPinTheme = PinTheme(
+      width: 56,
+      height: 56,
+      textStyle: TextStyle(
+        fontSize: 20,
+        color: Color.fromRGBO(30, 60, 87, 1),
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: BoxDecoration(
+        border: Border.all(color: Color.fromRGBO(234, 239, 243, 1)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyDecorationWith(
+      border: Border.all(color: AppColor.primary),
+      borderRadius: BorderRadius.circular(12),
+    );
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -270,108 +318,23 @@ class _LoginState extends State<Login> {
           ),
         ),
         SizedBox(height: 40),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(6, (index) {
-            return SizedBox(
-              width: 45,
-              height: 55,
-              child: TextField(
-                controller: _otpControllers[index],
-                focusNode: _otpFocusNodes[index],
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-                maxLength: 1,
-                cursorColor: AppColor.primary,
-                decoration: InputDecoration(
-                  counterText: '',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade400),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColor.primary, width: 2),
-                  ),
-                ),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                onChanged: (value) {
-                  if (value.length == 1) {
-                    if (index < 5) {
-                      FocusScope.of(context).requestFocus(_otpFocusNodes[index + 1]);
-                    } else {
-                      FocusScope.of(context).unfocus();
-                    }
-                    _updateOtpController();
-                  } else if (value.isEmpty) {
-                    if (index > 0) {
-                      FocusScope.of(context).requestFocus(_otpFocusNodes[index - 1]);
-                    }
-                    _updateOtpController();
-                  }
-                },
-              ),
-            );
-          }),
-        ),
 
-        // Auto-fill OTP display
-        Obx(() => authController.autoFilledOtp.value.isNotEmpty
-            ? Column(
-          children: [
-            SizedBox(height: 15),
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColor.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColor.primary),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Auto-detected OTP: ${authController.autoFilledOtp.value}',
-                    style: TextStyle(
-                      color: AppColor.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _fillAutoDetectedOtp(authController.autoFilledOtp.value);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.primary,
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    ),
-                    child: Text(
-                      'Use This',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 10),
-          ],
-        )
-            : SizedBox()),
+        Pinput(
+          length: 6,
+          controller: authController.otpController,
+          defaultPinTheme: defaultPinTheme,
+          focusedPinTheme: focusedPinTheme,
+          showCursor: true,
+          onCompleted: (pin) {
+            authController.verifyOtp(pin);
+          },
+        ),
 
         SizedBox(height: 20),
         Obx(() => authController.canResend.value
             ? TextButton(
           onPressed: () {
             authController.resendOtp();
-            _clearOtpBoxes();
           },
           child: Text(
             'Resend OTP',
@@ -390,8 +353,6 @@ class _LoginState extends State<Login> {
         ),
         ),
 
-
-
         SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
@@ -400,7 +361,7 @@ class _LoginState extends State<Login> {
             onPressed: authController.isLoading.value
                 ? null
                 : () {
-              String enteredOtp = _getOtpFromBoxes();
+              String enteredOtp = authController.otpController.text;
               if (enteredOtp.length == 6) {
                 authController.verifyOtp(enteredOtp);
               } else {
@@ -429,8 +390,6 @@ class _LoginState extends State<Login> {
         TextButton(
           onPressed: () {
             authController.reset();
-            phoneController.clear();
-            _clearOtpBoxes();
           },
           child: Text(
             'Change Phone Number',
@@ -442,66 +401,9 @@ class _LoginState extends State<Login> {
       ],
     );
   }
-  void _updateOtpController() {
-    String otp = '';
-    for (int i = 0; i < 6; i++) {
-      otp += _otpControllers[i].text;
-    }
-    otpController.text = otp;
-  }
 
-  String _getOtpFromBoxes() {
-    String otp = '';
-    for (int i = 0; i < 6; i++) {
-      otp += _otpControllers[i].text;
-    }
-    return otp;
-  }
-
-  void _clearOtpBoxes() {
-    for (int i = 0; i < 6; i++) {
-      _otpControllers[i].clear();
-    }
-    otpController.clear();
-    FocusScope.of(context).requestFocus(_otpFocusNodes[0]);
-  }
-
-  void _fillAutoDetectedOtp(String autoOtp) {
-    if (autoOtp.length == 6) {
-      for (int i = 0; i < 6; i++) {
-        _otpControllers[i].text = autoOtp[i];
-      }
-      _updateOtpController();
-      FocusScope.of(context).unfocus();
-    }
-  }
-  @override
-  void initState() {
-    super.initState();
-    ever(authController.isOtpSent, (value) {
-      if (value == true) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          FocusScope.of(context).requestFocus(_otpFocusNodes[0]);
-        });
-      }
-    });
-
-    ever(authController.autoFilledOtp, (String autoOtp) {
-      if (autoOtp.isNotEmpty && autoOtp.length == 6) {
-        _fillAutoDetectedOtp(autoOtp);
-      }
-    });
-  }
   @override
   void dispose() {
-    phoneController.dispose();
-    otpController.dispose();
-    for (var controller in _otpControllers) {
-      controller.dispose();
-    }
-    for (var focusNode in _otpFocusNodes) {
-      focusNode.dispose();
-    }
     super.dispose();
   }
 }

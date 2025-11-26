@@ -1,5 +1,6 @@
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../common/images.dart';
 
@@ -26,15 +27,15 @@ class PropertyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5),
+      margin: EdgeInsets.symmetric(vertical: 5.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
+        borderRadius: BorderRadius.circular(10.r),
+        boxShadow: [
           BoxShadow(
             color: Colors.black12,
-            blurRadius: 3,
-            offset: Offset(0, 2),
+            blurRadius: 3.r,
+            offset: Offset(0, 2.h),
           )
         ],
       ),
@@ -42,63 +43,91 @@ class PropertyCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(10),
-              topRight: Radius.circular(10),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10.r),
+              topRight: Radius.circular(10.r),
             ),
             child: Image.network(
               imageUrl,
-              height: 100,
+              height: 100.h,
               width: double.infinity,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 100.h,
+                  width: double.infinity,
+                  color: Colors.grey.shade200,
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    size: 30.w,
+                    color: Colors.grey.shade400,
+                  ),
+                );
+              },
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  height: 100.h,
+                  width: double.infinity,
+                  color: Colors.grey.shade200,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.w,
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.all(8.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
                   style: GoogleFonts.montserrat(
-                    fontSize: 13,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Row(
                   children: [
                     Image.asset(
                       Images.price,
-                      height: 13,
-                      width: 13,
+                      height: 13.h,
+                      width: 13.w,
                       color: AppColor.primary,
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4.w),
 
                     Text(
                       price,
                       style: GoogleFonts.montserrat(
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.bold,
                         color: AppColor.primary,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10.w),
                     Image.asset(
                       Images.squareFeet,
-                      height: 13,
-                      width: 13,
+                      height: 13.h,
+                      width: 13.w,
                       color: AppColor.primary,
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4.w),
                     Text(
-                      "$area sq.ft",
+                      "$area",
                       style: GoogleFonts.montserrat(
-                        fontSize: 11,
+                        fontSize: 11.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColor.primary,
                       ),
@@ -106,23 +135,23 @@ class PropertyCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 6),
+                SizedBox(height: 6.h),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.location_on,
-                          size: 12, color: Colors.grey),
-                      const SizedBox(width: 3),
+                      Icon(Icons.location_on,
+                          size: 12.sp, color: Colors.grey),
+                      SizedBox(width: 3.w),
                       Expanded(
                         child: Text(
                           location,
                           style: GoogleFonts.montserrat(
-                            fontSize: 10,
+                            fontSize: 10.sp,
                             color: Colors.grey[700],
                           ),
                           maxLines: 1,
@@ -132,32 +161,32 @@ class PropertyCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 5),
+                SizedBox(height: 5.h),
                 Text(
                   description,
                   style: GoogleFonts.montserrat(
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     color: Colors.grey[800],
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     SizedBox(
-                      height: 28,
+                      height: 28.h,
                       child: ElevatedButton(
                         onPressed: onTap,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+                          padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 6.w),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(
+                            borderRadius: BorderRadius.circular(8.r),
+                            side: BorderSide(
                               color: AppColor.primary,
-                              width: 0.8,
+                              width: 0.8.w,
                             ),
                           ),
                           minimumSize: Size.zero,
@@ -168,7 +197,7 @@ class PropertyCard extends StatelessWidget {
                           "View",
                           style: GoogleFonts.montserrat(
                             color: AppColor.primary,
-                            fontSize: 11,
+                            fontSize: 11.sp,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

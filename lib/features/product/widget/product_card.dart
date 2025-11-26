@@ -1,5 +1,6 @@
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../common/images.dart';
 
@@ -9,7 +10,6 @@ class ProductCard extends StatelessWidget {
   final String price;
   final String location;
   final String description;
-
   final VoidCallback onTap;
   final bool isFavourite;
   final VoidCallback onFavToggle;
@@ -31,15 +31,15 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5),
+      margin: EdgeInsets.symmetric(vertical: 5.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
+        borderRadius: BorderRadius.circular(10.r),
+        boxShadow: [
           BoxShadow(
             color: Colors.black12,
-            blurRadius: 3,
-            offset: Offset(0, 2),
+            blurRadius: 3.r,
+            offset: Offset(0, 2.h),
           )
         ],
       ),
@@ -49,59 +49,72 @@ class ProductCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(10.r),
+                  topRight: Radius.circular(10.r),
                 ),
                 child: Image.network(
                   imageUrl,
-                  height: 120,
+                  height: 120.h,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
               ),
               Positioned(
-                top: 8,
-                right: 8,
+                top: 8.h,
+                right: 8.w,
                 child: InkWell(
                   onTap: onFavToggle,
                   child: Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: EdgeInsets.all(6.r),
                     decoration: BoxDecoration(
                       color: AppColor.white,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 2.r,
+                          offset: Offset(0, 1.h),
+                        )
+                      ],
                     ),
                     child: Icon(
                       isFavourite ? Icons.favorite : Icons.favorite_border,
                       color: AppColor.primary,
-                      size: 18,
+                      size: 18.sp,
                     ),
                   ),
                 ),
               ),
 
               Positioned(
-                top: 8,
-                left: 8,
+                top: 8.h,
+                left: 8.w,
                 child: InkWell(
                   onTap: onAddToCart,
                   child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                     decoration: BoxDecoration(
                       color: AppColor.primary,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 2.r,
+                          offset: Offset(0, 1.h),
+                        )
+                      ],
                     ),
                     child: Row(
-                      children: const [
+                      children: [
                         Icon(Icons.shopping_cart_outlined,
-                            color: Colors.white, size: 14),
-                        SizedBox(width: 3),
+                            color: Colors.white, size: 14.sp),
+                        SizedBox(width: 3.w),
                         Text(
                           "Add",
                           style: TextStyle(
                               color: Colors.white,
-                              fontSize: 10,
+                              fontSize: 10.sp,
                               fontWeight: FontWeight.w600),
                         )
                       ],
@@ -112,74 +125,56 @@ class ProductCard extends StatelessWidget {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.all(8.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
                   style: GoogleFonts.montserrat(
-                    fontSize: 13,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Row(
                   children: [
                     Image.asset(
                       Images.price,
-                      height: 13,
-                      width: 13,
+                      height: 13.h,
+                      width: 13.w,
                       color: AppColor.primary,
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4.w),
                     Text(
                       price,
                       style: GoogleFonts.montserrat(
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.bold,
                         color: AppColor.primary,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    // Image.asset(
-                    //   Images.squareFeet,
-                    //   height: 13,
-                    //   width: 13,
-                    //   color: AppColor.primary,
-                    // ),
-                    // const SizedBox(width: 4),
-                    // Text(
-                    //   "$area sq.ft",
-                    //   style: GoogleFonts.montserrat(
-                    //     fontSize: 11,
-                    //     fontWeight: FontWeight.w600,
-                    //     color: AppColor.primary,
-                    //   ),
-                    // ),
                   ],
                 ),
 
-                const SizedBox(height: 3),
+                SizedBox(height: 3.h),
                 Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.location_on,
-                          size: 12, color: Colors.grey),
-                      const SizedBox(width: 3),
+                      Icon(Icons.location_on, size: 12.sp, color: Colors.grey),
+                      SizedBox(width: 3.w),
                       Expanded(
                         child: Text(
                           location,
                           style: GoogleFonts.montserrat(
-                            fontSize: 10,
+                            fontSize: 10.sp,
                             color: Colors.grey[700],
                           ),
                           maxLines: 1,
@@ -190,34 +185,33 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 5),
+                SizedBox(height: 5.h),
                 Text(
                   description,
                   style: GoogleFonts.montserrat(
-                    fontSize: 11,
+                    fontSize: 11.sp,
                     color: Colors.grey[800],
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     SizedBox(
-                      height: 28,
+                      height: 28.h,
                       child: ElevatedButton(
                         onPressed: onTap,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 4, horizontal: 6),
+                          padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 6.w),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(
+                            borderRadius: BorderRadius.circular(8.r),
+                            side: BorderSide(
                               color: AppColor.primary,
-                              width: 0.8,
+                              width: 0.8.w,
                             ),
                           ),
                           minimumSize: Size.zero,
@@ -228,7 +222,7 @@ class ProductCard extends StatelessWidget {
                           "View",
                           style: GoogleFonts.montserrat(
                             color: AppColor.primary,
-                            fontSize: 11,
+                            fontSize: 11.sp,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

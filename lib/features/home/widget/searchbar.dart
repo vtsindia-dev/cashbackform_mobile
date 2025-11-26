@@ -113,7 +113,7 @@ class _Home_SearchBarState extends State<Home_SearchBar> {
                             _searchController.clear();
                           });
                         },
-                        child: const Icon(Icons.close, color: Colors.grey, size: 16), // 👈 Changed to grey for visibility
+                        child: const Icon(Icons.close, color: Colors.grey, size: 16),
                       )
                   ],
                 ),
@@ -155,7 +155,7 @@ class _Home_SearchBarState extends State<Home_SearchBar> {
     if (value.trim().isNotEmpty) {
       setState(() {
         recentSearch = value.trim();
-        _searchController.clear(); // 👈 Clear the text field after search
+        _searchController.clear();
       });
     }
   }

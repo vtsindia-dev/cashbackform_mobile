@@ -49,6 +49,6 @@ flutter {
 }
 
 dependencies {
-    implementation("com.google.android.gms:play-services-auth:21.4.0")
-    implementation("com.google.android.gms:play-services-auth-api-phone:18.3.0")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("com.google.android.gms:play-services-auth-api-phone:18.0.1")
 }

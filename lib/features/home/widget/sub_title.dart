@@ -21,13 +21,10 @@ class SubtitleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // split text into words
     final words = title.split(" ");
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Title + highlighted word
         Expanded(
           child: RichText(
             text: TextSpan(
@@ -50,10 +47,6 @@ class SubtitleWidget extends StatelessWidget {
             ),
           ),
         ),
-
-
-
-        // View All
         GestureDetector(
           onTap: onViewAllTap,
           child: const Text(

@@ -1,10 +1,12 @@
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../common/app_constant.dart';
 import '../../../common/images.dart';
 import '../../../common/route/router.dart';
+import '../../../common/widget/sessionhandler.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -24,7 +26,10 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    _initializeAnimations();
+  }
 
+  void _initializeAnimations() {
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 5000),
@@ -71,11 +76,48 @@ class _SplashScreenState extends State<SplashScreen>
     _animationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         Future.delayed(Duration(milliseconds: 700), () {
-          Get.offAllNamed(AppRoutes.login);
+          _checkAuthenticationStatus();
         });
       }
     });
   }
+
+  Future<void> _checkAuthenticationStatus() async {
+    try {
+      final isLoggedIn = await SessionManager.isLoggedIn();
+      final userData = await SessionManager.getUserData();
+
+      print('=== SPLASH SCREEN AUTH CHECK ===');
+      print('SplashScreen - isLoggedIn: $isLoggedIn');
+      print('SplashScreen - userData: $userData');
+      print('SplashScreen - userData is null: ${userData == null}');
+
+      if (isLoggedIn && userData != null) {
+        print('✅ User is logged in and userData exists');
+
+        final isExpired = await SessionManager.isSessionExpired();
+        print('SplashScreen - isSessionExpired: $isExpired');
+
+        if (isExpired) {
+          print('❌ Session expired, clearing and going to login');
+          await SessionManager.clearSession();
+          Get.offAllNamed(AppRoutes.login);
+        } else {
+          print('✅ Session valid, going to dashboard');
+          Get.offAllNamed(AppRoutes.dashboard);
+        }
+      } else {
+        print('❌ User not logged in or userData is null');
+        print('   - isLoggedIn: $isLoggedIn');
+        print('   - userData is null: ${userData == null}');
+        Get.offAllNamed(AppRoutes.login);
+      }
+    } catch (e) {
+      print('❌ Error checking authentication: $e');
+      Get.offAllNamed(AppRoutes.login);
+    }
+  }
+
 
   @override
   void dispose() {

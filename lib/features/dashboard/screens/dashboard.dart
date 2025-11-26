@@ -1,6 +1,9 @@
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import '../../../common/images.dart';
+import '../../../common/route/router.dart';
 import '../../auth/screens/login.dart';
 import '../../home/screens/home.dart';
 
@@ -48,7 +51,6 @@ class _DashboardState extends State<Dashboard> {
           _animationController.repeat();
         }
       });
-
     _menuAnimationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: Navigator.of(context),
@@ -105,7 +107,6 @@ class _DashboardState extends State<Dashboard> {
     setState(() {
       _isPlotExpanded = !_isPlotExpanded;
       _isCartExpanded = false;
-
       if (_isPlotExpanded) {
         _animationController.repeat();
         _menuAnimationController.forward();
@@ -225,7 +226,6 @@ class _DashboardState extends State<Dashboard> {
             ),
         ],
       ),
-
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
         shape: const CircularNotchedRectangle(),
@@ -244,7 +244,6 @@ class _DashboardState extends State<Dashboard> {
           ),
         ),
       ),
-
       floatingActionButton: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -261,7 +260,6 @@ class _DashboardState extends State<Dashboard> {
                 size: 28,
                 color: Colors.white,
               ),
-
             ],
           ),
         ),
@@ -381,12 +379,17 @@ class _DashboardState extends State<Dashboard> {
     switch (menuIndex) {
       case 0:
         debugPrint('Plot Marketplace tapped');
+        Get.toNamed(AppRoutes.plotMarket);
+
         break;
       case 1:
         debugPrint('GIOO Plots tapped');
+        Get.toNamed(AppRoutes.gioo);
+
         break;
       case 2:
         debugPrint('Syndicate Plots tapped');
+        Get.toNamed(AppRoutes.syndicate);
         break;
       default:
         debugPrint('Unknown menu index: $menuIndex');
