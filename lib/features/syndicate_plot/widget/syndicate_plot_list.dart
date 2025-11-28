@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../common/route/router.dart';
 import '../../Properties/widget/property_card.dart';
 import '../controller/syndicate_controller.dart';
 import '../model/syndicate_model.dart';
@@ -52,11 +51,11 @@ class SyndicatePlotList extends StatelessWidget {
             rightIndex < plots.length ? plots[rightIndex] : null;
             return Row(
               children: [
-                Expanded(child: _buildCardAnimated(leftPlot)),
+                Expanded(child: _buildCardAnimated(leftPlot, leftIndex)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: rightPlot != null
-                      ? _buildCardAnimated(rightPlot)
+                      ? _buildCardAnimated(rightPlot, rightIndex)
                       : const SizedBox.shrink(),
                 ),
               ],
@@ -66,9 +65,10 @@ class SyndicatePlotList extends StatelessWidget {
       );
     });
   }
-  Widget _buildCardAnimated(SyndicatePlot plot) {
+
+  Widget _buildCardAnimated(SyndicatePlot plot, int index) {
     return PropertyCard(
-      imageUrl: plot.image,
+      imageUrl: plot.images.isNotEmpty ? plot.images[0] : '', // Use first image
       title: plot.name,
       price: plot.formattedPrice,
       area: plot.formattedArea,

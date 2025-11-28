@@ -24,4 +24,8 @@ class Images {
   static const String service = 'assets/images/services.png';
   static const String delete = 'assets/images/delete.png';
   static const String logout = 'assets/images/logout.png';
+  static const String selectSlot = 'assets/images/select.png';
+  static const String getPayment = 'assets/images/completed.png';
+  static const String registrationProcess = 'assets/images/process.png';
+  static const String plotRegistered = 'assets/images/share.png';
 }

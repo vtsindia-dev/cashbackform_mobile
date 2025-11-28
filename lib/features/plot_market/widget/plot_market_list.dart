@@ -70,7 +70,7 @@ class PlotMarketList extends StatelessWidget {
 
   Widget _buildAnimatedPlotCard(MarketPlot plot, int index) {
     return PropertyCard(
-      imageUrl: plot.image,
+      imageUrl: plot.images.isNotEmpty ? plot.images[0] : '', // Use first image from list
       title: plot.name,
       price: plot.formattedPrice,
       area: plot.formattedArea,

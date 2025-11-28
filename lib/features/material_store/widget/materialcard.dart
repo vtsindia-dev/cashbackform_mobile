@@ -2,24 +2,23 @@ import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../common/images.dart';
 
-class PropertyCard extends StatelessWidget {
+class MaterialCard extends StatelessWidget {
   final String imageUrl;
-  final String title;
-  final String price;
-  final String area;
-  final String location;
+  final String name;
+  final String category;
+  final String status;
+  final String createdDate;
   final String description;
   final VoidCallback onTap;
 
-  const PropertyCard({
+  const MaterialCard({
     super.key,
     required this.imageUrl,
-    required this.title,
-    required this.price,
-    required this.area,
-    required this.location,
+    required this.name,
+    required this.category,
+    required this.status,
+    required this.createdDate,
     required this.description,
     required this.onTap,
   });
@@ -44,6 +43,7 @@ class PropertyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // IMAGE
             ClipRRect(
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(10.r),
@@ -54,44 +54,24 @@ class PropertyCard extends StatelessWidget {
                 height: 100.h,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 100.h,
-                    width: double.infinity,
-                    color: Colors.grey.shade200,
-                    child: Icon(
-                      Icons.image_not_supported_outlined,
-                      size: 30.w,
-                      color: Colors.grey.shade400,
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 100.h,
-                    width: double.infinity,
-                    color: Colors.grey.shade200,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.w,
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    ),
-                  );
-                },
+                errorBuilder: (_, __, ___) => Container(
+                  height: 100.h,
+                  color: Colors.grey.shade200,
+                  child: Icon(Icons.image_not_supported_outlined,
+                      size: 30.w, color: Colors.grey.shade400),
+                ),
               ),
             ),
 
+            // CONTENT
             Padding(
               padding: EdgeInsets.all(8.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // TITLE
                   Text(
-                    title,
+                    name,
                     style: GoogleFonts.montserrat(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
@@ -99,71 +79,77 @@ class PropertyCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 4.h),
+
+                  SizedBox(height: 6.h),
+
+                  /// CATEGORY
                   Row(
                     children: [
-                      Image.asset(
-                        Images.price,
-                        height: 13.h,
-                        width: 13.w,
-                        color: AppColor.primary,
-                      ),
-                      SizedBox(width: 4.w),
-
-                      Text(
-                        price,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.primary,
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Image.asset(
-                        Images.squareFeet,
-                        height: 13.h,
-                        width: 13.w,
-                        color: AppColor.primary,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        "$area",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColor.primary,
+                      Icon(Icons.category, size: 13.sp, color: AppColor.primary),
+                      SizedBox(width: 5.w),
+                      Expanded(
+                        child: Text(
+                          category,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.primary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
 
                   SizedBox(height: 6.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.location_on,
-                            size: 12.sp, color: Colors.grey),
-                        SizedBox(width: 3.w),
-                        Expanded(
-                          child: Text(
-                            location,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 10.sp,
-                              color: Colors.grey[700],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+
+                  /// STATUS
+                  Row(
+                    children: [
+                      Icon(Icons.circle,
+                          size: 10.sp,
+                          color: status == "Active" ? AppColor.primary : Colors.red),
+                      SizedBox(width: 5.w),
+                      Expanded(
+                        child: Text(
+                          status,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColor.primary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 5.h),
+
+                  // SizedBox(height: 6.h),
+
+                  /// DATE
+                  // Row(
+                  //   children: [
+                  //     Icon(Icons.calendar_month, size: 12.sp, color: Colors.grey),
+                  //     SizedBox(width: 5.w),
+                  //     Expanded(
+                  //       child: Text(
+                  //         createdDate,
+                  //         style: GoogleFonts.montserrat(
+                  //           fontSize: 10.sp,
+                  //           color: Colors.grey[700],
+                  //         ),
+                  //         maxLines: 1,
+                  //         overflow: TextOverflow.ellipsis,
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
+
+                  SizedBox(height: 6.h),
+
+                  /// DESCRIPTION
                   Text(
                     description,
                     style: GoogleFonts.montserrat(
@@ -173,7 +159,10 @@ class PropertyCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+
                   SizedBox(height: 8.h),
+
+                  // VIEW BUTTON
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -183,7 +172,8 @@ class PropertyCard extends StatelessWidget {
                           onPressed: onTap,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
-                            padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 6.w),
+                            padding:
+                            EdgeInsets.symmetric(vertical: 4.h, horizontal: 6.w),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8.r),
                               side: BorderSide(

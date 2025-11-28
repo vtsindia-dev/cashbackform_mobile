@@ -3,33 +3,31 @@ import 'package:get/get.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
 import '../../home/widget/sub_title.dart';
-import '../controller/syndicate_controller.dart';
-import '../model/syndicate_model.dart';
+import '../../syndicate_plot/widget/scheme_overview.dart';
+import '../controller/gioo_controller.dart';
 import '../widget/about_plot.dart';
-import '../widget/legal_docments.dart';
-import '../widget/referals.dart';
-import '../widget/reserve_plots.dart';
-import '../widget/scheme_overview.dart';
+import '../widget/blue_print.dart';
+import '../widget/neraby_project.dart';
+import '../widget/plot_availability.dart';
+import '../widget/reserve_slot.dart';
 
-class SyndicateDetails extends StatefulWidget {
+class GiooDetails extends StatefulWidget {
   final int? id;
-  SyndicateDetails({super.key, this.id});
+  GiooDetails({super.key, this.id});
 
   @override
-  State<SyndicateDetails> createState() => _SyndicateDetailsState();
+  State<GiooDetails> createState() => _GiooDetailsState();
 }
 
-class _SyndicateDetailsState extends State<SyndicateDetails> {
-  final SyndicatePlotController controller = Get.put(SyndicatePlotController());
-  final GlobalKey _reserveButtonKey = GlobalKey(); // Create the key here
+class _GiooDetailsState extends State<GiooDetails> {
+  final GiooPlotController controller = Get.put(GiooPlotController());
 
 
   @override
   void initState() {
     super.initState();
-    // Fetch data when the widget is initialized
     if (widget.id != null) {
-      controller.fetchSyndicateDetail(widget.id!);
+      controller.fetchGiooPlotDetail(widget.id!);
     }
   }
 
@@ -41,28 +39,25 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
         showBackButton: true,
       ),
       body: Obx(() {
-        // Show loader until data is loaded
         if (controller.isLoadingDetail.value) {
           return const Center(child: GifLoader(message: "Loading...", size: 100));
         }
-
-        // Show "No data available" when data is null or empty
-        if (controller.syndicateDetail.value == null) {
+        if (controller.giooPlotDetail.value == null) {
           return _buildNoDataAvailable();
         }
-
-        // Show content when data is loaded
         return Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    AboutPlot(),
+                    AboutGiooPlot(),
+                    PlotAvailabilityWidget(),
+                    NearbyProject(),
                     SchemeOverview(),
-                    ReservePlotsScreen(reserveButtonKey: _reserveButtonKey), // Pass the key
-                    LegalDocumentsScreen(),
-                    Referrals(reservePlotsKey: _reserveButtonKey), // Pass the same key
+                    BluePrint(),
+                    ReserveSlot(),
+
                     SizedBox(height: 45,)
                   ],
                 ),
@@ -92,7 +87,8 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
           ElevatedButton(
             onPressed: () {
               if (widget.id != null) {
-                controller.fetchSyndicateDetail(widget.id!);
+                controller.fetchGiooPlotDetail(widget.id!);
+
               }
             },
             child: Text("Retry"),

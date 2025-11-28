@@ -1,4 +1,3 @@
-
 class MarketPlot {
   final int id;
   final String name;
@@ -14,7 +13,7 @@ class MarketPlot {
   final String price;
   final String description;
   final int unitSplit;
-  final String image;
+  final List<String> images; // Changed from String to List<String>
   final String? plotImage;
   final String work;
   final String? agentId;
@@ -39,7 +38,7 @@ class MarketPlot {
     required this.price,
     required this.description,
     required this.unitSplit,
-    required this.image,
+    required this.images, // Changed from image to images
     required this.plotImage,
     required this.work,
     required this.agentId,
@@ -66,7 +65,7 @@ class MarketPlot {
       price: json['price']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       unitSplit: json['unit_spilt'] as int? ?? 0,
-      image: json['image']?.toString() ?? '',
+      images: _parseImages(json['image']), // Updated to handle list
       plotImage: json['plot_image']?.toString(),
       work: json['work']?.toString() ?? '',
       agentId: json['agent_id']?.toString(),
@@ -78,12 +77,31 @@ class MarketPlot {
     );
   }
 
+  // Helper method to parse images
+  static List<String> _parseImages(dynamic imageData) {
+    if (imageData == null) return [];
+
+    if (imageData is String) {
+      return [imageData];
+    } else if (imageData is List) {
+      return imageData.map((item) => item?.toString() ?? '').where((item) => item.isNotEmpty).toList();
+    }
+
+    return [];
+  }
+
   // Helper methods
   String get formattedPrice => _formatNumber(price);
   String get formattedArea => '$area sq.ft';
   String get location => '${city?.cityName ?? ''}, ${state?.stateName ?? ''}'.trim();
   bool get isVerified => verifyStatus == 1;
   bool get hasPlotImage => plotImage != null && plotImage!.isNotEmpty;
+
+  // Get first image for thumbnail (backward compatibility)
+  String get firstImage => images.isNotEmpty ? images.first : '';
+
+  // Get all images
+  List<String> get allImages => images;
 
   String _formatNumber(String number) {
     try {

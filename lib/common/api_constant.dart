@@ -1,4 +1,6 @@
 class ApiUrl {
+
+  // static const String baseUrl = "http://192.168.1.114/admincashback/public";
   static const String baseUrl = "https://admincashback.vrikshatech.in/public";
   static const String login = "$baseUrl/api/v2/login";
   static const String otp = "$baseUrl/api/v2/otp";
@@ -9,4 +11,7 @@ class ApiUrl {
   static const String syndicateDetails = "$baseUrl/api/v2/property_details/synticate";
   static const String giooDetails = "$baseUrl/api/v2/property_details/geo";
   static const String marketDetails = "$baseUrl/api/v2/property_details/market";
+  static const String marketList = "$baseUrl/api/v2/material_list";
+  static const String serviceList = "$baseUrl/api/v2/services_list";
+  static const String serviceDetail = "$baseUrl/api/v2/services_list";
 }

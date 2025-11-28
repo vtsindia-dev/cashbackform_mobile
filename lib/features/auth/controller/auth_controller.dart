@@ -248,7 +248,8 @@ class AuthController extends GetxController with CodeAutoFill {
     } finally {
       isLoading(false);
     }
-  }  Future<void> register() async {
+  }
+  Future<void> register() async {
     try {
       if (!_validateForm()) return;
 
@@ -315,6 +316,7 @@ class AuthController extends GetxController with CodeAutoFill {
       isLoading(false);
     }
   }
+
   bool _validateForm() {
     if (firstNameController.text.isEmpty) {
       SnackBarHelper.showError("Please enter first name");
@@ -342,6 +344,10 @@ class AuthController extends GetxController with CodeAutoFill {
     }
     if (addressController.text.isEmpty) {
       SnackBarHelper.showError("Please enter address");
+      return false;
+    }
+    if (selectedImage.value == null) {
+      SnackBarHelper.showError("Please select a profile image");
       return false;
     }
     return true;

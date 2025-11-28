@@ -73,7 +73,7 @@ class GiooPlotList extends StatelessWidget {
 
   Widget _buildAnimatedPlotCard(GiooPlot plot) {
     return PropertyCard(
-      imageUrl: plot.image,
+      imageUrl: plot.images.isNotEmpty ? plot.images[0] : '', // Use first image from list
       title: plot.name,
       price: plot.formattedPrice,
       area: plot.formattedArea,
@@ -81,6 +81,8 @@ class GiooPlotList extends StatelessWidget {
       description: plot.description,
       onTap: () {
         print("View Gioo Plot: ${plot.name}");
+        Get.toNamed('/giooDetails', arguments: {"id": plot.id});
+
       },
     )
         .animate()

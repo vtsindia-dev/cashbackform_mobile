@@ -6,6 +6,8 @@ import '../../../common/images.dart';
 import '../../../common/route/router.dart';
 import '../../auth/screens/login.dart';
 import '../../home/screens/home.dart';
+import '../../material_store/screens/material_store.dart';
+import '../../service/screen/service.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -24,8 +26,8 @@ class _DashboardState extends State<Dashboard> {
 
   final List<Widget> _screens = [
      Home(),
-    const Center(child: Text('Service Screen')),
-    const Center(child: Text('Material Screen')),
+    Service(),
+    MaterialStore(),
     const Center(child: Text('Profile Screen')),
   ];
 
