@@ -60,68 +60,68 @@ class ProductCard extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-              Positioned(
-                top: 8.h,
-                right: 8.w,
-                child: InkWell(
-                  onTap: onFavToggle,
-                  child: Container(
-                    padding: EdgeInsets.all(6.r),
-                    decoration: BoxDecoration(
-                      color: AppColor.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 2.r,
-                          offset: Offset(0, 1.h),
-                        )
-                      ],
-                    ),
-                    child: Icon(
-                      isFavourite ? Icons.favorite : Icons.favorite_border,
-                      color: AppColor.primary,
-                      size: 18.sp,
-                    ),
-                  ),
-                ),
-              ),
-
-              Positioned(
-                top: 8.h,
-                left: 8.w,
-                child: InkWell(
-                  onTap: onAddToCart,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: AppColor.primary,
-                      borderRadius: BorderRadius.circular(8.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 2.r,
-                          offset: Offset(0, 1.h),
-                        )
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.shopping_cart_outlined,
-                            color: Colors.white, size: 14.sp),
-                        SizedBox(width: 3.w),
-                        Text(
-                          "Add",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w600),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              // Positioned(
+              //   top: 8.h,
+              //   right: 8.w,
+              //   child: InkWell(
+              //     onTap: onFavToggle,
+              //     child: Container(
+              //       padding: EdgeInsets.all(6.r),
+              //       decoration: BoxDecoration(
+              //         color: AppColor.white,
+              //         shape: BoxShape.circle,
+              //         boxShadow: [
+              //           BoxShadow(
+              //             color: Colors.black12,
+              //             blurRadius: 2.r,
+              //             offset: Offset(0, 1.h),
+              //           )
+              //         ],
+              //       ),
+              //       child: Icon(
+              //         isFavourite ? Icons.favorite : Icons.favorite_border,
+              //         color: AppColor.primary,
+              //         size: 18.sp,
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              //
+              // Positioned(
+              //   top: 8.h,
+              //   left: 8.w,
+              //   child: InkWell(
+              //     onTap: onAddToCart,
+              //     child: Container(
+              //       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              //       decoration: BoxDecoration(
+              //         color: AppColor.primary,
+              //         borderRadius: BorderRadius.circular(8.r),
+              //         boxShadow: [
+              //           BoxShadow(
+              //             color: Colors.black12,
+              //             blurRadius: 2.r,
+              //             offset: Offset(0, 1.h),
+              //           )
+              //         ],
+              //       ),
+              //       child: Row(
+              //         children: [
+              //           Icon(Icons.shopping_cart_outlined,
+              //               color: Colors.white, size: 14.sp),
+              //           SizedBox(width: 3.w),
+              //           Text(
+              //             "Add",
+              //             style: TextStyle(
+              //                 color: Colors.white,
+              //                 fontSize: 10.sp,
+              //                 fontWeight: FontWeight.w600),
+              //           )
+              //         ],
+              //       ),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
           Padding(

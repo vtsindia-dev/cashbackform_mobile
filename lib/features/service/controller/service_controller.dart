@@ -23,7 +23,9 @@ class ServiceController extends GetxController {
   var isExpanded = false.obs;
   var isDescriptionExpanded = false.obs;
   var _isLoadingMore = false; // Private variable to track load more state
-
+  // Add protection against multiple calls
+  var _isLoadingInProgress = false;
+  var _lastRequestedPage = 0;
   @override
   void onInit() {
     super.onInit();
@@ -31,6 +33,9 @@ class ServiceController extends GetxController {
   }
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
   void toggleDescription() => isDescriptionExpanded.value = !isDescriptionExpanded.value;
+
+
+
   Future<void> fetchServices({bool loadMore = false}) async {
     try {
       // Prevent multiple simultaneous requests

@@ -14,7 +14,7 @@ class FeaturesProduct extends StatelessWidget {
       builder: (controller) {
         final List<Map<String, dynamic>> dummyList = [
           {
-            "image": "https://picsum.photos/500/300",
+            "image":'https://admincashback.vrikshatech.in/public/uploads/property/1764252610_download%201.png',
             "title": controller.areaName.isNotEmpty
                 ? "${controller.areaName} Premium Plot"
                 : "Premium Plot",
@@ -24,7 +24,7 @@ class FeaturesProduct extends StatelessWidget {
             "description": "DTCP approved land with great surroundings.",
           },
           {
-            "image": "https://picsum.photos/510/300",
+            "image":'https://admincashback.vrikshatech.in/public/uploads/property/1764415266_expand_svgrepo.com.png',
             "title": "Luxury Villa Land",
             "price": "25,00,000",
             "area": "1500",
@@ -32,7 +32,7 @@ class FeaturesProduct extends StatelessWidget {
             "description": "Near main road, prime location.",
           },
           {
-            "image": "https://picsum.photos/520/300",
+            "image":'https://admincashback.vrikshatech.in/public/uploads/property/1764416700_expand_svgrepo.com-1.png',
             "title": "Budget Friendly Plot",
             "price": "8,40,000",
             "area": "900",

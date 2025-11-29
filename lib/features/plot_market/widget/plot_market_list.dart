@@ -1,3 +1,4 @@
+import 'package:cashback_farms/common/route/router.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -78,9 +79,9 @@ class PlotMarketList extends StatelessWidget {
       description: plot.description,
       onTap: () {
         print("View Market Plot: ${plot.name}");
-        // Navigate to market plot details
-        // Get.to(() => MarketPlotDetailsScreen(plot: plot));
+        Get.toNamed(AppRoutes.plotMarketDetails, arguments: {"id": plot.id});
       },
+
     )
         .animate()
         .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)

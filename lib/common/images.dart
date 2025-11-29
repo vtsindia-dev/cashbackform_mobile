@@ -28,4 +28,9 @@ class Images {
   static const String getPayment = 'assets/images/completed.png';
   static const String registrationProcess = 'assets/images/process.png';
   static const String plotRegistered = 'assets/images/share.png';
+  static const String featuredGioo = 'assets/images/Giooplots.png';
+  static const String featuredResidential = 'assets/images/residential.png';
+  static const String featuredPlotMarket = 'assets/images/PlotMarket.png';
+  static const String featuredSyndicate = 'assets/images/syndicte.png';
+  static const String menu = 'assets/images/menu.png';
 }

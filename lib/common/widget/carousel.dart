@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 
@@ -12,7 +12,7 @@ class CarouselWidget extends StatefulWidget {
     super.key,
     required this.images,
     this.height = 180,
-    this.autoPlayDuration = const Duration(seconds: 3),
+    this.autoPlayDuration = const Duration(seconds: 5),
     this.borderRadius = 12,
   });
 
@@ -20,97 +20,95 @@ class CarouselWidget extends StatefulWidget {
   State<CarouselWidget> createState() => _CarouselWidgetState();
 }
 
-class _CarouselWidgetState extends State<CarouselWidget>
-    with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
-  Timer? _timer;
-
+class _CarouselWidgetState extends State<CarouselWidget> {
   int _currentIndex = 0;
-  bool _isImageLoaded = false;
 
-  @override
-  void initState() {
-    super.initState();
+  Widget _buildImage(String path) {
+    final bool isNetwork = path.startsWith('http') || path.startsWith('https');
 
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    );
-
-    _fadeController.forward();
-
-    _timer = Timer.periodic(widget.autoPlayDuration, (timer) {
-      _changeImage();
-    });
-  }
-
-  void _changeImage() {
-    _fadeController.reverse().then((_) {
-      setState(() {
-        _isImageLoaded = false;
-        _currentIndex = (_currentIndex + 1) % widget.images.length;
-      });
-
-      _fadeController.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _fadeController.dispose();
-    super.dispose();
+    if (isNetwork) {
+      return Image.network(
+        path,
+        width: double.infinity,
+        height: widget.height,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Image.asset(
+            'assets/images/placeholder.png',
+            width: double.infinity,
+            height: widget.height,
+            fit: BoxFit.cover,
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset(
+            'assets/images/placeholder.png',
+            width: double.infinity,
+            height: widget.height,
+            fit: BoxFit.cover,
+          );
+        },
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.all(2.0),
+        child: Image.asset(
+          path,
+          width: double.infinity,
+          height: widget.height,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.images.isEmpty) {
+      return Container(
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+        ),
+        child: const Center(child: Text("No images")),
+      );
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-          child: Stack(
-            children: [
-              // IMAGE
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Image.network(
-                  widget.images[_currentIndex],
-                  width: double.infinity,
-                  height: widget.height,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) {
-                      Future.microtask(() {
-                        if (!_isImageLoaded) {
-                          setState(() {
-                            _isImageLoaded = true;
-                          });
-                        }
-                      });
-                      return child;
-                    }
-                    return _buildShimmer();
-                  },
-                ),
+        CarouselSlider.builder(
+          itemCount: widget.images.length,
+          itemBuilder: (context, index, realIndex) {
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              child: Padding(
+                padding: const EdgeInsets.all(1.0),
+                child: _buildImage(widget.images[index]),
               ),
-              if (!_isImageLoaded) Positioned.fill(child: _buildShimmer()),
-            ],
+            );
+          },
+          options: CarouselOptions(
+            height: widget.height,
+            viewportFraction: 1.0,
+            autoPlay: widget.images.length > 1,
+            autoPlayInterval: widget.autoPlayDuration,
+            autoPlayAnimationDuration: const Duration(seconds: 2),
+            enableInfiniteScroll: widget.images.length > 1,
+            onPageChanged: (index, reason) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
           ),
         ),
-
-        const SizedBox(height: 8),
+        const SizedBox(height: 5),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(widget.images.length, (index) {
             bool isActive = index == _currentIndex;
-
             return AnimatedContainer(
               duration: const Duration(milliseconds: 350),
               margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -124,7 +122,7 @@ class _CarouselWidgetState extends State<CarouselWidget>
                   BoxShadow(
                     color: AppColor.primary.withOpacity(0.6),
                     blurRadius: 8,
-                  ),
+                  )
                 ]
                     : [],
               ),
@@ -132,34 +130,6 @@ class _CarouselWidgetState extends State<CarouselWidget>
           }),
         ),
       ],
-    );
-  }
-  Widget _buildShimmer() {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: -1, end: 2),
-      duration: const Duration(seconds: 2),
-      builder: (context, value, child) {
-        return ShaderMask(
-          shaderCallback: (rect) {
-            return LinearGradient(
-              begin: Alignment(-1, 0),
-              end: Alignment(1, 0),
-              colors: [
-                Colors.grey.shade300,
-                Colors.grey.shade100,
-                Colors.grey.shade300,
-              ],
-              stops: [value - 1, value, value + 1],
-            ).createShader(rect);
-          },
-          blendMode: BlendMode.srcATop,
-          child: Container(
-            color: Colors.grey.shade300,
-            width: double.infinity,
-            height: widget.height,
-          ),
-        );
-      },
     );
   }
 }

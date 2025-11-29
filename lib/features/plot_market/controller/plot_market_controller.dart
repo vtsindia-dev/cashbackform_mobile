@@ -1,13 +1,15 @@
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/toster.dart';
 import '../model/plot_market.dart';
-
 class PlotMarketController extends GetxController {
   var isLoading = false.obs;
   var isLoadMore = false.obs;
+  var isLoadingDetail = false.obs;
   var marketPlots = <MarketPlot>[].obs;
+  var marketDetail = Rxn<MarketPlotDetail>();
   var currentPage = 1.obs;
   var totalPages = 1.obs;
   var hasMoreData = true.obs;
@@ -17,13 +19,128 @@ class PlotMarketController extends GetxController {
   var selectedState = ''.obs;
   var minPrice = ''.obs;
   var maxPrice = ''.obs;
+  var errorMessage = ''.obs;
+  var isExpanded = true.obs;
+  void toggleExpansion() => isExpanded.value = !isExpanded.value;
 
   @override
   void onInit() {
     super.onInit();
     fetchMarketPlots();
   }
+  Future<void> fetchMarketPlotDetail(int id) async {
+    try {
+      _clearDetailData();
+      isLoadingDetail(true);
+      errorMessage('');
+      final url = '${ApiUrl.marketDetails}/$id';
+      print('🌐 Fetching Market Plot Detail URL: $url');
+      final response = await ApiService.getRequest(url);
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData != null && responseData['data'] != null) {
+          marketDetail.value = MarketPlotDetail.fromJson(responseData['data']);
+          print('✅ Fetched market plot detail: ${marketDetail.value?.name}');
+          _logDetailInfo();
+        } else {
+          errorMessage('Invalid response format from server');
+          SnackBarHelper.showError("Invalid response format");
+          print('❌ Invalid response format: $responseData');
+        }
+      } else if (response.statusCode == 404) {
+        errorMessage('Market plot details not found');
+        SnackBarHelper.showError("Market plot details not found");
+        print('❌ 404 Error: ${response.data}');
+      } else {
+        final errorMsg = response.data?['message'] ?? 'Failed to fetch market plot details';
+        errorMessage(errorMsg);
+        SnackBarHelper.showError("Error: $errorMsg");
+        print('❌ API Error ${response.statusCode}: ${response.data}');
+      }
+    } catch (e) {
+      errorMessage('Network error: $e');
+      SnackBarHelper.showError("Network error: $e");
+      print('❌ Network error: $e');
+    } finally {
+      isLoadingDetail(false);
+    }
+  }
+  void _clearDetailData() {
+    marketDetail.value = null;
+    errorMessage('');
+  }
+  void _logDetailInfo() {
+    final detail = marketDetail.value;
+    if (detail != null) {
+      print('📊 Market Plot Details:');
+      print('   Name: ${detail.name}');
+      print('   Price: ${detail.formattedPrice}');
+      print('   Location: ${detail.fullAddress}');
+      print('   Verified: ${detail.isVerified}');
+      print('   Amenities: ${detail.amenities.length}');
+      print('   Documents: ${detail.documents.length}');
+      print('   Units: ${detail.unitSpilt}');
+    }
+  }
+  void navigateToDetail(int id) {
+    _clearDetailData();
+    Get.toNamed('/market-plot-detail', arguments: id);
+    fetchMarketPlotDetail(id);
+  }
+  Future<void> viewDocument(int id) async {
+    try {
+      final apiDoc = marketDetail.value?.documents.firstWhere((d) => d.id == id);
+      if (apiDoc != null) {
+        print("Viewing API document: ${apiDoc.doucType} - ${apiDoc.file}");
+        await _launchUrl(apiDoc.file);
+        return;
+      }
+    } catch (e) {
+      print("Document not found: $id");
+      SnackBarHelper.showError("Document not found");
+    }
+  }
 
+  Future<void> downloadDocument(int id) async {
+    try {
+      final apiDoc = marketDetail.value?.documents.firstWhere((d) => d.id == id);
+      if (apiDoc != null) {
+        print("Downloading API document: ${apiDoc.doucType} - ${apiDoc.file}");
+        await _launchUrl(apiDoc.file);
+        return;
+      }
+    } catch (e) {
+      print("Document not found: $id");
+      SnackBarHelper.showError("Document not found");
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    try {
+      String formattedUrl = url;
+
+      if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+        formattedUrl = 'http://$formattedUrl';
+      }
+
+      final Uri uri = Uri.parse(formattedUrl);
+
+      print('Launching URL: $uri');
+
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        print('Cannot launch URL: $uri');
+        SnackBarHelper.showError("Cannot open the document. Please check your connection.");
+      }
+    } catch (e) {
+      print('Error launching URL: $e');
+      SnackBarHelper.showError("Failed to open document");
+    }
+  }
   Future<void> fetchMarketPlots({bool loadMore = false}) async {
     try {
       if (loadMore) {
@@ -179,5 +296,11 @@ class PlotMarketController extends GetxController {
 
   void toggleFavorite(int plotId) {
     print('Toggled favorite for market plot $plotId');
+  }
+
+  @override
+  void onClose() {
+    _clearDetailData();
+    super.onClose();
   }
 }

@@ -63,7 +63,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   width: 80,
                   child: Center(
                     child: _buildIconButton(
-                      image: Images.profile,
+                      image: Images.menu,
                       onTap: () {
                         scaffoldKey.currentState?.openDrawer();
                       },

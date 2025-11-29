@@ -27,7 +27,6 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
   @override
   void initState() {
     super.initState();
-    // Fetch data when the widget is initialized
     if (widget.id != null) {
       controller.fetchSyndicateDetail(widget.id!);
     }
@@ -41,12 +40,10 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
         showBackButton: true,
       ),
       body: Obx(() {
-        // Show loader until data is loaded
         if (controller.isLoadingDetail.value) {
           return const Center(child: GifLoader(message: "Loading...", size: 100));
         }
 
-        // Show "No data available" when data is null or empty
         if (controller.syndicateDetail.value == null) {
           return _buildNoDataAvailable();
         }

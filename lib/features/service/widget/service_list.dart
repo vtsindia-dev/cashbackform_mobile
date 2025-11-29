@@ -19,11 +19,7 @@ class ServiceList extends StatelessWidget {
         return const Center(child: GifLoader(message: "Loading...", size: 100));
         return const Center(child: GifLoader(message: "Loading...", size: 100));
       }
-      if (services.isEmpty) {
-        return const Center(
-          child: Text("No services found"),
-        );
-      }
+
       return NotificationListener<ScrollNotification>(
         onNotification: (scrollInfo) {
           if (scrollInfo.metrics.pixels >=
@@ -58,7 +54,7 @@ class ServiceList extends StatelessWidget {
     return ServiceCard(
       service: service,
       onTap: () {
-        controller.fetchServiceDetail(service.id);
+        // controller.fetchServiceDetail(service.id);
       },
       onEnquiry: () {
         print("Send Enquiry pressed");

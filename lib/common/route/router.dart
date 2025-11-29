@@ -9,6 +9,7 @@ import '../../features/auth/screens/login.dart';
 import '../../features/dashboard/screens/dashboard.dart';
 import '../../features/home/screens/home.dart';
 import '../../features/plot_market/screens/plot_market.dart';
+import '../../features/plot_market/screens/plotmarket_details.dart';
 import '../../features/service/screen/service.dart';
 import '../../features/splash/screens/splash.dart';
 import '../../features/syndicate_plot/screens/syndicate_plot.dart';
@@ -28,7 +29,7 @@ class AppRoutes {
   static const String plotMarket = '/plotMarket';
   static const String syndicateDetails = '/syndicateDetails';
   static const String giooDetails = '/giooDetails';
-  static const String plotMarketDetails = '/plotMarketDeatils';
+  static const String plotMarketDetails = '/plotMarketDetails';
   static List<GetPage> routes = [
     GetPage(
       name: splash,
@@ -102,13 +103,15 @@ class AppRoutes {
     ),
     GetPage(
       name: plotMarketDetails,
-      page: (){
+      page: () {
         final arguments = Get.arguments;
         final id = arguments != null ? arguments['id'] : null;
-        return SyndicateDetails(id: id);
+        return PlotMarketDetails(id: id);
       },
       transition: Transition.cupertino,
     ),
+
+
 
   ];
   static void toDashboard() => Get.offAllNamed(dashboard);

@@ -6,6 +6,7 @@ class ServiceCard extends StatelessWidget {
   final double width;
   final double height;
   final VoidCallback? onTap;
+  final bool isAsset; // NEW: true if local asset, false if network
 
   const ServiceCard({
     super.key,
@@ -14,6 +15,7 @@ class ServiceCard extends StatelessWidget {
     this.width = 150,
     this.height = 230,
     this.onTap,
+    this.isAsset = false, // default network
   });
 
   @override
@@ -38,11 +40,36 @@ class ServiceCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           child: Stack(
             children: [
-              Image.network(
+              // IMAGE: network or asset
+              isAsset
+                  ? Image.asset(
                 imageUrl,
                 width: width,
                 height: height,
                 fit: BoxFit.cover,
+              )
+                  : Image.network(
+                imageUrl,
+                width: width,
+                height: height,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Image.asset(
+                    'assets/placeholder.png', // optional placeholder while loading
+                    width: width,
+                    height: height,
+                    fit: BoxFit.cover,
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    'assets/placeholder.png', // fallback if network fails
+                    width: width,
+                    height: height,
+                    fit: BoxFit.cover,
+                  );
+                },
               ),
 
               Positioned(

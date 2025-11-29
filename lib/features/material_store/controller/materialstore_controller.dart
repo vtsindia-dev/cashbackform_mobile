@@ -5,7 +5,7 @@ import '../../../common/widget/api_service.dart';
 import '../../../common/widget/toster.dart';
 import '../model/material_store.dart';
 
-class MaterialStore extends GetxController {
+class MaterialController extends GetxController {
   // Reactive variables
   var isLoading = false.obs;
   var isLoadMore = false.obs;

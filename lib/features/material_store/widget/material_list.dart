@@ -1,13 +1,13 @@
+import 'package:cashback_farms/features/material_store/controller/materialstore_controller.dart' show MaterialController;
 import 'package:flutter/material.dart' hide Material;
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../common/widget/loader.dart';
-import '../controller/materialStore_controller.dart';
 import '../model/material_store.dart';
 import 'materialcard.dart';
 
 class MaterialListScreen extends StatelessWidget {
-  final MaterialStore controller = Get.put(MaterialStore());
+  final MaterialController controller = Get.put(MaterialController());
 
   MaterialListScreen({super.key});
 
@@ -18,12 +18,6 @@ class MaterialListScreen extends StatelessWidget {
 
       if (controller.isLoading.value && materials.isEmpty) {
         return const Center(child: GifLoader(message: "Loading...", size: 100));
-      }
-
-      if (materials.isEmpty) {
-        return const Expanded(
-          child: Center(child: Text("No materials found")),
-        );
       }
 
       final rowCount = (materials.length / 2).ceil();

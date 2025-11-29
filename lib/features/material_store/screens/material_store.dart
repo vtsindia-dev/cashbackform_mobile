@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_state_manager/src/simple/get_state.dart';
+import 'package:get/get.dart';
 
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
-import '../../gioo_plots/controller/gioo_controller.dart';
-import '../../gioo_plots/widget/gioo_plot_list.dart';
+import '../controller/materialstore_controller.dart';
 import '../widget/material_list.dart';
-
-
 
 class MaterialStore extends StatefulWidget {
   const MaterialStore({super.key});
@@ -17,31 +14,44 @@ class MaterialStore extends StatefulWidget {
 }
 
 class _MaterialStoreState extends State<MaterialStore> {
+  final MaterialController controller = Get.put(MaterialController());
+
+  @override
+  void initState() {
+    super.initState();
+    controller.fetchMaterials();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<GiooPlotController>(
-      init: GiooPlotController(),
-      builder: (controller) {
-        return Scaffold(
-          appBar: DynamicAppBar(
-            title: "Material Store",
-            showBackButton: true,
-          ),
-          body: controller.isLoading.value
-              ? const Center(child: GifLoader(message: "Loading...", size: 100))
-              : _buildContent(),
-        );
-      },
+    return Scaffold(
+      appBar: DynamicAppBar(
+        title: "Material Store",
+        showBackButton: false,
+      ),
+      body: Obx(() {
+        // Show loader while fetching data
+        if (controller.isLoading.value) {
+          return const Center(
+            child: GifLoader(
+              message: "Loading...",
+              size: 100,
+            ),
+          );
+        }
+        if (controller.materials.isEmpty) {
+          return const Center(
+            child: GifLoader(
+              message: "Loading...",
+              size: 100,
+            ),
+          );
+
+        }
+
+        // Show list once data is available
+        return MaterialListScreen();
+      }),
     );
   }
 }
-
-  Widget _buildContent() {
-    return Column(
-      children: [
-        Expanded(
-          child: MaterialListScreen(),
-        ),
-      ],
-    );
-  }

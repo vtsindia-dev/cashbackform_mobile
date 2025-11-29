@@ -22,7 +22,6 @@ class MyApp extends StatelessWidget {
                 scaffoldBackgroundColor: Colors.white,
                 textTheme: GoogleFonts.montserratTextTheme(),
               ),
-
               initialRoute: AppRoutes.splash,
               getPages: AppRoutes.routes,
               debugShowCheckedModeBanner: false,

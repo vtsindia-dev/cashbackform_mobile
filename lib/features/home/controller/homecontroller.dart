@@ -9,6 +9,7 @@ class HomeController extends GetxController {
   String areaName = "";
   String fullAddress = "";
   var services = <Map<String, String>>[].obs;
+  var material = <Map<String, String>>[].obs;
 
   @override
   void onInit() {
@@ -20,21 +21,40 @@ class HomeController extends GetxController {
   void loadDummyData() {
     services.value = [
       {
-        "title": "Electrician",
-        "image": "https://picsum.photos/300/200?1",
+        "title": "Interior Design",
+        "image": "https://admincashback.vrikshatech.in/public/uploads/services/1764414157_Inteirordesign.png",
       },
       {
-        "title": "Plumber",
-        "image": "https://picsum.photos/300/200?2",
+        "title": "Painting",
+        "image": "https://admincashback.vrikshatech.in/public/uploads/services/1764414290_paint.png",
       },
       {
-        "title": "Cleaning Service",
-        "image": "https://picsum.photos/300/200?3",
+        "title": "Electrical Service",
+        "image": "https://admincashback.vrikshatech.in/public/uploads/services/1764414500_electrical.png",
       },
       {
-        "title": "AC Repair",
-        "image": "https://picsum.photos/300/200?4",
+        "title": "Flooring",
+        "image": "https://admincashback.vrikshatech.in/public/uploads/services/1764414697_Frame%201000005988-2.png",
       },
+    ];
+    material.value = [
+      {
+        "title": "Cement",
+        "image": "assets/images/cement.png",
+      },
+      {
+        "title": "Bricks",
+        "image": "assets/images/bricks.png",
+      },
+      {
+        "title": "Steel",
+        "image": "assets/images/steel.png",
+      },
+      {
+        "title": "Sand",
+        "image": "assets/images/sand.png",
+      },
+
     ];
   }
   Future<void> getUserLocation() async {
