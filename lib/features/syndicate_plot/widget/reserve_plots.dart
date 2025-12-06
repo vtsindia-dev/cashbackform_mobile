@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../common/images.dart';
 import '../../home/widget/sub_title.dart';
+import '../../payment/controller/razorpay_controller.dart';
 import '../controller/syndicate_controller.dart';
 class ReservePlotsScreen extends StatefulWidget {
   final GlobalKey reserveButtonKey;
@@ -15,6 +16,7 @@ class ReservePlotsScreen extends StatefulWidget {
 
 class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
   final controller = Get.find<SyndicatePlotController>();
+  final RazorpayController paymentcontroller = Get.put(RazorpayController());
 
 
   @override
@@ -155,23 +157,32 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                       ),
                       SizedBox(height: 5.h),
                       Center(
-                        child: Container(
-                          key: widget.reserveButtonKey, // Add the key here
-                          width: 230.w,
-                          height: 45.h,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.18),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              )
-                            ],
-                          ),
-                          child: TextButton(
-                            onPressed: controller.reserveSelectedPlots,
+                        child: InkWell(
+                          onTap: () {
+                            paymentcontroller.openCheckout(
+                              customerName: "Abishek Jr",
+                              customerEmail: "abishek@gmail.com",
+                              customerPhone: "9876543210",
+                              amount: 15000*100,
+                              description: "Premium Plan",
+                            );
+                          },
+                          child: Container(
+                            key: widget.reserveButtonKey,
+                            width: 230.w,
+                            height: 45.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.18),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                )
+                              ],
+                            ),
+                            alignment: Alignment.center,
                             child: Text(
                               "Reserve Selected Plots",
                               style: TextStyle(
@@ -180,16 +191,16 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
+                          )
+                              .animate(
+                            onPlay: (ctrl) => ctrl.repeat(),
+                          )
+                              .shake(
+                            hz: 3,
+                            offset: const Offset(4, 0),
+                            duration: 1000.ms,
+                            curve: Curves.easeInOut,
                           ),
-                        )
-                            .animate(
-                          onPlay: (ctrl) => ctrl.repeat(),
-                        )
-                            .shake(
-                          hz: 3,
-                          offset: const Offset(4, 0),
-                          duration: 1000.ms,
-                          curve: Curves.easeInOut,
                         ),
                       )
                     ],

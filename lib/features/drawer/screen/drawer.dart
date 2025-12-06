@@ -69,13 +69,14 @@ class _CustomDrawerState extends State<CustomDrawer> {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _menuOption(context, asset: Images.profile, title: 'Profile', onTap: () => Navigator.pop(context)),
+                  _menuOption(context, asset: Images.profile, title: 'Profile', onTap: () => Get.toNamed('/profile')),
                   _menuOption(context, asset: Images.plotMarketplace, title: 'Plot Properties', onTap: () => Navigator.pop(context)),
                   _menuOption(context, asset: Images.GiooPlots, title: 'GIOO Plots', onTap: () => Navigator.pop(context)),
                   _menuOption(context, asset: Images.syndicatePlots, title: 'Syndicate Plots', onTap: () => Navigator.pop(context)),
                   _menuOption(context, asset: Images.materialStore, title: 'Material Store', onTap: () => Navigator.pop(context)),
-                  _menuOption(context, asset: Images.productEnquiry, title: 'My Product Enquiry', onTap: () => Navigator.pop(context)),
-                  _menuOption(context, asset: Images.service, title: 'My Service Enquiry', onTap: () => Navigator.pop(context)),
+                  _menuOption(context, asset: Images.productEnquiry, title: 'My Product Enquiry', onTap: () => Get.toNamed('/myMaterialList')),
+                  _menuOption(context, asset: Images.service, title: 'My Service Enquiry', onTap: () => Get.toNamed('/myServiceList')),
+                  _menuOption(context, asset: Images.plotRegistered, title: 'My Property', onTap: () => Get.toNamed('/myProperty')),
                   _menuOption(context, asset: Images.aboutUs, title: 'About Us', onTap: () => Navigator.pop(context)),
                   _menuOption(context, asset: Images.contactUs, title: 'Contact Us', onTap: () => Navigator.pop(context)),
                   _menuOption(context, asset: Images.logout, title: 'Logout', onTap: () => _showLogoutConfirmation(context)),

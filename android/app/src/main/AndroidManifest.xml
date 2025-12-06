@@ -47,6 +47,7 @@
             </intent-filter>
         </receiver>
 
+
         <receiver
             android:exported="false"
             android:name="com.dexterous.flutterlocalnotifications.FlutterLocalNotificationReceiver" />

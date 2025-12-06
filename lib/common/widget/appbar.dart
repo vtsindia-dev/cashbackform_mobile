@@ -3,8 +3,6 @@ import 'package:get/get.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
 import '../../features/home/controller/homecontroller.dart';
-
-
 class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
   final HomeController? controller;
   final GlobalKey<ScaffoldState>? scaffoldKey;
@@ -215,5 +213,3 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
-
-// U

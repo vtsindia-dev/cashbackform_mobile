@@ -12,7 +12,9 @@ class SyndicatePlotList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
+    return Obx(()
+
+    {
       final plots = controller.syndicatePlots;
       if (controller.isLoading.value && plots.isEmpty) {
         return const Expanded(child: Center(child: CircularProgressIndicator()));

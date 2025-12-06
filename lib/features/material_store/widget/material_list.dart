@@ -79,11 +79,12 @@ class MaterialListScreen extends StatelessWidget {
     return MaterialCard(
       imageUrl: material.image,
       name: material.materialName,
-      category: material.category.categoryName,
+      category: material.category?.categoryName??'',
       status: material.status == 1 ? "Active" : "Inactive",
       createdDate: material.createdAt.toString().substring(0, 10),
       description: material.description,
       onTap: () {
+        Get.toNamed('/materialDetails', arguments: {"id": material.id});
       },
     )
         .animate()

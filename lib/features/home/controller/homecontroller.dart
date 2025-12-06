@@ -53,6 +53,10 @@ class HomeController extends GetxController {
       {
         "title": "Sand",
         "image": "assets/images/sand.png",
+        },
+      {
+        "title": "Tiles",
+        "image": "assets/images/tiles.png",
       },
 
     ];

@@ -51,14 +51,11 @@ class ArrowLinePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
-
-    // Draw continuous ---> pattern
     const dashLength = 8.0;
     const gapLength = 4.0;
     const arrowSize = 6.0;
     double x = 0;
     while (x < size.width) {
-      // Draw dash "---"
       if (x + dashLength <= size.width) {
         canvas.drawLine(
           Offset(x, size.height / 2),
@@ -70,15 +67,14 @@ class ArrowLinePainter extends CustomPainter {
       if (x + arrowSize <= size.width) {
         final arrowX = x;
         final arrowY = size.height / 2;
-
         final arrowPaint = Paint()
           ..color = AppColor.primary
           ..style = PaintingStyle.fill;
 
         final Path arrowPath = Path();
-        arrowPath.moveTo(arrowX, arrowY);                    // Tip of arrow
-        arrowPath.lineTo(arrowX - arrowSize, arrowY - 4);    // Top point
-        arrowPath.lineTo(arrowX - arrowSize, arrowY + 4);    // Bottom point
+        arrowPath.moveTo(arrowX, arrowY);
+        arrowPath.lineTo(arrowX - arrowSize, arrowY - 4);
+        arrowPath.lineTo(arrowX - arrowSize, arrowY + 4);
         arrowPath.close();
 
         canvas.drawPath(arrowPath, arrowPaint);

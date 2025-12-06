@@ -2,7 +2,6 @@ import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 class MaterialCard extends StatelessWidget {
   final String imageUrl;
   final String name;
@@ -81,8 +80,6 @@ class MaterialCard extends StatelessWidget {
                   ),
 
                   SizedBox(height: 6.h),
-
-                  /// CATEGORY
                   Row(
                     children: [
                       Icon(Icons.category, size: 13.sp, color: AppColor.primary),
@@ -103,8 +100,6 @@ class MaterialCard extends StatelessWidget {
                   ),
 
                   SizedBox(height: 6.h),
-
-                  /// STATUS
                   Row(
                     children: [
                       Icon(Icons.circle,

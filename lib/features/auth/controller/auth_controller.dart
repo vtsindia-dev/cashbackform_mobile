@@ -11,7 +11,6 @@ import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
 class AuthController extends GetxController with CodeAutoFill {
   var phoneNumber = ''.obs;
   var isOtpSent = false.obs;
@@ -23,8 +22,6 @@ class AuthController extends GetxController with CodeAutoFill {
   var selectedRole = 1.obs;
   var selectedImage = Rxn<File>();
   var hoveredGender = (-1).obs;
-
-
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
   final TextEditingController firstNameController = TextEditingController();
@@ -37,7 +34,6 @@ class AuthController extends GetxController with CodeAutoFill {
   String? code;
   RxBool hasShownPhoneHint = false.obs;
   final ImagePicker _picker = ImagePicker();
-
   @override
   void onInit() {
     super.onInit();

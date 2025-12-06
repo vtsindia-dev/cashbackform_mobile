@@ -1,9 +1,12 @@
+// Updated ServiceList widget
 import 'package:cashback_farms/features/service/widget/service_product_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../common/widget/loader.dart';
 import '../controller/service_controller.dart';
+import 'enquiry_form.dart';
 
 class ServiceList extends StatelessWidget {
   final ServiceController controller = Get.put(ServiceController());
@@ -16,14 +19,14 @@ class ServiceList extends StatelessWidget {
       final services = controller.services;
 
       if (controller.isLoading.value && services.isEmpty) {
-        return const Center(child: GifLoader(message: "Loading...", size: 100));
-        return const Center(child: GifLoader(message: "Loading...", size: 100));
+        return const Center(child: GifLoader(message: "Loading Services...", size: 100));
+
       }
 
       return NotificationListener<ScrollNotification>(
         onNotification: (scrollInfo) {
           if (scrollInfo.metrics.pixels >=
-              scrollInfo.metrics.maxScrollExtent * 0.95 && // Increased to 95% to be more conservative
+              scrollInfo.metrics.maxScrollExtent * 0.95 &&
               !controller.isLoadMore.value &&
               controller.hasMoreData.value) {
             controller.loadMoreServices();
@@ -35,11 +38,16 @@ class ServiceList extends StatelessWidget {
           itemBuilder: (context, index) {
             if (index == services.length) {
               return controller.isLoadMore.value
-                  ? const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(child: Text('Loading...'),),
+                  ? Padding(
+                padding: EdgeInsets.symmetric(vertical: 20.h),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.green,
+                    strokeWidth: 2,
+                  ),
+                ),
               )
-                  : const SizedBox.shrink();
+                  : SizedBox.shrink();
             }
             final service = services[index];
 
@@ -54,16 +62,50 @@ class ServiceList extends StatelessWidget {
     return ServiceCard(
       service: service,
       onTap: () {
-        // controller.fetchServiceDetail(service.id);
+        // Show enquiry form when tapped
+        _showEnquiryForm(service);
       },
       onEnquiry: () {
-        print("Send Enquiry pressed");
+        // Show enquiry form when enquiry button is tapped
+        _showEnquiryForm(service);
       },
-      onShare: () {  },
+      onShare: () {
+        // Share functionality
+        _shareService(service);
+      },
     )
         .animate()
         .fadeIn(duration: 400.ms)
         .slide(begin: const Offset(0, 0.20), duration: 450.ms)
-        .scale(begin: const Offset(0.92, 0.92), duration: 450.ms);
+        .scale(begin: const Offset(0.92, 0.92), duration: 450.ms)
+        .then(delay: (index * 50).ms);
+  }
+
+  void _showEnquiryForm(service) {
+    Get.bottomSheet(
+      ServiceEnquiryForm(
+        serviceName: service.serviceName,
+        serviceId: service.id,
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(25.r),
+          topRight: Radius.circular(25.r),
+        ),
+      ),
+      enableDrag: true,
+    );
+  }
+
+  void _shareService(service) {
+    // Implement share functionality
+    final shareMessage = "Check out this service: ${service.serviceName}\n";
+    print("Sharing: $shareMessage");
+
+    // You can use share_plus package for actual sharing
+    // Share.share(shareMessage);
   }
 }

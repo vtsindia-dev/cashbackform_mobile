@@ -3,12 +3,14 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/widget/api_service.dart';
+import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../model/service_model.dart' show Service;
-
+import 'package:flutter/material.dart';
 class ServiceController extends GetxController {
   var isLoading = false.obs;
   var isLoadMore = false.obs;
+  var myServices = <Service>[].obs;
   var services = <Service>[].obs;
   var currentPage = 1.obs;
   var totalPages = 1.obs;
@@ -22,29 +24,32 @@ class ServiceController extends GetxController {
   var errorMessage = ''.obs;
   var isExpanded = false.obs;
   var isDescriptionExpanded = false.obs;
-  var _isLoadingMore = false; // Private variable to track load more state
-  // Add protection against multiple calls
+  var _isLoadingMore = false;
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final quoteController = TextEditingController();
+  var isSubmitting = false.obs;
+  var materialId = 0.obs;
+  var nameError = RxString('');
+  var phoneError = RxString('');
+  var quoteError = RxString('');
   var _isLoadingInProgress = false;
   var _lastRequestedPage = 0;
   @override
   void onInit() {
     super.onInit();
     fetchServices();
+    fetchMyServices();
+
   }
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
   void toggleDescription() => isDescriptionExpanded.value = !isDescriptionExpanded.value;
-
-
-
   Future<void> fetchServices({bool loadMore = false}) async {
     try {
-      // Prevent multiple simultaneous requests
       if ((isLoading.value && !loadMore) || (isLoadMore.value && loadMore)) {
         return;
       }
-
       if (loadMore) {
-        // Check if we're already at the last page
         if (!hasMoreData.value) return;
         isLoadMore(true);
       } else {
@@ -52,23 +57,18 @@ class ServiceController extends GetxController {
         currentPage.value = 1;
         hasMoreData.value = true;
       }
-
       final url = '${ApiUrl.serviceList}?page=${currentPage.value}${_buildQueryParams()}';
       print('🌐 Fetching Services URL: $url');
-
       final response = await ApiService.getRequest(url);
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData != null &&
             responseData['data'] != null &&
             responseData['data']['services'] != null) {
-
           final servicesData = responseData['data']['services'];
           final paginationData = responseData['data']['pagination'];
           final List<Service> fetchedServices = _parseServices(servicesData);
-
           if (loadMore) {
-            // Check for duplicates before adding
             final newServices = fetchedServices.where((newService) =>
             !services.any((existingService) => existingService.id == newService.id)
             ).toList();
@@ -82,10 +82,8 @@ class ServiceController extends GetxController {
           totalPages.value = paginationData['last_page'] ?? 1;
           totalItems.value = paginationData['total'] ?? 0;
           hasMoreData.value = currentPage.value < totalPages.value;
-
           print('✅ Fetched ${services.length} services');
           print('📄 Current page: $currentPage, Total pages: $totalPages, Total items: $totalItems');
-
         } else {
           SnackBarHelper.showError("Invalid response format from server");
           print('❌ Invalid response format: $responseData');
@@ -345,6 +343,250 @@ class ServiceController extends GetxController {
     return services.where((service) =>
     service.description != null && service.description!.isNotEmpty
     ).toList();
+  }
+  void setMaterialId(int id) {
+    materialId.value = id;
+    clearForm();
+  }
+
+  // Clear form
+  void clearForm() {
+    nameController.clear();
+    phoneController.clear();
+    quoteController.clear();
+    clearErrors();
+  }
+
+  // Clear validation errors
+  void clearErrors() {
+    nameError.value = '';
+    phoneError.value = '';
+    quoteError.value = '';
+    errorMessage.value = '';
+  }
+
+  // Validate form
+  bool validateForm() {
+    clearErrors();
+
+    bool isValid = true;
+
+    // Name validation
+    if (nameController.text.trim().isEmpty) {
+      nameError.value = 'Name is required';
+      isValid = false;
+    } else if (nameController.text.trim().length < 2) {
+      nameError.value = 'Name must be at least 2 characters';
+      isValid = false;
+    }
+
+    // Phone validation
+    if (phoneController.text.trim().isEmpty) {
+      phoneError.value = 'Phone number is required';
+      isValid = false;
+    } else if (!_isValidPhoneNumber(phoneController.text.trim())) {
+      phoneError.value = 'Enter a valid phone number';
+      isValid = false;
+    }
+
+    // Quote validation
+    if (quoteController.text.trim().isEmpty) {
+      quoteError.value = 'Enquiry message is required';
+      isValid = false;
+    } else if (quoteController.text.trim().length < 10) {
+      quoteError.value = 'Message must be at least 10 characters';
+      isValid = false;
+    }
+
+    // Material ID validation
+    if (materialId.value == 0) {
+      errorMessage.value = 'Invalid service selection';
+      isValid = false;
+    }
+
+    return isValid;
+  }
+  Future<Map<String, dynamic>> submitEnquiry() async {
+    if (!validateForm()) {
+      return {
+        'success': false,
+        'message': 'Please fix all errors',
+        'status': 400
+      };
+    }
+
+    try {
+      isSubmitting(true);
+      errorMessage('');
+
+      // Get token if user is logged in
+      final token = await SessionManager.getToken();
+
+      // Use the new ApiService method
+      final response = await ApiService.submitMaterialEnquiry(
+        name: nameController.text.trim(),
+        materialId: materialId.value,
+        phone: phoneController.text.trim(),
+        quote: quoteController.text.trim(),
+        token: token,
+      );
+
+      print('📤 Enquiry Response Status: ${response.statusCode}');
+      print('📤 Enquiry Response Data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = response.data;
+        final success = responseData['success'] ?? true;
+        final message = responseData['message'] ?? 'Enquiry submitted successfully';
+
+        if (success) {
+          SnackBarHelper.showSuccess(message);
+
+          // Clear form on success
+          clearForm();
+
+          return {
+            'success': true,
+            'message': message,
+            'status': response.statusCode,
+            'data': responseData
+          };
+        } else {
+          errorMessage.value = message;
+          SnackBarHelper.showError(message);
+
+          return {
+            'success': false,
+            'message': message,
+            'status': response.statusCode ?? 400,
+          };
+        }
+      } else {
+        final errorMsg = response.data?['message'] ??
+            response.statusMessage ??
+            'Failed to submit enquiry';
+        errorMessage.value = errorMsg;
+        SnackBarHelper.showError(errorMsg);
+
+        return {
+          'success': false,
+          'message': errorMsg,
+          'status': response.statusCode ?? 500,
+        };
+      }
+    } catch (e) {
+      print('❌ Enquiry Error: $e');
+      final errorMsg = 'Network error: ${e.toString()}';
+      errorMessage.value = errorMsg;
+      SnackBarHelper.showError('Failed to submit enquiry');
+
+      return {
+        'success': false,
+        'message': errorMsg,
+        'status': 500,
+      };
+    } finally {
+      isSubmitting(false);
+    }
+  }
+
+  // Phone number validation
+  bool _isValidPhoneNumber(String phone) {
+    final phoneRegex = RegExp(r'^[0-9]{10}$');
+    return phoneRegex.hasMatch(phone);
+  }
+
+
+  Future<void> fetchMyServices({bool loadMore = false}) async {
+    try {
+      if ((isLoading.value && !loadMore) || (isLoadMore.value && loadMore)) {
+        return;
+      }
+      if (loadMore) {
+        if (!hasMoreData.value) return;
+        isLoadMore(true);
+      } else {
+        isLoading(true);
+        currentPage.value = 1;
+        hasMoreData.value = true;
+      }
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) {
+        SnackBarHelper.showError('Please login to view your services');
+        resetLoadingStates();
+        return;
+      }
+      final url = '${ApiUrl.myServicesList}?page=${currentPage.value}';
+      print('📱 My Services URL: $url');
+      print('🔐 Token available, length: ${token.length}');
+      final response = await ApiService.getAuthenticatedRequest(url, token);
+      print('📥 My Services Response Status: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        print('✅ My Services API call successful');
+      }
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData != null &&
+            responseData['data'] != null &&
+            responseData['data']['services'] != null) {
+          final dataMap = responseData['data'];
+          final servicesData = dataMap['services'];
+          final paginationData = dataMap['pagination'];
+          final List<Service> fetchedServices = _parseServices(servicesData);
+          if (loadMore) {
+            myServices.addAll(fetchedServices);
+          } else {
+            myServices.assignAll(fetchedServices);
+          }
+          currentPage.value = paginationData['current_page'] ?? 1;
+          totalPages.value = paginationData['last_page'] ?? 1;
+          totalItems.value = paginationData['total'] ?? fetchedServices.length;
+          hasMoreData.value = currentPage.value < totalPages.value;
+          print('✅ Loaded ${myServices.length} my services');
+          print('📄 Current page: $currentPage, Total pages: $totalPages');
+        } else {
+          print('❌ No my services found or invalid format');
+          errorMessage.value = 'No services found';
+          myServices.clear();
+        }
+      } else if (response.statusCode == 401) {
+        errorMessage.value = 'Session expired. Please login again.';
+        SnackBarHelper.showError('Session expired');
+        await SessionManager.clearSession();
+        Get.offAllNamed('/login');
+      } else if (response.statusCode == 403) {
+        errorMessage.value = 'Access denied';
+        SnackBarHelper.showError('You don\'t have permission to view these services');
+      } else {
+        final errorMsg = response.data?['message'] ?? 'Failed to load services';
+        errorMessage.value = errorMsg;
+        SnackBarHelper.showError(errorMsg);
+        print('❌ My Services API Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      errorMessage.value = 'Network error occurred';
+      SnackBarHelper.showError('Failed to load services');
+      debugPrint('❌ Error fetching my services: ${e.toString()}');
+    } finally {
+      resetLoadingStates();
+    }
+  }
+  Future<void> loadMoreMyServices() async {
+    if (!hasMoreData.value || isLoadMore.value || isLoading.value) {
+      return;
+    }
+
+    print('📱 Loading more my services, page: ${currentPage.value + 1}');
+    currentPage.value++;
+    await fetchMyServices(loadMore: true);
+  }
+  int get activeServicesCount {
+    return myServices.where((service) => service.status == 1).length;
+  }
+  void resetLoadingStates() {
+    isLoading(false);
+    isLoadMore(false);
+    update();
   }
 
   @override

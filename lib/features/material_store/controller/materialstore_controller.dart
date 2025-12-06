@@ -177,20 +177,34 @@ class MaterialController extends GetxController {
 
   // ... REST OF YOUR EXISTING METHODS REMAIN THE SAME ...
   // Fetch Material Detail
+// In MaterialController, update the fetchMaterialDetail method:
   Future<void> fetchMaterialDetail(int id) async {
     try {
       _clearDetailData();
       isLoadingDetail(true);
       errorMessage('');
 
-      final url = '${ApiUrl.marketDetails}/$id';
+      final url = '${ApiUrl.materialDetail}/$id';
       print('🌐 Fetching Material Detail URL: $url');
 
       final response = await ApiService.getRequest(url);
       if (response.statusCode == 200) {
         final responseData = response.data;
+        print('📦 API Response: ${responseData.toString()}');
+
         if (responseData != null && responseData['data'] != null) {
-          materialDetail.value = Material.fromJson(responseData['data']);
+          // Check the structure of the response
+          if (responseData['data'] is Map && responseData['data'].containsKey('material')) {
+            // If it's a single material object
+            materialDetail.value = Material.fromJson(responseData['data']['material']);
+          } else if (responseData['data'] is Map) {
+            // If it's directly the material data
+            materialDetail.value = Material.fromJson(responseData['data']);
+          } else {
+            errorMessage('Unexpected response format');
+            SnackBarHelper.showError("Unexpected response format");
+          }
+
           print('✅ Fetched Material detail: ${materialDetail.value?.materialName}');
           _logMaterialDetailInfo();
         } else {
@@ -216,7 +230,6 @@ class MaterialController extends GetxController {
       isLoadingDetail(false);
     }
   }
-
   // View Material Document/Image
   Future<void> viewMaterialImage(String imageUrl) async {
     try {

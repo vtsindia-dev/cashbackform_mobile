@@ -1,0 +1,349 @@
+// market_plot_item.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+
+import '../../../common/colours.dart';
+import '../model/plot_market.dart';
+
+class MarketPlotItem extends StatelessWidget {
+  final MarketPlot plot;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const MarketPlotItem({
+    super.key,
+    required this.plot,
+    required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color adityaGreen = const Color(0xFF7FA93C);
+    final Color adityaYellow = const Color(0xFFF3C623);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Section
+            Stack(
+              children: [
+                Container(
+                  height: 160.h,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(12.r),
+                      topRight: Radius.circular(12.r),
+                    ),
+                    color: Colors.grey[100],
+                  ),
+                  child: plot.images.isNotEmpty
+                      ? ClipRRect(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(12.r),
+                      topRight: Radius.circular(12.r),
+                    ),
+                    child: Image.network(
+                      plot.images[0],
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, o, s) => Center(
+                        child: Icon(
+                          Icons.image,
+                          size: 40.sp,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  )
+                      : Center(
+                    child: Icon(
+                      Icons.image,
+                      size: 40.sp,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+
+                // Verified Badge
+                if (plot.isVerified == true)
+                  Positioned(
+                    top: 8.w,
+                    left: 8.w,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: adityaGreen,
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.verified, size: 12.sp, color: Colors.white),
+                          SizedBox(width: 4.w),
+                          Text(
+                            'Verified',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Price Tag
+                Positioned(
+                  bottom: 8.w,
+                  left: 8.w,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 6.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: adityaGreen,
+                      borderRadius: BorderRadius.circular(6.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      plot.formattedPrice,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Actions Menu
+                Positioned(
+                  top: 8.w,
+                  right: 8.w,
+                  child: PopupMenuButton<String>(
+                    icon: Container(
+                      padding: EdgeInsets.all(6.r),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Icon(Icons.more_vert, size: 18.sp, color: Colors.grey[700]),
+                    ),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        onEdit();
+                      } else if (value == 'delete') {
+                        onDelete();
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, size: 16.sp, color: adityaGreen),
+                            SizedBox(width: 8.w),
+                            Text('Edit', style: TextStyle(fontSize: 12.sp)),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, size: 16.sp, color: Colors.red),
+                            SizedBox(width: 8.w),
+                            Text('Delete', style: TextStyle(fontSize: 12.sp)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // Details Section
+            Padding(
+              padding: EdgeInsets.all(12.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    plot.name,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[900],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  SizedBox(height: 4.h),
+
+                  // Location
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 14.sp,
+                        color: Colors.grey[600],
+                      ),
+                      SizedBox(width: 4.w),
+                      Expanded(
+                        child: Text(
+                          plot.location,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.grey[600],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 6.h),
+
+                  // Description
+                  Text(
+                    plot.description,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.grey[700],
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // Footer Info
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Area
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.aspect_ratio,
+                            size: 14.sp,
+                            color: adityaGreen,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            plot.formattedArea,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.grey[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Type
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: adityaGreen.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                        child: Text(
+                          plot.type.toString(),
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: adityaGreen,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // // Amenities (if any)
+                  // if (plot.amenities.isNotEmpty)
+                  //   Column(
+                  //     crossAxisAlignment: CrossAxisAlignment.start,
+                  //     children: [
+                  //       SizedBox(height: 8.h),
+                  //       Wrap(
+                  //         spacing: 6.w,
+                  //         runSpacing: 4.h,
+                  //         children: plot.amenities.take(3).map((amenity) {
+                  //           return Chip(
+                  //             label: Text(
+                  //               amenity,
+                  //               style: TextStyle(fontSize: 10.sp),
+                  //             ),
+                  //             backgroundColor: adityaYellow.withOpacity(0.1),
+                  //             labelPadding: EdgeInsets.symmetric(horizontal: 6.w),
+                  //             visualDensity: VisualDensity.compact,
+                  //           );
+                  //         }).toList(),
+                  //       ),
+                  //       if (plot.amenities.length > 3)
+                  //         Padding(
+                  //           padding: EdgeInsets.only(top: 4.h),
+                  //           child: Text(
+                  //             '+${plot.amenities.length - 3} more',
+                  //             style: TextStyle(
+                  //               fontSize: 10.sp,
+                  //               color: Colors.grey[500],
+                  //             ),
+                  //           ),
+                  //         ),
+                  //     ],
+                  //   ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

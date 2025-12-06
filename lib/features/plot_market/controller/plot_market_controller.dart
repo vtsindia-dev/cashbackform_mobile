@@ -1,9 +1,14 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart' as dio;
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/widget/api_service.dart';
+import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../model/plot_market.dart';
+import '../screens/add_plot.dart';
 class PlotMarketController extends GetxController {
   var isLoading = false.obs;
   var isLoadMore = false.obs;
@@ -82,11 +87,7 @@ class PlotMarketController extends GetxController {
       print('   Units: ${detail.unitSpilt}');
     }
   }
-  void navigateToDetail(int id) {
-    _clearDetailData();
-    Get.toNamed('/market-plot-detail', arguments: id);
-    fetchMarketPlotDetail(id);
-  }
+
   Future<void> viewDocument(int id) async {
     try {
       final apiDoc = marketDetail.value?.documents.firstWhere((d) => d.id == id);
@@ -298,6 +299,135 @@ class PlotMarketController extends GetxController {
     print('Toggled favorite for market plot $plotId');
   }
 
+  Future<Map<String, dynamic>> submitMarketPlot({
+    required Map<String, dynamic> formData,
+    List<File> images = const [],
+    File? plotImage,
+    File? bluePrint,
+    bool isUpdate = false,
+  }) async {
+    try {
+      isLoading(true);
+      final formDataToSend = dio.FormData();
+      formData.forEach((key, value) {
+        if (value != null) {
+          if (value is List) {
+            formDataToSend.fields.add(MapEntry(key, value.join(',')));
+          } else {
+            formDataToSend.fields.add(MapEntry(key, value.toString()));
+          }
+        }
+      });
+      for (int i = 0; i < images.length; i++) {
+        formDataToSend.files.add(
+          MapEntry(
+            'image[]',
+            await dio.MultipartFile.fromFile(
+              images[i].path,
+              filename: 'image_$i.jpg',
+            ),
+          ),
+        );
+      }
+      if (plotImage != null) {
+        formDataToSend.files.add(
+          MapEntry(
+            'plot_image',
+            await dio.MultipartFile.fromFile(
+              plotImage.path,
+              filename: 'plot_image.jpg',
+            ),
+          ),
+        );
+      }
+      if (bluePrint != null) {
+        formDataToSend.files.add(
+          MapEntry(
+            'blue_print',
+            await dio.MultipartFile.fromFile(
+              bluePrint.path,
+              filename: 'blueprint.jpg',
+            ),
+          ),
+        );
+      }
+      final token = await SessionManager.getToken();
+      print('🔑 Using token: $token');
+      final url = isUpdate ? ApiUrl.marketPlotEdit : ApiUrl.marketPlotAdd;
+      print('🌐 ${isUpdate ? 'Updating' : 'Adding'} market plot: $url');
+      final response = await dio.Dio().post(
+        url,
+        data: formDataToSend,
+        options: dio.Options(
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "multipart/form-data",
+            if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
+          },
+        ),
+      );
+      print('📥 Response status: ${response.statusCode}');
+      print('📥 Response data: ${response.data}');
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        print('✅ ${isUpdate ? 'Updated' : 'Added'} market plot successfully');
+        await fetchMarketPlots();
+        return {
+          'status': 200,
+          'message': responseData['message'] ?? 'Success',
+          'data': responseData['data'],
+        };
+      } else {
+        final errorMsg = response.data?['message'] ?? 'Failed to ${isUpdate ? 'update' : 'add'} market plot';
+        print('❌ Error: $errorMsg');
+        return {
+          'status': response.statusCode ?? 500,
+          'message': errorMsg,
+        };
+      }
+    } catch (e, stackTrace) {
+      print('❌ Exception: $e');
+      print('❌ Stack trace: $stackTrace');
+      return {
+        'status': 500,
+        'message': 'Network error: $e',
+      };
+    } finally {
+      isLoading(false);
+    }
+  }
+  Future<bool> deleteMarketPlot(int id) async {
+    try {
+      isLoading(true);
+      final url = '${ApiUrl.marketPlotDelete}/$id';
+      print('🌐 Deleting market plot: $url');
+      final response = await dio.Dio().delete(url);
+      if (response.statusCode == 200) {
+        print('✅ Deleted market plot successfully');
+        marketPlots.removeWhere((plot) => plot.id == id);
+        refresh();
+        return true;
+      } else {
+        final errorMsg = response.data?['message'] ?? 'Failed to delete market plot';
+        print('❌ Error: $errorMsg');
+        SnackBarHelper.showError(errorMsg);
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception: $e');
+      SnackBarHelper.showError('Network error: $e');
+      return false;
+    } finally {
+      isLoading(false);
+    }
+  }
+  void openEditForm(MarketPlot plot) {
+    Get.to(() => MarketPlotForm(plot: plot));
+  }
+
+  void openAddForm() {
+    Get.to(() => MarketPlotForm());
+  }
   @override
   void onClose() {
     _clearDetailData();

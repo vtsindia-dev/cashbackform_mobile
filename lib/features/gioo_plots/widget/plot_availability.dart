@@ -273,10 +273,6 @@ class PlotAvailabilityWidget extends StatelessWidget {
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // SECTION 2: PROFIT CARDS (With Animations)
-  // ---------------------------------------------------------------------------
   Widget _buildProfitCard({
     required String title,
     required String subtitle,

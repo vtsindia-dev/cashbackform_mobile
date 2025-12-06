@@ -1,7 +1,4 @@
-
-
 import 'dart:core';
-
 class Images {
   static const String logo = 'assets/images/app_icon.png';
   static const String loginBackground = 'assets/images/login-background.png';
