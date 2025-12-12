@@ -9,7 +9,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final HomeController controller;
   final GlobalKey<ScaffoldState> scaffoldKey;
 
-  const HomeAppBar({super.key, required this.controller, required this.scaffoldKey});
+  const HomeAppBar({
+    super.key,
+    required this.controller,
+    required this.scaffoldKey,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(80);
@@ -42,6 +46,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             padding: const EdgeInsets.symmetric(horizontal: 5),
             child: Row(
               children: [
+                // Logo
                 SizedBox(
                   width: 80,
                   child: Center(
@@ -52,33 +57,35 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
 
+                // 🔥 Wrap Location text area with Obx
                 Expanded(
                   child: InkWell(
                     onTap: () => controller.refreshLocation(),
-                    child: _buildLocationText(),
+                    child: Obx(() => _buildLocationText()),
                   ),
                 ),
 
+                // Menu Button
                 SizedBox(
                   width: 80,
                   child: Center(
                     child: _buildIconButton(
                       image: Images.menu,
-                      onTap: () {
-                        scaffoldKey.currentState?.openDrawer();
-                      },
+                      onTap: () => scaffoldKey.currentState?.openDrawer(),
                     ),
                   ),
                 ),
               ],
-            )
-
+            ),
           ),
         ),
       ),
     );
   }
 
+  // ================================
+  // LOCATION TEXT VIEW
+  // ================================
   Widget _buildLocationText() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -87,16 +94,13 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.location_on,
-              color: AppColor.primary,
-              size: 16,
-            ),
+            Icon(Icons.location_on, color: AppColor.primary, size: 16),
             const SizedBox(width: 4),
             Text(
-              controller.areaName.isNotEmpty ? controller.areaName : "Fetching...",
+              controller.areaName.isNotEmpty
+                  ? controller.areaName.toString()
+                  : "Fetching...",
               style: const TextStyle(
                 fontSize: 16,
                 color: AppColor.black,
@@ -107,11 +111,12 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ],
         ),
+
         if (controller.fullAddress.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(
-              controller.fullAddress,
+              controller.fullAddress.toString(),
               style: const TextStyle(
                 fontSize: 12,
                 color: AppColor.black,
@@ -125,6 +130,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       ],
     );
   }
+
+  // ================================
+  // MENU ICON BUTTON
+  // ================================
   Widget _buildIconButton({
     required String image,
     required VoidCallback onTap,
@@ -133,7 +142,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
         ),

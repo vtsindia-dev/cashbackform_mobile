@@ -1,12 +1,15 @@
 import 'dart:io';
-
+import 'package:flutter/material.dart';
 import 'package:dio/dio.dart' as dio;
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
+import '../../../common/colours.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../payment/controller/razorpay_controller.dart';
 import '../model/plot_market.dart';
 import '../screens/add_plot.dart';
 class PlotMarketController extends GetxController {
@@ -26,6 +29,8 @@ class PlotMarketController extends GetxController {
   var maxPrice = ''.obs;
   var errorMessage = ''.obs;
   var isExpanded = true.obs;
+  var verificationAmount = 499.0.obs; // Verification fee amount
+
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
 
   @override
@@ -423,6 +428,255 @@ class PlotMarketController extends GetxController {
   }
   void openEditForm(MarketPlot plot) {
     Get.to(() => MarketPlotForm(plot: plot));
+  }
+
+
+  Future<void> initiateVerificationPayment(MarketPlot plot) async {
+    try {
+      final razorpayController = Get.put(RazorpayController());
+
+      // Check verification status
+      if (plot.verifyStatus == 1) {
+        Get.snackbar(
+          "Already Verified",
+          "This plot is already verified!",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // If you have a pending status (like 2), check for it here
+      // if (plot.verifyStatus == 2) {
+      //   Get.snackbar(
+      //     "Verification Pending",
+      //     "This plot is already under verification review.",
+      //     snackPosition: SnackPosition.BOTTOM,
+      //     backgroundColor: Colors.orange,
+      //     colorText: Colors.white,
+      //   );
+      //   return;
+      // }
+
+      // Setup verification payment (₹499)
+      razorpayController.setupMarketVerificationPayment(
+        marketPlotId: plot.id,
+        amount: 499.0,
+        propertyName: plot.name,
+      );
+
+      // Show verification payment dialog
+      Get.dialog(
+        AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.verified, color: Colors.blue, size: 24.sp),
+              SizedBox(width: 8.w),
+              Text(
+                "Verify Your Plot",
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Verify your plot to enhance visibility and trust:",
+                style: TextStyle(fontSize: 14.sp, color: Colors.grey[700]),
+              ),
+
+              SizedBox(height: 12.h),
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      plot.name,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      plot.location,
+                      style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildBenefitItem("✓ Enhanced visibility in search"),
+                  _buildBenefitItem("✓ Trust badge on listing"),
+                  _buildBenefitItem("✓ Priority customer support"),
+                  _buildBenefitItem("✓ Increased buyer confidence"),
+                ],
+              ),
+
+              SizedBox(height: 16.h),
+
+              // Price
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Verification Fee:",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    "₹499",
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 12.h),
+
+              // Terms checkbox
+              Obx(() => Row(
+                children: [
+                  Checkbox(
+                    value: razorpayController.isTermsAccepted.value,
+                    onChanged: (value) {
+                      razorpayController.toggleTerms();
+                    },
+                    activeColor: Colors.blue,
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _showTermsDialog(),
+                      child: Text.rich(
+                        TextSpan(
+                          text: "I agree to the ",
+                          style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+                          children: [
+                            TextSpan(
+                              text: "terms and conditions",
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text(
+                "Cancel",
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (!razorpayController.isTermsAccepted.value) {
+                  Get.snackbar(
+                    "Terms Required",
+                    "Please accept terms and conditions",
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                  return;
+                }
+
+                Get.back();
+                razorpayController.initiatePayment();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+              child: Text("Proceed to Pay"),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print("❌ Error initiating verification payment: $e");
+      Get.snackbar(
+        "Error",
+        "Failed to initiate verification: $e",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Widget _buildBenefitItem(String text) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.check_circle, size: 16.sp, color: Colors.green),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 12.sp),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTermsDialog() {
+    Get.dialog(
+      AlertDialog(
+        title: Text("Terms and Conditions"),
+        content: SingleChildScrollView(
+          child: Text(
+            "1. Verification fee is non-refundable.\n"
+                "2. Verification process takes 2-3 business days.\n"
+                "3. We verify plot details, documents, and ownership.\n"
+                "4. Verified status can be revoked if false information is provided.\n"
+                "5. All documents must be authentic and valid.",
+            style: TextStyle(fontSize: 12.sp),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text("Close"),
+          ),
+        ],
+      ),
+    );
   }
 
   void openAddForm() {

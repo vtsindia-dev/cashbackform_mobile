@@ -18,16 +18,16 @@ class MaterialCategory extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 0),
-            itemCount: controller.material.length,
+            itemCount: controller.materials.length,
             separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
-              final item = controller.material[index];
+              final item = controller.materials[index];
               return ServiceCard(
                 imageUrl: item["image"]!,
                 title: item["title"]!,
                 width: 170,
                 height: 140,
-                isAsset: true,
+                isAsset: false,
                 onTap: () {
                   print("Tapped → ${item["title"]}");
                 },

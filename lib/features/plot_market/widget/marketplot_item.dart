@@ -1,9 +1,10 @@
-// market_plot_item.dart
+// market_plot_item.dart - UPDATED CORRECTLY
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../common/colours.dart';
+import '../controller/plot_market_controller.dart';
 import '../model/plot_market.dart';
 
 class MarketPlotItem extends StatelessWidget {
@@ -84,8 +85,8 @@ class MarketPlotItem extends StatelessWidget {
                   ),
                 ),
 
-                // Verified Badge
-                if (plot.isVerified == true)
+                // Verified Badge - Show ONLY if verifyStatus == 1 (VERIFIED)
+                if (plot.verifyStatus == 1)
                   Positioned(
                     top: 8.w,
                     left: 8.w,
@@ -170,36 +171,76 @@ class MarketPlotItem extends StatelessWidget {
                         onEdit();
                       } else if (value == 'delete') {
                         onDelete();
+                      } else if (value == 'verify') {
+                        _initiateVerification(plot);
                       }
                     },
-                    itemBuilder: (BuildContext context) => [
-                      PopupMenuItem<String>(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 16.sp, color: adityaGreen),
-                            SizedBox(width: 8.w),
-                            Text('Edit', style: TextStyle(fontSize: 12.sp)),
-                          ],
+                    itemBuilder: (BuildContext context) {
+                      // Create menu items list
+                      List<PopupMenuItem<String>> items = [];
+
+                      // Always show Edit
+                      items.add(
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, size: 16.sp, color: adityaGreen),
+                              SizedBox(width: 8.w),
+                              Text('Edit', style: TextStyle(fontSize: 12.sp)),
+                            ],
+                          ),
                         ),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 16.sp, color: Colors.red),
-                            SizedBox(width: 8.w),
-                            Text('Delete', style: TextStyle(fontSize: 12.sp)),
-                          ],
+                      );
+
+                      // Show Verify option only if plot is NOT verified (verifyStatus == 0)
+                      if (plot.verifyStatus == 0) {
+                        items.add(
+                          PopupMenuItem<String>(
+                            value: 'verify',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.verified_outlined,
+                                  size: 16.sp,
+                                  color: adityaGreen,
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  'Get Verified',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: adityaGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Always show Delete
+                      items.add(
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 16.sp, color: Colors.red),
+                              SizedBox(width: 8.w),
+                              Text('Delete', style: TextStyle(fontSize: 12.sp)),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      );
+
+                      return items;
+                    },
                   ),
                 ),
               ],
             ),
 
-            // Details Section
+            // Details Section (unchanged)
             Padding(
               padding: EdgeInsets.all(12.w),
               child: Column(
@@ -293,7 +334,7 @@ class MarketPlotItem extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                         child: Text(
-                          plot.type.toString(),
+                          plot.type?.toString() ?? 'N/A',
                           style: TextStyle(
                             fontSize: 10.sp,
                             color: adityaGreen,
@@ -303,41 +344,6 @@ class MarketPlotItem extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  // // Amenities (if any)
-                  // if (plot.amenities.isNotEmpty)
-                  //   Column(
-                  //     crossAxisAlignment: CrossAxisAlignment.start,
-                  //     children: [
-                  //       SizedBox(height: 8.h),
-                  //       Wrap(
-                  //         spacing: 6.w,
-                  //         runSpacing: 4.h,
-                  //         children: plot.amenities.take(3).map((amenity) {
-                  //           return Chip(
-                  //             label: Text(
-                  //               amenity,
-                  //               style: TextStyle(fontSize: 10.sp),
-                  //             ),
-                  //             backgroundColor: adityaYellow.withOpacity(0.1),
-                  //             labelPadding: EdgeInsets.symmetric(horizontal: 6.w),
-                  //             visualDensity: VisualDensity.compact,
-                  //           );
-                  //         }).toList(),
-                  //       ),
-                  //       if (plot.amenities.length > 3)
-                  //         Padding(
-                  //           padding: EdgeInsets.only(top: 4.h),
-                  //           child: Text(
-                  //             '+${plot.amenities.length - 3} more',
-                  //             style: TextStyle(
-                  //               fontSize: 10.sp,
-                  //               color: Colors.grey[500],
-                  //             ),
-                  //           ),
-                  //         ),
-                  //     ],
-                  //   ),
                 ],
               ),
             ),
@@ -345,5 +351,22 @@ class MarketPlotItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _initiateVerification(MarketPlot plot) {
+    // Only allow verification if plot is not verified (verifyStatus == 0)
+    if (plot.verifyStatus == 1) {
+      Get.snackbar(
+        "Already Verified",
+        "This plot is already verified!",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final controller = Get.find<PlotMarketController>();
+    controller.initiateVerificationPayment(plot);
   }
 }

@@ -1,4 +1,3 @@
-// service_model.dart
 class Service {
   final int id;
   final String serviceName;
@@ -9,7 +8,6 @@ class Service {
   final DateTime createdAt;
   final DateTime updatedAt;
   final Category category;
-
   Service({
     required this.id,
     required this.serviceName,
@@ -21,7 +19,6 @@ class Service {
     required this.updatedAt,
     required this.category,
   });
-
   factory Service.fromJson(Map<String, dynamic> json) {
     return Service(
       id: json['id'] ?? 0,
@@ -35,7 +32,6 @@ class Service {
       category: Category.fromJson(json['category'] ?? {}),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -50,14 +46,12 @@ class Service {
     };
   }
 }
-
 class Category {
   final int id;
   final String categoryName;
   final int status;
   final DateTime createdAt;
   final DateTime updatedAt;
-
   Category({
     required this.id,
     required this.categoryName,
@@ -65,7 +59,6 @@ class Category {
     required this.createdAt,
     required this.updatedAt,
   });
-
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
       id: json['id'] ?? 0,
@@ -75,7 +68,6 @@ class Category {
       updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,

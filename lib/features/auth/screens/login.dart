@@ -14,11 +14,9 @@ class Login extends StatefulWidget {
   @override
   State<Login> createState() => _LoginState();
 }
-
 class _LoginState extends State<Login> {
   final AuthController authController = Get.put(AuthController());
   bool isTermsAccepted = false;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,7 +30,6 @@ class _LoginState extends State<Login> {
               ),
             ),
           ),
-
           Positioned(
             bottom: 0,
             left: 0,
@@ -67,7 +64,6 @@ class _LoginState extends State<Login> {
       ),
     );
   }
-
   Widget _buildPhoneScreen() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -297,7 +293,6 @@ class _LoginState extends State<Login> {
       border: Border.all(color: AppColor.primary),
       borderRadius: BorderRadius.circular(12),
     );
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -318,7 +313,6 @@ class _LoginState extends State<Login> {
           ),
         ),
         SizedBox(height: 40),
-
         Pinput(
           length: 6,
           controller: authController.otpController,
@@ -329,7 +323,6 @@ class _LoginState extends State<Login> {
             authController.verifyOtp(pin);
           },
         ),
-
         SizedBox(height: 20),
         Obx(() => authController.canResend.value
             ? TextButton(
@@ -352,7 +345,6 @@ class _LoginState extends State<Login> {
           ),
         ),
         ),
-
         SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
@@ -401,7 +393,6 @@ class _LoginState extends State<Login> {
       ],
     );
   }
-
   @override
   void dispose() {
     super.dispose();

@@ -5,19 +5,15 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
 import '../controller/auth_controller.dart';
-
 class Registration extends StatefulWidget {
   final String? phone;
   const Registration({super.key, this.phone});
-
   @override
   State<Registration> createState() => _RegistrationState();
 }
-
 class _RegistrationState extends State<Registration> {
   final AuthController controller = Get.put(AuthController());
   bool isTermsAccepted = false;
-
   @override
   void initState() {
     super.initState();
@@ -25,7 +21,6 @@ class _RegistrationState extends State<Registration> {
       controller.phoneController.text = widget.phone!;
     }
   }
-
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -50,7 +45,6 @@ class _RegistrationState extends State<Registration> {
       controller.setDateOfBirth(picked);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,7 +89,6 @@ class _RegistrationState extends State<Registration> {
       ),
     );
   }
-
   Widget _buildRegistrationForm() {
     return SingleChildScrollView(
       child: Column(
@@ -244,8 +237,6 @@ class _RegistrationState extends State<Registration> {
             ],
           ),
           const SizedBox(height: 15),
-
-          // Account Type
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

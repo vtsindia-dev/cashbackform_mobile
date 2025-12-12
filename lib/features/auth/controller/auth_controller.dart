@@ -41,7 +41,6 @@ class AuthController extends GetxController with CodeAutoFill {
     _checkPermissions();
     listenForCode();
   }
-
   @override
   void codeUpdated() {
     code = this.code;
@@ -62,7 +61,6 @@ class AuthController extends GetxController with CodeAutoFill {
         maxHeight: 800,
         imageQuality: 80,
       );
-
       if (image != null) {
         selectedImage.value = File(image.path);
       }
@@ -103,7 +101,6 @@ class AuthController extends GetxController with CodeAutoFill {
       SnackBarHelper.showError("Auto-fill not available");
     }
   }
-
   String _processPhoneNumber(String phoneHint) {
     try {
       print('Raw phone hint: $phoneHint');
@@ -142,7 +139,6 @@ class AuthController extends GetxController with CodeAutoFill {
       print("Permission check error: $e");
     }
   }
-
   Future<void> _getAppSignature() async {
     try {
       appSignature = await SmsAutoFill().getAppSignature;
@@ -153,7 +149,6 @@ class AuthController extends GetxController with CodeAutoFill {
       print("Error getting app signature: $e");
     }
   }
-
   Future<void> sendOtp(String phone) async {
     try {
       isLoading(true);
@@ -166,7 +161,6 @@ class AuthController extends GetxController with CodeAutoFill {
           "key_id": appSignature ?? '',
         },
       );
-
       if (response.statusCode == 200) {
         final responseData = response.data;
         serverOtp.value = responseData['otp']?.toString() ?? '';
@@ -184,7 +178,6 @@ class AuthController extends GetxController with CodeAutoFill {
       isLoading(false);
     }
   }
-
   Future<void> verifyOtp(String otp) async {
     try {
       isLoading(true);

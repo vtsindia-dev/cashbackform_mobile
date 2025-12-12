@@ -153,7 +153,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                controller!.areaName.isNotEmpty ? controller!.areaName : "Fetching...",
+                controller!.areaName.isNotEmpty ? controller!.areaName.toString() : "Fetching...",
                 style: TextStyle(
                   fontSize: 16,
                   color: textColor,
@@ -168,7 +168,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
-                controller!.fullAddress,
+                controller!.fullAddress.toString(),
                 style: TextStyle(
                   fontSize: 12,
                   color: textColor,

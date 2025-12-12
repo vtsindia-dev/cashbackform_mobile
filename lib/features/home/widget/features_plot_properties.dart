@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../common/route/router.dart';
 import '../../Properties/widget/property_card.dart';
 import '../controller/homecontroller.dart';
 
@@ -11,81 +14,160 @@ class FeaturesPlotProperties extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<HomeController>(
       builder: (controller) {
-        final List<Map<String, dynamic>> dummyList = [
-          {
-            "image":"https://admincashback.vrikshatech.in/public/uploads/property/1764415266_expand_svgrepo.com.png",
+        // Show loading state
+        if (controller.isLoadingMarket.value) {
+          return SizedBox(
+            height: 230,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
 
-            "title": controller.areaName.isNotEmpty
-                ? "${controller.areaName} Premium Plot"
-                : "Premium Plot",
-            "price": "9,80,000",
-            "area": "1200",
-            "location": controller.currentLocation,
-            "description": "DTCP approved land with great surroundings.",
-          },
-          {
-            "image":'https://admincashback.vrikshatech.in/public/uploads/property/1764252610_download%201.png',
-            "title": "Luxury Villa Land",
-            "price": "25,00,000",
-            "area": "1500",
-            "location": "Chennai, Tamil Nadu",
-            "description": "Near main road, prime location.",
-          },
-          {
-            "image":'https://admincashback.vrikshatech.in/public/uploads/property/1764416700_expand_svgrepo.com-1.png',
-            "title": "Budget Friendly Plot",
-            "price": "8,40,000",
-            "area": "900",
-            "location": controller.areaName,
-            "description": "Perfect for small investment.",
-          },
-        ];
+        // Show error state
+        if (controller.marketError.value.isNotEmpty) {
+          return SizedBox(
+            height: 230,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 40),
+                  SizedBox(height: 10),
+                  Text(
+                    'Failed to load properties',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: controller.refreshMarket,
+                    child: Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
-        return SizedBox(
-          height: 230,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 0),
-            itemCount: dummyList.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, i) {
-              final item = dummyList[i];
+        // Show empty state
+        if (controller.featuredMarketProperties.isEmpty) {
+          return SizedBox(
+            height: 230,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.home_outlined, color: Colors.grey, size: 40),
+                  SizedBox(height: 10),
+                  Text(
+                    'No properties available',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
-              return SizedBox(
-                width: 170,
-                child: PropertyCard(
-                  imageUrl: item["image"],
-                  title: item["title"],
-                  price: item["price"],
-                  area: item["area"],
-                  location: item["location"],
-                  description: item["description"],
-                  onTap: () {
-                    print("View: ${item['title']}");
+        return Column(
+          children: [
+            SizedBox(
+              height: 230,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (scrollNotification) {
+                  if (scrollNotification is ScrollEndNotification) {
+                    final scrollController = scrollNotification.metrics;
+                    if (scrollController.pixels >=
+                        scrollController.maxScrollExtent - 100) {
+                      if (controller.marketHasMore.value &&
+                          !controller.isLoadingMoreMarket.value) {
+                        controller.loadMoreFeaturedMarket();
+                      }
+                    }
+                  }
+                  return false;
+                },
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 0),
+                  itemCount: controller.featuredMarketProperties.length +
+                      (controller.marketHasMore.value ? 1 : 0),
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    // Load more indicator
+                    if (index == controller.featuredMarketProperties.length) {
+                      return SizedBox(
+                        width: 170,
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    final property = controller.featuredMarketProperties[index];
+
+                    return SizedBox(
+                      width: 170,
+                      child: PropertyCard(
+                        imageUrl: property.thumbnailImage,
+                        title: property.name,
+                        price: property.formattedPrice,
+                        area: property.formattedArea,
+                        location: property.address,
+                        description: property.description,
+                        onTap: () {
+                          print("View: ${property.name}");
+                          Get.toNamed(AppRoutes.plotMarketDetails, arguments: {"id": property.id});
+                        },
+                      )
+                          .animate()
+                          .slideX(
+                        begin: 0.5,
+                        end: 0,
+                        duration: 600.ms,
+                        curve: Curves.easeOutCubic,
+                      )
+                          .fadeIn(duration: 500.ms)
+                          .scale(
+                        begin: const Offset(0.9, 0.9),
+                        end: const Offset(1, 1),
+                        duration: 600.ms,
+                        curve: Curves.easeOutBack,
+                      )
+                          .then(delay: (index * 200).ms)
+                          .shimmer(
+                        duration: 800.ms,
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                    );
                   },
-                )
-                    .animate()
-                    .slideX(
-                  begin: 0.5,
-                  end: 0,
-                  duration: 600.ms,
-                  curve: Curves.easeOutCubic,
-                )
-                    .fadeIn(duration: 500.ms)
-                    .scale(
-                  begin: const Offset(0.9, 0.9),
-                  end: const Offset(1, 1),
-                  duration: 600.ms,
-                  curve: Curves.easeOutBack,
-                )
-                    .then(delay: (i * 200).ms)
-                    .shimmer(
-                  duration: 800.ms,
-                  color: Colors.white.withOpacity(0.3),
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+
+            // Pagination indicators (optional)
+            if (controller.marketPagination.value != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (int i = 0; i < min(5, controller.marketTotalPages.value); i++)
+                      Container(
+                        width: 8,
+                        height: 8,
+                        margin: EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: controller.marketCurrentPage.value == i + 1
+                              ? Colors.blue
+                              : Colors.grey[300],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
         );
       },
     );

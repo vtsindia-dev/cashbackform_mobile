@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
 import '../controller/materialstore_controller.dart';
 import '../widget/material_list.dart';
-
 class MaterialStore extends StatefulWidget {
   const MaterialStore({super.key});
 
   @override
   State<MaterialStore> createState() => _MaterialStoreState();
 }
-
 class _MaterialStoreState extends State<MaterialStore> {
   final MaterialController controller = Get.put(MaterialController());
 
@@ -21,7 +18,6 @@ class _MaterialStoreState extends State<MaterialStore> {
     super.initState();
     controller.fetchMaterials();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,7 +26,6 @@ class _MaterialStoreState extends State<MaterialStore> {
         showBackButton: false,
       ),
       body: Obx(() {
-        // Show loader while fetching data
         if (controller.isLoading.value) {
           return const Center(
             child: GifLoader(
@@ -46,10 +41,7 @@ class _MaterialStoreState extends State<MaterialStore> {
               size: 100,
             ),
           );
-
         }
-
-        // Show list once data is available
         return MaterialListScreen();
       }),
     );

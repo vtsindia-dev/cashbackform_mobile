@@ -1,7 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import '../api_constant.dart';
-
 class ApiService {
   static final dio = Dio(
     BaseOptions(
@@ -46,8 +46,7 @@ class ApiService {
       }
       rethrow;
     }
-  }
-  static Future<Response> postMultipart(String url, FormData formData) async {
+  }  static Future<Response> postMultipart(String url, FormData formData) async {
     try {
       return await dio.post(url, data: formData);
     } catch (e) {
@@ -103,6 +102,7 @@ class ApiService {
       );
     }
   }
+
   static Future<Response> updateProfile({
     required Map<String, dynamic> data,
     required String token,
@@ -110,7 +110,6 @@ class ApiService {
   }) async {
     try {
       FormData formData = FormData.fromMap(data);
-
       if (profileImage != null) {
         formData.files.add(
           MapEntry(
@@ -134,7 +133,6 @@ class ApiService {
       );
     }
   }
-
   static Future<Response> submitMaterialEnquiry({
     required String name,
     required int materialId,
@@ -275,5 +273,65 @@ class ApiService {
   }
   static String getCurrentBaseUrl() {
     return ApiUrl.baseUrl;
+  }
+  // Add this to your ApiService class
+  static Future<Response> postRequestWithToken(
+      String url,
+      {
+        required Map<String, dynamic> data,
+        required String token,
+      }
+      ) async {
+    try {
+      final options = Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      return await dio.post(
+        url,
+        data: jsonEncode(data),
+        options: options,
+      );
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        return e.response!;
+      }
+      rethrow;
+    }
+  }
+
+// Or if you prefer FormData (for file uploads)
+  static Future<Response> postFormDataWithToken(
+      String url,
+      {
+        required Map<String, dynamic> data,
+        required String token,
+      }
+      ) async {
+    try {
+      final formData = FormData.fromMap(data);
+
+      final options = Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'multipart/form-data',
+        },
+      );
+
+      return await dio.post(
+        url,
+        data: formData,
+        options: options,
+      );
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        return e.response!;
+      }
+      rethrow;
+    }
   }
 }

@@ -1,12 +1,11 @@
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import '../../../common/images.dart';
 import '../../../common/route/router.dart';
-import '../../auth/screens/login.dart';
 import '../../home/screens/home.dart';
 import '../../material_store/screens/material_store.dart';
+import '../../menu/screens/menu.dart';
 import '../../service/screen/service.dart';
 
 class Dashboard extends StatefulWidget {
@@ -28,7 +27,7 @@ class _DashboardState extends State<Dashboard> {
      Home(),
     Service(),
     MaterialStore(),
-    const Center(child: Text('Profile Screen')),
+    Menu()
   ];
 
   late AnimationController _animationController;

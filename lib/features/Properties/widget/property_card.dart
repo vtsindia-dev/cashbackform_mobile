@@ -102,41 +102,73 @@ class PropertyCard extends StatelessWidget {
                   SizedBox(height: 4.h),
                   Row(
                     children: [
-                      Image.asset(
-                        Images.price,
-                        height: 13.h,
-                        width: 13.w,
-                        color: AppColor.primary,
-                      ),
-                      SizedBox(width: 4.w),
+                      // PRICE SECTION
+                      Expanded(
+                        flex: 1,
+                        child: Row(
+                          children: [
+                            // Price Icon
+                            // Image.asset(
+                            //   Images.price,
+                            //   height: 13.h,
+                            //   width: 13.w,
+                            //   color: AppColor.primary,
+                            // ),
+                            SizedBox(width: 4.w),
 
-                      Text(
-                        price,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.primary,
+                            // Auto-resize Text
+                            Expanded(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  price,
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColor.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+
                       SizedBox(width: 10.w),
-                      Image.asset(
-                        Images.squareFeet,
-                        height: 13.h,
-                        width: 13.w,
-                        color: AppColor.primary,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        "$area",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColor.primary,
+
+                      // AREA SECTION
+                      Expanded(
+                        flex: 1,
+                        child: Row(
+                          children: [
+                            Image.asset(
+                              Images.squareFeet,
+                              height: 13.h,
+                              width: 13.w,
+                              color: AppColor.primary,
+                            ),
+                            SizedBox(width: 4.w),
+
+                            Expanded(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  "$area",
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColor.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-
                   SizedBox(height: 6.h),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),

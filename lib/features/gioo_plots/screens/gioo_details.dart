@@ -45,25 +45,19 @@ class _GiooDetailsState extends State<GiooDetails> {
         if (controller.giooPlotDetail.value == null) {
           return _buildNoDataAvailable();
         }
-        return Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    AboutGiooPlot(),
-                    PlotAvailabilityWidget(),
-                    NearbyProject(),
-                    SchemeOverview(),
-                    BluePrint(),
-                    ReserveSlot(),
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              AboutGiooPlot(),
+              PlotAvailabilityWidget(),
+              NearbyProject(),
+              SchemeOverview(),
+              BluePrint(),
+              ReserveSlot(),
 
-                    SizedBox(height: 45,)
-                  ],
-                ),
-              ),
-            ),
-          ],
+              SizedBox(height: 45,)
+            ],
+          ),
         );
       }),
     );

@@ -1,4 +1,3 @@
-// my_services_list.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,33 +7,26 @@ import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
 import '../controller/service_controller.dart';
 import '../widget/service_product_card.dart';
-
 class MyServicesList extends StatefulWidget {
   MyServicesList({super.key});
 
   @override
   State<MyServicesList> createState() => _MyServicesListState();
 }
-
 class _MyServicesListState extends State<MyServicesList> {
   final ServiceController controller = Get.put(ServiceController());
   final ScrollController _scrollController = ScrollController();
-
   @override
   void initState() {
     super.initState();
     controller.fetchMyServices();
-
-
     _scrollController.addListener(_scrollListener);
   }
-
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
-
   void _scrollListener() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 100 &&
@@ -43,7 +35,6 @@ class _MyServicesListState extends State<MyServicesList> {
       controller.loadMoreMyServices();
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,11 +49,9 @@ class _MyServicesListState extends State<MyServicesList> {
             child: GifLoader(message: "Loading your services...", size: 120),
           );
         }
-
         if (controller.myServices.isEmpty && !controller.isLoading.value) {
           return Center(child: _buildEmptyState());
         }
-
         return RefreshIndicator(
           onRefresh: () async {
             await controller.fetchMyServices();
@@ -71,19 +60,11 @@ class _MyServicesListState extends State<MyServicesList> {
             controller: _scrollController,
             padding: EdgeInsets.all(16.w),
             children: [
-              // Header with count
               _buildHeader(),
-
               SizedBox(height: 16.h),
-
-              // Services list
               _buildServicesList(),
-
-              // Load more indicator
               if (controller.isLoadMore.value)
                 _buildLoadMoreIndicator(),
-
-              // End of list message
               if (!controller.hasMoreData.value && controller.myServices.isNotEmpty)
                 _buildEndOfList(),
             ],
@@ -92,7 +73,6 @@ class _MyServicesListState extends State<MyServicesList> {
       }),
     );
   }
-
   Widget _buildHeader() {
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -138,7 +118,6 @@ class _MyServicesListState extends State<MyServicesList> {
       ),
     ).animate().fade(duration: 300.ms).slide(begin: Offset(-0.1, 0));
   }
-
   Widget _buildServicesList() {
     return Column(
       children: controller.myServices.map((service) {
@@ -161,7 +140,6 @@ class _MyServicesListState extends State<MyServicesList> {
       }).toList(),
     );
   }
-
   Widget _buildLoadMoreIndicator() {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 20.h),
@@ -185,7 +163,6 @@ class _MyServicesListState extends State<MyServicesList> {
       ),
     );
   }
-
   Widget _buildEndOfList() {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 24.h),
@@ -200,7 +177,6 @@ class _MyServicesListState extends State<MyServicesList> {
       ),
     );
   }
-
   Widget _buildEmptyState() {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 60.h, horizontal: 32.w),
@@ -255,11 +231,9 @@ class _MyServicesListState extends State<MyServicesList> {
       ),
     );
   }
-
   void _showEnquiryForm(service) {
     print("Enquiry for: ${service.serviceName}");
   }
-
   void _shareService(service) {
     print("Share service: ${service.serviceName}");
   }

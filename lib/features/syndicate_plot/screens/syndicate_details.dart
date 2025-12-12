@@ -21,8 +21,7 @@ class SyndicateDetails extends StatefulWidget {
 
 class _SyndicateDetailsState extends State<SyndicateDetails> {
   final SyndicatePlotController controller = Get.put(SyndicatePlotController());
-  final GlobalKey _reserveButtonKey = GlobalKey(); // Create the key here
-
+  final GlobalKey _reserveButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -43,12 +42,9 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
         if (controller.isLoadingDetail.value) {
           return const Center(child: GifLoader(message: "Loading...", size: 100));
         }
-
         if (controller.syndicateDetail.value == null) {
           return _buildNoDataAvailable();
         }
-
-        // Show content when data is loaded
         return Column(
           children: [
             Expanded(
@@ -76,7 +72,6 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
           SizedBox(height: 16),
           Text(
             "No Data Available",

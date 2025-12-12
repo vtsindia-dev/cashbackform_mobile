@@ -303,7 +303,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
       },
     );
   }
-
   void _showDeleteAccountConfirmation(BuildContext context) {
     Navigator.pop(context);
     showDialog(
@@ -400,7 +399,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
       },
     );
   }
-
   Future<void> _performLogout() async {
     try {
       Get.dialog(
@@ -419,7 +417,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
     }
   }
-
   Future<void> _performDeleteAccount() async {
     try {
       Get.dialog(

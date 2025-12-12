@@ -96,7 +96,22 @@ class _MarketPlotsScreenState extends State<MarketPlotsScreen> {
               }
 
               if (controller.marketPlots.isEmpty && !controller.isLoading.value) {
-                return _buildEmptyState();
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GifLoader(message: "Loading Properties", size: 120),
+                      SizedBox(height: 20.h),
+                      Text(
+                        "Fetching your properties...",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColor.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               }
 
               return RefreshIndicator(

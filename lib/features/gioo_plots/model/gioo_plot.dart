@@ -12,7 +12,7 @@ class GiooPlot {
   final String price;
   final String description;
   final int unitSplit;
-  final List<String> images; // Changed from String to List<String>
+  final List<String> images;
   final String plotImage;
   final String work;
   final String? agentId;
@@ -20,6 +20,7 @@ class GiooPlot {
   final DateTime createdAt;
   final DateTime updatedAt;
   final PropertyType? propertyType;
+
 
   GiooPlot({
     required this.id,
@@ -139,7 +140,6 @@ class PropertyType {
     );
   }
 }
-
 class City {
   final int id;
   final int stateId;
@@ -147,7 +147,6 @@ class City {
   final int status;
   final DateTime createdAt;
   final DateTime updatedAt;
-
   City({
     required this.id,
     required this.stateId,
@@ -156,7 +155,6 @@ class City {
     required this.createdAt,
     required this.updatedAt,
   });
-
   factory City.fromJson(Map<String, dynamic> json) {
     return City(
       id: json['id'] as int,
@@ -168,9 +166,6 @@ class City {
     );
   }
 }
-
-
-
 class GiooPlotDetail {
   final int id;
   final String name;
@@ -190,10 +185,14 @@ class GiooPlotDetail {
   final String work;
   final String agentId;
   final int status;
+  final int featured;
   final String? aminities;
   final String? bluePrint;
   final String? totalPrice;
   final String uldNo;
+  final int adminBlock;
+  final AdminBlock? adminblock;
+  final List<dynamic> user;
   final List<Amenity> amenity;
   final List<Document> documents;
   final List<Booking> bookings;
@@ -201,7 +200,6 @@ class GiooPlotDetail {
   final DateTime updatedAt;
 
   GiooPlotDetail({
-
     required this.id,
     required this.name,
     this.propertyType,
@@ -220,10 +218,14 @@ class GiooPlotDetail {
     required this.work,
     required this.agentId,
     required this.status,
+    required this.featured,
     this.aminities,
     this.bluePrint,
     this.totalPrice,
     required this.uldNo,
+    required this.adminBlock,
+    this.adminblock,
+    required this.user,
     required this.amenity,
     required this.documents,
     required this.bookings,
@@ -232,11 +234,8 @@ class GiooPlotDetail {
   });
 
   factory GiooPlotDetail.fromJson(Map<String, dynamic> json) {
-    // Helper functions for safe parsing
     String safeString(dynamic value) => value?.toString() ?? '';
     int safeInt(dynamic value) => (value is int) ? value : int.tryParse(value.toString()) ?? 0;
-
-    // Parse images
     List<String> parseImages(dynamic images) {
       if (images == null) return [];
       if (images is List) {
@@ -244,8 +243,6 @@ class GiooPlotDetail {
       }
       return [];
     }
-
-    // Parse amenities
     List<Amenity> parseAmenities(dynamic amenities) {
       if (amenities == null || amenities is! List) return [];
       return amenities.map((e) => Amenity.fromJson(e)).toList();
@@ -254,13 +251,14 @@ class GiooPlotDetail {
       if (bookings == null || bookings is! List) return [];
       return bookings.map((e) => Booking.fromJson(e)).toList();
     }
-    // Parse documents
     List<Document> parseDocuments(dynamic documents) {
       if (documents == null || documents is! List) return [];
       return documents.map((e) => Document.fromJson(e)).toList();
     }
-
-    // Parse datetime
+    List<dynamic> parseUser(dynamic users) {
+      if (users == null || users is! List) return [];
+      return users;
+    }
     DateTime parseDateTime(dynamic dateTime) {
       if (dateTime == null) return DateTime.now();
       try {
@@ -269,7 +267,6 @@ class GiooPlotDetail {
         return DateTime.now();
       }
     }
-
     return GiooPlotDetail(
       id: safeInt(json['id']),
       name: safeString(json['name']),
@@ -289,10 +286,14 @@ class GiooPlotDetail {
       work: safeString(json['work']),
       agentId: safeString(json['agent_id']),
       status: safeInt(json['status']),
+      featured: safeInt(json['featured'] ?? 0), // Added
       aminities: safeString(json['aminities']),
       bluePrint: safeString(json['blue_print']),
       totalPrice: safeString(json['total_price']),
       uldNo: safeString(json['uld_no']),
+      adminBlock: safeInt(json['admin_block']), // Added
+      adminblock: json['adminblock'] != null ? AdminBlock.fromJson(json['adminblock']) : null, // Added
+      user: parseUser(json['user']), // Added
       amenity: parseAmenities(json['amenity']),
       bookings: parseBookings(json['booking']),
       documents: parseDocuments(json['documents']),
@@ -301,14 +302,24 @@ class GiooPlotDetail {
     );
   }
 }
+class AdminBlock {
+  final String units;
+  AdminBlock({
+    required this.units,
+  });
+  factory AdminBlock.fromJson(Map<String, dynamic> json) {
+    return AdminBlock(
+      units: json['units'] as String? ?? '',
+    );
+  }
+}
 class Booking {
   final int id;
   final int propertyId;
   final int userId;
-  final String units; // e.g., "1,5,3"
+  final String units;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-
   Booking({
     required this.id,
     required this.propertyId,
@@ -317,7 +328,6 @@ class Booking {
     this.createdAt,
     this.updatedAt,
   });
-
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
       id: json['id'] as int? ?? 0,
@@ -337,7 +347,6 @@ class Amenity {
   final String subtitle;
   final String distance;
   final String time;
-
   Amenity({
     required this.id,
     required this.title,
@@ -358,7 +367,6 @@ class Amenity {
     );
   }
 }
-
 
 class Document {
   final int id;
@@ -385,7 +393,6 @@ class Document {
     );
   }
 }
-
 
 class AppState {
   final int id;

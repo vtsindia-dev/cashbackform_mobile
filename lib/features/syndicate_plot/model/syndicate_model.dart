@@ -172,6 +172,7 @@ class SyndicateDetail {
   final int id;
   final String name;
   final PropertyType? propertyType;
+  final String? documentPayment;
   final String? map;
   final String address;
   final String lat;
@@ -179,9 +180,11 @@ class SyndicateDetail {
   final City? city;
   final AppState? state;
   final String area;
-  final String price;
+  final String price; // Price per sq.ft
   final String description;
+  final String documentPrice; // Document price
   final int unitSpilt;
+  final String unit; // Unit areas in sq.ft
   final List<String> images;
   final String plotImage;
   final String work;
@@ -193,13 +196,14 @@ class SyndicateDetail {
   final List<Amenity> amenities;
   final List<Document> documents;
   final List<Booking> bookings;
-  final List<User> users; // Added user field
+  final List<User> users;
 
-  SyndicateDetail({
+  SyndicateDetail( {
     required this.id,
     required this.name,
     this.propertyType,
     this.map,
+    this.documentPayment,
     required this.address,
     required this.lat,
     required this.long,
@@ -208,7 +212,9 @@ class SyndicateDetail {
     required this.area,
     required this.price,
     required this.description,
+    required this.documentPrice,
     required this.unitSpilt,
+    required this.unit,
     required this.images,
     required this.plotImage,
     required this.work,
@@ -220,14 +226,13 @@ class SyndicateDetail {
     required this.amenities,
     required this.documents,
     required this.bookings,
-    required this.users, // Added user field
+    required this.users,
   });
 
   factory SyndicateDetail.fromJson(Map<String, dynamic> json) {
     // Helper functions for safe parsing
     String safeString(dynamic value) => value?.toString() ?? '';
     int safeInt(dynamic value) => (value is int) ? value : int.tryParse(value.toString()) ?? 0;
-    double safeDouble(dynamic value) => (value is double) ? value : double.tryParse(value.toString()) ?? 0.0;
 
     // Parse images
     List<String> parseImages(dynamic images) {
@@ -235,7 +240,7 @@ class SyndicateDetail {
       if (images is List) {
         return images.map((e) => e.toString()).toList();
       }
-      return [];
+      return [images.toString()];
     }
 
     // Parse amenities
@@ -256,7 +261,7 @@ class SyndicateDetail {
       return bookings.map((e) => Booking.fromJson(e)).toList();
     }
 
-    // Parse users - Added this function
+    // Parse users
     List<User> parseUsers(dynamic users) {
       if (users == null || users is! List) return [];
       return users.map((e) => User.fromJson(e)).toList();
@@ -275,24 +280,69 @@ class SyndicateDetail {
       area: safeString(json['area']),
       price: safeString(json['price']),
       description: safeString(json['description']),
+      documentPrice: safeString(json['DocumentPrice'] ?? '0'),
       unitSpilt: safeInt(json['unit_spilt']),
+      unit: safeString(json['unit'] ?? ''),
       images: parseImages(json['image']),
       plotImage: safeString(json['plot_image']),
       work: safeString(json['work']),
       agentId: safeString(json['agent_id']),
       status: safeInt(json['status']),
-      aminities: safeString(json['aminities']),
-      uldNo: safeString(json['uld_no']),
-      startingPrice: safeString(json['starting_price']),
+      aminities: safeString(json['aminities'] ?? ''),
+      uldNo: safeString(json['uld_no'] ?? ''),
+      startingPrice: safeString(json['starting_price'] ?? '0'),
       amenities: parseAmenities(json['amenity']),
       documents: parseDocuments(json['documents']),
       bookings: parseBookings(json['booking']),
-      users: parseUsers(json['user']), // Added user parsing
+      users: parseUsers(json['user']),
+      documentPayment: safeString(json['documentPayment'] ?? ''),
     );
   }
-}
 
-// Add the User class
+  // Get unit areas in sq.ft
+  List<double> get unitAreas {
+    try {
+      if (unit.isEmpty) return List.filled(unitSpilt, 0.0);
+      return unit.split(',').map((e) => double.tryParse(e.trim()) ?? 0.0).toList();
+    } catch (e) {
+      return List.filled(unitSpilt, 0.0);
+    }
+  }
+
+  // Get price per sq.ft
+  double get pricePerSqFt {
+    try {
+      return double.tryParse(price.replaceAll(',', '')) ?? 0.0;
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+  // Get document price
+  double get documentPriceValue {
+    try {
+      return double.tryParse(documentPrice.replaceAll(',', '')) ?? 0.0;
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+  // Calculate price for a specific unit
+  double calculateUnitPrice(int unitIndex) {
+    if (unitIndex < 0 || unitIndex >= unitAreas.length) return 0.0;
+    return unitAreas[unitIndex] * pricePerSqFt;
+  }
+
+  // Get area of a specific unit
+  String getUnitArea(int unitIndex) {
+    if (unitIndex < 0 || unitIndex >= unitAreas.length) return "0 sq.ft";
+    return "${unitAreas[unitIndex]} sq.ft";
+  }
+
+  String get formattedPricePerSqFt {
+    return "₹${pricePerSqFt.toStringAsFixed(2)}/sq.ft";
+  }
+}// Add the User class
 class User {
   final int id;
   final int role;

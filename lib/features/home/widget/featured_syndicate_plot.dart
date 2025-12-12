@@ -3,19 +3,18 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../Properties/widget/property_card.dart';
 import '../../product/widget/product_card.dart';
 import '../controller/homecontroller.dart';
 
-class FeaturesGiooPlots extends StatelessWidget {
-  const FeaturesGiooPlots({super.key});
+class FeaturesSyndicateProperties extends StatelessWidget {
+  const FeaturesSyndicateProperties({super.key});
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<HomeController>(
       builder: (controller) {
         // Show loading state
-        if (controller.isLoadingGioo.value && controller.featuredGiooPlots.isEmpty) {
+        if (controller.isLoadingSyndicates.value && controller.featuredSyndicates.isEmpty) {
           return SizedBox(
             height: 242,
             child: Center(
@@ -25,7 +24,7 @@ class FeaturesGiooPlots extends StatelessWidget {
         }
 
         // Show error state
-        if (controller.giooError.value.isNotEmpty) {
+        if (controller.syndicateError.value.isNotEmpty) {
           return SizedBox(
             height: 242,
             child: Center(
@@ -35,12 +34,12 @@ class FeaturesGiooPlots extends StatelessWidget {
                   Icon(Icons.error_outline, color: Colors.red, size: 40),
                   SizedBox(height: 10),
                   Text(
-                    'Failed to load GIOO plots',
+                    'Failed to load syndicates',
                     style: TextStyle(color: Colors.grey),
                   ),
                   SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: controller.refreshGioo,
+                    onPressed: controller.refreshSyndicates,
                     child: Text('Retry'),
                   ),
                 ],
@@ -50,17 +49,17 @@ class FeaturesGiooPlots extends StatelessWidget {
         }
 
         // Show empty state
-        if (controller.featuredGiooPlots.isEmpty) {
+        if (controller.featuredSyndicates.isEmpty) {
           return SizedBox(
             height: 242,
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.home_outlined, color: Colors.grey, size: 40),
+                  Icon(Icons.business_outlined, color: Colors.grey, size: 40),
                   SizedBox(height: 10),
                   Text(
-                    'No GIOO plots available',
+                    'No syndicates available',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ],
@@ -79,9 +78,9 @@ class FeaturesGiooPlots extends StatelessWidget {
                     final scrollController = scrollNotification.metrics;
                     if (scrollController.pixels >=
                         scrollController.maxScrollExtent - 100) {
-                      if (controller.giooHasMore.value &&
-                          !controller.isLoadingMoreGioo.value) {
-                        controller.loadMoreFeaturedGioo();
+                      if (controller.syndicateHasMore.value &&
+                          !controller.isLoadingMoreSyndicates.value) {
+                        controller.loadMoreFeaturedSyndicates();
                       }
                     }
                   }
@@ -90,12 +89,12 @@ class FeaturesGiooPlots extends StatelessWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 0),
-                  itemCount: controller.featuredGiooPlots.length +
-                      (controller.giooHasMore.value ? 1 : 0),
+                  itemCount: controller.featuredSyndicates.length +
+                      (controller.syndicateHasMore.value ? 1 : 0),
                   separatorBuilder: (_, __) => const SizedBox(width: 10),
                   itemBuilder: (context, index) {
                     // Load more indicator
-                    if (index == controller.featuredGiooPlots.length) {
+                    if (index == controller.featuredSyndicates.length) {
                       return SizedBox(
                         width: 170,
                         child: Center(
@@ -107,28 +106,30 @@ class FeaturesGiooPlots extends StatelessWidget {
                       );
                     }
 
-                    final plot = controller.featuredGiooPlots[index];
+                    final syndicate = controller.featuredSyndicates[index];
 
                     return SizedBox(
                       width: 170,
                       child: ProductCard(
-                        imageUrl: plot.thumbnailImage,
-                        title: plot.name,
-                        price: plot.formattedPrice,
-                        location: plot.location,
-                        description: plot.description.isNotEmpty
-                            ? plot.description
-                            : 'Premium GIOO Plot',
+                        imageUrl: syndicate.thumbnailImage,
+                        title: syndicate.name,
+                        price: syndicate.formattedPrice,
+                        location: syndicate.location,
+                        description: syndicate.description.isNotEmpty
+                            ? syndicate.description
+                            : 'Premium Syndicate Property',
                         onTap: () {
-                          Get.toNamed('/giooDetails', arguments: {"id": plot.id});
+                          print("View: ${syndicate.name}");
+                          Get.toNamed('/syndicateDetails', arguments: {"id": syndicate.id});
+
                         },
                         isFavourite: true,
                         onFavToggle: () {
-                          print("Fav Toggled for: ${plot.name}");
+                          print("Fav Toggled for: ${syndicate.name}");
                           // Add to favorites logic here
                         },
                         onAddToCart: () {
-                          print("Add to Cart: ${plot.name}");
+                          print("Add to Cart: ${syndicate.name}");
                           // Add to cart logic here
                         },
                       )
@@ -158,29 +159,29 @@ class FeaturesGiooPlots extends StatelessWidget {
             ),
 
             // Pagination indicators (optional)
-            if (controller.giooPagination.value != null && controller.giooTotalPages.value > 1)
+            if (controller.syndicatePagination.value != null && controller.syndicateTotalPages.value > 1)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    for (int i = 0; i < min(5, controller.giooTotalPages.value); i++)
+                    for (int i = 0; i < min(5, controller.syndicateTotalPages.value); i++)
                       Container(
                         width: 8,
                         height: 8,
                         margin: EdgeInsets.symmetric(horizontal: 4),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: controller.giooCurrentPage.value == i + 1
+                          color: controller.syndicateCurrentPage.value == i + 1
                               ? Colors.blue
                               : Colors.grey[300],
                         ),
                       ),
-                    if (controller.giooTotalPages.value > 5)
+                    if (controller.syndicateTotalPages.value > 5)
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0),
                         child: Text(
-                          '${controller.giooCurrentPage.value}/${controller.giooTotalPages.value}',
+                          '${controller.syndicateCurrentPage.value}/${controller.syndicateTotalPages.value}',
                           style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ),

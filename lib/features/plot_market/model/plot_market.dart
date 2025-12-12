@@ -1,4 +1,4 @@
-class MarketPlot {
+class MarketPlot  {
   final int id;
   final String name;
   final int? type;
@@ -13,7 +13,7 @@ class MarketPlot {
   final String price;
   final String description;
   final int unitSplit;
-  final List<String> images; // Changed from String to List<String>
+  final List<String> images;
   final String? plotImage;
   final String work;
   final String? agentId;
@@ -395,4 +395,7 @@ class PropertyType {
       updatedAt: DateTime.parse(json['updated_at']?.toString() ?? ''),
     );
   }
+
 }
+
+
