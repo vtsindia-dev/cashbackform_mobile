@@ -23,7 +23,7 @@ class TopProfessionalService extends StatelessWidget {
             itemBuilder: (context, index) {
               final item = controller.services[index];
               return ServiceCard(
-                imageUrl: item["image"]!,
+                imageUrl: item["image"][0]!,
                 title: item["title"]!,
                 width: 170,
                 height: 230,

@@ -22,8 +22,6 @@ class ServiceCard extends StatelessWidget {
 
   final double imageWidth = 100.w;
   final double imageHeight = 100.h;
-
-  // ----- Dynamic Info Row -----
   Widget _infoRow(IconData icon, String text) {
     return Padding(
       padding: EdgeInsets.only(bottom: 4.h),
@@ -48,8 +46,6 @@ class ServiceCard extends StatelessWidget {
       ),
     );
   }
-
-  // ----- Link Row -----
   Widget _linkRow(IconData icon, String text) {
     final isLink = text == "Get Direction";
     final linkColor = isLink ? AppColor.primary : Colors.grey.shade700;
@@ -77,8 +73,6 @@ class ServiceCard extends StatelessWidget {
       ),
     );
   }
-
-  // ----- Verified Badge -----
   Widget _buildVerifiedBadge() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
@@ -126,7 +120,6 @@ class ServiceCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// IMAGE + VERIFIED BADGE
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -153,13 +146,10 @@ class ServiceCard extends StatelessWidget {
             ),
 
             SizedBox(width: 12.w),
-
-            /// RIGHT CONTENT
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// TITLE + SHARE
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -201,18 +191,12 @@ class ServiceCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  /// ---------- DYNAMIC FIELDS -----------
                   _infoRow(Icons.location_on,
                       service.category.categoryName),
-
-// dynamic category name
-
                   _infoRow(Icons.email,
-                      service.description ?? "No email available"), // dynamic desc
-
+                      service.description ?? "No email available"),
                   _infoRow(Icons.language,
-                      "greenheapfarms.com"), // if you have a website field → replace it here
-
+                      "greenheapfarms.com"),
                   _linkRow(Icons.directions, "Get Direction"),
 
                   SizedBox(height: 8.h),

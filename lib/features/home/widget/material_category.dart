@@ -16,6 +16,7 @@ class MaterialCategory extends StatelessWidget {
         return SizedBox(
           height: 140,
           child: ListView.separated(
+
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 0),
             itemCount: controller.materials.length,
@@ -23,13 +24,13 @@ class MaterialCategory extends StatelessWidget {
             itemBuilder: (context, index) {
               final item = controller.materials[index];
               return ServiceCard(
-                imageUrl: item["image"]!,
+                imageUrl: item["image"][0]!,
                 title: item["title"]!,
                 width: 170,
                 height: 140,
                 isAsset: false,
                 onTap: () {
-                  print("Tapped → ${item["title"]}");
+                  print("Tapped →${item["title"]}");
                 },
               )
                   .animate()

@@ -184,10 +184,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildIconButton({
-    IconData? icon,
-    String? image,
-    required VoidCallback onTap,
+  Widget _buildIconButton({ IconData? icon, String? image, required VoidCallback onTap,
   }) {
     return InkWell(
       onTap: onTap,
@@ -202,8 +199,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
           icon,
           size: 20,
           color: AppColor.primary,
-        )
-            : Image.asset(
+        ) : Image.asset(
           image!,
           width: 20,
           height: 20,

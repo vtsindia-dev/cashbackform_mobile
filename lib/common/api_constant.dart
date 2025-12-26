@@ -39,9 +39,11 @@ class ApiUrl {
   static const String privacy = "$baseUrl/api/v2/privacy";
 
 
-  static const String carouselBanners = '$baseUrl/carousel_banner';
-  static const String featuredSyndicates = '$baseUrl/synticate/featured';
-  static const String featuredMarket = '$baseUrl/market/featured';
+  static const String carouselBanners = '$baseUrl/api/v2/carousel_banner';
+  static const String featuredSyndicates = '$baseUrl/api/v2/synticate/featured';
+  static const String featuredMarket = '$baseUrl/api/v2/market/featured';
+  static const String featuredGioo = "$baseUrl/api/v2/geo/featured";
 
 
+// static const String featuredMarket = '$baseUrl//api/v2/market/featured';
 }

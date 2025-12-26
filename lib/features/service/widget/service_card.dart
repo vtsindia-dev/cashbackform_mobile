@@ -6,7 +6,7 @@ class ServiceCard extends StatelessWidget {
   final double width;
   final double height;
   final VoidCallback? onTap;
-  final bool isAsset; // NEW: true if local asset, false if network
+  final bool isAsset;
 
   const ServiceCard({
     super.key,
@@ -15,7 +15,7 @@ class ServiceCard extends StatelessWidget {
     this.width = 150,
     this.height = 230,
     this.onTap,
-    this.isAsset = false, // default network
+    this.isAsset = false,
   });
 
   @override

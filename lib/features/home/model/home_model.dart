@@ -293,7 +293,6 @@ class FeaturedMarketProperty {
   String get propertyTypeName => propertyType?.categoryName ?? 'Not specified';
 }
 
-// Featured Pagination Model
 class FeaturedPagination {
   final int currentPage;
   final int total;
@@ -321,7 +320,6 @@ class FeaturedPagination {
   bool get isLastPage => currentPage == lastPage;
 }
 
-// Featured API Response Models
 class FeaturedBannerResponse {
   final List<FeaturedBanner> banners;
 
@@ -377,10 +375,6 @@ class FeaturedMarketResponse {
     );
   }
 }
-
-// Add these models to your home_model.dart file
-
-// GIOO Plot Model
 class GiooPlot {
   final int id;
   final String name;
@@ -439,14 +433,12 @@ class GiooPlot {
   });
 
   factory GiooPlot.fromJson(Map<String, dynamic> json) {
-    // Parse images array
     List<String> imagesList = [];
     if (json['image'] is List) {
       imagesList = List<String>.from(json['image']);
     } else if (json['image'] is String) {
       imagesList = [json['image']];
     }
-
     return GiooPlot(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
@@ -476,10 +468,7 @@ class GiooPlot {
       propertyType: FeaturedPropertyType.fromJson(json['property_type'] ?? {}),
     );
   }
-
-  // Helper methods
   String get thumbnailImage => images.isNotEmpty ? images.first : plotImage;
-
   String get formattedPrice {
     try {
       final priceValue = double.tryParse(totalPrice.isNotEmpty ? totalPrice : price);

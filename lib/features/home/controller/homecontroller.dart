@@ -270,7 +270,7 @@ class HomeController extends GetxController {
   Future<void> fetchServices() async {
     try {
       if (_isFetchingServices) {
-        print('⏸️ Services fetch already in progress');
+        print('⏸️ Services already in progress');
         return;
       }
 
@@ -279,9 +279,7 @@ class HomeController extends GetxController {
       serviceError('');
 
       print('🌐 Fetching services from: ${ApiUrl.serviceList}');
-
       final response = await ApiService.getRequest(ApiUrl.serviceList);
-
       if (response.statusCode == 200) {
         final responseData = response.data;
         print('📦 Services API Response: $responseData');
@@ -351,7 +349,8 @@ class HomeController extends GetxController {
 
       print('🌐 Fetching materials from: ${ApiUrl.marketList}');
 
-      final response = await ApiService.getRequest(ApiUrl.marketList);
+      final response =
+      await ApiService.getRequest(ApiUrl.marketList);
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -359,36 +358,56 @@ class HomeController extends GetxController {
 
         if (responseData != null &&
             responseData['status'] == 200 &&
-            responseData['data'] != null) {
+            responseData['data'] != null &&
+            responseData['data'] is Map) {
 
-          if (responseData['data'] is Map &&
-              responseData['data']['material'] is List) {
-            final List<dynamic> materialsData = responseData['data']['material'];
-            materials.assignAll(materialsData.map((material) {
-              return {
-                'id': material['id'] ?? 0,
-                'title': material['material_name'] ?? material['name'] ?? 'Material',
-                'image': material['image'] ?? material['material_image'] ?? '',
-                'description': material['description'] ?? '',
-                'category': material['category'] != null ? {
-                  'id': material['category']['id'] ?? 0,
-                  'name': material['category']['category_name'] ?? 'Uncategorized',
-                } : null,
-                'status': material['status'] ?? 1,
-                'created_at': material['created_at'],
-                'updated_at': material['updated_at'],
-              };
-            }).toList());
+          final data = responseData['data'];
+
+          if (data['material'] is List) {
+            final List<dynamic> materialsData = data['material'];
+
+            materials.assignAll(
+              materialsData.map((material) {
+                return {
+                  'id': material['id'] ?? 0,
+                  'title': material['material_name'] ??
+                      material['name'] ??
+                      'Material',
+                  'image': material['image'] ??
+                      material['material_image'] ??
+                      '',
+                  'description': material['description'] ?? '',
+                  'category': material['category'] != null
+                      ? {
+                    'id':
+                    material['category']['id'] ?? 0,
+                    'name': material['category']
+                    ['category_name'] ??
+                        'Uncategorized',
+                  }
+                      : null,
+                  'status': material['status'] ?? 1,
+                  'created_at': material['created_at'],
+                  'updated_at': material['updated_at'],
+                };
+              }).toList(),
+            );
+
+            print(
+                '✅ Loaded ${materials.length} materials');
+          } else {
+            materialError('Material list missing in response');
+            print('❌ material key not found or invalid');
           }
-
-          print('✅ Loaded ${materials.length} materials');
         } else {
           materialError('Invalid materials response format');
           print('❌ Invalid materials response format');
         }
       } else {
-        materialError('Failed to load materials: ${response.statusCode}');
-        print('❌ Materials API Error: ${response.statusCode} - ${response.data}');
+        materialError(
+            'Failed to load materials: ${response.statusCode}');
+        print(
+            '❌ Materials API Error: ${response.statusCode} - ${response.data}');
       }
     } catch (e) {
       materialError('Materials error: $e');
@@ -411,7 +430,7 @@ class HomeController extends GetxController {
       isLoadingBanners(true);
       bannerError('');
 
-      const bannerUrl = 'http://192.168.1.114/admincashback/public/api/v2/carousel_banner';
+      const bannerUrl = 'https://admincashback.vrikshatech.in/public/api/v2/carousel_banner';
       print('🌐 Fetching banners from: $bannerUrl');
 
       final response = await ApiService.getRequest(bannerUrl);
@@ -470,9 +489,10 @@ class HomeController extends GetxController {
         syndicateError('');
       }
 
-      const syndicateUrl = 'http://192.168.1.114/admincashback/public/api/v2/synticate/featured';
-      final page = loadMore ? syndicateCurrentPage.value + 1 : 1;
-      final url = '$syndicateUrl?page=$page';
+      final page =
+      loadMore ? syndicateCurrentPage.value + 1 : 1;
+      final url =
+          '${ApiUrl.featuredSyndicates}?page=$page';
 
       print('🌐 Fetching featured syndicates from: $url');
 
@@ -486,28 +506,37 @@ class HomeController extends GetxController {
             responseData['status'] == 200 &&
             responseData['data'] != null) {
 
-          final syndicateResponse = FeaturedSyndicateResponse.fromJson(responseData['data']);
+          final syndicateResponse =
+          FeaturedSyndicateResponse.fromJson(
+              responseData['data']);
 
           if (loadMore) {
-            featuredSyndicates.addAll(syndicateResponse.syndicates);
+            featuredSyndicates
+                .addAll(syndicateResponse.syndicates);
           } else {
-            featuredSyndicates.assignAll(syndicateResponse.syndicates);
+            featuredSyndicates
+                .assignAll(syndicateResponse.syndicates);
           }
 
-          syndicatePagination.value = syndicateResponse.pagination;
-          syndicateCurrentPage.value = syndicateResponse.pagination.currentPage;
-          syndicateTotalPages.value = syndicateResponse.pagination.lastPage;
-          syndicateHasMore.value = syndicateResponse.pagination.hasMorePages;
+          syndicatePagination.value =
+              syndicateResponse.pagination;
+          syndicateCurrentPage.value =
+              syndicateResponse.pagination.currentPage;
+          syndicateTotalPages.value =
+              syndicateResponse.pagination.lastPage;
+          syndicateHasMore.value =
+              syndicateResponse.pagination.hasMorePages;
 
-          print('✅ Loaded ${featuredSyndicates.length} featured syndicates');
-          print('📊 Pagination: ${syndicateCurrentPage.value}/${syndicateTotalPages.value}');
+          print(
+              '✅ Loaded ${featuredSyndicates.length} featured syndicates');
+          print(
+              '📊 Pagination: ${syndicateCurrentPage.value}/${syndicateTotalPages.value}');
         } else {
           syndicateError('Invalid syndicates response format');
-          print('❌ Invalid syndicates response format');
         }
       } else {
-        syndicateError('Failed to load syndicates: ${response.statusCode}');
-        print('❌ Syndicates API Error: ${response.statusCode} - ${response.data}');
+        syndicateError(
+            'Failed to load syndicates: ${response.statusCode}');
       }
     } catch (e) {
       syndicateError('Syndicates error: $e');
@@ -550,9 +579,8 @@ class HomeController extends GetxController {
         marketError('');
       }
 
-      const marketUrl = 'http://192.168.1.114/admincashback/public/api/v2/market/featured';
       final page = loadMore ? marketCurrentPage.value + 1 : 1;
-      final url = '$marketUrl?page=$page';
+      final url = '${ApiUrl.featuredMarket}?page=$page';
 
       print('🌐 Fetching featured market from: $url');
 
@@ -566,28 +594,34 @@ class HomeController extends GetxController {
             responseData['status'] == 200 &&
             responseData['data'] != null) {
 
-          final marketResponse = FeaturedMarketResponse.fromJson(responseData['data']);
+          final marketResponse =
+          FeaturedMarketResponse.fromJson(responseData['data']);
 
           if (loadMore) {
-            featuredMarketProperties.addAll(marketResponse.marketProperties);
+            featuredMarketProperties
+                .addAll(marketResponse.marketProperties);
           } else {
-            featuredMarketProperties.assignAll(marketResponse.marketProperties);
+            featuredMarketProperties
+                .assignAll(marketResponse.marketProperties);
           }
 
           marketPagination.value = marketResponse.pagination;
-          marketCurrentPage.value = marketResponse.pagination.currentPage;
-          marketTotalPages.value = marketResponse.pagination.lastPage;
-          marketHasMore.value = marketResponse.pagination.hasMorePages;
+          marketCurrentPage.value =
+              marketResponse.pagination.currentPage;
+          marketTotalPages.value =
+              marketResponse.pagination.lastPage;
+          marketHasMore.value =
+              marketResponse.pagination.hasMorePages;
 
-          print('✅ Loaded ${featuredMarketProperties.length} featured market properties');
-          print('📊 Pagination: ${marketCurrentPage.value}/${marketTotalPages.value}');
+          print(
+              '✅ Loaded ${featuredMarketProperties.length} featured market properties');
+          print(
+              '📊 Pagination: ${marketCurrentPage.value}/${marketTotalPages.value}');
         } else {
           marketError('Invalid market response format');
-          print('❌ Invalid market response format');
         }
       } else {
         marketError('Failed to load market: ${response.statusCode}');
-        print('❌ Market API Error: ${response.statusCode} - ${response.data}');
       }
     } catch (e) {
       marketError('Market error: $e');
@@ -630,9 +664,8 @@ class HomeController extends GetxController {
         giooError('');
       }
 
-      const giooUrl = 'http://192.168.1.114/admincashback/public/api/v2/geo/featured';
       final page = loadMore ? giooCurrentPage.value + 1 : 1;
-      final url = '$giooUrl?page=$page';
+      final url = '${ApiUrl.featuredGioo}?page=$page';
 
       print('🌐 Fetching featured GIOO from: $url');
 
@@ -646,7 +679,8 @@ class HomeController extends GetxController {
             responseData['status'] == 200 &&
             responseData['data'] != null) {
 
-          final giooResponse = GiooResponse.fromJson(responseData['data']);
+          final giooResponse =
+          GiooResponse.fromJson(responseData['data']);
 
           if (loadMore) {
             featuredGiooPlots.addAll(giooResponse.giooPlots);
@@ -660,18 +694,14 @@ class HomeController extends GetxController {
           giooHasMore.value = giooResponse.pagination.hasMorePages;
 
           print('✅ Loaded ${featuredGiooPlots.length} featured GIOO plots');
-          print('📊 Pagination: ${giooCurrentPage.value}/${giooTotalPages.value}');
         } else {
           giooError('Invalid GIOO response format');
-          print('❌ Invalid GIOO response format');
         }
       } else {
         giooError('Failed to load GIOO: ${response.statusCode}');
-        print('❌ GIOO API Error: ${response.statusCode} - ${response.data}');
       }
     } catch (e) {
       giooError('GIOO error: $e');
-      print('❌ Error fetching featured GIOO: $e');
     } finally {
       isLoadingGioo(false);
       isLoadingMoreGioo(false);

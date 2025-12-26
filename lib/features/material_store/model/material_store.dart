@@ -54,30 +54,19 @@ class Material {
       priceRange: json['price_range'] ?? '',
     );
   }
-
-  // Dynamic price text based on available data
   String getFormattedPrice() {
-    // If API provides price range, use it
     if (priceRange != null && priceRange!.isNotEmpty) {
       return priceRange!;
     }
-
-    // If API provides min and max price, format them
     if (minPrice != null && maxPrice != null) {
       return "₹${_formatNumber(minPrice!)} - ₹${_formatNumber(maxPrice!)}${unit != null && unit!.isNotEmpty ? '/ $unit' : ''}";
     }
-
-    // If only min price is available
     if (minPrice != null) {
       return "Starting from ₹${_formatNumber(minPrice!)}${unit != null && unit!.isNotEmpty ? '/ $unit' : ''}";
     }
-
-    // If only max price is available
     if (maxPrice != null) {
       return "Up to ₹${_formatNumber(maxPrice!)}${unit != null && unit!.isNotEmpty ? '/ $unit' : ''}";
     }
-
-    // Default fallback based on category (only if no API data)
     return _getDefaultPriceByCategory();
   }
 
@@ -92,29 +81,24 @@ class Material {
   }
 
   String _getDefaultPriceByCategory() {
-    // This is a fallback only if no price data from API
-    // You should eventually get this data from API
     switch (categoryId) {
-      case 12: // Cement & Concrete Products
+      case 12:
         return "Contact for Price (Cement)";
-      case 13: // Example: Steel Products
+      case 13:
         return "Contact for Price (Steel)";
-      case 14: // Example: Tiles
+      case 14:
         return "Contact for Price (Tiles)";
       default:
         return "Contact for Price";
     }
   }
 }
-
-// Category Model Class
 class Category {
   final int id;
   final String categoryName;
   final int status;
   final DateTime createdAt;
   final DateTime updatedAt;
-
   Category({
     required this.id,
     required this.categoryName,
@@ -122,7 +106,6 @@ class Category {
     required this.createdAt,
     required this.updatedAt,
   });
-
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
       id: json['id'] ?? 0,
@@ -132,7 +115,6 @@ class Category {
       updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,

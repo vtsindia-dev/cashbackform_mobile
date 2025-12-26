@@ -130,10 +130,6 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       ],
     );
   }
-
-  // ================================
-  // MENU ICON BUTTON
-  // ================================
   Widget _buildIconButton({
     required String image,
     required VoidCallback onTap,
