@@ -161,48 +161,52 @@ class AboutPlot extends StatelessWidget {
     required String postedDate,
     required String lastUpdate,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 8.h),
-        _headerBox(projectName)
-            .animate()
-            .slideX(begin: 0.3, end: 0)
-            .fadeIn()
-            .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
-        SizedBox(height: 10.h),
-        _detailRow('Location', location)
-            .animate()
-            .slideX(begin: 0.3, end: 0)
-            .fadeIn()
-            .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
-        SizedBox(height: 12.h),
-        _plotInfoGrid(
-          plotCounts: plotCounts,
-          plotAreaSqFt: plotAreaSqFt,
-          totalPrice: totalPrice,
-          pricePerSqFt: pricePerSqFt,
-        ),
-        SizedBox(height: 15.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return GetBuilder<PlotMarketController>(
+      builder: (controllerx) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _dateBox(postedDate, 'Posted On')
+            SizedBox(height: 8.h),
+            _headerBox(projectName)
                 .animate()
-                .slideX(begin: 0.2, end: 0)
-                .fadeIn(),
-            _dateBox(lastUpdate, 'Last Update')
+                .slideX(begin: 0.3, end: 0)
+                .fadeIn()
+                .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
+            SizedBox(height: 10.h),
+            _detailRow('Location', location)
                 .animate()
-                .slideX(begin: 0.2, end: 0)
-                .fadeIn(),
+                .slideX(begin: 0.3, end: 0)
+                .fadeIn()
+                .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
+            SizedBox(height: 12.h),
+            _plotInfoGrid(
+              plotCounts: plotCounts,
+              plotAreaSqFt: plotAreaSqFt,
+              totalPrice: totalPrice,
+              pricePerSqFt: pricePerSqFt,
+            ),
+            SizedBox(height: 15.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _dateBox(postedDate, 'Posted On')
+                    .animate()
+                    .slideX(begin: 0.2, end: 0)
+                    .fadeIn(),
+                _dateBox(lastUpdate, 'Last Update')
+                    .animate()
+                    .slideX(begin: 0.2, end: 0)
+                    .fadeIn(),
+              ],
+            ),
+            SizedBox(height: 20.h),
+        _centerEnquiryButton(controllerx)
+            .animate(onPlay: (controller) => controller.repeat()) // repeat indefinitely
+            .shake(duration: 800.ms, hz: 2),// shake animation
+            SizedBox(height: 15.h),
           ],
-        ),
-        SizedBox(height: 20.h),
-    _centerEnquiryButton()
-        .animate(onPlay: (controller) => controller.repeat()) // repeat indefinitely
-        .shake(duration: 800.ms, hz: 2),// shake animation
-        SizedBox(height: 15.h),
-      ],
+        );
+      }
     );
   }
 
@@ -334,25 +338,88 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  Widget _centerEnquiryButton() {
-    return Center(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColor.primary, AppColor.primarylite],
+  // Widget _centerEnquiryButton() {
+  //   final EnquiryController enquiryController = Get.find<EnquiryController>();
+  //
+  //   return Obx(() => Center(
+  //     child: InkWell(
+  //       borderRadius: BorderRadius.circular(30.r),
+  //       onTap: enquiryController.isEnquiryLoading.value
+  //           ? null
+  //           : () {
+  //         enquiryController.sendEnquiry();
+  //       },
+  //       child: Container(
+  //         padding:
+  //         EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),
+  //         decoration: BoxDecoration(
+  //           gradient: const LinearGradient(
+  //             colors: [AppColor.primary, AppColor.primarylite],
+  //           ),
+  //           borderRadius: BorderRadius.circular(30.r),
+  //         ),
+  //         child: enquiryController.isEnquiryLoading.value
+  //             ? SizedBox(
+  //           height: 18.sp,
+  //           width: 18.sp,
+  //           child: const CircularProgressIndicator(
+  //             strokeWidth: 2,
+  //             color: Colors.black,
+  //           ),
+  //         )
+  //             : Text(
+  //           "Send Enquiry",
+  //           style: TextStyle(
+  //             color: Colors.black,
+  //             fontWeight: FontWeight.bold,
+  //             fontSize: 15.sp,
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   ));
+  // }
+  Widget _centerEnquiryButton(
+      PlotMarketController enquiryController,
+      ) {
+    return Obx(() => Center(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30.r),
+        onTap: enquiryController.isEnquiryLoading.value
+            ? null
+            : () {
+          enquiryController.sendEnquiry();
+        },
+        child: Container(
+          padding:
+          EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColor.primary, AppColor.primarylite],
+            ),
+            borderRadius: BorderRadius.circular(30.r),
           ),
-          borderRadius: BorderRadius.circular(30.r),
-        ),
-        child: Text(
-          "Send Enquiry",
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 15.sp,
+          child: enquiryController.isEnquiryLoading.value
+              ? SizedBox(
+            height: 18.sp,
+            width: 18.sp,
+            child: const CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.black,
+            ),
+          )
+              : Text(
+            "Send Enquiry",
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 15.sp,
+            ),
           ),
         ),
       ),
-    );
+    ));
   }
+
+
 }

@@ -5,24 +5,24 @@ import '../../../animations/arrowlines.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
 import '../../home/widget/sub_title.dart';
-class SchemeOverview extends StatelessWidget {
-  const SchemeOverview({super.key});
+class GioSchemeOverview extends StatelessWidget {
+  const GioSchemeOverview({super.key});
   final List<Map<String, dynamic>> _schemeItems = const [
     {
-      'image': Images.getPayment,
-      'title': 'Pay 5000rs for Land Document Verification',
+      'image': Images.selectSlot,
+      'title': 'Select Your Slot',
     },
     {
-      'image': Images.selectSlot,
-      'title': 'Select your prefered plot part from the available options',
+      'image': Images.getPayment,
+      'title': 'Get Payment Verified',
     },
     {
       'image': Images.registrationProcess,
-      'title': 'Reverse and proceed to purchase your desired slot',
+      'title': 'Registration Process',
     },
     {
       'image': Images.plotRegistered,
-      'title': 'Refer Friends and Earn Rewards!',
+      'title': 'Plot Registered',
     },
   ];
   @override
@@ -155,3 +155,4 @@ class SchemeOverview extends StatelessWidget {
         .then(delay: (index * 200).ms);
   }
 }
+

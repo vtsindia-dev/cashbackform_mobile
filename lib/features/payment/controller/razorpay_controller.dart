@@ -9,19 +9,20 @@ import 'package:flutter/material.dart';
 import '../../gioo_plots/controller/gioo_controller.dart';
 import '../../syndicate_plot/controller/syndicate_controller.dart';
 import '../../plot_market/controller/plot_market_controller.dart';
-import '../../plot_market/model/plot_market.dart'; // Import your model
+import '../../plot_market/model/plot_market.dart';
 
 class PaymentType {
   static const String plotPayment = 'plot_payment';
   static const String documentPayment = 'document_payment';
   static const String giooPayment = 'gioo_payment';
-  static const String marketVerification = 'market_verification'; // Only verification
+  static const String marketVerification = 'market_verification';
 }
 
 class RazorpayController extends GetxController {
   late Razorpay _razorpay;
   var isProcessing = false.obs;
   var paymentResponse = Rxn<Map<String, dynamic>>();
+  var paymentID = "";
   var currentPaymentType = PaymentType.plotPayment.obs;
   var isTermsAccepted = false.obs;
   var _currentPaymentUrl = ''.obs;
@@ -34,7 +35,7 @@ class RazorpayController extends GetxController {
   var documentAmount = 0.0.obs;
   var documentId = 0.obs;
   var documentType = ''.obs;
-  var marketPlotId = 0.obs; // For market plot verification
+  var marketPlotId = 0.obs;
 
   @override
   void onInit() {
@@ -92,7 +93,6 @@ class RazorpayController extends GetxController {
     isTermsAccepted.value = false;
   }
 
-  // Method for market plot VERIFICATION payment only
   void setupMarketVerificationPayment({
     required int marketPlotId,
     required double amount,
@@ -102,7 +102,7 @@ class RazorpayController extends GetxController {
     this.totalAmount.value = amount;
     this.propertyName.value = propertyName;
     currentPaymentType.value = PaymentType.marketVerification;
-    _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/market_pay';
+    _currentPaymentUrl.value = '${ApiUrl.baseUrl} ';
     isTermsAccepted.value = false;
 
     print('✅ Setup market plot VERIFICATION payment for plot $marketPlotId, amount: $amount, name: $propertyName');
@@ -178,6 +178,7 @@ class RazorpayController extends GetxController {
   Future<void> _handleSuccess(PaymentSuccessResponse response) async {
     try {
       isProcessing.value = true;
+      paymentID = response.paymentId ?? "N/A";
       print("✅ Payment Successful: ${response.paymentId}");
       print("📝 Payment Type: ${currentPaymentType.value}");
       final token = await SessionManager.getToken();
@@ -506,7 +507,8 @@ class RazorpayController extends GetxController {
           ),
           SizedBox(height: 15.h),
           Text(
-            "Payment ID: ${paymentResponse.value?['payment_id'] ?? 'N/A'}",
+            // "Payment ID: ${paymentResponse.value?['payment_id'] ?? 'N/A'}",
+            "Payment ID: ${paymentID}",
             style: TextStyle(fontSize: 12.sp),
           ),
           SizedBox(height: 8.h),

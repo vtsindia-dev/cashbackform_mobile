@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
@@ -55,6 +56,7 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
                     SchemeOverview(),
                     ReservePlotsScreen(reserveButtonKey: _reserveButtonKey), // Pass the key
                     LegalDocumentsScreen(),
+                    Description(),
                     Referrals(reservePlotsKey: _reserveButtonKey), // Pass the same key
                     SizedBox(height: 45,)
                   ],
@@ -64,6 +66,41 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
           ],
         );
       }),
+    );
+  }
+
+  Widget Description(){
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Align(
+              alignment: AlignmentGeometry.centerLeft,
+              child: Text("Description",style: TextStyle(fontSize: 20.sp),)),
+          SizedBox(height: 10,),
+          Container(
+            width: MediaQuery.of(context).size.width,
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 2,
+                  blurRadius: 1,
+                  offset: Offset(0, 1),
+                ),
+              ],
+              // border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+            "${controller.syndicateDetail.value?.description}",
+          ),
+          ),
+        ],
+      ),
     );
   }
 

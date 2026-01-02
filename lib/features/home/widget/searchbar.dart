@@ -35,6 +35,7 @@ class _Home_SearchBarState extends State<Home_SearchBar> {
           ),
           child: Row(
             children: [
+              if(recentSearch.isNotEmpty)
               Container(
                 constraints: BoxConstraints(
                   maxWidth: MediaQuery.of(context).size.width * 0.22,
@@ -66,13 +67,17 @@ class _Home_SearchBarState extends State<Home_SearchBar> {
                           recentSearch = "Chennai";
                         });
                       },
-                      child: const Icon(Icons.close, size: 14, color: Colors.white),
+                      child:  GestureDetector(onTap: (){setState(() {
+                        recentSearch = "";
+                      });
+                      }, child: Icon(Icons.close,size: 14, color: Colors.white)),
                     ),
                   ],
                 ),
               ),
 
               const SizedBox(width: 5),
+              if(recentSearch.isNotEmpty)
               Container(
                 width: 2,
                 height: 24,

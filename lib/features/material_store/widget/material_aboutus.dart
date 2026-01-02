@@ -111,8 +111,8 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
 
   // --- Image Section with thumbnails ---
   Widget _imageSection() {
-    final String imageUrl = widget.material.image.isNotEmpty
-        ? widget.material.image
+    final String imageUrl = widget.material.image.first.isNotEmpty
+        ? widget.material.image.first
         : 'https://via.placeholder.com/600x400.png?text=No+Image';
 
     final thumbnails = [
@@ -495,7 +495,7 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
                       height: 110.h,
                       color: Colors.grey[100],
                       child: related.image.isNotEmpty
-                          ? Image.network(related.image, fit: BoxFit.cover, width: double.infinity, errorBuilder: (c, o, s) => Icon(Icons.image))
+                          ? Image.network(related.image.first, fit: BoxFit.cover, width: double.infinity, errorBuilder: (c, o, s) => Icon(Icons.image))
                           : Icon(Icons.image, size: 36.sp, color: Colors.grey),
                     ),
                   ),

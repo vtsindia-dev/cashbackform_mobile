@@ -1,5 +1,7 @@
+import 'package:cashback_farms/features/gioo_plots/widget/gio_scheme_overview.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
 import '../../home/widget/sub_title.dart';
@@ -51,7 +53,8 @@ class _GiooDetailsState extends State<GiooDetails> {
               AboutGiooPlot(),
               PlotAvailabilityWidget(),
               NearbyProject(),
-              SchemeOverview(),
+              GioSchemeOverview(),
+              buyersList(controller),
               BluePrint(),
               ReserveSlot(),
 
@@ -62,6 +65,129 @@ class _GiooDetailsState extends State<GiooDetails> {
       }),
     );
   }
+  Widget buyersList(GiooPlotController controller) {
+    final buyers = controller.giooPlotDetail.value?.user ?? [];
+
+    if (buyers.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Text(
+          "No buyers yet",
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Text(
+            "Our Buyers List",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: buyers.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final buyer = buyers[index] as Map<String, dynamic>;
+
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Avatar
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundImage: buyer['avatar'] != null &&
+                        buyer['avatar'].toString().isNotEmpty
+                        ? NetworkImage(buyer['avatar'])
+                        : null,
+                    child: buyer['avatar'] == null
+                        ? const Icon(Icons.person)
+                        : null,
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Name + Email
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          buyer['name'] ?? 'Unknown',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          buyer['email'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Phone icon
+                  if (buyer['phone'] != null)
+                    IconButton(
+                      icon: const Icon(Icons.call, size: 20),
+                      onPressed: () {
+                        launchUrl(
+                          Uri.parse('tel:${buyer['phone']}'),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+
+  /// Avatar fallback
+  Widget _avatarFallback() {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Icon(Icons.person, color: Colors.white),
+    );
+  }
+
 
   Widget _buildNoDataAvailable() {
     return Center(

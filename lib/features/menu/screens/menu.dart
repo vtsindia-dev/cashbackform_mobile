@@ -1,7 +1,12 @@
 import 'dart:math';
+import 'package:cashback_farms/features/about/screens/about_us.dart';
+import 'package:cashback_farms/features/menu/dashboard_menu_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
 
@@ -14,54 +19,65 @@ class Menu extends StatefulWidget {
 
 class _MenuState extends State<Menu> {
   String selectedRole = "User";
+  late DashboardController dashboardController;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    dashboardController = Get.put(DashboardController());
+    dashboardController.refreshDashboard();
+    selectedRole = dashboardController.profile.value?.role.role ?? "User";
+  }
 
   @override
   Widget build(BuildContext context) {
     ScreenUtil.init(context);
 
+
     return Scaffold(
       appBar: DynamicAppBar(
         title: "DashBoard",
-        showBackButton: true,
       ),
       backgroundColor: AppColor.backgroundLight,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          children: [
-            _buildHeader().animate().fade().slideY(begin: -0.2),
-            SizedBox(height: 20.h),
+      body: Obx(() {
+        if (dashboardController.isLoading.value) {
+          return const Center(child: CircularProgressIndicator(color: AppColor.primary,));
+        }
 
-            _buildRoleButtons()
-                .animate().fade(duration: 400.ms)
-                .slideY(begin: -0.1),
-            SizedBox(height: 25.h),
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            children: [
+              _buildHeader().animate().fade().slideY(begin: -0.2),
+              SizedBox(height: 20.h),
 
-            _buildDashboardTitle(),
-            SizedBox(height: 12.h),
+              _buildRoleButtons(),
+              SizedBox(height: 25.h),
 
-            _buildDashboardGrid()
-                .animate()
-                .fade(duration: 450.ms)
-                .slide(begin: const Offset(0, 0.1)),
-            SizedBox(height: 30.h),
+              _buildDashboardTitle(),
+              SizedBox(height: 12.h),
 
-            _buildMenuTitle(),
-            SizedBox(height: 12.h),
+              _buildDashboardGrid(),
+              SizedBox(height: 30.h),
 
-            _buildMenuList()
-                .animate()
-                .fade(duration: 450.ms)
-                .slide(begin: const Offset(0, 0.1)),
-            SizedBox(height: 30.h),
-          ],
-        ),
-      ),
+              _buildMenuTitle(),
+              SizedBox(height: 12.h),
+
+              _buildMenuList(),
+              SizedBox(height: 30.h),
+            ],
+          ),
+        );
+      }),
+
     );
   }
 
   // HEADER
   Widget _buildHeader() {
+    final profile = dashboardController.profile.value;
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -72,23 +88,28 @@ class _MenuState extends State<Menu> {
         children: [
           CircleAvatar(
             radius: 35.r,
-            backgroundImage: const NetworkImage("https://i.pravatar.cc/150?img=3"),
+            backgroundColor: AppColor.lightGrey,
+            backgroundImage: profile?.avatar != null
+                ? NetworkImage(profile!.avatar)
+                : null,
+            child: profile?.avatar == null
+                ? const Icon(Icons.person, size: 30)
+                : null,
           ),
           SizedBox(width: 16.w),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Abishek Jr",
+                profile?.name ?? "USER",
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
-                  color: AppColor.black,
                 ),
               ),
               SizedBox(height: 4.h),
               Text(
-                "Role: $selectedRole",
+                "Role: ${profile?.role.role ?? "User"}",
                 style: TextStyle(
                   fontSize: 14.sp,
                   color: AppColor.textSecondary,
@@ -100,6 +121,7 @@ class _MenuState extends State<Menu> {
       ),
     );
   }
+
 
   // ROLE BUTTONS
   Widget _buildRoleButtons() {
@@ -153,29 +175,31 @@ class _MenuState extends State<Menu> {
 
   // 🔥 FIXED SIZE GRID
   Widget _buildDashboardGrid() {
-    List<Map<String, dynamic>> data = [
+    final controller = dashboardController;
+
+    final List<Map<String, dynamic>> data = [
       {
         "title": "Plot Enquiries",
-        "count": 23,
-        "percent": 70,
+        "count": controller.marketEnquiryCount.value,
+        "percent": controller.marketEnquiryCount.value > 0 ? 70 : 0,
         "color": AppColor.primary,
       },
       {
         "title": "Material Enquiries",
-        "count": 12,
-        "percent": 52,
+        "count": controller.materialEnquiryCount.value,
+        "percent": controller.materialEnquiryCount.value > 0 ? 55 : 0,
         "color": AppColor.orange,
       },
       {
-        "title": "Service Enquiries",
-        "count": 18,
-        "percent": 40,
+        "title": "Residential Enquiries",
+        "count": controller.residentialEnquiry.value,
+        "percent": controller.residentialEnquiry.value > 0 ? 40 : 0,
         "color": AppColor.secondary,
       },
       {
-        "title": "Visits Booked",
-        "count": 9,
-        "percent": 64,
+        "title": "My Properties",
+        "count": controller.myProperties.value,
+        "percent": controller.myProperties.value > 0 ? 60 : 0,
         "color": AppColor.green,
       },
     ];
@@ -188,7 +212,7 @@ class _MenuState extends State<Menu> {
         crossAxisCount: 2,
         crossAxisSpacing: 12.w,
         mainAxisSpacing: 12.h,
-        childAspectRatio: 0.92, // ⭐ PERFECT SIZE
+        childAspectRatio: 0.92,
       ),
       itemBuilder: (context, index) {
         final item = data[index];
@@ -201,6 +225,7 @@ class _MenuState extends State<Menu> {
       },
     );
   }
+
 
   // DASHBOARD CARD
   Widget _dashboardCard({
@@ -293,44 +318,59 @@ class _MenuState extends State<Menu> {
   Widget _buildMenuList() {
     return Column(
       children: [
-        _menuTile(Icons.info, "About Us"),
-        _menuTile(Icons.history, "Transaction Details"),
-        _menuTile(Icons.support_agent, "Support"),
-        _menuTile(Icons.logout, "Logout", isLogout: true),
+        _menuTile(Icons.info, "About Us", () => Get.to(()=>AboutUs())),
+        _menuTile(Icons.history, "Transaction Details",()=>Get.toNamed("/transaction")),
+        _menuTile(
+          Icons.support_agent,
+          "Support",
+              () async {
+            final uri = Uri.parse("https://cashback.vrikshatech.in/");
+
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            } else {
+              debugPrint("Could not launch $uri");
+            }
+          },
+        ),
+        _menuTile(Icons.logout, "Logout", isLogout: true, () => Get.offAllNamed("/login")),
       ],
     );
   }
 
-  Widget _menuTile(IconData icon, String title, {bool isLogout = false}) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColor.grey.withOpacity(0.18),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: isLogout ? AppColor.red : AppColor.primary),
-          SizedBox(width: 14.w),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: isLogout ? AppColor.red : AppColor.textMain,
-              fontWeight: FontWeight.w500,
+  Widget _menuTile(IconData icon, String title, GestureTapCallback ontap, {bool isLogout = false}) {
+    return GestureDetector(
+      onTap: ontap,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 10.h),
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: [
+            BoxShadow(
+              color: AppColor.grey.withOpacity(0.18),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isLogout ? AppColor.red : AppColor.primary),
+            SizedBox(width: 14.w),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: isLogout ? AppColor.red : AppColor.textMain,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          const Spacer(),
-          Icon(Icons.arrow_forward_ios, size: 16, color: AppColor.grey),
-        ],
+            const Spacer(),
+            Icon(Icons.arrow_forward_ios, size: 16, color: AppColor.grey),
+          ],
+        ),
       ),
     );
   }

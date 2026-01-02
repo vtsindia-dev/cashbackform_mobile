@@ -20,6 +20,9 @@ class Referrals extends StatefulWidget {
 }
 
 class _ReferralsState extends State<Referrals> {
+
+  final TextEditingController _referralCodeController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<SyndicatePlotController>();
@@ -110,6 +113,7 @@ class _ReferralsState extends State<Referrals> {
                   border: Border.all(color: Colors.grey.shade300),
                 ),
                 child: TextField(
+                  controller: _referralCodeController,
                   decoration: InputDecoration(
                     hintText: "Enter Referral Code",
                     border: InputBorder.none,
@@ -124,6 +128,8 @@ class _ReferralsState extends State<Referrals> {
             GestureDetector(
               onTap: () {
                 // TODO: Implement join functionality
+                Get.snackbar("Success", "Joined Successfully",colorText: Colors.white,backgroundColor: AppColor.green);
+                _referralCodeController.clear();
               },
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),

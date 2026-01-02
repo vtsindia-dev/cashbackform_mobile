@@ -126,7 +126,7 @@ class ServiceCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14.r),
                   child: Image.network(
-                    service.image,
+                    service.image.first,
                     width: imageWidth,
                     height: imageHeight,
                     fit: BoxFit.cover,

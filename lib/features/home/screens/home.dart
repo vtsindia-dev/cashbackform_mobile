@@ -81,7 +81,7 @@ class _HomeState extends State<Home> {
                         title: "Features Plot Market",
                         highlightWord: "Plot",
                         onViewAllTap: () {
-                          print("View All clicked");
+                          Get.toNamed('/plotMarket');
                         },
                       ),
                       const SizedBox(height: 10),
@@ -98,6 +98,7 @@ class _HomeState extends State<Home> {
                         title: "Top Professional Services",
                         highlightWord: "Professional",
                         onViewAllTap: () {
+                          Get.toNamed('/service');
                           print("View All clicked");
                         },
                       ),
@@ -115,6 +116,8 @@ class _HomeState extends State<Home> {
                         title: "Features GIOO Plot",
                         highlightWord: "GIOO",
                         onViewAllTap: () {
+                          Get.toNamed('/gioo');
+
                           print("View All clicked");
                         },
                       ),
@@ -132,6 +135,8 @@ class _HomeState extends State<Home> {
                         title: "Features Syndicate Plot ",
                         highlightWord: "Syndicate",
                         onViewAllTap: () {
+                          Get.toNamed('/syndicate');
+
                           print("View All clicked");
                         },
                       ),
@@ -149,6 +154,7 @@ class _HomeState extends State<Home> {
                         title: "Material Store",
                         highlightWord: "Material",
                         onViewAllTap: () {
+                          Get.toNamed('/materialStore');
                           print("View All clicked");
                         },
                       ),

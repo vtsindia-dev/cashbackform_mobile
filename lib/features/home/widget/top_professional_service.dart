@@ -29,6 +29,7 @@ class TopProfessionalService extends StatelessWidget {
                 height: 230,
                 onTap: () {
                   print("Tapped → ${item["title"]}");
+                  Get.toNamed('/service');
                 },
               )
                   .animate()

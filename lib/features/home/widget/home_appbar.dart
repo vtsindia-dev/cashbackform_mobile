@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
@@ -58,12 +59,13 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
 
                 // 🔥 Wrap Location text area with Obx
-                Expanded(
-                  child: InkWell(
-                    onTap: () => controller.refreshLocation(),
-                    child: Obx(() => _buildLocationText()),
-                  ),
-                ),
+                Expanded(child: Center(child: Text("Cashback Farms",style: TextStyle(fontSize: 20.sp),))),
+                // Expanded(
+                //   child: InkWell(
+                //     onTap: () => controller.refreshLocation(),
+                //     child: Obx(() => _buildLocationText()),
+                //   ),
+                // ),
 
                 // Menu Button
                 SizedBox(
@@ -83,9 +85,6 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // ================================
-  // LOCATION TEXT VIEW
-  // ================================
   Widget _buildLocationText() {
     return Column(
       mainAxisSize: MainAxisSize.min,

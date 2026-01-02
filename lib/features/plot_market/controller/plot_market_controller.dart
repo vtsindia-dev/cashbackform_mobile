@@ -38,6 +38,66 @@ class PlotMarketController extends GetxController {
     super.onInit();
     fetchMarketPlots();
   }
+
+  var isEnquiryLoading = false.obs;
+  var enquiryCount = 0.obs;
+  var message = ''.obs;
+
+  Future<void> sendEnquiry() async {
+    isEnquiryLoading.value = true;
+    final token = await SessionManager.getToken();
+    try {
+      final response = await dio.Dio().post(
+        ApiUrl.sendMarketEnquiry,
+        options: dio.Options(
+          headers: {
+            "Accept": "application/json",
+            if (token != null && token.isNotEmpty)
+              "Authorization": "Bearer $token",
+          },
+        ),
+      );
+
+      final data = response.data;
+
+      if (response.statusCode == 200 && data['status'] == true) {
+        enquiryCount.value = data['counts'];
+        message.value = data['message'];
+
+        Get.snackbar(
+          'Success',
+          "Enquiry Submitted successfully",
+          // message.value,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        Get.snackbar(
+          'Error',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          data['message'] ?? 'Something went wrong',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Network Error',
+        e.response?.data['message'] ?? e.message ?? 'Request failed',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isEnquiryLoading.value = false;
+    }
+  }
+
   Future<void> fetchMarketPlotDetail(int id) async {
     try {
       _clearDetailData();
@@ -371,6 +431,7 @@ class PlotMarketController extends GetxController {
           },
         ),
       );
+      print('🌐 Response status code: ${response.headers}');
       print('📥 Response status: ${response.statusCode}');
       print('📥 Response data: ${response.data}');
       if (response.statusCode == 200) {
@@ -383,6 +444,8 @@ class PlotMarketController extends GetxController {
           'data': responseData['data'],
         };
       } else {
+        print('Form Data : $formDataToSend');
+        print('🌐 Response status code: ${response.headers}');
         final errorMsg = response.data?['message'] ?? 'Failed to ${isUpdate ? 'update' : 'add'} market plot';
         print('❌ Error: $errorMsg');
         return {

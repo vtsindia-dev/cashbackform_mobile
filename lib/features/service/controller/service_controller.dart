@@ -5,12 +5,13 @@ import '../../../common/api_constant.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
-import '../model/service_model.dart' show Service;
+import '../model/service_model.dart' show Service, MaterialEnquiry, MaterialEnquiryResponse;
 import 'package:flutter/material.dart';
 class ServiceController extends GetxController {
   var isLoading = false.obs;
   var isLoadMore = false.obs;
   var myServices = <Service>[].obs;
+  var enquiries = <MaterialEnquiry>[].obs;
   var services = <Service>[].obs;
   var currentPage = 1.obs;
   var totalPages = 1.obs;
@@ -38,8 +39,8 @@ class ServiceController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchServices();
-    fetchMyServices();
+    // fetchServices();
+    // fetchMyServices();
 
   }
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
@@ -220,7 +221,7 @@ class ServiceController extends GetxController {
   String getServiceImage() {
     final service = serviceDetail.value;
     if (service?.image != null && service!.image.isNotEmpty) {
-      return service.image;
+      return service.image.first;
     }
     return 'assets/images/placeholder_service.png';
   }
@@ -497,11 +498,88 @@ class ServiceController extends GetxController {
   }
 
 
+  // Future<void> fetchMyServices({bool loadMore = false}) async {
+  //   try {
+  //     if ((isLoading.value && !loadMore) || (isLoadMore.value && loadMore)) {
+  //       return;
+  //     }
+  //     if (loadMore) {
+  //       if (!hasMoreData.value) return;
+  //       isLoadMore(true);
+  //     } else {
+  //       isLoading(true);
+  //       currentPage.value = 1;
+  //       hasMoreData.value = true;
+  //     }
+  //     final token = await SessionManager.getToken();
+  //     if (token == null || token.isEmpty) {
+  //       SnackBarHelper.showError('Please login to view your services');
+  //       resetLoadingStates();
+  //       return;
+  //     }
+  //     final url = '${ApiUrl.myServicesList}?page=${currentPage.value}';
+  //     print('📱 My Services URL: $url');
+  //     print('🔐 Token available, length: ${token.length}');
+  //     final response = await ApiService.getAuthenticatedRequest(url, token);
+  //     print('📥 My Services Response Status: ${response.statusCode}');
+  //     if (response.statusCode == 200) {
+  //       print('✅ My Services API call successful');
+  //     }
+  //     if (response.statusCode == 200) {
+  //       final responseData = response.data;
+  //       if (responseData != null &&
+  //           responseData['data'] != null &&
+  //           responseData['data']['material_enquiry'] != null) {
+  //         final dataMap = responseData['data'];
+  //         print(responseData);
+  //         final servicesData = dataMap['material_enquiry'];
+  //         final paginationData = dataMap['pagination'];
+  //         final List<Service> fetchedServices = _parseServices(servicesData);
+  //         if (loadMore) {
+  //           myServices.addAll(fetchedServices);
+  //         } else {
+  //           myServices.assignAll(fetchedServices);
+  //         }
+  //         currentPage.value = paginationData['current_page'] ?? 1;
+  //         totalPages.value = paginationData['last_page'] ?? 1;
+  //         totalItems.value = paginationData['total'] ?? fetchedServices.length;
+  //         hasMoreData.value = currentPage.value < totalPages.value;
+  //         print('✅ Loaded ${myServices.length} my services');
+  //         print('📄 Current page: $currentPage, Total pages: $totalPages');
+  //       } else {
+  //         print('❌ No my services found or invalid format');
+  //         errorMessage.value = 'No services found';
+  //         myServices.clear();
+  //       }
+  //     } else if (response.statusCode == 401) {
+  //       errorMessage.value = 'Session expired. Please login again.';
+  //       SnackBarHelper.showError('Session expired');
+  //       await SessionManager.clearSession();
+  //       Get.offAllNamed('/login');
+  //     } else if (response.statusCode == 403) {
+  //       errorMessage.value = 'Access denied';
+  //       SnackBarHelper.showError('You don\'t have permission to view these services');
+  //     } else {
+  //       final errorMsg = response.data?['message'] ?? 'Failed to load services';
+  //       errorMessage.value = errorMsg;
+  //       SnackBarHelper.showError(errorMsg);
+  //       print('❌ My Services API Error: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     errorMessage.value = 'Network error occurred';
+  //     SnackBarHelper.showError('Failed to load services');
+  //     debugPrint('❌ Error fetching my services: ${e.toString()}');
+  //   } finally {
+  //     resetLoadingStates();
+  //   }
+  // }
+
   Future<void> fetchMyServices({bool loadMore = false}) async {
     try {
       if ((isLoading.value && !loadMore) || (isLoadMore.value && loadMore)) {
         return;
       }
+
       if (loadMore) {
         if (!hasMoreData.value) return;
         isLoadMore(true);
@@ -509,68 +587,52 @@ class ServiceController extends GetxController {
         isLoading(true);
         currentPage.value = 1;
         hasMoreData.value = true;
+        enquiries.clear();
       }
+
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
-        SnackBarHelper.showError('Please login to view your services');
-        resetLoadingStates();
+        SnackBarHelper.showError('Please login');
         return;
       }
+
       final url = '${ApiUrl.myServicesList}?page=${currentPage.value}';
-      print('📱 My Services URL: $url');
-      print('🔐 Token available, length: ${token.length}');
+      debugPrint('🌐 Material Enquiry URL: $url');
+
       final response = await ApiService.getAuthenticatedRequest(url, token);
-      print('📥 My Services Response Status: ${response.statusCode}');
-      if (response.statusCode == 200) {
-        print('✅ My Services API call successful');
-      }
-      if (response.statusCode == 200) {
-        final responseData = response.data;
-        if (responseData != null &&
-            responseData['data'] != null &&
-            responseData['data']['services'] != null) {
-          final dataMap = responseData['data'];
-          final servicesData = dataMap['services'];
-          final paginationData = dataMap['pagination'];
-          final List<Service> fetchedServices = _parseServices(servicesData);
-          if (loadMore) {
-            myServices.addAll(fetchedServices);
-          } else {
-            myServices.assignAll(fetchedServices);
-          }
-          currentPage.value = paginationData['current_page'] ?? 1;
-          totalPages.value = paginationData['last_page'] ?? 1;
-          totalItems.value = paginationData['total'] ?? fetchedServices.length;
-          hasMoreData.value = currentPage.value < totalPages.value;
-          print('✅ Loaded ${myServices.length} my services');
-          print('📄 Current page: $currentPage, Total pages: $totalPages');
+
+      if (response.statusCode == 200 && response.data != null) {
+        /// ✅ MODEL PARSING
+        final result = MaterialEnquiryResponse.fromJson(response.data);
+
+        final fetchedList = result.data.materialEnquiry;
+        final pageInfo = result.data.pagination;
+
+        if (loadMore) {
+          enquiries.addAll(fetchedList);
         } else {
-          print('❌ No my services found or invalid format');
-          errorMessage.value = 'No services found';
-          myServices.clear();
+          enquiries.assignAll(fetchedList);
         }
-      } else if (response.statusCode == 401) {
-        errorMessage.value = 'Session expired. Please login again.';
-        SnackBarHelper.showError('Session expired');
-        await SessionManager.clearSession();
-        Get.offAllNamed('/login');
-      } else if (response.statusCode == 403) {
-        errorMessage.value = 'Access denied';
-        SnackBarHelper.showError('You don\'t have permission to view these services');
+
+        currentPage.value = pageInfo.currentPage;
+        totalPages.value = pageInfo.lastPage;
+        totalItems.value = pageInfo.total;
+        hasMoreData.value = currentPage.value < totalPages.value;
+
+        debugPrint('✅ Enquiries Loaded: ${enquiries.length}');
       } else {
-        final errorMsg = response.data?['message'] ?? 'Failed to load services';
-        errorMessage.value = errorMsg;
-        SnackBarHelper.showError(errorMsg);
-        print('❌ My Services API Error: ${response.statusCode}');
+        SnackBarHelper.showError('No enquiries found');
       }
     } catch (e) {
-      errorMessage.value = 'Network error occurred';
-      SnackBarHelper.showError('Failed to load services');
-      debugPrint('❌ Error fetching my services: ${e.toString()}');
+      SnackBarHelper.showError('Failed to load enquiries');
+      debugPrint('❌ fetchMaterialEnquiries error: $e');
     } finally {
-      resetLoadingStates();
+      isLoading(false);
+      isLoadMore(false);
     }
   }
+
+
   Future<void> loadMoreMyServices() async {
     if (!hasMoreData.value || isLoadMore.value || isLoading.value) {
       return;

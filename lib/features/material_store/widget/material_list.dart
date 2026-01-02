@@ -77,7 +77,7 @@ class MaterialListScreen extends StatelessWidget {
 
   Widget _buildCard(Material material) {
     return MaterialCard(
-      imageUrl: material.image,
+      imageUrl: material.image.first,
       name: material.materialName,
       category: material.category?.categoryName??'',
       status: material.status == 1 ? "Active" : "Inactive",

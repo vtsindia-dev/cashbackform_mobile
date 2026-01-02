@@ -792,9 +792,9 @@ class ProfileForm extends StatelessWidget {
                 icon: Icons.delete_outline,
                 title: 'Remove Photo',
                 color: Colors.red,
-                onTap: () {
-                  Get.back();
-                  controller.clearProfileImage();
+                onTap: () async {
+                  Get.back(); // close bottom sheet / dialog
+                  await controller.removeProfileImage();
                 },
               ),
             SizedBox(height: 16.h),

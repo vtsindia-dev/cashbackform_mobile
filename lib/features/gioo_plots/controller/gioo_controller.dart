@@ -525,7 +525,6 @@ class GiooPlotController extends GetxController {
   List<String> getAvailableCities() {
     return giooPlots.map((plot) => plot.city?.cityName ?? '').where((city) => city.isNotEmpty).toSet().toList();
   }
-
   List<String> getAvailableStates() {
     return giooPlots.map((plot) => plot.state?.stateName ?? '').where((state) => state.isNotEmpty).toSet().toList();
   }
@@ -551,7 +550,6 @@ class GiooPlotController extends GetxController {
   List<GiooPlot> _parseGiooPlots(List<dynamic> data) {
     return data.map((item) => GiooPlot.fromJson(item)).toList();
   }
-
   GiooPlot? getPlotById(int id) {
     try {
       return giooPlots.firstWhere((plot) => plot.id == id);
@@ -559,14 +557,12 @@ class GiooPlotController extends GetxController {
       return null;
     }
   }
-
   bool isPlotFavorite(int plotId) {
     return false;
   }
   void toggleFavorite(int plotId) {
     print('Toggled favorite for Gioo plot $plotId');
   }
-
   void toggleUnitSelection(int unitId) {
     final unitIndex = units.indexWhere((unit) => unit.id == unitId);
     if (unitIndex == -1) return;
@@ -593,7 +589,6 @@ class GiooPlotController extends GetxController {
 
     calculateTotals();
   }
-
   void calculateTotals() {
     final selectedUnitList =
     units.where((unit) => selectedUnits.contains(unit.id)).toList();
@@ -619,7 +614,6 @@ class GiooPlotController extends GetxController {
     print('   Total Price: ₹${totalFinalPrice.value}');
     print('====================');
   }
-
   String getSelectedUnitRange() {
     if (selectedUnits.isEmpty) return "No units selected";
 
@@ -630,35 +624,28 @@ class GiooPlotController extends GetxController {
       return "Units ${sortedUnits.first}-${sortedUnits.last}";
     }
   }
-
   String getSelectedUnitsString() {
     if (selectedUnits.isEmpty) return "";
     final sortedUnits = List.from(selectedUnits)..sort();
     return sortedUnits.join(',');
   }
-
   String formatCurrency(double amount) {
     return "₹${amount.toStringAsFixed(2)}";
   }
-
   void setPlotDetail(GiooPlotDetail detail) {
     giooPlotDetail.value = detail;
     _initializePlotData();
     generateAllPlotUnits();
   }
-
-  // Add this method to update available count properly
   void updateAvailableCount() {
     refresh();
   }
-
   @override
   void onClose() {
     _clearDetailData();
     super.onClose();
   }
 }
-
 class PlotUnit {
   final int id;
   final String label;

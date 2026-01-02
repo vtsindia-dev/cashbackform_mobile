@@ -304,7 +304,7 @@ class MaterialController extends GetxController {
   String getMaterialImage() {
     final material = materialDetail.value;
     if (material?.image != null && material!.image.isNotEmpty) {
-      return material.image;
+      return material.image.first;
     }
     return 'assets/images/placeholder_material.png';
   }

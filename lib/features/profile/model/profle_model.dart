@@ -65,7 +65,9 @@ class ProfileModel {
       phone: json['phone']?.toString() ?? '',
       gender: (json['gender'] is int) ? json['gender'] as int : int.tryParse('${json['gender'] ?? 0}') ?? 0,
       dob: json['dob']?.toString(),
-      pinCode: json['pin_code']?.toString() ?? json['pinCode']?.toString(),
+      pinCode: json['pin']?.toString() ??
+          json['pin_code']?.toString() ??
+          json['pinCode']?.toString(),
       address: json['address']?.toString(),
       profileImage: json['profile_image']?.toString() ?? json['avatar']?.toString(),
       isEmailVerifiedBool: parseBool(json['is_email_verified'] ?? json['email_verified'] ?? 0),

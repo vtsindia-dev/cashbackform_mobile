@@ -1,6 +1,7 @@
 // profile_controller.dart
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -45,6 +46,52 @@ class ProfileController extends GetxController {
     super.onClose();
   }
 
+  final RxBool isRemovingImage = false.obs;
+
+  Future<void> removeProfileImage() async {
+    if (isRemovingImage.value) return;
+
+    try {
+      isRemovingImage(true);
+
+      final token = await SessionManager.getToken();
+
+      final response = await dio.Dio().post(
+        "http://admincashback.vrikshatech.in/public/api/v2/profile-image-remove",
+        options: dio.Options(
+          headers: {
+            "Accept": "application/json",
+            if (token != null && token.isNotEmpty)
+              "Authorization": "Bearer $token",
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 &&
+          response.data?['status'] == 200) {
+
+        final message =
+            response.data?['message'] ?? 'Profile image removed';
+
+        SnackBarHelper.showSuccess(message);
+        await fetchProfile();
+
+        // Optional: refresh profile data
+        update();
+      } else {
+        final errorMessage =
+            response.data?['message'] ?? 'Failed to remove profile image';
+        SnackBarHelper.showError(errorMessage);
+      }
+    } catch (e) {
+      SnackBarHelper.showError('Network error. Please try again.');
+      print('❌ Remove profile image error: $e');
+    } finally {
+      isRemovingImage(false);
+    }
+  }
+
+
   Future<void> fetchProfile() async {
     try {
       isLoading(true);
@@ -60,10 +107,12 @@ class ProfileController extends GetxController {
       final response = await ApiService.getProfile(token);
       if (response.statusCode == 200) {
         final responseData = response.data;
+        print(responseData);
         if (responseData != null && responseData['data'] != null) {
           profile.value = ProfileModel.fromJson(responseData['data']);
           _prefillFormData();
           print('✅ Profile data loaded successfully');
+          print(responseData);
         } else {
           errorMessage('Invalid response format from server');
           SnackBarHelper.showError('Failed to load profile data');
@@ -178,8 +227,11 @@ class ProfileController extends GetxController {
 
   // Prefill form data from profile
   void _prefillFormData() {
-    if (profile.value != null) {
-      final p = profile.value!;
+    if (profile.value == null) return;
+
+    final p = profile.value!;
+
+    Future.microtask(() {
       firstNameController.text = p.firstName;
       lastNameController.text = p.lastName;
       emailController.text = p.email;
@@ -189,8 +241,23 @@ class ProfileController extends GetxController {
       pinCodeController.text = p.pinCode ?? '';
       addressController.text = p.address ?? '';
       profileImageUrl.value = p.profileImage ?? '';
-    }
+    });
   }
+
+  // void _prefillFormData() {
+  //   if (profile.value != null) {
+  //     final p = profile.value!;
+  //     firstNameController.text = p.firstName;
+  //     lastNameController.text = p.lastName;
+  //     emailController.text = p.email;
+  //     phoneController.text = p.phone;
+  //     selectedGender.value = p.gender;
+  //     dobController.text = p.dob ?? '';
+  //     pinCodeController.text = p.pinCode ?? '';
+  //     addressController.text = p.address ?? '';
+  //     profileImageUrl.value = p.profileImage ?? '';
+  //   }
+  // }
 
   // Validate form
   bool _validateForm() {

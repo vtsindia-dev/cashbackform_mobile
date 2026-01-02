@@ -674,7 +674,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
       color = AppColor.primary;
       icon = Icons.person;
     } else if (unit.status == 'AdminBooked') {
-      color = AppColor.primary;
+      color = AppColor.red;
       icon = Icons.person;
     } else if (isTempSelected && _isSelectionMode) {
       color = AppColor.orange.withOpacity(0.7);

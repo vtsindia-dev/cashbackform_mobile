@@ -1,3 +1,5 @@
+import 'package:cashback_farms/features/about/screens/about_us.dart';
+import 'package:cashback_farms/features/contact/screens/contact_us.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
@@ -7,6 +9,7 @@ import '../../../common/widget/imagepicker.dart';
 import '../../../common/route/router.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../home/controller/delete_account_controller.dart';
 
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
@@ -18,6 +21,7 @@ class CustomDrawer extends StatefulWidget {
 class _CustomDrawerState extends State<CustomDrawer> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
+
 
   @override
   void initState() {
@@ -55,9 +59,12 @@ class _CustomDrawerState extends State<CustomDrawer> {
   String get _userProfileImage {
     return userData?['profile_image'] ?? "https://i.pravatar.cc/300?img=12";
   }
+  DeleteAccountController deleteAccountController = Get.put(DeleteAccountController());
 
   @override
   Widget build(BuildContext context) {
+
+
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.72,
       child: Drawer(
@@ -70,15 +77,15 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 padding: EdgeInsets.zero,
                 children: [
                   _menuOption(context, asset: Images.profile, title: 'Profile', onTap: () => Get.toNamed('/profile')),
-                  _menuOption(context, asset: Images.plotMarketplace, title: 'Plot Properties', onTap: () => Navigator.pop(context)),
-                  _menuOption(context, asset: Images.GiooPlots, title: 'GIOO Plots', onTap: () => Navigator.pop(context)),
-                  _menuOption(context, asset: Images.syndicatePlots, title: 'Syndicate Plots', onTap: () => Navigator.pop(context)),
-                  _menuOption(context, asset: Images.materialStore, title: 'Material Store', onTap: () => Navigator.pop(context)),
+                  _menuOption(context, asset: Images.plotMarketplace, title: 'Plot Properties', onTap: () => Get.toNamed('/plotMarket')),
+                  _menuOption(context, asset: Images.GiooPlots, title: 'GIOO Plots', onTap: () => Get.toNamed('/gioo')),
+                  _menuOption(context, asset: Images.syndicatePlots, title: 'Syndicate Plots', onTap: () => Get.toNamed('/syndicate')),
+                  _menuOption(context, asset: Images.materialStore, title: 'Material Store', onTap: () => Get.toNamed('/materialStore')),
                   _menuOption(context, asset: Images.productEnquiry, title: 'My Product Enquiry', onTap: () => Get.toNamed('/myMaterialList')),
                   _menuOption(context, asset: Images.service, title: 'My Service Enquiry', onTap: () => Get.toNamed('/myServiceList')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Property', onTap: () => Get.toNamed('/myProperty')),
-                  _menuOption(context, asset: Images.aboutUs, title: 'About Us', onTap: () => Navigator.pop(context)),
-                  _menuOption(context, asset: Images.contactUs, title: 'Contact Us', onTap: () => Navigator.pop(context)),
+                  _menuOption(context, asset: Images.aboutUs, title: 'About Us', onTap: () => Get.to(()=>AboutUs())),
+                  _menuOption(context, asset: Images.contactUs, title: 'Contact Us', onTap: () => Get.to(()=>ContactUs())),
                   _menuOption(context, asset: Images.logout, title: 'Logout', onTap: () => _showLogoutConfirmation(context)),
                   _menuOption(context, asset: Images.delete, title: 'Delete Account', delete: true, onTap: () => _showDeleteAccountConfirmation(context),
                   ),
@@ -303,102 +310,125 @@ class _CustomDrawerState extends State<CustomDrawer> {
       },
     );
   }
+
   void _showDeleteAccountConfirmation(BuildContext context) {
     Navigator.pop(context);
+
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: AppColor.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColor.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(40),
+        return Obx(() {
+          final isDeleting = deleteAccountController.isDeleting.value;
+
+          return AlertDialog(
+            backgroundColor: AppColor.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(35),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColor.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  child: Image.asset(Images.delete),
                 ),
-                child: Image.asset(
-                  Images.delete,
-                  fit: BoxFit.contain,
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Delete Account',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
+
+                const SizedBox(height: 10),
+
+                const Text(
+                  'This action cannot be undone. All your data will be permanently deleted.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'This action cannot be undone. All your data will be permanently deleted.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColor.black,
-                  fontWeight: FontWeight.bold
-                ),
-              ),
-              const SizedBox(height: 25),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+
+                const SizedBox(height: 25),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: isDeleting
+                            ? null
+                            : () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                        side: BorderSide(color: Colors.grey.shade400),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.bold,
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await _performDeleteAccount();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isDeleting
+                            ? null
+                            : () async {
+                          await deleteAccountController.deleteAccount();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                        child: isDeleting
+                            ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                            : const Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
+                  ],
+                ),
+              ],
+            ),
+          );
+        });
       },
     );
   }
+
+
   Future<void> _performLogout() async {
     try {
       Get.dialog(

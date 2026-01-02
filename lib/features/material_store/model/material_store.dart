@@ -4,7 +4,7 @@ class Material {
   final String materialName;
   final int categoryId;
   final String description;
-  final String image;
+  final List<String> image;
   final int status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -43,7 +43,7 @@ class Material {
       materialName: json['material_name'] ?? '',
       categoryId: json['category_id'] ?? 0,
       description: json['description'] ?? '',
-      image: json['image'] ?? '',
+      image: json['image'] != null ? List<String>.from(json['image']) : [],
       status: json['status'] ?? 0,
       createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toIso8601String()),

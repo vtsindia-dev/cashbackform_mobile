@@ -240,7 +240,7 @@ class _DashboardState extends State<Dashboard> {
               _buildNavItem(Images.service, "Service", 1, isCart: false),
               const SizedBox(width: 40),
               _buildNavItem(Images.materialStore, "Material", 2),
-              _buildNavItem(Images.profile, "Menu", 3),
+              _buildNavItem(Images.profile, "Profile", 3),
             ],
           ),
         ),

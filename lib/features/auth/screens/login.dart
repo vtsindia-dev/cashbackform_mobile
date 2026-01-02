@@ -152,7 +152,7 @@ class _LoginState extends State<Login> {
           'Tap "Auto-fill" to use your device\'s phone number',
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade600,
+            color: Colors.black,
             fontStyle: FontStyle.italic,
           ),
         ),
