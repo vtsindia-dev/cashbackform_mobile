@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:permission_handler/permission_handler.dart';
@@ -178,6 +179,7 @@ class AuthController extends GetxController with CodeAutoFill {
       isLoading(false);
     }
   }
+// In your AuthController verifyOtp method
   Future<void> verifyOtp(String otp) async {
     try {
       isLoading(true);
@@ -194,39 +196,62 @@ class AuthController extends GetxController with CodeAutoFill {
           },
         );
 
-        print("Login Response Status: ${loginResponse.statusCode}");
-        print("Login Response Data: ${loginResponse.data}");
+        print("=== FULL LOGIN RESPONSE ===");
+        print("Status: ${loginResponse.statusCode}");
+        print("Data: ${loginResponse.data}");
+        print("=== END RESPONSE ===");
 
         if (loginResponse.statusCode == 200) {
-          SnackBarHelper.showSuccess("Login Successful!");
+          final responseData = loginResponse.data;
 
-          final userData = loginResponse.data['data']['user'];
-          final token = loginResponse.data['data']['token'];
+          // Check different possible response structures
+          Map<String, dynamic>? userData;
+          String? token;
 
-          print('Extracted User Data: $userData');
-          print('Token: $token');
+          if (responseData['data'] != null) {
+            // Structure: {data: {user: {...}, token: '...'}}
+            userData = responseData['data']['user'];
+            token = responseData['data']['token'];
+          } else {
+            // Structure: {user: {...}, token: '...'}
+            userData = responseData['user'];
+            token = responseData['token'];
+          }
 
+          // Alternative token field names
+          token ??= responseData['access_token'];
+          token ??= responseData['auth_token'];
+
+          if (userData == null || token == null) {
+            print('❌ ERROR: Could not extract user data or token');
+            print('   Available keys: ${responseData.keys}');
+            SnackBarHelper.showError("Invalid response from server");
+            return;
+          }
+
+          print('✅ Extracted user data: $userData');
+          print('✅ Extracted token: ${token.substring(0, min(token.length, 20))}...');
+
+          // Save session
           await SessionManager.saveUserSession(userData, token: token);
 
-          final isLoggedIn = await SessionManager.isLoggedIn();
-          print('After login - isLoggedIn: $isLoggedIn');
-
-          if (isLoggedIn) {
+          // Verify token was saved
+          final savedToken = await SessionManager.getToken();
+          if (savedToken != null && savedToken.isNotEmpty) {
+            SnackBarHelper.showSuccess("Login Successful!");
             await cancel();
             Get.offAllNamed('/dashboard');
             reset();
           } else {
-            SnackBarHelper.showError("Session not saved properly");
-            await cancel();
-            reset();
+            print('❌ ERROR: Token was not saved!');
+            SnackBarHelper.showError("Failed to save session");
           }
         } else if (loginResponse.statusCode == 404) {
           SnackBarHelper.showInfo("New user! Redirecting to registration...");
           await cancel();
           Get.toNamed('/register', arguments: {"phone": phoneNumber.value});
         } else {
-          SnackBarHelper.showError(
-              loginResponse.data["message"]?.toString() ?? "Login failed");
+          SnackBarHelper.showError("Login failed");
         }
       } else {
         SnackBarHelper.showError("Invalid OTP");
@@ -237,8 +262,7 @@ class AuthController extends GetxController with CodeAutoFill {
     } finally {
       isLoading(false);
     }
-  }
-  Future<void> register() async {
+  }  Future<void> register() async {
     try {
       if (!_validateForm()) return;
 

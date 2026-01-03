@@ -1,6 +1,6 @@
 class ApiUrl {
-  // static const String baseUrl = "http://192.168.1.114/admincashback/public";
-  static const String baseUrl = "https://admincashback.vrikshatech.in/public";
+  static const String baseUrl = "http://192.168.1.114/admincashback/public";
+  // static const String baseUrl = "https://admincashback.vrikshatech.in/public";
   static const String login = "$baseUrl/api/v2/login";
   static const String otp = "$baseUrl/api/v2/otp";
   static const String register = "$baseUrl/api/v2/register";
@@ -48,6 +48,8 @@ class ApiUrl {
   static const String featuredMarket = '$baseUrl/api/v2/market/featured';
   static const String featuredGioo = "$baseUrl/api/v2/geo/featured";
 
-
+  static const String giooBuyingList = '$baseUrl/api/v2/gioo_buying_list';
+  static const String giooBuyingListDetails = '$baseUrl/api/v2/gioo_buying_list_details';
+  static const String giooBuyingCancelRequest = '$baseUrl/api/v2/gioo_buying_cancel_request';
 // static const String featuredMarket = '$baseUrl//api/v2/market/featured';
 }

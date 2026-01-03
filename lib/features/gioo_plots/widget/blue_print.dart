@@ -39,7 +39,7 @@ class _BluePrintState extends State<BluePrint> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
       child: Obx(() {
-        final String? bluePrintUrl = controller.giooPlotDetail.value?.image[0];
+        final String? bluePrintUrl = controller.giooPlotDetail.value?.bluePrint;
         final String imageUrl = bluePrintUrl?.isNotEmpty == true
             ? bluePrintUrl!
             : 'https://via.placeholder.com/600x400?text=Plot+Blueprint+Unavailable';

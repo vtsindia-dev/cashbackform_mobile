@@ -25,7 +25,7 @@ class AboutGiooPlot extends StatelessWidget {
       final totalArea = "${detail?.area} Sq.Ft";
       final ulpin = detail?.uldNo ?? '';
       final totalPrize = "₹  ${detail?.totalPrice}";
-      final images = detail?.image.isNotEmpty == true ? detail!.image : ["http://192.168.1.114/admincashback/public/uploads/property/1764237164_Group%201597885062.png",];
+      final images = detail?.images.isNotEmpty == true ? detail!.images : ["http://192.168.1.114/admincashback/public/uploads/property/1764237164_Group%201597885062.png",];
       final description = detail?.description ?? 'No description available';
 
       return Container(

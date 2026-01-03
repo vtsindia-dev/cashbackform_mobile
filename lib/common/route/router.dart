@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 
 import '../../features/auth/screens/login.dart';
 import '../../features/dashboard/screens/dashboard.dart';
+import '../../features/gioo_plots/screens/owned_plots.dart';
 import '../../features/home/screens/home.dart';
 import '../../features/material_store/screens/materialstore_details.dart';
 import '../../features/plot_market/screens/myplot_list.dart';
@@ -39,6 +40,7 @@ class AppRoutes {
   static const String myProperty = '/myProperty';
   static const String myServiceList = '/myServiceList';
   static const String myMaterialList = '/myMaterialList';
+  static const String ownedplotlist = '/ownedplotlist';
   static List<GetPage> routes = [
     GetPage(
       name: splash,
@@ -73,6 +75,11 @@ class AppRoutes {
     GetPage(
       name: myMaterialList,
       page: () => MyMaterialList(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: ownedplotlist,
+      page: () => GiooBuyingListWidget(),
       transition: Transition.cupertino,
     ), GetPage(
       name: service,
@@ -151,6 +158,7 @@ class AppRoutes {
 
   ];
   static void toDashboard() => Get.offAllNamed(dashboard);
+  static void toOwnedGioPlotList() => Get.offAllNamed(ownedplotlist);
   static void toLogin() => Get.offAllNamed(login);
   static void toProfile() => Get.toNamed(profile);
   static void toHome() => Get.offAllNamed(home);

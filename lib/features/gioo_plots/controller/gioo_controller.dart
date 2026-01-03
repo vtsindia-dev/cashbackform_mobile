@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:cashback_farms/common/widget/sessionhandler.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
@@ -6,26 +9,48 @@ import '../../../common/widget/toster.dart';
 import '../../payment/controller/razorpay_controller.dart';
 import '../model/gioo_plot.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 class GiooPlotController extends GetxController {
   var isLoading = false.obs;
   var isLoadMore = false.obs;
   var giooPlots = <GiooPlot>[].obs;
   var currentPage = 1.obs;
+  final ScrollController gridScrollController = ScrollController();
+  int firstAvailablePlotIndex = 0;
+  bool hasFoundFirstAvailable = false;
   var totalPages = 1.obs;
   var hasMoreData = true.obs;
   var totalItems = 0.obs;
   var searchQuery = ''.obs;
   var selectedCity = ''.obs;
   var selectedState = ''.obs;
+  var selectedPlotTypes = <String>[].obs;
   var minPrice = ''.obs;
   var maxPrice = ''.obs;
   var isLoadingDetail = false.obs;
   var giooPlotDetail = Rxn<GiooPlotDetail>();
   var errorMessage = ''.obs;
   var isExpanded = false.obs;
+  var minAreaSqft = ''.obs;
+  var maxAreaSqft = ''.obs;
   var isDescriptionExpanded = false.obs;
   var selectedStatsType = "Weekly".obs;
   var pricePerUnit = 0.0.obs;
+  var isLoadingBuyingList = false.obs;
+  var isLoadingBuyingDetail = false.obs;
+  var isLoadingCancelRequest = false.obs;
+
+  var buyingList = <GiooBuyingList>[].obs;
+  var buyingListPage = 1.obs;
+  var hasMoreBuyingData = true.obs;
+  var totalBuyingPages = 1.obs;
+
+  var buyingDetailList = <GiooBuyingDetail>[].obs;
+  var buyingDetailPage = 1.obs;
+  var hasMoreBuyingDetailData = true.obs;
+  var totalBuyingDetailPages = 1.obs;
+
+  var selectedTransactionId = Rxn<int>();
   RxInt get selectedCount => units.where((u) => u.status == 'Selected').length.obs;
   RxInt get bookedCount => units.where((u) => u.status == 'Booked').length.obs;
   RxInt get availableCount => units.where((u) => u.status == 'Available').length.obs;
@@ -59,6 +84,17 @@ class GiooPlotController extends GetxController {
     super.onInit();
     fetchGiooPlots();
     updateStats("Weekly");
+    fetchGiooBuyingList();
+
+  }
+  void findFirstAvailablePlot() {
+    for (int i = 0; i < units.length; i++) {
+      if (units[i].status == 'Available' || units[i].status == 'Open') {
+        firstAvailablePlotIndex = i;
+        hasFoundFirstAvailable = true;
+        break;
+      }
+    }
   }
   void updateStats(String type) {
     selectedStatsType.value = type;
@@ -77,6 +113,21 @@ class GiooPlotController extends GetxController {
       overallProfit.value = 18000;
       overallProfitPercent.value = 62;
     }
+  }
+  bool hasFiltersApplied() {
+    return searchQuery.isNotEmpty ||
+        selectedPlotTypes.isNotEmpty ||
+        minPrice.isNotEmpty ||
+        maxPrice.isNotEmpty ||
+        minAreaSqft.isNotEmpty;
+  }
+
+  int getActiveFilterCount() {
+    int count = selectedPlotTypes.length;
+    if (searchQuery.isNotEmpty) count++;
+    if (minPrice.isNotEmpty || maxPrice.isNotEmpty) count++;
+    if (minAreaSqft.isNotEmpty) count++;
+    return count;
   }
   Future<void> fetchGiooPlots({bool loadMore = false}) async {
     try {
@@ -439,7 +490,7 @@ class GiooPlotController extends GetxController {
       print('💰 Price per sqft: ${detail.price}');
       print('📏 Total Plot Slots (area field): ${detail.area}');
       print('🔢 Unit Split: ${detail.unitSpilt}');
-      print('🖼️ Images: ${detail.image.length}');
+      print('🖼️ Images: ${detail.images.length}');
       print('📄 Documents: ${detail.documents.length}');
       print('🛠️ Work: ${detail.work}');
       print('👨‍💼 Agent ID: ${detail.agentId}');
@@ -471,8 +522,8 @@ class GiooPlotController extends GetxController {
   }
   String getPrimaryImage() {
     final detail = giooPlotDetail.value;
-    if (detail?.image != null && detail!.image.isNotEmpty) {
-      return detail.image.first;
+    if (detail?.images != null && detail!.images.isNotEmpty) {
+      return detail.images.first;
     }
     return detail?.plotImage ?? '';
   }
@@ -482,8 +533,8 @@ class GiooPlotController extends GetxController {
     if (detail?.plotImage != null && detail!.plotImage.isNotEmpty) {
       allImages.add(detail.plotImage);
     }
-    if (detail?.image != null && detail!.image.isNotEmpty) {
-      allImages.addAll(detail.image);
+    if (detail?.images != null && detail!.images.isNotEmpty) {
+      allImages.addAll(detail.images);
     }
     return allImages.toSet().toList();
   }
@@ -530,21 +581,31 @@ class GiooPlotController extends GetxController {
   }
   String _buildQueryParams() {
     final params = <String>[];
+
     if (searchQuery.value.isNotEmpty) {
       params.add('search=${Uri.encodeComponent(searchQuery.value)}');
     }
+
     if (selectedCity.value.isNotEmpty) {
       params.add('city=${Uri.encodeComponent(selectedCity.value)}');
     }
-    if (selectedState.value.isNotEmpty) {
-      params.add('state=${Uri.encodeComponent(selectedState.value)}');
+
+    if (selectedPlotTypes.isNotEmpty) {
+      params.add('plot_type=${selectedPlotTypes.join(",")}');
     }
+
     if (minPrice.value.isNotEmpty) {
-      params.add('min_price=${Uri.encodeComponent(minPrice.value)}');
+      params.add('min_price=${minPrice.value}');
     }
+
     if (maxPrice.value.isNotEmpty) {
-      params.add('max_price=${Uri.encodeComponent(maxPrice.value)}');
+      params.add('max_price=${maxPrice.value}');
     }
+
+    if (minAreaSqft.value.isNotEmpty) {
+      params.add('area_sqft=${minAreaSqft.value}');
+    }
+
     return params.isEmpty ? '' : '&${params.join('&')}';
   }
   List<GiooPlot> _parseGiooPlots(List<dynamic> data) {
@@ -639,6 +700,320 @@ class GiooPlotController extends GetxController {
   }
   void updateAvailableCount() {
     refresh();
+  }
+
+
+  Future<void> fetchGiooBuyingList({bool loadMore = false}) async {
+    try {
+      // DEBUG: Check session status
+      await SessionManager.debugSession();
+
+
+      // Get token
+      final String? token = await SessionManager.getToken();
+
+      if (token == null || token.isEmpty) {
+        print('the token....$token');
+        SnackBarHelper.showError('Authentication failed. Please login again.');
+        // await SessionManager.clearSession();
+        isLoadingBuyingList(false);
+        return;
+      }
+
+      if (loadMore) {
+        if (!hasMoreBuyingData.value) return;
+        buyingListPage.value++;
+      } else {
+        isLoadingBuyingList(true);
+        buyingListPage.value = 1;
+        hasMoreBuyingData.value = true;
+        buyingList.clear();
+      }
+
+      final url = '${ApiUrl.giooBuyingList}?page=${buyingListPage.value}';
+      print('🌐 Fetching Gioo Buying List URL: $url');
+
+      // Add headers with token
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      final response = await ApiService.getRequest(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData['status'] == true) {
+          final giooBuyingResponse = GiooBuyingListResponse.fromJson(responseData);
+
+          if (loadMore) {
+            buyingList.addAll(giooBuyingResponse.data);
+          } else {
+            buyingList.assignAll(giooBuyingResponse.data);
+          }
+
+          totalBuyingPages.value = giooBuyingResponse.pagination.lastPage;
+          hasMoreBuyingData.value = buyingListPage.value < totalBuyingPages.value;
+
+          print('✅ Fetched ${buyingList.length} buying records');
+          print('📄 Current page: $buyingListPage, Total pages: $totalBuyingPages');
+        } else {
+          SnackBarHelper.showError(responseData['message'] ?? "Failed to fetch buying list");
+          print('❌ API Error: ${responseData['message']}');
+        }
+      } else if (response.statusCode == 401) {
+        SnackBarHelper.showError("Session expired. Please login again.");
+      } else if (response.statusCode == 403) {
+        SnackBarHelper.showError("You don't have permission to access this");
+      } else if (response.statusCode == 404) {
+        SnackBarHelper.showError("Resource not found");
+      } else {
+        SnackBarHelper.showError("Failed to fetch buying list: ${response.statusCode}");
+        print('❌ Error fetching buying list: ${response.data}');
+      }
+    } catch (e) {
+      SnackBarHelper.showError("Network error: $e");
+      print('❌ Network error fetching buying list: $e');
+    } finally {
+      isLoadingBuyingList(false);
+    }
+  }
+  Future<void> fetchGiooBuyingListDetails({bool loadMore = false, int? transactionId}) async {
+    try {
+      if (transactionId != null) {
+        selectedTransactionId.value = transactionId;
+      }
+
+      final txnId = transactionId ?? selectedTransactionId.value;
+      if (txnId == null) {
+        SnackBarHelper.showError("Transaction ID is required");
+        return;
+      }
+
+      // Check token first
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) {
+        print('❌ No token found for details fetch');
+        SnackBarHelper.showError('Please login');
+        isLoadingBuyingDetail(false);
+        return;
+      }
+
+      if (loadMore) {
+        if (!hasMoreBuyingDetailData.value) return;
+        buyingDetailPage.value++;
+      } else {
+        isLoadingBuyingDetail(true);
+        buyingDetailPage.value = 1;
+        hasMoreBuyingDetailData.value = true;
+        buyingDetailList.clear();
+      }
+
+      final url = '${ApiUrl.giooBuyingListDetails}?tran_id=$txnId&page=${buyingDetailPage.value}';
+      print('🌐 Fetching Gioo Buying Details URL: $url');
+
+      // Add headers with token
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      final response = await ApiService.getRequest(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData['status'] == true) {
+          final detailResponse = GiooBuyingDetailResponse.fromJson(responseData);
+
+          if (loadMore) {
+            buyingDetailList.addAll(detailResponse.data);
+          } else {
+            buyingDetailList.assignAll(detailResponse.data);
+          }
+
+          totalBuyingDetailPages.value = detailResponse.pagination.lastPage;
+          hasMoreBuyingDetailData.value = buyingDetailPage.value < totalBuyingDetailPages.value;
+
+          print('✅ Fetched ${buyingDetailList.length} buying detail records');
+        } else {
+          SnackBarHelper.showError(responseData['message'] ?? "Failed to fetch buying details");
+          print('❌ API Error: ${responseData['message']}');
+        }
+      } else if (response.statusCode == 401) {
+        print('🔐 Session expired (401) for details');
+        SnackBarHelper.showError("Session expired. Please login again.");
+      } else if (response.statusCode == 403) {
+        SnackBarHelper.showError("You don't have permission to view these details");
+      } else if (response.statusCode == 404) {
+        SnackBarHelper.showError("Transaction details not found");
+      } else {
+        SnackBarHelper.showError("Failed to fetch buying details: ${response.statusCode}");
+        print('❌ Error fetching buying details: ${response.data}');
+      }
+    } catch (e) {
+      SnackBarHelper.showError("Network error: $e");
+      print('❌ Network error fetching buying details: $e');
+    } finally {
+      isLoadingBuyingDetail(false);
+    }
+  }
+  Future<void> cancelGiooBuyingRequest(int buyingId) async {
+    try {
+      isLoadingCancelRequest(true);
+
+      // Get the token using SessionManager
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) {
+        print('❌ No token found for cancellation');
+        SnackBarHelper.showError('Please login');
+        isLoadingCancelRequest(false);
+        return;
+      }
+
+      final url = '${ApiUrl.giooBuyingCancelRequest}/$buyingId';
+      print('🌐 Cancelling Gioo Buying Request URL: $url');
+
+      // Add headers with token for GET request
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      // Use GET method for cancel API
+      final response = await ApiService.getRequest(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData['status'] == true) {
+          SnackBarHelper.showSuccess(responseData['message'] ?? 'Cancellation request submitted successfully');
+
+          // Update the item in the list
+          final index = buyingList.indexWhere((item) => item.id == buyingId);
+          if (index != -1) {
+            // Create a copy with updated status from response
+            final updatedItem = buyingList[index];
+            final data = responseData['data'] ?? {};
+
+            buyingList[index] = GiooBuyingList(
+              id: updatedItem.id,
+              propertyId: updatedItem.propertyId,
+              userId: updatedItem.userId,
+              units: updatedItem.units,
+              amount: updatedItem.amount,
+              transactionId: updatedItem.transactionId,
+              returnAmount: data['refund_amount'] != null
+                  ? double.tryParse(data['refund_amount'].toString())
+                  : updatedItem.returnAmount,
+              returnDate: data['return_date'] != null
+                  ? DateTime.parse(data['return_date'])
+                  : DateTime.now(),
+              createdAt: updatedItem.createdAt,
+              updatedAt: DateTime.now(),
+              transaction: Transaction(
+                id: updatedItem.transaction.id,
+                transactionId: updatedItem.transaction.transactionId,
+                paymentMode: updatedItem.transaction.paymentMode,
+                transactionDetails: updatedItem.transaction.transactionDetails,
+                amount: updatedItem.transaction.amount,
+                isCompleted: updatedItem.transaction.isCompleted,
+                status: data['cancel_status'] == 1 ? 'cancelled' : updatedItem.transaction.status,
+                propertyId: updatedItem.transaction.propertyId,
+                userId: updatedItem.transaction.userId,
+                type: updatedItem.transaction.type,
+                createdAt: updatedItem.transaction.createdAt,
+                updatedAt: DateTime.now(),
+                user: updatedItem.transaction.user,
+              ),
+              property: updatedItem.property,
+            );
+
+            // Refresh the list
+            buyingList.refresh();
+            print('✅ Updated item $buyingId with cancellation status');
+          }
+        } else {
+          SnackBarHelper.showError(responseData['message'] ?? 'Failed to submit cancellation request');
+        }
+      } else if (response.statusCode == 401) {
+        print('🔐 Session expired (401) during cancellation');
+        SnackBarHelper.showError("Session expired. Please login again.");
+      } else if (response.statusCode == 403) {
+        SnackBarHelper.showError("You don't have permission to cancel this booking");
+      } else if (response.statusCode == 404) {
+        SnackBarHelper.showError("Booking not found");
+      } else if (response.statusCode == 422) {
+        SnackBarHelper.showError("Invalid request. Please check the details");
+      } else {
+        SnackBarHelper.showError("Failed to cancel request: ${response.statusCode}");
+        print('❌ Error cancelling request: ${response.data}');
+      }
+    } catch (e) {
+      SnackBarHelper.showError("Network error: $e");
+      print('❌ Network error cancelling request: $e');
+    } finally {
+      isLoadingCancelRequest(false);
+    }
+  }
+
+
+  Future<void> loadMoreBuyingList() async {
+    if (!isLoadingBuyingList.value && hasMoreBuyingData.value) {
+      await fetchGiooBuyingList(loadMore: true);
+    }
+  }
+
+  Future<void> loadMoreBuyingDetails() async {
+    if (!isLoadingBuyingDetail.value && hasMoreBuyingDetailData.value) {
+      await fetchGiooBuyingListDetails(loadMore: true);
+    }
+  }
+
+  // Helper methods
+  List<String> getUnitsList(String unitsString) {
+    return unitsString.split(',').map((unit) => unit.trim()).toList();
+  }
+
+  String formatDate(DateTime? date) {
+    if (date == null) return 'N/A';
+    return DateFormat('dd MMM yyyy hh:mm a').format(date);
+  }
+
+  String getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'confirm':
+        return 'Confirmed';
+      case 'pending':
+        return 'Pending';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'refunded':
+        return 'Refunded';
+      default:
+        return status;
+    }
+  }
+
+  Color getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'confirm':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'cancelled':
+        return Colors.red;
+      case 'refunded':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  bool canCancelBooking(GiooBuyingList booking) {
+    // Add your logic for when a booking can be cancelled
+    // For example, only if it's confirmed and within cancellation period
+    return booking.transaction.status.toLowerCase() == 'confirm' &&
+        booking.returnAmount == null &&
+        booking.returnDate == null;
   }
   @override
   void onClose() {

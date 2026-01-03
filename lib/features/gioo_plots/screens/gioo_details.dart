@@ -7,6 +7,7 @@ import '../../../common/widget/loader.dart';
 import '../../home/widget/sub_title.dart';
 import '../../syndicate_plot/widget/scheme_overview.dart';
 import '../controller/gioo_controller.dart';
+import '../model/gioo_plot.dart' show User;
 import '../widget/about_plot.dart';
 import '../widget/blue_print.dart';
 import '../widget/neraby_project.dart';
@@ -66,7 +67,7 @@ class _GiooDetailsState extends State<GiooDetails> {
     );
   }
   Widget buyersList(GiooPlotController controller) {
-    final buyers = controller.giooPlotDetail.value?.user ?? [];
+    final buyers = controller.giooPlotDetail.value?.users ?? [];
 
     if (buyers.isEmpty) {
       return const Padding(

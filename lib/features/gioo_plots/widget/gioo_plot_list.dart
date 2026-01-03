@@ -7,12 +7,14 @@ import '../controller/gioo_controller.dart';
 import '../model/gioo_plot.dart';
 
 class GiooPlotList extends StatelessWidget {
-  final GiooPlotController controller = Get.put(GiooPlotController());
+  final controller = Get.find<GiooPlotController>(); // ✅ reuse
 
   GiooPlotList({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final GiooPlotController controller = Get.find();
+
     return Obx(() {
       final plots = controller.giooPlots;
 

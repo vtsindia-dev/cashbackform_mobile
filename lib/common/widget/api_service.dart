@@ -46,7 +46,8 @@ class ApiService {
       }
       rethrow;
     }
-  }  static Future<Response> postMultipart(String url, FormData formData) async {
+  }
+  static Future<Response> postMultipart(String url, FormData formData) async {
     try {
       return await dio.post(url, data: formData);
     } catch (e) {
