@@ -120,7 +120,7 @@ class FeaturesGiooPlots extends StatelessWidget {
                             ? plot.description
                             : 'Premium GIOO Plot',
                         onTap: () {
-                          Get.toNamed('/giooDetails', arguments: {"id": plot.id});
+                          Get.toNamed('/giooDetails', arguments: {"id": plot.id, "title": plot.name});
                         },
                         isFavourite: true,
                         onFavToggle: () {

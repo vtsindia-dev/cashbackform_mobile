@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:cashback_farms/common/widget/sessionhandler.dart';
@@ -10,11 +11,17 @@ import '../../payment/controller/razorpay_controller.dart';
 import '../model/gioo_plot.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 class GiooPlotController extends GetxController {
   var isLoading = false.obs;
   var isLoadMore = false.obs;
+  final RxBool showAllUnits = false.obs;
   var giooPlots = <GiooPlot>[].obs;
   var currentPage = 1.obs;
+  var unitRanges = <String>[].obs;
+  final TextEditingController searchController = TextEditingController();
+  final RxString recentSearch = ''.obs;
+  Timer? _debounce;
   final ScrollController gridScrollController = ScrollController();
   int firstAvailablePlotIndex = 0;
   bool hasFoundFirstAvailable = false;
@@ -22,8 +29,8 @@ class GiooPlotController extends GetxController {
   var hasMoreData = true.obs;
   var totalItems = 0.obs;
   var searchQuery = ''.obs;
-  var selectedCity = ''.obs;
-  var selectedState = ''.obs;
+  var selectedCity = Rxn<City>();
+  var selectedState = Rxn<AppState>();
   var selectedPlotTypes = <String>[].obs;
   var minPrice = ''.obs;
   var maxPrice = ''.obs;
@@ -39,6 +46,15 @@ class GiooPlotController extends GetxController {
   var isLoadingBuyingList = false.obs;
   var isLoadingBuyingDetail = false.obs;
   var isLoadingCancelRequest = false.obs;
+  var states = <AppState>[].obs;
+  var cities = <City>[].obs;
+
+  // Properties for filtering
+  var propertyTypes = <PropertyType>[].obs;
+  var priceMin = 0.0.obs;
+  var priceMax = 5000000.0.obs;
+  var sqftMin = 0.0.obs;
+  var sqftMax = 5000.0.obs;
 
   var buyingList = <GiooBuyingList>[].obs;
   var buyingListPage = 1.obs;
@@ -51,24 +67,21 @@ class GiooPlotController extends GetxController {
   var totalBuyingDetailPages = 1.obs;
 
   var selectedTransactionId = Rxn<int>();
-  RxInt get selectedCount => units.where((u) => u.status == 'Selected').length.obs;
-  RxInt get bookedCount => units.where((u) => u.status == 'Booked').length.obs;
-  RxInt get availableCount => units.where((u) => u.status == 'Available').length.obs;
-  RxInt get adminBookedCount => units.where((u) => u.status == 'AdminBooked').length.obs;
+
+  RxInt get selectedCount =>
+      units.where((u) => u.status == 'Selected').length.obs;
+
+  RxInt get bookedCount =>
+      units.where((u) => u.status == 'Booked').length.obs;
+
+  RxInt get availableCount =>
+      units.where((u) => u.status == 'Available').length.obs;
+
+  RxInt get adminBookedCount =>
+      units.where((u) => u.status == 'AdminBooked').length.obs;
+
   RxInt get totalPlotsCount => units.length.obs;
-  void toggleExpansion() => isExpanded.value = !isExpanded.value;
-  void toggleDescription() => isDescriptionExpanded.value = !isDescriptionExpanded.value;
-  final List<String> unitRanges = ["1-50", "50-100", "150-200", "250-300", "350-400","450-500","550-600","650-700",];
-  var weeklyProfit = 5000.obs;
-  var weeklyProfitPercent = 30.obs;
-  final RxList<double> bookedValues = <double>[].obs;
-  final RxList<double> availableValues = <double>[].obs;
-  var overallProfit = 5000.obs;
-  var overallProfitPercent = 50.obs;
-  final List<double> _weeklyBooked = [60, 80, 65, 78, 40, 75, 58, 79, 38, 38, 62, 72];
-  final List<double> _weeklyAvailable = [15, 18, 15, 15, 20, 14, 12, 18, 18, 12, 20, 18];
-  final List<double> _monthlyBooked = [40, 50, 45, 60, 30, 50, 40, 60, 30, 20, 50, 60];
-  final List<double> _monthlyAvailable = [30, 20, 30, 20, 40, 20, 30, 15, 40, 50, 20, 15];
+
   var units = <PlotUnit>[].obs;
   var selectedUnits = <int>[].obs;
   var approvedDate = "24 Dec 2024".obs;
@@ -79,14 +92,27 @@ class GiooPlotController extends GetxController {
   var slotArea = 0.0.obs;
   var adminBlockUnits = ''.obs;
   var totalPlotSlots = 0.obs;
+
+  // Dynamic graph data
+  var weeklyProfit = 0.0.obs;
+  var weeklyProfitPercent = 0.0.obs;
+  final RxList<double> bookedValues = <double>[].obs;
+  final RxList<double> availableValues = <double>[].obs;
+  var overallProfit = 0.0.obs;
+  var overallProfitPercent = 0.0.obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchGiooPlots();
-    updateStats("Weekly");
     fetchGiooBuyingList();
-
   }
+
+  void toggleExpansion() => isExpanded.value = !isExpanded.value;
+
+  void toggleDescription() =>
+      isDescriptionExpanded.value = !isDescriptionExpanded.value;
+
   void findFirstAvailablePlot() {
     for (int i = 0; i < units.length; i++) {
       if (units[i].status == 'Available' || units[i].status == 'Open') {
@@ -96,39 +122,41 @@ class GiooPlotController extends GetxController {
       }
     }
   }
-  void updateStats(String type) {
-    selectedStatsType.value = type;
-    if (type == "Weekly") {
-      bookedValues.value = _weeklyBooked;
-      availableValues.value = _weeklyAvailable;
-      weeklyProfit.value = 5000;
-      weeklyProfitPercent.value = 30;
-      overallProfit.value = 5000;
-      overallProfitPercent.value = 50;
-    } else {
-      bookedValues.value = _monthlyBooked;
-      availableValues.value = _monthlyAvailable;
-      weeklyProfit.value = 12500;
-      weeklyProfitPercent.value = 45;
-      overallProfit.value = 18000;
-      overallProfitPercent.value = 62;
-    }
-  }
+
+  // Check if any filters are applied
   bool hasFiltersApplied() {
-    return searchQuery.isNotEmpty ||
+    return searchQuery.value.isNotEmpty ||
         selectedPlotTypes.isNotEmpty ||
-        minPrice.isNotEmpty ||
-        maxPrice.isNotEmpty ||
-        minAreaSqft.isNotEmpty;
+        minPrice.value.isNotEmpty ||
+        maxPrice.value.isNotEmpty ||
+        minAreaSqft.value.isNotEmpty ||
+        selectedState.value != null ||
+        selectedCity.value != null;
   }
 
+  // Get active filter count for UI
   int getActiveFilterCount() {
     int count = selectedPlotTypes.length;
-    if (searchQuery.isNotEmpty) count++;
-    if (minPrice.isNotEmpty || maxPrice.isNotEmpty) count++;
-    if (minAreaSqft.isNotEmpty) count++;
+    if (searchQuery.value.isNotEmpty) count++;
+    if (minPrice.value.isNotEmpty || maxPrice.value.isNotEmpty) count++;
+    if (minAreaSqft.value.isNotEmpty) count++;
+    if (selectedState.value != null) count++;
+    if (selectedCity.value != null) count++;
     return count;
   }
+
+  // Clear all filters
+  void clearFilters() {
+    searchQuery.value = '';
+    selectedPlotTypes.clear();
+    minPrice.value = '';
+    maxPrice.value = '';
+    minAreaSqft.value = '';
+    selectedState.value = null;
+    selectedCity.value = null;
+    fetchGiooPlots();
+  }
+
   Future<void> fetchGiooPlots({bool loadMore = false}) async {
     try {
       if (loadMore) {
@@ -138,39 +166,46 @@ class GiooPlotController extends GetxController {
         currentPage.value = 1;
         hasMoreData.value = true;
       }
+
       final url = '${ApiUrl.giooPlotList}?page_no=${currentPage.value}${_buildQueryParams()}';
       print('🌐 Fetching Gioo Plots URL: $url');
 
       final response = await ApiService.getRequest(url);
+
       if (response.statusCode == 200) {
         final responseData = response.data;
-        if (responseData != null &&
-            responseData['data'] != null &&
-            responseData['data']['geo'] != null) {
-          final giooData = responseData['data']['geo'];
-          final paginationData = responseData['data']['pagination'];
-          if (loadMore) {
-            giooPlots.addAll(_parseGiooPlots(giooData));
-          } else {
-            giooPlots.assignAll(_parseGiooPlots(giooData));
+        if (responseData != null && responseData['data'] != null) {
+          final data = responseData['data'];
+
+          // Extract all filter data
+          _extractFilterData(data);
+
+          // Parse plots
+          final giooData = data['geo'];
+          if (giooData != null) {
+            if (loadMore) {
+              giooPlots.addAll(_parseGiooPlots(giooData));
+            } else {
+              giooPlots.assignAll(_parseGiooPlots(giooData));
+            }
           }
+
+          // Update pagination
+          final paginationData = data['pagination'] ?? {};
           currentPage.value = paginationData['current_page'] ?? 1;
           totalPages.value = paginationData['last_page'] ?? 1;
           totalItems.value = paginationData['total'] ?? 0;
           hasMoreData.value = currentPage.value < totalPages.value;
+
           print('✅ Fetched ${giooPlots.length} Gioo plots');
-          print('📄 Current page: $currentPage, Total pages: $totalPages, Total items: $totalItems');
         } else {
           SnackBarHelper.showError("Invalid response format from server");
-          print('❌ Invalid response format: $responseData');
         }
       } else if (response.statusCode == 404) {
         SnackBarHelper.showError("Gioo plots not found");
-        print('❌ 404 Error: ${response.data}');
       } else {
-        final errorMessage = response.data?['message'] ?? 'Failed to fetch Gioo plots';
-        SnackBarHelper.showError("Error $errorMessage");
-        print('❌ API Error ${response.statusCode}: ${response.data}');
+        final errorMsg = response.data?['message'] ?? 'Failed to fetch Gioo plots';
+        SnackBarHelper.showError("Error $errorMsg");
       }
     } catch (e) {
       SnackBarHelper.showError("Network error: $e");
@@ -178,18 +213,275 @@ class GiooPlotController extends GetxController {
     } finally {
       isLoading(false);
       isLoadMore(false);
-      refresh();
     }
   }
+
+  void _extractFilterData(Map<String, dynamic> data) {
+    try {
+      // Extract states
+      if (data['state_list'] != null && data['state_list'] is List) {
+        states.value = (data['state_list'] as List)
+            .map((item) => AppState.fromJson(item))
+            .toList();
+        print('✅ Loaded ${states.length} states');
+      }
+
+      // Extract property types
+      if (data['property_type'] != null && data['property_type'] is List) {
+        propertyTypes.value = (data['property_type'] as List)
+            .map((item) => PropertyType.fromJson(item))
+            .toList();
+        print('✅ Loaded ${propertyTypes.length} property types');
+      }
+
+      // Extract price ranges
+      if (data['price_min'] != null) {
+        final minPriceValue = (data['price_min'] as num).toDouble();
+        priceMin.value = minPriceValue > 0 ? minPriceValue : 0.0;
+      } else {
+        priceMin.value = 0.0;
+      }
+
+      if (data['price_max'] != null) {
+        final maxPriceValue = (data['price_max'] as num).toDouble();
+        priceMax.value = maxPriceValue > priceMin.value ? maxPriceValue : priceMin.value + 1000000;
+      } else {
+        priceMax.value = priceMin.value + 1000000;
+      }
+
+      // Extract area ranges
+      if (data['sqft_min'] != null) {
+        final minAreaValue = (data['sqft_min'] as num).toDouble();
+        sqftMin.value = minAreaValue > 0 ? minAreaValue : 0.0;
+      } else {
+        sqftMin.value = 0.0;
+      }
+
+      if (data['sqft_max'] != null) {
+        final maxAreaValue = (data['sqft_max'] as num).toDouble();
+        sqftMax.value = maxAreaValue > sqftMin.value ? maxAreaValue : sqftMin.value + 1000;
+      } else {
+        sqftMax.value = sqftMin.value + 1000;
+      }
+
+      // Extract cities from plots
+      _extractCitiesFromPlots(data);
+
+      print('💰 Price range: ₹${priceMin.value} - ₹${priceMax.value}');
+      print('📏 Area range: ${sqftMin.value} - ${sqftMax.value} sqft');
+
+    } catch (e) {
+      print('❌ Error extracting filter data: $e');
+      // Set safe defaults
+      priceMin.value = 0.0;
+      priceMax.value = 5000000.0;
+      sqftMin.value = 0.0;
+      sqftMax.value = 5000.0;
+    }
+  }
+
+  void _extractCitiesFromPlots(Map<String, dynamic> data) {
+    try {
+      if (data['geo'] != null && data['geo'] is List) {
+        final List<City> uniqueCities = [];
+        final Set<int> seenCityIds = {};
+
+        for (var plotData in data['geo'] as List) {
+          if (plotData['city'] != null && plotData['city'] is Map) {
+            final city = City.fromJson(plotData['city']);
+            if (!seenCityIds.contains(city.id)) {
+              seenCityIds.add(city.id);
+              uniqueCities.add(city);
+            }
+          }
+        }
+
+        // Sort cities by name
+        uniqueCities.sort((a, b) => a.cityName.compareTo(b.cityName));
+        cities.value = uniqueCities;
+        print('✅ Extracted ${cities.length} unique cities from plots');
+      }
+    } catch (e) {
+      print('❌ Error extracting cities: $e');
+    }
+  }
+
+  List<City> getCitiesForState(int stateId) {
+    return cities.where((city) => city.stateId == stateId).toList();
+  }
+
+  String _buildQueryParams() {
+    final params = <String>[];
+
+    if (searchQuery.value.isNotEmpty) {
+      params.add('search=${Uri.encodeComponent(searchQuery.value)}');
+    }
+
+    // State filter
+    if (selectedState.value != null) {
+      params.add('state=${selectedState.value!.id}');
+    }
+
+    // City filter
+    if (selectedCity.value != null) {
+      params.add('city=${selectedCity.value!.id}');
+    }
+
+    // Property type filter
+    if (selectedPlotTypes.isNotEmpty) {
+      final List<String> typeIds = [];
+      for (var typeName in selectedPlotTypes) {
+        final propertyType = propertyTypes.firstWhere(
+              (type) => type.categoryName == typeName,
+          orElse: () => PropertyType(
+            id: 0,
+            categoryName: '',
+            status: 0,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+        if (propertyType.id > 0) {
+          typeIds.add(propertyType.id.toString());
+        }
+      }
+      if (typeIds.isNotEmpty) {
+        params.add('property_type=${typeIds.join(",")}');
+      }
+    }
+
+    // Price filters
+    if (minPrice.value.isNotEmpty) {
+      params.add('min_price=${Uri.encodeComponent(minPrice.value)}');
+    }
+
+    if (maxPrice.value.isNotEmpty) {
+      params.add('max_price=${Uri.encodeComponent(maxPrice.value)}');
+    }
+
+    // --- UPDATED AREA FILTERS ---
+    if (minAreaSqft.value.isNotEmpty) {
+      params.add('sqft_min=${Uri.encodeComponent(minAreaSqft.value)}');
+    }
+
+    // Adding sqft_max in case you decide to use a range slider for area too
+    if (maxAreaSqft.value.isNotEmpty) {
+      params.add('sqft_max=${Uri.encodeComponent(maxAreaSqft.value)}');
+    }
+
+    return params.isEmpty ? '' : '&${params.join('&')}';
+  }
+  void updateStats(String type) {
+    selectedStatsType.value = type;
+
+    if (giooPlotDetail.value == null) return;
+
+    final detail = giooPlotDetail.value!;
+
+    // Clear previous data
+    bookedValues.clear();
+    availableValues.clear();
+    unitRanges.clear();
+
+    if (type == "Weekly") {
+      // Use weekly graph data
+      if (detail.weeklyGraph.isNotEmpty) {
+        final graphData = detail.weeklyGraph;
+
+        // Prepare data for chart
+        final List<double> bookedList = [];
+        final List<double> availableList = [];
+        final List<String> ranges = [];
+
+        // Assuming weeklyGraph contains daily data
+        for (var item in graphData) {
+          ranges.add(item.day);
+          bookedList.add(item.total.toDouble());
+          // Calculate available units (total slots - booked)
+          final totalSlots = totalPlotSlots.value;
+          final available = totalSlots > item.total
+              ? totalSlots - item.total
+              : 0;
+          availableList.add(available.toDouble());
+        }
+
+        bookedValues.value = bookedList;
+        availableValues.value = availableList;
+
+        // Update ranges
+        unitRanges.value = ranges;
+      }
+
+      // Use weekly booked data
+      if (detail.weeklyBooked != null) {
+        weeklyProfit.value =
+            double.tryParse(detail.weeklyBooked!.weeklyProfit) ?? 0.0;
+        weeklyProfitPercent.value =
+            detail.weeklyBooked!.profitMargin;
+      } else {
+        weeklyProfit.value = 0.0;
+        weeklyProfitPercent.value = 0.0;
+      }
+    } else {
+      // Use monthly graph data
+      if (detail.monthlyGraph.isNotEmpty) {
+        final graphData = detail.monthlyGraph;
+
+        final List<double> bookedList = [];
+        final List<double> availableList = [];
+        final List<String> ranges = [];
+
+        for (var item in graphData) {
+          ranges.add(item.month);
+          bookedList.add(item.total.toDouble());
+          final totalSlots = totalPlotSlots.value;
+          final available = totalSlots > item.total
+              ? totalSlots - item.total
+              : 0;
+          availableList.add(available.toDouble());
+        }
+
+        bookedValues.value = bookedList;
+        availableValues.value = availableList;
+
+        unitRanges.value = ranges;
+      } else {
+        weeklyProfit.value = 0.0;
+        weeklyProfitPercent.value = 0.0;
+      }
+    }
+
+    // Update overall data
+    if (detail.overallBooked != null) {
+      overallProfit.value = detail.overallBooked!.totalBookedUnits.toDouble();
+      overallProfitPercent.value =
+          detail.overallBooked!.growth;
+    } else {
+      overallProfit.value = 0.0;
+      overallProfitPercent.value = 0.0;
+    }
+
+    print('📊 Graph data updated for $type');
+    print('   Weekly Profit: ${weeklyProfit.value}');
+    print('   Weekly Profit %: ${weeklyProfitPercent.value}');
+    print('   Overall Profit: ${overallProfit.value}');
+    print('   Overall Profit %: ${overallProfitPercent.value}');
+    print('   Booked values: ${bookedValues.length} items');
+    print('   Unit ranges: ${unitRanges.length} items');
+  }
+
   Future<void> fetchGiooPlotDetail(int id) async {
     try {
       _clearDetailData();
       selectedUnits.clear();
       isLoadingDetail(true);
-      errorMessage('');
+      errorMessage.value = '';
+
       final url = '${ApiUrl.giooDetails}/$id';
       print('🌐 Fetching Gioo Plot Detail URL: $url');
+
       final response = await ApiService.getRequest(url);
+
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData != null && responseData['data'] != null) {
@@ -199,29 +491,33 @@ class GiooPlotController extends GetxController {
           _initializePlotData();
           _logPlotDetailInfo();
           generateAllPlotUnits();
+
+          // Initialize graph data
+          updateStats(selectedStatsType.value);
         } else {
-          errorMessage('Invalid response format from server');
+          errorMessage.value = 'Invalid response format from server';
           SnackBarHelper.showError("Invalid response format");
           print('❌ Invalid response format: $responseData');
         }
       } else if (response.statusCode == 404) {
-        errorMessage('Gioo plot details not found');
+        errorMessage.value = 'Gioo plot details not found';
         SnackBarHelper.showError("Gioo plot details not found");
         print('❌ 404 Error: ${response.data}');
       } else {
         final errorMsg = response.data?['message'] ?? 'Failed to fetch Gioo plot details';
-        errorMessage(errorMsg);
+        errorMessage.value = errorMsg;
         SnackBarHelper.showError("Error: $errorMsg");
         print('❌ API Error ${response.statusCode}: ${response.data}');
       }
     } catch (e) {
-      errorMessage('Network error: $e');
+      errorMessage.value = 'Network error: $e';
       SnackBarHelper.showError("Network error: $e");
       print('❌ Network error: $e');
     } finally {
       isLoadingDetail(false);
     }
   }
+
   void _initializePlotData() {
     final detail = giooPlotDetail.value;
     if (detail != null) {
@@ -244,6 +540,7 @@ class GiooPlotController extends GetxController {
       }
     }
   }
+
   List<int> getAdminBlockUnitIds() {
     final detail = giooPlotDetail.value;
     if (detail?.adminblock?.units == null) return [];
@@ -259,6 +556,7 @@ class GiooPlotController extends GetxController {
       return [];
     }
   }
+
   List<int> getUserBookedUnitIds() {
     final detail = giooPlotDetail.value;
     if (detail?.bookings == null || detail!.bookings.isEmpty) {
@@ -278,6 +576,7 @@ class GiooPlotController extends GetxController {
     }
     return bookedIds;
   }
+
   void generateAllPlotUnits() {
     final detail = giooPlotDetail.value;
     if (detail == null || totalPlotSlots.value == 0) {
@@ -316,9 +615,15 @@ class GiooPlotController extends GetxController {
       units.value = allUnits;
       print('📊 === PLOT STATISTICS ===');
       print('   Total Plots: ${units.length}');
-      print('   Available: ${units.where((u) => u.status == 'Available').length}');
-      print('   Admin Booked: ${units.where((u) => u.status == 'AdminBooked').length}');
-      print('   User Booked: ${units.where((u) => u.status == 'Booked').length}');
+      print('   Available: ${units
+          .where((u) => u.status == 'Available')
+          .length}');
+      print('   Admin Booked: ${units
+          .where((u) => u.status == 'AdminBooked')
+          .length}');
+      print('   User Booked: ${units
+          .where((u) => u.status == 'Booked')
+          .length}');
       print('   Available Count: ${availableCount.value}');
       print('========================');
     } catch (e) {
@@ -326,9 +631,12 @@ class GiooPlotController extends GetxController {
       generateDummyUnits();
     }
   }
+
   void generateDummyUnits() {
     final List<PlotUnit> dummyUnits = [];
-    final int totalUnits = totalPlotSlots.value > 0 ? totalPlotSlots.value : 1800;
+    final int totalUnits = totalPlotSlots.value > 0
+        ? totalPlotSlots.value
+        : 1800;
     for (int i = 1; i <= totalUnits; i++) {
       final bool isBooked = i % 7 == 0;
       final status = isBooked ? 'Booked' : 'Available';
@@ -342,6 +650,7 @@ class GiooPlotController extends GetxController {
     units.value = dummyUnits;
     print('✅ Generated ${units.length} dummy units');
   }
+
   Future<void> proceedToPayment() async {
     if (selectedUnits.isEmpty) {
       SnackBarHelper.showError("Please select at least one plot unit");
@@ -356,7 +665,7 @@ class GiooPlotController extends GetxController {
       return;
     }
     try {
-       final razorpayController = Get.put(RazorpayController());
+      final razorpayController = Get.put(RazorpayController());
       razorpayController.setupPlotPayment(
         type: 'gioo',
         propertyId: giooPlotDetail.value!.id,
@@ -370,7 +679,8 @@ class GiooPlotController extends GetxController {
       SnackBarHelper.showError("Failed to setup payment: $e");
     }
   }
-  Future<void> showPaymentDialog() async  {
+
+  Future<void> showPaymentDialog() async {
     if (selectedUnits.isEmpty) {
       SnackBarHelper.showError("Please select at least one plot unit");
       return;
@@ -392,31 +702,34 @@ class GiooPlotController extends GetxController {
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 16),
-          Obx(() => CheckboxListTile(
-            title: Text("I agree to the terms and conditions"),
-            value: razorpayController.isTermsAccepted.value,
-            onChanged: (value) {
-              razorpayController.toggleTerms();
-            },
-            controlAffinity: ListTileControlAffinity.leading,
-          )),
+          Obx(() =>
+              CheckboxListTile(
+                title: Text("I agree to the terms and conditions"),
+                value: razorpayController.isTermsAccepted.value,
+                onChanged: (value) {
+                  razorpayController.toggleTerms();
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+              )),
         ],
       ),
-      confirm: Obx(() => ElevatedButton(
-        onPressed: razorpayController.isTermsAccepted.value
-            ? () {
-          Get.back();
-          razorpayController.initiatePayment();
-        }
-            : null,
-        child: Text("Proceed to Payment"),
-      )),
+      confirm: Obx(() =>
+          ElevatedButton(
+            onPressed: razorpayController.isTermsAccepted.value
+                ? () {
+              Get.back();
+              razorpayController.initiatePayment();
+            }
+                : null,
+            child: Text("Proceed to Payment"),
+          )),
       cancel: TextButton(
         onPressed: () => Get.back(),
         child: Text("Cancel"),
       ),
     );
   }
+
   Future<void> viewDocument(int id) async {
     try {
       final plotDetail = giooPlotDetail.value;
@@ -431,6 +744,7 @@ class GiooPlotController extends GetxController {
       SnackBarHelper.showError("Document not found");
     }
   }
+
   Future<void> downloadDocument(int id) async {
     try {
       final plotDetail = giooPlotDetail.value;
@@ -445,10 +759,12 @@ class GiooPlotController extends GetxController {
       SnackBarHelper.showError("Document not found");
     }
   }
+
   Future<void> _launchUrl(String url) async {
     try {
       String formattedUrl = url;
-      if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      if (!formattedUrl.startsWith('http://') &&
+          !formattedUrl.startsWith('https://')) {
         formattedUrl = 'http://$formattedUrl';
       }
       final Uri uri = Uri.parse(formattedUrl);
@@ -460,16 +776,18 @@ class GiooPlotController extends GetxController {
         );
       } else {
         print('Cannot launch URL: $uri');
-        SnackBarHelper.showError("Cannot open the document. Please check your connection.");
+        SnackBarHelper.showError(
+            "Cannot open the document. Please check your connection.");
       }
     } catch (e) {
       print('Error launching URL: $e');
       SnackBarHelper.showError("Failed to open document");
     }
   }
+
   void _clearDetailData() {
     giooPlotDetail.value = null;
-    errorMessage('');
+    errorMessage.value = '';
     units.clear();
     selectedUnits.clear();
     totalSelectedAreaSqft.value = 0.0;
@@ -479,7 +797,17 @@ class GiooPlotController extends GetxController {
     slotArea.value = 0.0;
     adminBlockUnits.value = '';
     totalPlotSlots.value = 0;
+
+    // Clear graph data
+    bookedValues.clear();
+    availableValues.clear();
+    unitRanges.clear();
+    weeklyProfit.value = 0.0;
+    weeklyProfitPercent.value = 0.0;
+    overallProfit.value = 0.0;
+    overallProfitPercent.value = 0.0;
   }
+
   void _logPlotDetailInfo() {
     final detail = giooPlotDetail.value;
     if (detail != null) {
@@ -497,9 +825,30 @@ class GiooPlotController extends GetxController {
       print('🔢 ULD No: ${detail.uldNo}');
       print('💰 Total Price: ${detail.totalPrice}');
       print('🧱 Admin Block: ${detail.adminBlock}');
-      print('📋 Admin Block Units: ${detail.adminblock?.units?.split(',')?.length ?? 0} units');
+      print('📋 Admin Block Units: ${detail.adminblock?.units
+          ?.split(',')
+          ?.length ?? 0} units');
+
+      // Log graph data
+      if (detail.weeklyGraph.isNotEmpty) {
+        print('📅 Weekly Graph: ${detail.weeklyGraph.length} days');
+      }
+      if (detail.monthlyGraph.isNotEmpty) {
+        print('📅 Monthly Graph: ${detail.monthlyGraph.length} months');
+      }
+      if (detail.weeklyBooked != null) {
+        print('💰 Weekly Booked: ${detail.weeklyBooked!
+            .weeklyProfit}, Profit Margin: ${detail.weeklyBooked!
+            .profitMargin}%');
+      }
+      if (detail.overallBooked != null) {
+        print('💰 Overall Booked: ${detail.overallBooked!
+            .totalBookedUnits} units, Growth: ${detail.overallBooked!
+            .growth}%');
+      }
     }
   }
+
   String getFormattedAddress() {
     final detail = giooPlotDetail.value;
     if (detail == null) return '';
@@ -514,12 +863,14 @@ class GiooPlotController extends GetxController {
     }
     return detail.address;
   }
+
   String getFormattedPrice() {
     if (pricePerSqft.value > 0) {
       return '₹${pricePerSqft.value.toStringAsFixed(2)}/sqft';
     }
     return 'Price not available';
   }
+
   String getPrimaryImage() {
     final detail = giooPlotDetail.value;
     if (detail?.images != null && detail!.images.isNotEmpty) {
@@ -527,6 +878,7 @@ class GiooPlotController extends GetxController {
     }
     return detail?.plotImage ?? '';
   }
+
   List<String> getAllImages() {
     final detail = giooPlotDetail.value;
     final List<String> allImages = [];
@@ -538,79 +890,49 @@ class GiooPlotController extends GetxController {
     }
     return allImages.toSet().toList();
   }
+
   Future<void> loadMore() async {
     if (!isLoadMore.value && hasMoreData.value) {
       currentPage.value++;
       await fetchGiooPlots(loadMore: true);
     }
   }
+
   Future<void> refreshData() async {
     await fetchGiooPlots();
   }
-  Future<void> searchPlots(String query) async {
-    searchQuery.value = query;
-    await fetchGiooPlots();
+
+  void onSearchChanged(String value) {
+    searchQuery.value = value;
   }
-  Future<void> filterByCity(String city) async {
-    selectedCity.value = city;
-    await fetchGiooPlots();
+
+  void applySearch() {
+    if (searchQuery.value.trim().isEmpty) return;
+    recentSearch.value = searchQuery.value.trim();
+    fetchGiooPlots();
   }
-  Future<void> filterByState(String state) async {
-    selectedState.value = state;
-    await fetchGiooPlots();
-  }
-  Future<void> filterByPrice(String min, String max) async {
-    minPrice.value = min;
-    maxPrice.value = max;
-    await fetchGiooPlots();
-  }
-  Future<void> clearFilters() async {
+
+  void clearRecentSearch() {
+    recentSearch.value = '';
     searchQuery.value = '';
-    selectedCity.value = '';
-    selectedState.value = '';
-    minPrice.value = '';
-    maxPrice.value = '';
-
-    await fetchGiooPlots();
+    searchController.clear();
+    fetchGiooPlots();
   }
+
   List<String> getAvailableCities() {
-    return giooPlots.map((plot) => plot.city?.cityName ?? '').where((city) => city.isNotEmpty).toSet().toList();
+    return giooPlots.map((plot) => plot.city?.cityName ?? '').where((
+        city) => city.isNotEmpty).toSet().toList();
   }
+
   List<String> getAvailableStates() {
-    return giooPlots.map((plot) => plot.state?.stateName ?? '').where((state) => state.isNotEmpty).toSet().toList();
+    return giooPlots.map((plot) => plot.state?.stateName ?? '').where((
+        state) => state.isNotEmpty).toSet().toList();
   }
-  String _buildQueryParams() {
-    final params = <String>[];
 
-    if (searchQuery.value.isNotEmpty) {
-      params.add('search=${Uri.encodeComponent(searchQuery.value)}');
-    }
-
-    if (selectedCity.value.isNotEmpty) {
-      params.add('city=${Uri.encodeComponent(selectedCity.value)}');
-    }
-
-    if (selectedPlotTypes.isNotEmpty) {
-      params.add('plot_type=${selectedPlotTypes.join(",")}');
-    }
-
-    if (minPrice.value.isNotEmpty) {
-      params.add('min_price=${minPrice.value}');
-    }
-
-    if (maxPrice.value.isNotEmpty) {
-      params.add('max_price=${maxPrice.value}');
-    }
-
-    if (minAreaSqft.value.isNotEmpty) {
-      params.add('area_sqft=${minAreaSqft.value}');
-    }
-
-    return params.isEmpty ? '' : '&${params.join('&')}';
-  }
   List<GiooPlot> _parseGiooPlots(List<dynamic> data) {
     return data.map((item) => GiooPlot.fromJson(item)).toList();
   }
+
   GiooPlot? getPlotById(int id) {
     try {
       return giooPlots.firstWhere((plot) => plot.id == id);
@@ -618,12 +940,15 @@ class GiooPlotController extends GetxController {
       return null;
     }
   }
+
   bool isPlotFavorite(int plotId) {
     return false;
   }
+
   void toggleFavorite(int plotId) {
     print('Toggled favorite for Gioo plot $plotId');
   }
+
   void toggleUnitSelection(int unitId) {
     final unitIndex = units.indexWhere((unit) => unit.id == unitId);
     if (unitIndex == -1) return;
@@ -650,6 +975,7 @@ class GiooPlotController extends GetxController {
 
     calculateTotals();
   }
+
   void calculateTotals() {
     final selectedUnitList =
     units.where((unit) => selectedUnits.contains(unit.id)).toList();
@@ -675,39 +1001,51 @@ class GiooPlotController extends GetxController {
     print('   Total Price: ₹${totalFinalPrice.value}');
     print('====================');
   }
-  String getSelectedUnitRange() {
+
+  String getSelectedUnitsText({int limit = 5}) {
     if (selectedUnits.isEmpty) return "No units selected";
 
-    final sortedUnits = List.from(selectedUnits)..sort();
-    if (sortedUnits.length == 1) {
-      return "Unit ${sortedUnits.first}";
-    } else {
-      return "Units ${sortedUnits.first}-${sortedUnits.last}";
+    final units = selectedUnits.toList()..sort();
+
+    if (showAllUnits.value || units.length <= limit) {
+      return "Units: ${units.join(', ')}";
     }
+
+    final visibleUnits = units.take(limit).join(', ');
+    final remaining = units.length - limit;
+
+    return "Units: $visibleUnits +$remaining more";
+  }
+
+  void toggleShowUnits() {
+    showAllUnits.toggle();
+    update();
   }
   String getSelectedUnitsString() {
     if (selectedUnits.isEmpty) return "";
-    final sortedUnits = List.from(selectedUnits)..sort();
+    final sortedUnits = List.from(selectedUnits)
+      ..sort();
     return sortedUnits.join(',');
   }
+
   String formatCurrency(double amount) {
     return "₹${amount.toStringAsFixed(2)}";
   }
+
   void setPlotDetail(GiooPlotDetail detail) {
     giooPlotDetail.value = detail;
     _initializePlotData();
     generateAllPlotUnits();
   }
+
   void updateAvailableCount() {
     refresh();
   }
-
 
   Future<void> fetchGiooBuyingList({bool loadMore = false}) async {
     try {
       // DEBUG: Check session status
       await SessionManager.debugSession();
-
 
       // Get token
       final String? token = await SessionManager.getToken();
@@ -715,7 +1053,6 @@ class GiooPlotController extends GetxController {
       if (token == null || token.isEmpty) {
         print('the token....$token');
         SnackBarHelper.showError('Authentication failed. Please login again.');
-        // await SessionManager.clearSession();
         isLoadingBuyingList(false);
         return;
       }
@@ -744,7 +1081,8 @@ class GiooPlotController extends GetxController {
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == true) {
-          final giooBuyingResponse = GiooBuyingListResponse.fromJson(responseData);
+          final giooBuyingResponse = GiooBuyingListResponse.fromJson(
+              responseData);
 
           if (loadMore) {
             buyingList.addAll(giooBuyingResponse.data);
@@ -753,12 +1091,15 @@ class GiooPlotController extends GetxController {
           }
 
           totalBuyingPages.value = giooBuyingResponse.pagination.lastPage;
-          hasMoreBuyingData.value = buyingListPage.value < totalBuyingPages.value;
+          hasMoreBuyingData.value =
+              buyingListPage.value < totalBuyingPages.value;
 
           print('✅ Fetched ${buyingList.length} buying records');
-          print('📄 Current page: $buyingListPage, Total pages: $totalBuyingPages');
+          print(
+              '📄 Current page: $buyingListPage, Total pages: $totalBuyingPages');
         } else {
-          SnackBarHelper.showError(responseData['message'] ?? "Failed to fetch buying list");
+          SnackBarHelper.showError(
+              responseData['message'] ?? "Failed to fetch buying list");
           print('❌ API Error: ${responseData['message']}');
         }
       } else if (response.statusCode == 401) {
@@ -768,7 +1109,8 @@ class GiooPlotController extends GetxController {
       } else if (response.statusCode == 404) {
         SnackBarHelper.showError("Resource not found");
       } else {
-        SnackBarHelper.showError("Failed to fetch buying list: ${response.statusCode}");
+        SnackBarHelper.showError(
+            "Failed to fetch buying list: ${response.statusCode}");
         print('❌ Error fetching buying list: ${response.data}');
       }
     } catch (e) {
@@ -778,7 +1120,9 @@ class GiooPlotController extends GetxController {
       isLoadingBuyingList(false);
     }
   }
-  Future<void> fetchGiooBuyingListDetails({bool loadMore = false, int? transactionId}) async {
+
+  Future<void> fetchGiooBuyingListDetails(
+      {bool loadMore = false, int? transactionId}) async {
     try {
       if (transactionId != null) {
         selectedTransactionId.value = transactionId;
@@ -809,7 +1153,9 @@ class GiooPlotController extends GetxController {
         buyingDetailList.clear();
       }
 
-      final url = '${ApiUrl.giooBuyingListDetails}?tran_id=$txnId&page=${buyingDetailPage.value}';
+      final url = '${ApiUrl
+          .giooBuyingListDetails}?tran_id=$txnId&page=${buyingDetailPage
+          .value}';
       print('🌐 Fetching Gioo Buying Details URL: $url');
 
       // Add headers with token
@@ -823,7 +1169,8 @@ class GiooPlotController extends GetxController {
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == true) {
-          final detailResponse = GiooBuyingDetailResponse.fromJson(responseData);
+          final detailResponse = GiooBuyingDetailResponse.fromJson(
+              responseData);
 
           if (loadMore) {
             buyingDetailList.addAll(detailResponse.data);
@@ -832,22 +1179,26 @@ class GiooPlotController extends GetxController {
           }
 
           totalBuyingDetailPages.value = detailResponse.pagination.lastPage;
-          hasMoreBuyingDetailData.value = buyingDetailPage.value < totalBuyingDetailPages.value;
+          hasMoreBuyingDetailData.value =
+              buyingDetailPage.value < totalBuyingDetailPages.value;
 
           print('✅ Fetched ${buyingDetailList.length} buying detail records');
         } else {
-          SnackBarHelper.showError(responseData['message'] ?? "Failed to fetch buying details");
+          SnackBarHelper.showError(
+              responseData['message'] ?? "Failed to fetch buying details");
           print('❌ API Error: ${responseData['message']}');
         }
       } else if (response.statusCode == 401) {
         print('🔐 Session expired (401) for details');
         SnackBarHelper.showError("Session expired. Please login again.");
       } else if (response.statusCode == 403) {
-        SnackBarHelper.showError("You don't have permission to view these details");
+        SnackBarHelper.showError(
+            "You don't have permission to view these details");
       } else if (response.statusCode == 404) {
         SnackBarHelper.showError("Transaction details not found");
       } else {
-        SnackBarHelper.showError("Failed to fetch buying details: ${response.statusCode}");
+        SnackBarHelper.showError(
+            "Failed to fetch buying details: ${response.statusCode}");
         print('❌ Error fetching buying details: ${response.data}');
       }
     } catch (e) {
@@ -857,6 +1208,7 @@ class GiooPlotController extends GetxController {
       isLoadingBuyingDetail(false);
     }
   }
+
   Future<void> cancelGiooBuyingRequest(int buyingId) async {
     try {
       isLoadingCancelRequest(true);
@@ -885,7 +1237,8 @@ class GiooPlotController extends GetxController {
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == true) {
-          SnackBarHelper.showSuccess(responseData['message'] ?? 'Cancellation request submitted successfully');
+          SnackBarHelper.showSuccess(responseData['message'] ??
+              'Cancellation request submitted successfully');
 
           // Update the item in the list
           final index = buyingList.indexWhere((item) => item.id == buyingId);
@@ -916,7 +1269,8 @@ class GiooPlotController extends GetxController {
                 transactionDetails: updatedItem.transaction.transactionDetails,
                 amount: updatedItem.transaction.amount,
                 isCompleted: updatedItem.transaction.isCompleted,
-                status: data['cancel_status'] == 1 ? 'cancelled' : updatedItem.transaction.status,
+                status: data['cancel_status'] == 1 ? 'cancelled' : updatedItem
+                    .transaction.status,
                 propertyId: updatedItem.transaction.propertyId,
                 userId: updatedItem.transaction.userId,
                 type: updatedItem.transaction.type,
@@ -932,19 +1286,22 @@ class GiooPlotController extends GetxController {
             print('✅ Updated item $buyingId with cancellation status');
           }
         } else {
-          SnackBarHelper.showError(responseData['message'] ?? 'Failed to submit cancellation request');
+          SnackBarHelper.showError(responseData['message'] ??
+              'Failed to submit cancellation request');
         }
       } else if (response.statusCode == 401) {
         print('🔐 Session expired (401) during cancellation');
         SnackBarHelper.showError("Session expired. Please login again.");
       } else if (response.statusCode == 403) {
-        SnackBarHelper.showError("You don't have permission to cancel this booking");
+        SnackBarHelper.showError(
+            "You don't have permission to cancel this booking");
       } else if (response.statusCode == 404) {
         SnackBarHelper.showError("Booking not found");
       } else if (response.statusCode == 422) {
         SnackBarHelper.showError("Invalid request. Please check the details");
       } else {
-        SnackBarHelper.showError("Failed to cancel request: ${response.statusCode}");
+        SnackBarHelper.showError(
+            "Failed to cancel request: ${response.statusCode}");
         print('❌ Error cancelling request: ${response.data}');
       }
     } catch (e) {
@@ -954,7 +1311,6 @@ class GiooPlotController extends GetxController {
       isLoadingCancelRequest(false);
     }
   }
-
 
   Future<void> loadMoreBuyingList() async {
     if (!isLoadingBuyingList.value && hasMoreBuyingData.value) {
@@ -1008,19 +1364,17 @@ class GiooPlotController extends GetxController {
     }
   }
 
-  bool canCancelBooking(GiooBuyingList booking) {
-    // Add your logic for when a booking can be cancelled
-    // For example, only if it's confirmed and within cancellation period
-    return booking.transaction.status.toLowerCase() == 'confirm' &&
-        booking.returnAmount == null &&
-        booking.returnDate == null;
-  }
+
   @override
   void onClose() {
     _clearDetailData();
+    _debounce?.cancel();
+    gridScrollController.dispose();
+    searchController.dispose();
     super.onClose();
   }
 }
+
 class PlotUnit {
   final int id;
   final String label;

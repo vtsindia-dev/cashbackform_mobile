@@ -477,9 +477,11 @@ class MonthlyGraph {
   }
 }
 
+// In your model file (gioo_plot.dart)
+
 class OverallBooked {
   final int totalBookedUnits;
-  final int growth;
+  final double growth; // Changed from int to double
 
   OverallBooked({
     required this.totalBookedUnits,
@@ -489,7 +491,7 @@ class OverallBooked {
   factory OverallBooked.fromJson(Map<String, dynamic> json) {
     return OverallBooked(
       totalBookedUnits: json['total_booked_units'] ?? 0,
-      growth: json['growth'] ?? 0,
+      growth: (json['growth'] as num?)?.toDouble() ?? 0.0, // Convert to double
     );
   }
 }
@@ -497,8 +499,8 @@ class OverallBooked {
 class WeeklyBooked {
   final String weeklyProfit;
   final int unitsBooked;
-  final int growth;
-  final int profitMargin;
+  final double growth; // Changed from int to double
+  final double profitMargin; // Changed from int to double
 
   WeeklyBooked({
     required this.weeklyProfit,
@@ -511,8 +513,8 @@ class WeeklyBooked {
     return WeeklyBooked(
       weeklyProfit: json['weekly_profit']?.toString() ?? '0',
       unitsBooked: json['units_booked'] ?? 0,
-      growth: json['growth'] ?? 0,
-      profitMargin: json['profit_margin'] ?? 0,
+      growth: (json['growth'] as num?)?.toDouble() ?? 0.0, // Convert to double
+      profitMargin: (json['profit_margin'] as num?)?.toDouble() ?? 0.0, // Convert to double
     );
   }
 }

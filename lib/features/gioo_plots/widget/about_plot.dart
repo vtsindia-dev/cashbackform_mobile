@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
 
@@ -25,7 +27,11 @@ class AboutGiooPlot extends StatelessWidget {
       final totalArea = "${detail?.area} Sq.Ft";
       final ulpin = detail?.uldNo ?? '';
       final totalPrize = "₹  ${detail?.totalPrice}";
-      final images = detail?.images.isNotEmpty == true ? detail!.images : ["http://192.168.1.114/admincashback/public/uploads/property/1764237164_Group%201597885062.png",];
+      final images = detail?.images.isNotEmpty == true
+          ? detail!.images
+          : [
+              "http://192.168.1.114/admincashback/public/uploads/property/1764237164_Group%201597885062.png",
+            ];
       final description = detail?.description ?? 'No description available';
 
       return Container(
@@ -76,27 +82,30 @@ class AboutGiooPlot extends StatelessWidget {
               ),
             ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 6.h, horizontal: 5.h),
+                /// SHARE BUTTON
+                Padding(
+                  padding: EdgeInsets.only(right: 12.w,left: 8.w),
                   child: GestureDetector(
                     onTap: controller.toggleExpansion,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 8.h,
+                      ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [AppColor.primary, AppColor.primarylite],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(20.r),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            controller.isExpanded.value ? 'Hide Details' : 'View Details',
+                            controller.isExpanded.value
+                                ? 'Hide Details'
+                                : 'View Details',
                             style: TextStyle(
                               color: Colors.black,
                               fontWeight: FontWeight.bold,
@@ -116,6 +125,44 @@ class AboutGiooPlot extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w,vertical: 5.w),
+                  child: GestureDetector(
+                    onTap: () {
+                      final cleanBaseUrl =
+                      ApiUrl.baseUrl.replaceAll('/public', '');
+
+                      Share.share(
+                        '$cleanBaseUrl/gioo-plots/details/${detail?.id ?? ''}',
+                      );
+                    },
+
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 8.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.share, size: 18.sp, color: AppColor.black),
+                          SizedBox(width: 6.w),
+                          Text(
+                            "Share",
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
             AnimatedContainer(
@@ -124,325 +171,405 @@ class AboutGiooPlot extends StatelessWidget {
               height: controller.isExpanded.value ? null : 0,
               child: controller.isExpanded.value
                   ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 6.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(vertical: 8.h),
-                      decoration: BoxDecoration(
-                        color: AppColor.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Text(
-                        projectName,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          color: AppColor.primary,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
-                        ),
-                      )
-                          .animate()
-                          .slideX(begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
-                          .fadeIn(duration: 500.ms)
-                          .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
-                          .then(delay: 0.ms)
-                          .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3)),
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 5.h),
-                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SizedBox(height: 6.h),
                         Container(
-                          width: 110.w,
-                          child: Text(
-                            'Plot Area',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: AppColor.primary,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          ':',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColor.black,
-                            fontWeight: FontWeight.w600,
-                            height: 1.2,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Expanded(
-                          child: Text(
-                            totalArea,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: AppColor.black,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                        .animate()
-                        .slideX(begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
-                        .fadeIn(duration: 500.ms)
-                        .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
-                        .then(delay: 200.ms)
-                        .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3)),
-                  ),
-                  SizedBox(height: 8.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 5.h),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 110.w,
-                          child: Text(
-                            'Price per Sq.Ft',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: AppColor.primary,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          ':',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColor.black,
-                            fontWeight: FontWeight.w600,
-                            height: 1.2,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Expanded(
-                          child: Text(
-                            pricePerSqFt,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: AppColor.black,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                        .animate()
-                        .slideX(begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
-                        .fadeIn(duration: 500.ms)
-                        .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
-                        .then(delay: 400.ms)
-                        .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3)),
-                  ),
-                  SizedBox(height: 8.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 5.h),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 110.w,
-                          child: Text(
-                            'Total Price',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: AppColor.primary,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          ':',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColor.black,
-                            fontWeight: FontWeight.w600,
-                            height: 1.2,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Expanded(
-                          child: Text(
-                            totalPrize,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: AppColor.black,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                        .animate()
-                        .slideX(begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
-                        .fadeIn(duration: 500.ms)
-                        .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
-                        .then(delay: 400.ms)
-                        .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3)),
-                  ),
-                  SizedBox(height: 8.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 5.h),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 110.w,
-                          child: Text(
-                            'Location',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: AppColor.primary,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          ':',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColor.black,
-                            fontWeight: FontWeight.w600,
-                            height: 1.2,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Expanded(
-                          child: Text(
-                            location,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: AppColor.black,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                        .animate()
-                        .slideX(begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
-                        .fadeIn(duration: 500.ms)
-                        .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
-                        .then(delay: 100.ms)
-                        .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3)),
-                  ),
-                  SizedBox(height: 8.h),
-                  Obx(() {
-                    final isExpanded = controller.isDescriptionExpanded.value;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: double.infinity,
                           padding: EdgeInsets.symmetric(vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color: AppColor.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Text(
-                            "Description",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 17.sp,
-                              color: AppColor.primary,
-                              fontWeight: FontWeight.bold,
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                            decoration: BoxDecoration(
+                              color: AppColor.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
+                            child:
+                                Text(
+                                      projectName,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        color: AppColor.primary,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.2,
+                                      ),
+                                    )
+                                    .animate()
+                                    .slideX(
+                                      begin: 0.5,
+                                      end: 0,
+                                      duration: 600.ms,
+                                      curve: Curves.easeOutCubic,
+                                    )
+                                    .fadeIn(duration: 500.ms)
+                                    .scale(
+                                      begin: const Offset(0.9, 0.9),
+                                      end: const Offset(1, 1),
+                                      duration: 600.ms,
+                                      curve: Curves.easeOutBack,
+                                    )
+                                    .then(delay: 0.ms)
+                                    .shimmer(
+                                      duration: 800.ms,
+                                      color: Colors.white.withOpacity(0.3),
+                                    ),
                           ),
                         ),
                         SizedBox(height: 8.h),
-                        AnimatedCrossFade(
-                          crossFadeState:
-                          isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                          duration: 300.ms,
-                          firstChild: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                description.length > 120
-                                    ? "${description.substring(0, 120)}..."
-                                    : description,
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  height: 1.3,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              SizedBox(height: 6.h),
-                              GestureDetector(
-                                onTap: controller.toggleDescription,
-                                child: Text(
-                                  "Show More",
-                                  style: TextStyle(
-                                    color: AppColor.primary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13.sp,
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 5.h),
+                          child:
+                              Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 110.w,
+                                        child: Text(
+                                          'Plot Area',
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: AppColor.primary,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        ':',
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          color: AppColor.black,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Expanded(
+                                        child: Text(
+                                          totalArea,
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: AppColor.black,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                  .animate()
+                                  .slideX(
+                                    begin: 0.5,
+                                    end: 0,
+                                    duration: 600.ms,
+                                    curve: Curves.easeOutCubic,
+                                  )
+                                  .fadeIn(duration: 500.ms)
+                                  .scale(
+                                    begin: const Offset(0.9, 0.9),
+                                    end: const Offset(1, 1),
+                                    duration: 600.ms,
+                                    curve: Curves.easeOutBack,
+                                  )
+                                  .then(delay: 200.ms)
+                                  .shimmer(
+                                    duration: 800.ms,
+                                    color: Colors.white.withOpacity(0.3),
                                   ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          secondChild: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                description,
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  height: 1.3,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              SizedBox(height: 6.h),
-                              GestureDetector(
-                                onTap: controller.toggleDescription,
-                                child: Text(
-                                  "Show Less",
-                                  style: TextStyle(
-                                    color: AppColor.primary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13.sp,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
+                        SizedBox(height: 8.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 5.h),
+                          child:
+                              Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 110.w,
+                                        child: Text(
+                                          'Price per Sq.Ft',
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: AppColor.primary,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        ':',
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          color: AppColor.black,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Expanded(
+                                        child: Text(
+                                          pricePerSqFt,
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: AppColor.black,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                  .animate()
+                                  .slideX(
+                                    begin: 0.5,
+                                    end: 0,
+                                    duration: 600.ms,
+                                    curve: Curves.easeOutCubic,
+                                  )
+                                  .fadeIn(duration: 500.ms)
+                                  .scale(
+                                    begin: const Offset(0.9, 0.9),
+                                    end: const Offset(1, 1),
+                                    duration: 600.ms,
+                                    curve: Curves.easeOutBack,
+                                  )
+                                  .then(delay: 400.ms)
+                                  .shimmer(
+                                    duration: 800.ms,
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 5.h),
+                          child:
+                              Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 110.w,
+                                        child: Text(
+                                          'Total Price',
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: AppColor.primary,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        ':',
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          color: AppColor.black,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Expanded(
+                                        child: Text(
+                                          totalPrize,
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: AppColor.black,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                  .animate()
+                                  .slideX(
+                                    begin: 0.5,
+                                    end: 0,
+                                    duration: 600.ms,
+                                    curve: Curves.easeOutCubic,
+                                  )
+                                  .fadeIn(duration: 500.ms)
+                                  .scale(
+                                    begin: const Offset(0.9, 0.9),
+                                    end: const Offset(1, 1),
+                                    duration: 600.ms,
+                                    curve: Curves.easeOutBack,
+                                  )
+                                  .then(delay: 400.ms)
+                                  .shimmer(
+                                    duration: 800.ms,
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 5.h),
+                          child:
+                              Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 110.w,
+                                        child: Text(
+                                          'Location',
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: AppColor.primary,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        ':',
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          color: AppColor.black,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Expanded(
+                                        child: Text(
+                                          location,
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: AppColor.black,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                  .animate()
+                                  .slideX(
+                                    begin: 0.5,
+                                    end: 0,
+                                    duration: 600.ms,
+                                    curve: Curves.easeOutCubic,
+                                  )
+                                  .fadeIn(duration: 500.ms)
+                                  .scale(
+                                    begin: const Offset(0.9, 0.9),
+                                    end: const Offset(1, 1),
+                                    duration: 600.ms,
+                                    curve: Curves.easeOutBack,
+                                  )
+                                  .then(delay: 100.ms)
+                                  .shimmer(
+                                    duration: 800.ms,
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Obx(() {
+                          final isExpanded =
+                              controller.isDescriptionExpanded.value;
+
+                          return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 8.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColor.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    child: Text(
+                                      "Description",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 17.sp,
+                                        color: AppColor.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  AnimatedCrossFade(
+                                    crossFadeState: isExpanded
+                                        ? CrossFadeState.showSecond
+                                        : CrossFadeState.showFirst,
+                                    duration: 300.ms,
+                                    firstChild: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          description.length > 120
+                                              ? "${description.substring(0, 120)}..."
+                                              : description,
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            height: 1.3,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        SizedBox(height: 6.h),
+                                        GestureDetector(
+                                          onTap: controller.toggleDescription,
+                                          child: Text(
+                                            "Show More",
+                                            style: TextStyle(
+                                              color: AppColor.primary,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13.sp,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    secondChild: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          description,
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            height: 1.3,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        SizedBox(height: 6.h),
+                                        GestureDetector(
+                                          onTap: controller.toggleDescription,
+                                          child: Text(
+                                            "Show Less",
+                                            style: TextStyle(
+                                              color: AppColor.primary,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13.sp,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                              .animate()
+                              .slideY(begin: 0.2, end: 0, duration: 600.ms)
+                              .fadeIn(duration: 500.ms);
+                        }),
+                        SizedBox(height: 10.h),
                       ],
                     )
-                        .animate()
-                        .slideY(begin: 0.2, end: 0, duration: 600.ms)
-                        .fadeIn(duration: 500.ms);
-                  }),
-                  SizedBox(height: 10.h),
-                ],
-              )
                   : const SizedBox(),
             ),
           ],

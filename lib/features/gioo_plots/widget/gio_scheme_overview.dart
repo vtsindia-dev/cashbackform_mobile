@@ -33,8 +33,8 @@ class GioSchemeOverview extends StatelessWidget {
           padding: EdgeInsets.all(8.w),
           child: SubtitleWidget(
             showViewAll: false,
-            title: "Plot Purchase Overview Scheme",
-            highlightWord: "Overview Scheme",
+            title: "How it's Works",
+            highlightWord: "Works",
             onViewAllTap: () {
               print("View All clicked");
             },

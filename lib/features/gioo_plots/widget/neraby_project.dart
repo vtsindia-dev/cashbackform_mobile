@@ -10,7 +10,83 @@ class NearbyProject extends StatelessWidget {
   NearbyProject({super.key});
 
   final GiooPlotController controller = Get.find<GiooPlotController>();
-  final ScrollController scrollController = ScrollController();
+  final ScrollController amenitiesScrollController = ScrollController();
+  final ScrollController nearbyScrollController = ScrollController();
+
+  // Function to open Google Maps with coordinates
+  Future<void> _launchGoogleMaps(dynamic lat, dynamic lng) async {
+    double? latitude;
+    double? longitude;
+
+    // Helper function to safely convert any type to double
+    double? _toDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is int) {
+        return value.toDouble();
+      } else if (value is double) {
+        return value;
+      } else if (value is String) {
+        return double.tryParse(value);
+      } else if (value is num) {
+        return value.toDouble();
+      }
+      return null;
+    }
+
+    // Convert lat to double
+    latitude = _toDouble(lat);
+
+    // Convert lng to double
+    longitude = _toDouble(lng);
+
+    // Fallback to controller values if needed
+    if (latitude == null || longitude == null) {
+      final detail = controller.giooPlotDetail.value;
+      if (detail != null) {
+        latitude = _toDouble(detail.lat) ?? 0.0;
+        longitude = _toDouble(detail.long) ?? 0.0;
+      } else {
+        latitude = 0.0;
+        longitude = 0.0;
+      }
+    }
+
+    // Check if coordinates are valid
+    if (latitude == 0.0 && longitude == 0.0) {
+      Get.snackbar("Error", "Location coordinates not available");
+      return;
+    }
+
+    // Google Maps URL
+    final googleMapsUrl = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+    );
+
+    // Alternative: Apple Maps for iOS
+    final appleMapsUrl = Uri.parse(
+      'https://maps.apple.com/?q=$latitude,$longitude',
+    );
+
+    try {
+      // Try Google Maps first
+      if (await canLaunchUrl(googleMapsUrl)) {
+        await launchUrl(
+          googleMapsUrl,
+          mode: LaunchMode.externalApplication,
+        );
+      } else if (await canLaunchUrl(appleMapsUrl)) {
+        // Fallback to Apple Maps
+        await launchUrl(
+          appleMapsUrl,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        Get.snackbar("Error", "Could not launch maps application");
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to open maps: ${e.toString()}");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,14 +99,15 @@ class NearbyProject extends StatelessWidget {
 
       final String uldNo = detail.uldNo ?? "-";
       final String address = detail.address ?? "-";
-      final String mapUrl = detail.map ?? "";
       final List<Amenity> amenities = detail.amenity ?? [];
+      final List<NearbyLocation> nearbyLocations = detail.nearby_locations;
 
       return Container(
         color: AppColor.backgroundLight.withOpacity(0.5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // LOCATION DETAILS SECTION
             Padding(
               padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 0),
               child: Row(
@@ -91,6 +168,17 @@ class NearbyProject extends StatelessWidget {
                             ],
                           ),
                         ),
+                        // Show coordinates if available
+                        if (detail.lat != null || detail.long != null) ...[
+                          4.h.verticalSpace,
+                          Text(
+                            "Coordinates: ${detail.lat ?? '-'}, ${detail.long ?? '-'}",
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   )
@@ -101,7 +189,7 @@ class NearbyProject extends StatelessWidget {
             25.h.verticalSpace,
 
             // ------------------------------------
-            // HEADER (VIEW MORE ON MAP)
+            // HEADER FOR AMENITIES
             // ------------------------------------
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -109,7 +197,7 @@ class NearbyProject extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Around This Plot",
+                    "Amenities Nearby",
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.bold,
@@ -119,14 +207,10 @@ class NearbyProject extends StatelessWidget {
 
                   // VIEW MAP BUTTON
                   GestureDetector(
-                    onTap: () async {
-                      if (mapUrl.isNotEmpty) {
-                        await launchUrl(Uri.parse(mapUrl),
-                            mode: LaunchMode.externalApplication);
-                      } else {
-                        Get.snackbar("No Map URL", "Map link not provided");
-                      }
-                    },
+                    onTap: () => _launchGoogleMaps(
+                      detail.lat,
+                      detail.long,
+                    ),
                     child: Container(
                       padding: EdgeInsets.symmetric(
                           horizontal: 10.w, vertical: 6.h),
@@ -134,13 +218,24 @@ class NearbyProject extends StatelessWidget {
                         color: AppColor.primary.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
-                      child: Text(
-                        "View more on maps",
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.map_outlined,
+                            size: 14.sp,
+                            color: Colors.white,
+                          ),
+                          4.w.horizontalSpace,
+                          Text(
+                            "View on Map",
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -151,44 +246,50 @@ class NearbyProject extends StatelessWidget {
             15.h.verticalSpace,
 
             // ------------------------------------
-            // AMENITIES LIST
+            // AMENITIES LIST - Using small card design
             // ------------------------------------
-            amenities.isEmpty
-                ? Padding(
+            _buildHorizontalSmallCardList(
+              items: amenities,
+              scrollController: amenitiesScrollController,
+              getImage: (item) => (item as Amenity).image,
+              getTitle: (item) => (item as Amenity).title ?? "",
+              getSubtitle: (item) => (item as Amenity).distance != null
+                  ? "${(item as Amenity).distance} km"
+                  : "",
+              fallbackIcon: Icons.category_outlined,
+              emptyMessage: "No amenities available",
+            ),
+
+            25.h.verticalSpace,
+
+            // ------------------------------------
+            // NEARBY LOCATIONS SECTION
+            // ------------------------------------
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Text(
-                "No amenities available",
+                "Around This Plot",
                 style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey.shade600
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.textMain,
                 ),
               ),
-            )
-                : SizedBox(
-              height: 70.h,
-              child: Row(
-                children: [
-                  // Left arrow button
-                  _buildArrowButton(isRight: false),
+            ),
 
-                  // Amenities list
-                  Expanded(
-                    child: ListView.builder(
-                      controller: scrollController,
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: 4.w),
-                      itemCount: amenities.length,
-                      itemBuilder: (context, index) {
-                        final amenity = amenities[index];
-                        return _buildAmenityCard(amenity);
-                      },
-                    ),
-                  ),
+            15.h.verticalSpace,
 
-                  // Right arrow button
-                  _buildArrowButton(isRight: true),
-                ],
-              ),
+            // ------------------------------------
+            // NEARBY LOCATIONS LIST - Using SAME small card design as amenities
+            // ------------------------------------
+            _buildHorizontalSmallCardList(
+              items: nearbyLocations,
+              scrollController: nearbyScrollController,
+              getImage: (item) => (item as NearbyLocation).image,
+              getTitle: (item) => (item as NearbyLocation).title,
+              getSubtitle: (item) => "Nearby location",
+              fallbackIcon: Icons.location_on,
+              emptyMessage: "No nearby locations available",
             ),
 
             20.h.verticalSpace,
@@ -199,11 +300,84 @@ class NearbyProject extends StatelessWidget {
   }
 
   // ------------------------------------
-  // AMENITY CARD (SMALLER VERSION)
+  // HORIZONTAL SMALL CARD LIST (for both amenities and nearby locations)
   // ------------------------------------
-  Widget _buildAmenityCard(Amenity amenity) {
+  Widget _buildHorizontalSmallCardList({
+    required List<dynamic> items,
+    required ScrollController scrollController,
+    required String? Function(dynamic) getImage,
+    required String Function(dynamic) getTitle,
+    required String Function(dynamic) getSubtitle,
+    required IconData fallbackIcon,
+    required String emptyMessage,
+  }) {
+    if (items.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Text(
+          emptyMessage,
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 70.h, // Same height as amenities section
+      child: Row(
+        children: [
+          // Left arrow button
+          _buildArrowButton(
+            isRight: false,
+            scrollController: scrollController,
+          ),
+
+          // Items list
+          Expanded(
+            child: ListView.builder(
+              controller: scrollController,
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final image = getImage(item);
+                final title = getTitle(item);
+                final subtitle = getSubtitle(item);
+
+                return _buildSmallCard(
+                  image: image,
+                  title: title,
+                  subtitle: subtitle,
+                  icon: fallbackIcon,
+                );
+              },
+            ),
+          ),
+
+          // Right arrow button
+          _buildArrowButton(
+            isRight: true,
+            scrollController: scrollController,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ------------------------------------
+  // SMALL CARD DESIGN (same as original amenities design)
+  // ------------------------------------
+  Widget _buildSmallCard({
+    String? image,
+    required String title,
+    required String subtitle,
+    IconData? icon,
+  }) {
     return Container(
-      width: 140.w,
+      width: 140.w, // Same width as amenities cards
       margin: EdgeInsets.symmetric(horizontal: 4.w),
       padding: EdgeInsets.all(8.w),
       decoration: BoxDecoration(
@@ -220,24 +394,21 @@ class NearbyProject extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Image/Icon container
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(12.r),
             ),
-            child: amenity.image != null && amenity.image!.isNotEmpty
+            child: image != null && image.isNotEmpty
                 ? Image.network(
-              amenity.image!,
+              image,
               width: 32.w,
               height: 32.h,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
-                return Icon(
-                  Icons.image_not_supported_outlined,
-                  size: 24.sp,
-                  color: Colors.grey,
-                );
+                return _buildSmallCardFallbackIcon(icon);
               },
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
@@ -254,23 +425,34 @@ class NearbyProject extends StatelessWidget {
                 );
               },
             )
-                : Icon(
-              Icons.category_outlined,
-              size: 24.sp,
-              color: Colors.grey,
-            ),
+                : _buildSmallCardFallbackIcon(icon),
           ),
           6.w.horizontalSpace,
+          // Text content
           Expanded(
-            child: Text(
-              amenity.title ?? "",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColor.textMain,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.textMain,
+                  ),
+                ),
+                4.h.verticalSpace,
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -278,24 +460,36 @@ class NearbyProject extends StatelessWidget {
     );
   }
 
-// Add this arrow button method
-  Widget _buildArrowButton({required bool isRight}) {
+  // Fallback icon for small card
+  Widget _buildSmallCardFallbackIcon(IconData? icon) {
+    return Icon(
+      icon ?? Icons.category_outlined,
+      size: 24.sp,
+      color: Colors.grey,
+    );
+  }
+
+  // ------------------------------------
+  // ARROW BUTTON
+  // ------------------------------------
+  Widget _buildArrowButton({
+    required bool isRight,
+    required ScrollController scrollController,
+  }) {
     return GestureDetector(
       onTap: () {
-        // Add scroll functionality here
-        final scrollController = ScrollController(); // You'll need to get this from your controller
-        final scrollAmount = 150.0; // Adjust as needed
+        final scrollAmount = 180.0;
 
         if (isRight) {
           scrollController.animateTo(
             scrollController.offset + scrollAmount,
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
           );
         } else {
           scrollController.animateTo(
             scrollController.offset - scrollAmount,
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
           );
         }
@@ -316,6 +510,4 @@ class NearbyProject extends StatelessWidget {
       ),
     );
   }
-
-
 }

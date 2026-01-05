@@ -132,7 +132,9 @@ class AppRoutes {
       page: (){
         final arguments = Get.arguments;
         final id = arguments != null ? arguments['id'] : null;
-        return GiooDetails(id: id);
+        final title = arguments != null ? arguments['title'] : null;
+
+        return GiooDetails(id: id,title: title,);
       },
       transition: Transition.cupertino,
     ),

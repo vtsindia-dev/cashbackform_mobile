@@ -83,7 +83,7 @@ class GiooPlotList extends StatelessWidget {
       description: plot.description,
       onTap: () {
         print("View Gioo Plot: ${plot.name}");
-        Get.toNamed('/giooDetails', arguments: {"id": plot.id});
+        Get.toNamed('/giooDetails', arguments: {"id": plot.id, "title": plot.name});
 
       },
     )

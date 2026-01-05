@@ -20,43 +20,84 @@ class PlotAvailabilityWidget extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.all(16.w),
-      child: Obx(() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Top Bar Chart Section (Animation for Entrance)
-          _buildBarChartSection(controller)
-              .animate()
-              .slideX(begin: -0.2, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
-              .fadeIn(duration: 500.ms),
+      child: Obx(() {
+        // Show loading skeleton if no data
+        if (controller.giooPlotDetail.value == null) {
+          return _buildLoadingSkeleton();
+        }
 
-          20.h.verticalSpace,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Top Bar Chart Section (Animation for Entrance)
+            _buildBarChartSection(controller)
+                .animate()
+                .slideX(begin: -0.2, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
+                .fadeIn(duration: 500.ms),
 
-          // 2. Bottom Profit Cards Section (Animation for Entrance)
-          Row(
-            children: [
-              Expanded(
-                child: _buildProfitCard(
-                  title: "Weekly Profit",
-                  subtitle: "This Week Units booked Range",
-                  value: controller.weeklyProfit.value,
-                  percent: controller.weeklyProfitPercent.value,
-                  isDashed: true,
+            20.h.verticalSpace,
+
+            // 2. Bottom Profit Cards Section (Animation for Entrance)
+            Row(
+              children: [
+                Expanded(
+                  child: _buildProfitCard(
+                    title: "Weekly Profit",
+                    subtitle: "This Week Units booked Range",
+                    value: controller.weeklyProfit.value.toInt(),
+                    percent: controller.weeklyProfitPercent.value.toInt(),
+                    isDashed: true,
+                  ),
                 ),
-              ),
-              12.w.horizontalSpace,
-              Expanded(
-                child: _buildProfitCard(
-                  title: "Over all Booked",
-                  subtitle: "This Week Over all booked Units Range",
-                  value: controller.overallProfit.value,
-                  percent: controller.overallProfitPercent.value,
-                  isDashed: false,
+                12.w.horizontalSpace,
+                Expanded(
+                  child: _buildProfitCard(
+                    title: "Overall Booked",
+                    subtitle: "Total booked units",
+                    value: controller.overallProfit.value.toInt(),
+                    percent: controller.overallProfitPercent.value.toInt(),
+                    isDashed: false,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  // Loading skeleton while data is being fetched
+  Widget _buildLoadingSkeleton() {
+    return Column(
+      children: [
+        Container(
+          height: 300.h,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(16.r),
           ),
-        ],
-      )),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        20.h.verticalSpace,
+        Row(
+          children: [
+            Expanded(child: _buildCardSkeleton()),
+            12.w.horizontalSpace,
+            Expanded(child: _buildCardSkeleton()),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCardSkeleton() {
+    return Container(
+      height: 120.h,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
     );
   }
 
@@ -64,6 +105,14 @@ class PlotAvailabilityWidget extends StatelessWidget {
   // SECTION 1: BAR CHART CARD
   // ---------------------------------------------------------------------------
   Widget _buildBarChartSection(GiooPlotController controller) {
+    // Get dynamic data
+    final ranges = controller.unitRanges;
+    final bookedValues = controller.bookedValues;
+    final availableValues = controller.availableValues;
+
+    // Format month names to short form
+    final formattedRanges = _formatRanges(ranges, controller.selectedStatsType.value);
+
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
@@ -115,101 +164,145 @@ class PlotAvailabilityWidget extends StatelessWidget {
           // The Chart
           SizedBox(
             height: 220.h,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceBetween,
-                maxY: 100,
-                barTouchData: BarTouchData(enabled: false),
-
-
-
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30.w,
-                      interval: 20,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          "${value.toInt()}%",
-                          style: TextStyle(
-                            color: Colors.grey.shade400,
-                            fontSize: 10.sp,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 24.h,
-                      getTitlesWidget: (value, meta) {
-                        int index = value.toInt();
-                        if (index >= 0 && index < controller.unitRanges.length) {
-                          return Padding(
-                            padding: EdgeInsets.only(top: 8.h),
-                            child: Text(
-                              controller.unitRanges[index],
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 8.sp,
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox();
-                      },
-                    ),
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 20,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: Colors.grey.shade100,
-                    strokeWidth: 1,
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: List.generate(controller.unitRanges.length, (index) {
-                  // Safety check for index bounds
-                  if (index >= controller.bookedValues.length) return BarChartGroupData(x: index);
-
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: controller.bookedValues[index] + controller.availableValues[index],
-                        width: 8.w,
-                        borderRadius: BorderRadius.circular(2.r),
-                        rodStackItems: [
-                          BarChartRodStackItem(
-                              0, controller.bookedValues[index], colorBooked),
-                          BarChartRodStackItem(
-                              controller.bookedValues[index],
-                              controller.bookedValues[index] + controller.availableValues[index],
-                              colorAvailable),
-                        ],
-                        color: Colors.transparent,
-                      ),
-                    ],
-                  );
-                }),
-              ),
-            ),
+            child: ranges.isEmpty
+                ? _buildEmptyChart()
+                : _buildChartWithData(formattedRanges, bookedValues, availableValues),
           ),
 
           15.h.verticalSpace,
 
           Text(
-            "Unit Ranges",
+            controller.selectedStatsType.value == "Weekly" ? "Days" : "Months",
             style: TextStyle(
                 fontSize: 12.sp, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartWithData(List<String> ranges, List<double> bookedValues, List<double> availableValues) {
+    // Calculate max Y value
+    double maxY = 0;
+    if (bookedValues.isNotEmpty && availableValues.isNotEmpty) {
+      for (int i = 0; i < bookedValues.length; i++) {
+        final total = bookedValues[i] + (i < availableValues.length ? availableValues[i] : 0);
+        if (total > maxY) maxY = total;
+      }
+    }
+
+    // Round up to nearest 10 for better grid
+    maxY = (maxY * 1.1).ceilToDouble(); // Add 10% padding
+    if (maxY < 10) maxY = 100; // Default minimum
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceBetween,
+        maxY: maxY,
+        barTouchData: BarTouchData(enabled: false),
+        titlesData: FlTitlesData(
+          show: true,
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30.w,
+              interval: maxY / 5, // Show 5 intervals
+              getTitlesWidget: (value, meta) {
+                return Padding(
+                  padding: EdgeInsets.only(right: 4.w),
+                  child: Text(
+                    "${value.toInt()}",
+                    style: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 10.sp,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 24.h,
+              getTitlesWidget: (value, meta) {
+                int index = value.toInt();
+                if (index >= 0 && index < ranges.length) {
+                  return Padding(
+                    padding: EdgeInsets.only(top: 8.h),
+                    child: Text(
+                      ranges[index],
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 9.sp, // Slightly larger font
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  );
+                }
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxY / 5,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.grey.shade100,
+            strokeWidth: 1,
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        barGroups: List.generate(ranges.length, (index) {
+          return BarChartGroupData(
+            x: index,
+            barRods: [
+              BarChartRodData(
+                toY: (index < bookedValues.length ? bookedValues[index] : 0) +
+                    (index < availableValues.length ? availableValues[index] : 0),
+                width: 12.w, // Slightly wider bars
+                borderRadius: BorderRadius.circular(2.r),
+                rodStackItems: [
+                  BarChartRodStackItem(
+                      0,
+                      index < bookedValues.length ? bookedValues[index] : 0,
+                      colorBooked
+                  ),
+                  BarChartRodStackItem(
+                      index < bookedValues.length ? bookedValues[index] : 0,
+                      (index < bookedValues.length ? bookedValues[index] : 0) +
+                          (index < availableValues.length ? availableValues[index] : 0),
+                      colorAvailable
+                  ),
+                ],
+                color: Colors.transparent,
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildEmptyChart() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.bar_chart, size: 40.w, color: Colors.grey.shade300),
+          SizedBox(height: 8.h),
+          Text(
+            "No data available",
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.grey.shade400,
+            ),
           ),
         ],
       ),
@@ -273,6 +366,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildProfitCard({
     required String title,
     required String subtitle,
@@ -333,9 +427,9 @@ class PlotAvailabilityWidget extends StatelessWidget {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        "$percent% ↑ ",
+                        "$percent% ${percent >= 0 ? '↑' : '↓'} ",
                         style: TextStyle(
-                            color: const Color(0xFF2ECC71),
+                            color: percent >= 0 ? const Color(0xFF2ECC71) : Colors.red,
                             fontSize: 10.sp,
                             fontWeight: FontWeight.bold),
                       ),
@@ -451,7 +545,47 @@ class PlotAvailabilityWidget extends StatelessWidget {
       ],
     );
   }
+
+  // Helper method to format ranges (convert full month names to abbreviations)
+  List<String> _formatRanges(List<String> ranges, String selectedStatsType) {
+    if (selectedStatsType == "Monthly") {
+      // Map full month names to abbreviations
+      final monthAbbreviations = {
+        'January': 'Jan',
+        'February': 'Feb',
+        'March': 'Mar',
+        'April': 'Apr',
+        'May': 'May',
+        'June': 'Jun',
+        'July': 'Jul',
+        'August': 'Aug',
+        'September': 'Sep',
+        'October': 'Oct',
+        'November': 'Nov',
+        'December': 'Dec',
+      };
+
+      return ranges.map((range) {
+        // Check if it's a full month name
+        for (var fullName in monthAbbreviations.keys) {
+          if (range.toLowerCase().contains(fullName.toLowerCase())) {
+            return monthAbbreviations[fullName]!;
+          }
+        }
+        return range;
+      }).toList();
+    } else {
+      // For weekly view, keep as is but use first 3 letters
+      return ranges.map((range) {
+        if (range.length > 3) {
+          return range.substring(0, 3);
+        }
+        return range;
+      }).toList();
+    }
+  }
 }
+
 // -----------------------------------------------------------------------------
 // CUSTOM PAINTER FOR DASHED RING (Remains unchanged)
 // -----------------------------------------------------------------------------

@@ -72,7 +72,7 @@ class _BluePrintState extends State<BluePrint> {
                         border: Border.all(color: AppColor.primary.withOpacity(0.3), width: 1.w),
                       ),
                       child: Text(
-                        plotName,
+                        'GreenHeap plots structure',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,

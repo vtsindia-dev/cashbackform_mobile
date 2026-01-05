@@ -1,320 +1,516 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
 import '../controller/gioo_controller.dart';
+import '../model/gioo_plot.dart';
 import '../widget/gioo_plot_list.dart';
 
-class Giooplot extends StatelessWidget {
+class Giooplot extends StatefulWidget {
   const Giooplot({super.key});
 
+  @override
+  State<Giooplot> createState() => _GiooplotState();
+}
+
+class _GiooplotState extends State<Giooplot> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<GiooPlotController>(
       init: GiooPlotController(),
       builder: (controller) {
         return Scaffold(
+          backgroundColor: const Color(0xFFF4F7F2),
           appBar: const DynamicAppBar(
             title: "Gioo Plots",
             showBackButton: true,
           ),
-          body: controller.isLoading.value
-              ? const Center(
-            child: GifLoader(message: "Loading...", size: 100),
-          )
-              : RefreshIndicator(
-            onRefresh: () async {
-              controller.clearFilters();
-              controller.selectedPlotTypes.clear();
-              await controller.fetchGiooPlots();
-            },
-            child: Column(
-              children: [
-                _FilterSection(controller: controller),
-                Expanded(
-                  child:   GiooPlotList(),
-                ),
-                _BottomActionBar(controller: controller),
-              ],
-            ),
-          ),
+          body: Obx(() => controller.isLoading.value
+              ? const Center(child: GifLoader(message: "Finding best plots...", size: 100))
+              : Column(
+            children: [
+              _CompactFilterSection(controller: controller),
+              Expanded(child: GiooPlotList()),
+              _BottomActionBar(controller: controller),
+            ],
+          )),
         );
       },
     );
   }
 }
 
-class _FilterSection extends StatelessWidget {
-  final GiooPlotController controller;
+void _showFilterSheet(BuildContext context, GiooPlotController controller) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => _ModernFilterSheet(controller: controller),
+  );
+}
 
-  const _FilterSection({required this.controller});
+class _ModernFilterSheet extends StatefulWidget {
+  final GiooPlotController controller;
+  const _ModernFilterSheet({required this.controller});
+
+  @override
+  State<_ModernFilterSheet> createState() => _ModernFilterSheetState();
+}
+
+class _ModernFilterSheetState extends State<_ModernFilterSheet> {
+  late RangeValues _priceRange;
+  late RangeValues _areaRange; // Changed to RangeValues
+  late List<String> _selectedTypes;
+  late AppState? _selectedState;
+  late City? _selectedCity;
+  late List<City> _filteredCities;
+
+  bool _priceChanged = false;
+  bool _areaChanged = false;
+
+  bool _showAllStates = false;
+  bool _showAllCities = false;
+  bool _showAllPropertyTypes = false;
+  final int _initialItemCount = 4;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFilters();
+    _filteredCities = widget.controller.cities;
+  }
+
+  void _initFilters() {
+    final c = widget.controller;
+
+    // Price Init
+    _priceChanged = c.minPrice.value.isNotEmpty;
+    double startP = _priceChanged ? double.parse(c.minPrice.value) : c.priceMin.value;
+    double endP = c.maxPrice.value.isNotEmpty ? double.parse(c.maxPrice.value) : c.priceMax.value;
+    _priceRange = RangeValues(
+      startP.clamp(c.priceMin.value, c.priceMax.value),
+      endP.clamp(c.priceMin.value, c.priceMax.value),
+    );
+
+    // Area Init (Now as a Range)
+    _areaChanged = c.minAreaSqft.value.isNotEmpty;
+    double startA = _areaChanged ? double.parse(c.minAreaSqft.value) : c.sqftMin.value;
+    double endA = c.maxAreaSqft.value.isNotEmpty ? double.parse(c.maxAreaSqft.value) : c.sqftMax.value;
+    _areaRange = RangeValues(
+      startA.clamp(c.sqftMin.value, c.sqftMax.value),
+      endA.clamp(c.sqftMin.value, c.sqftMax.value),
+    );
+
+    _selectedTypes = List.from(c.selectedPlotTypes);
+    _selectedState = c.selectedState.value;
+    _selectedCity = c.selectedCity.value;
+
+    _updateFilteredCities();
+  }
+
+  void _updateFilteredCities() {
+    if (_selectedState != null) {
+      _filteredCities = widget.controller.getCitiesForState(_selectedState!.id);
+    } else {
+      _filteredCities = widget.controller.cities;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade200),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.9,
+      maxChildSize: 0.95,
+      minChildSize: 0.6,
+      builder: (_, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Filter header with clear all button
-          Row(
-            children: [
-              const Text(
-                "Filters",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const Spacer(),
-              Obx(
-                    () => AnimatedOpacity(
-                  duration: const Duration(milliseconds: 300),
-                  opacity: controller.hasFiltersApplied() ? 1.0 : 0.0,
-                  child: TextButton.icon(
-                    onPressed: controller.clearFilters,
-                    icon: const Icon(Icons.close, size: 14),
-                    label: const Text(
-                      "Clear All",
-                      style: TextStyle(fontSize: 13),
-                    ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.grey.shade600,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                    ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 45, height: 4, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10))),
+            _buildHeader(),
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                children: [
+                  _buildAnimatedSection(0, "GIOO LOCATION",
+                      icon: Icons.location_on_rounded,
+                      color: Colors.orange,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLabelTag("STATE"),
+                          const SizedBox(height: 10),
+                          _buildStateSelector(),
+                          if (_selectedState != null) ...[
+                            const SizedBox(height: 20),
+                            _buildLabelTag("CITY"),
+                            const SizedBox(height: 10),
+                            _buildCitySelector(),
+                          ],
+                        ],
+                      )
                   ),
-                ),
+                  const SizedBox(height: 32),
+                  _buildAnimatedSection(1, "PROPERTY CATEGORY",
+                      icon: Icons.grid_view_rounded,
+                      color: Colors.blueAccent,
+                      child: _buildTypeChips()
+                  ),
+                  const SizedBox(height: 32),
+                  _buildAnimatedSection(2, "PRICE BUDGET",
+                      icon: Icons.payments_rounded,
+                      color: Colors.green,
+                      trailing: _priceChanged ? "₹${_priceRange.start.toInt()} - ₹${_priceRange.end.toInt()}" : "Open Budget",
+                      child: _buildPriceSlider()
+                  ),
+                  const SizedBox(height: 32),
+                  _buildAnimatedSection(3, "LAND AREA RANGE",
+                      icon: Icons.square_foot_rounded,
+                      color: Colors.purple,
+                      trailing: _areaChanged ? "${_areaRange.start.toInt()} - ${_areaRange.end.toInt()} sqft" : "Any Size",
+                      child: _buildAreaSlider()
+                  ),
+                  const SizedBox(height: 40),
+                ],
               ),
+            ),
+            _buildFooter(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabelTag(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF819E4F).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF819E4F), letterSpacing: 0.5),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedSection(int index, String title, {required IconData icon, required Color color, required Widget child, String? trailing}) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 300 + (index * 100)),
+      builder: (context, value, _) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, 15 * (1 - value)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 16, color: color),
+                  const SizedBox(width: 8),
+                  Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: Colors.grey[600])),
+                  const Spacer(),
+                  if (trailing != null)
+                    Text(trailing, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              child,
             ],
           ),
-          const SizedBox(height: 12),
-
-          // Active filters chips
-          Obx(
-                () {
-              if (!controller.hasFiltersApplied()) {
-                return const SizedBox.shrink();
-              }
-
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    // Filter button
-                    _FilterChipButton(
-                      label: "More Filters",
-                      icon: Icons.add,
-                      color: const Color(0xFFFDB913),
-                      onTap: () => _openFilterSheet(context, controller),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Selected plot types
-                    ...controller.selectedPlotTypes.map(
-                          (type) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _FilterChip(
-                          label: _shortenTypeName(type),
-                          onRemove: () {
-                            controller.selectedPlotTypes.remove(type);
-                            controller.fetchGiooPlots();
-                          },
-                        ),
-                      ),
-                    ),
-
-                    // Search filter
-                    if (controller.searchQuery.value.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _FilterChip(
-                          label: "Search: ${controller.searchQuery.value}",
-                          icon: Icons.search,
-                          onRemove: () {
-                            controller.searchQuery.value = '';
-                            controller.fetchGiooPlots();
-                          },
-                        ),
-                      ),
-
-                    // Price filter
-                    if (controller.minPrice.value.isNotEmpty ||
-                        controller.maxPrice.value.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _FilterChip(
-                          label: _formatPriceRange(controller),
-                          icon: Icons.attach_money,
-                          onRemove: () {
-                            controller.minPrice.value = '';
-                            controller.maxPrice.value = '';
-                            controller.fetchGiooPlots();
-                          },
-                        ),
-                      ),
-
-                    // Area filter
-                    if (controller.minAreaSqft.value.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _FilterChip(
-                          label: "Min ${controller.minAreaSqft.value} sqft",
-                          icon: Icons.square_foot,
-                          onRemove: () {
-                            controller.minAreaSqft.value = '';
-                            controller.fetchGiooPlots();
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  String _shortenTypeName(String type) {
-    return type
-        .replaceAll('Gioo ', '')
-        .replaceAll(' Plots', '')
-        .replaceAll(' Properties', '');
-  }
-
-  String _formatPriceRange(GiooPlotController controller) {
-    if (controller.minPrice.value.isNotEmpty &&
-        controller.maxPrice.value.isNotEmpty) {
-      return "₹${controller.minPrice.value} - ₹${controller.maxPrice.value}";
-    } else if (controller.minPrice.value.isNotEmpty) {
-      return "From ₹${controller.minPrice.value}";
-    } else if (controller.maxPrice.value.isNotEmpty) {
-      return "Up to ₹${controller.maxPrice.value}";
-    }
-    return "Price";
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final VoidCallback onRemove;
-
-  const _FilterChip({
-    required this.label,
-    this.icon,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF819E4F).withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF819E4F).withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: 14,
-              color: const Color(0xFF819E4F),
-            ),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF819E4F),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(width: 6),
-          GestureDetector(
-            onTap: onRemove,
-            child: Container(
-              width: 18,
-              height: 18,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF819E4F),
-              ),
-              child: const Icon(
-                Icons.close,
-                size: 12,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FilterChipButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _FilterChipButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildSelectorItem({required String label, required bool isSelected, required VoidCallback onTap}) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? const Color(0xFF819E4F) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isSelected ? const Color(0xFF819E4F) : Colors.grey[200]!),
+          boxShadow: isSelected ? [BoxShadow(color: const Color(0xFF819E4F).withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))] : [],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, fontSize: 13),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStateSelector() {
+    final statesToShow = _showAllStates ? widget.controller.states : widget.controller.states.take(_initialItemCount).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8, runSpacing: 8,
+          children: [
+            _buildSelectorItem(label: "All States", isSelected: _selectedState == null, onTap: () {
+              setState(() { _selectedState = null; _selectedCity = null; _updateFilteredCities(); });
+            }),
+            ...statesToShow.map((state) => _buildSelectorItem(
+                label: state.stateName,
+                isSelected: _selectedState?.id == state.id,
+                onTap: () { setState(() { _selectedState = state; _selectedCity = null; _updateFilteredCities(); }); }
+            )),
+          ],
+        ),
+        if (widget.controller.states.length > _initialItemCount) _buildSeeMore(() => setState(() => _showAllStates = !_showAllStates), _showAllStates),
+      ],
+    );
+  }
+
+  Widget _buildCitySelector() {
+    final citiesToShow = _showAllCities ? _filteredCities : _filteredCities.take(_initialItemCount).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8, runSpacing: 8,
+          children: [
+            _buildSelectorItem(label: "All Cities", isSelected: _selectedCity == null, onTap: () => setState(() => _selectedCity = null)),
+            ...citiesToShow.map((city) => _buildSelectorItem(
+                label: city.cityName,
+                isSelected: _selectedCity?.id == city.id,
+                onTap: () => setState(() => _selectedCity = city)
+            )),
+          ],
+        ),
+        if (_filteredCities.length > _initialItemCount) _buildSeeMore(() => setState(() => _showAllCities = !_showAllCities), _showAllCities),
+      ],
+    );
+  }
+
+  Widget _buildTypeChips() {
+    final typesToShow = _showAllPropertyTypes ? widget.controller.propertyTypes : widget.controller.propertyTypes.take(_initialItemCount).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8, runSpacing: 8,
+          children: typesToShow.map((type) => _buildSelectorItem(
+              label: type.categoryName.replaceAll('GreenHeap ', ''),
+              isSelected: _selectedTypes.contains(type.categoryName),
+              onTap: () => setState(() => _selectedTypes.contains(type.categoryName) ? _selectedTypes.remove(type.categoryName) : _selectedTypes.add(type.categoryName))
+          )).toList(),
+        ),
+        if (widget.controller.propertyTypes.length > _initialItemCount) _buildSeeMore(() => setState(() => _showAllPropertyTypes = !_showAllPropertyTypes), _showAllPropertyTypes),
+      ],
+    );
+  }
+
+  Widget _buildSeeMore(VoidCallback onTap, bool isOpen) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(isOpen ? "- See Less" : "+ See More", style: const TextStyle(color: Color(0xFF819E4F), fontSize: 12, fontWeight: FontWeight.w900)),
+      ),
+    );
+  }
+
+  Widget _buildPriceSlider() {
+    return _buildSliderCard(
+      accentColor: Colors.green,
+      child: RangeSlider(
+        values: _priceRange,
+        min: widget.controller.priceMin.value,
+        max: widget.controller.priceMax.value,
+        onChanged: (val) {
+          setState(() { _priceRange = val; _priceChanged = true; });
+        },
+      ),
+    );
+  }
+
+  Widget _buildAreaSlider() {
+    return _buildSliderCard(
+      accentColor: Colors.purple,
+      child: RangeSlider( // Changed from Slider to RangeSlider
+        values: _areaRange,
+        min: widget.controller.sqftMin.value,
+        max: widget.controller.sqftMax.value,
+        onChanged: (val) {
+          setState(() { _areaRange = val; _areaChanged = true; });
+        },
+      ),
+    );
+  }
+
+  Widget _buildSliderCard({required Widget child, required Color accentColor}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey[100]!)),
+      child: SliderTheme(
+        data: SliderTheme.of(context).copyWith(
+          trackHeight: 6,
+          activeTrackColor: accentColor,
+          inactiveTrackColor: accentColor.withOpacity(0.1),
+          thumbColor: Colors.white,
+          rangeThumbShape: const RoundRangeSliderThumbShape(enabledThumbRadius: 12, elevation: 5),
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Filters", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
+              Text("Customize your search", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+            ],
+          ),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.vibrate();
+              widget.controller.clearFilters();
+              setState(() => _initFilters());
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.red[50], shape: BoxShape.circle),
+              child: Icon(Icons.refresh_rounded, color: Colors.red[400], size: 22),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
+      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF819E4F),
+          minimumSize: const Size(double.infinity, 60),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          elevation: 8,
+          shadowColor: const Color(0xFF819E4F).withOpacity(0.4),
+        ),
+        onPressed: () {
+          widget.controller.selectedPlotTypes.assignAll(_selectedTypes);
+
+          // PRICE LOGIC
+          widget.controller.minPrice.value = _priceChanged ? _priceRange.start.toInt().toString() : "";
+          widget.controller.maxPrice.value = _priceChanged ? _priceRange.end.toInt().toString() : "";
+
+          // AREA LOGIC (Now handles Min and Max)
+          widget.controller.minAreaSqft.value = _areaChanged ? _areaRange.start.toInt().toString() : "";
+          widget.controller.maxAreaSqft.value = _areaChanged ? _areaRange.end.toInt().toString() : "";
+
+          widget.controller.selectedState.value = _selectedState;
+          widget.controller.selectedCity.value = _selectedCity;
+          widget.controller.fetchGiooPlots();
+          Get.back();
+        },
+        child: const Text("Show Plots", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+      ),
+    );
+  }
+}
+
+// Compact Filter and Bottom Action Bar remain the same as your provided code
+class _CompactFilterSection extends StatelessWidget {
+  final GiooPlotController controller;
+  const _CompactFilterSection({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.black12, width: 0.5),
+          borderRadius: BorderRadius.circular(35),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+            Obx(() {
+              if (controller.recentSearch.value.isEmpty) return const SizedBox.shrink();
+              return Row(
+                children: [
+                  Container(
+                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.22),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.25), borderRadius: BorderRadius.circular(25)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Expanded(child: Text(controller.recentSearch.value, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11), overflow: TextOverflow.ellipsis)),
+                        const SizedBox(width: 4),
+                        GestureDetector(onTap: controller.clearRecentSearch, child: const Icon(Icons.close, size: 14, color: Colors.white)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(width: 1.5, height: 24, color: Colors.grey),
+                  const SizedBox(width: 6),
+                ],
+              );
+            }),
+            Expanded(
+              child: Row(
+                children: [
+                  const Icon(Icons.search, size: 18, color: Colors.black),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: TextField(
+                      controller: controller.searchController,
+                      onChanged: controller.onSearchChanged,
+                      onSubmitted: (_) => controller.applySearch,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: const InputDecoration(hintText: "Search your location...", border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
+                    ),
+                  ),
+                  Obx(() {
+                    if (controller.searchQuery.value.isEmpty) return const SizedBox.shrink();
+                    return GestureDetector(onTap: () { controller.searchController.clear(); controller.searchQuery.value = ''; }, child: const Icon(Icons.close, size: 16, color: Colors.grey));
+                  }),
+                ],
               ),
             ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: controller.applySearch,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF819E4F), Color(0xFF9CB45A)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(20)),
+                child: const Text("Search", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+            ),
+            const SizedBox(width: 6),
+            GestureDetector(onTap: () => _showFilterSheet(context, controller), child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: const Color(0xFF819E4F), borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.tune, color: Colors.white, size: 18))),
           ],
         ),
       ),
@@ -324,531 +520,21 @@ class _FilterChipButton extends StatelessWidget {
 
 class _BottomActionBar extends StatelessWidget {
   final GiooPlotController controller;
-
   const _BottomActionBar({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade200),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
+    return Obx(() => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Colors.black12, width: 0.5))),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Filter summary
-          Expanded(
-            child: Obx(
-                  () {
-                final count = controller.getActiveFilterCount();
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      count > 0
-                          ? "$count filter${count > 1 ? 's' : ''} active"
-                          : "No filters applied",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    if (count > 0)
-                      Text(
-                        "Tap to refine",
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ),
-
-          // Filter button
-          Obx(
-                () {
-              final count = controller.getActiveFilterCount();
-              return ElevatedButton.icon(
-                onPressed: () => _openFilterSheet(context, controller),
-                icon: count > 0
-                    ? Badge(
-                  label: Text(count.toString()),
-                  smallSize: 18,
-                  backgroundColor: Colors.white,
-                  textColor: const Color(0xFFFDB913),
-                  child: const Icon(Icons.filter_alt,
-                      size: 20, color: Color(0xFFFDB913)),
-                )
-                    : const Icon(Icons.filter_alt_outlined,
-                    size: 20, color: Colors.white),
-                label: Text(
-                  count > 0 ? "Edit Filters" : "Add Filters",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: count > 0 ? const Color(0xFFFDB913) : Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  count > 0 ? const Color(0xFFFDB913).withOpacity(0.1) : const Color(0xFFFDB913),
-                  foregroundColor: count > 0 ? const Color(0xFFFDB913) : Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                    side: count > 0
-                        ? const BorderSide(color: Color(0xFFFDB913), width: 1.5)
-                        : BorderSide.none,
-                  ),
-                  elevation: 0,
-                ),
-              );
-            },
-          ),
+          Text("${controller.giooPlots.length} Plots found", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          if (controller.hasFiltersApplied())
+            GestureDetector(onTap: () => controller.clearFilters(), child: Text("RESET FILTERS", style: TextStyle(color: Colors.red[400], fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1))),
         ],
       ),
-    );
+    ));
   }
-}
-
-void _openFilterSheet(BuildContext context, GiooPlotController controller) {
-  TextEditingController searchController =
-  TextEditingController(text: controller.searchQuery.value);
-  TextEditingController minPriceController =
-  TextEditingController(text: controller.minPrice.value);
-  TextEditingController maxPriceController =
-  TextEditingController(text: controller.maxPrice.value);
-  TextEditingController minAreaController =
-  TextEditingController(text: controller.minAreaSqft.value);
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    enableDrag: true,
-    builder: (_) {
-      return GestureDetector(
-        onTap: () => Get.back(),
-        child: Container(
-          color: Colors.black.withOpacity(0.4),
-          child: GestureDetector(
-            onTap: () {},
-            child: DraggableScrollableSheet(
-              initialChildSize: 0.9,
-              minChildSize: 0.5,
-              maxChildSize: 0.95,
-              snap: true,
-              snapSizes: const [0.5, 0.7, 0.95],
-              builder: (_, scrollController) {
-                return StatefulBuilder(
-                  builder: (context, setState) {
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(24),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 30,
-                            spreadRadius: -5,
-                            offset: const Offset(0, -10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          // Drag handle
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12, bottom: 4),
-                            child: Container(
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade400,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-
-                          // Header
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 16),
-                            child: Row(
-                              children: [
-                                const Text(
-                                  "Filter & Sort",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Obx(
-                                      () => AnimatedOpacity(
-                                    duration:
-                                    const Duration(milliseconds: 300),
-                                    opacity: controller.hasFiltersApplied()
-                                        ? 1.0
-                                        : 0.0,
-                                    child: TextButton(
-                                      onPressed: controller.clearFilters,
-                                      child: const Text(
-                                        "Clear All",
-                                        style: TextStyle(
-                                          color: Color(0xFFFDB913),
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                IconButton(
-                                  icon: const Icon(Icons.close,
-                                      size: 20, color: Colors.black54),
-                                  onPressed: () => Get.back(),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const Divider(height: 1, color: Colors.grey),
-
-                          // Content
-                          Expanded(
-                            child: SingleChildScrollView(
-                              controller: scrollController,
-                              physics: const ClampingScrollPhysics(),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 20),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Search
-                                    _FilterSectionCard(
-                                      title: "Search Properties",
-                                      icon: Icons.search,
-                                      child: _buildModernTextField(
-                                        controller: searchController,
-                                        hint: 'Enter location, name...',
-                                        icon: Icons.search,
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 24),
-
-                                    // Plot Types
-                                    _FilterSectionCard(
-                                      title: "Plot Types",
-                                      icon: Icons.category,
-                                      child: _buildPlotTypeGrid(controller),
-                                    ),
-
-                                    const SizedBox(height: 24),
-
-                                    // Price Range
-                                    _FilterSectionCard(
-                                      title: "Price Range",
-                                      icon: Icons.attach_money,
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: _buildModernTextField(
-                                              controller: minPriceController,
-                                              hint: "Min",
-                                              prefix: "₹",
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: _buildModernTextField(
-                                              controller: maxPriceController,
-                                              hint: "Max",
-                                              prefix: "₹",
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 24),
-
-                                    // Area
-                                    _FilterSectionCard(
-                                      title: "Area (Square Feet)",
-                                      icon: Icons.square_foot,
-                                      child: _buildModernTextField(
-                                        controller: minAreaController,
-                                        hint: "Minimum area",
-                                        suffix: "sqft",
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 40),
-
-                                    // Apply Button
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 56,
-                                      child: ElevatedButton(
-                                        onPressed: () {
-                                          controller.searchQuery.value =
-                                              searchController.text;
-                                          controller.minPrice.value =
-                                              minPriceController.text;
-                                          controller.maxPrice.value =
-                                              maxPriceController.text;
-                                          controller.minAreaSqft.value =
-                                              minAreaController.text;
-                                          controller.fetchGiooPlots();
-                                          Get.back();
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                          const Color(0xFF819E4F),
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(16),
-                                          ),
-                                          elevation: 2,
-                                        ),
-                                        child: const Text(
-                                          "Apply Filters",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    SizedBox(
-                                        height: MediaQuery.of(context)
-                                            .padding
-                                            .bottom +
-                                            20),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ),
-      );
-    },
-  );
-}
-
-class _FilterSectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Widget child;
-
-  const _FilterSectionCard({
-    required this.title,
-    required this.icon,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: const Color(0xFF819E4F),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        child,
-      ],
-    );
-  }
-}
-
-Widget _buildModernTextField({
-  required TextEditingController controller,
-  required String hint,
-  IconData? icon,
-  String? prefix,
-  String? suffix,
-}) {
-  return Container(
-    height: 52,
-    decoration: BoxDecoration(
-      color: Colors.grey.shade50,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.grey.shade300),
-    ),
-    child: Row(
-      children: [
-        if (prefix != null)
-          Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Text(
-              prefix,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-        if (icon != null)
-          Padding(
-            padding: const EdgeInsets.only(left: 16, right: 8),
-            child: Icon(icon, color: Colors.grey.shade500, size: 20),
-          ),
-        Expanded(
-          child: TextField(
-            controller: controller,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(color: Colors.grey.shade500),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            ),
-          ),
-        ),
-        if (suffix != null)
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Text(
-              suffix,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-      ],
-    ),
-  );
-}
-
-Widget _buildPlotTypeGrid(GiooPlotController controller) {
-  final plotTypes = [
-    "Gioo Plots Properties",
-    "Gioo Rich Plots",
-    "Gioo Main Plots",
-    "Gioo Metro Plots",
-    "Gioo Urban Plots",
-  ];
-
-  return GridView.builder(
-    physics: const NeverScrollableScrollPhysics(),
-    shrinkWrap: true,
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 3.5,
-    ),
-    itemCount: plotTypes.length,
-    itemBuilder: (context, index) {
-      final type = plotTypes[index];
-      return Obx(() {
-        final isSelected = controller.selectedPlotTypes.contains(type);
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              if (isSelected) {
-                controller.selectedPlotTypes.remove(type);
-              } else {
-                controller.selectedPlotTypes.add(type);
-              }
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF819E4F).withOpacity(0.1)
-                    : Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF819E4F)
-                      : Colors.grey.shade300,
-                  width: isSelected ? 1.5 : 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isSelected ? Icons.check_circle : Icons.circle_outlined,
-                    color: isSelected
-                        ? const Color(0xFF819E4F)
-                        : Colors.grey.shade400,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      type.replaceAll('Gioo ', ''),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? Colors.black87 : Colors.grey.shade700,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      });
-    },
-  );
 }

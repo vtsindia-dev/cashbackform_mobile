@@ -8,8 +8,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../common/colours.dart';
 import '../controller/gioo_controller.dart';
-import '../model/gioo_plot.dart';
 import 'package:lottie/lottie.dart';
+
+import '../model/gioo_plot.dart';
 
 class ReserveSlot extends StatefulWidget {
   const ReserveSlot({super.key});
@@ -23,47 +24,33 @@ class _ReserveSlotState extends State<ReserveSlot> {
   int selectedPlotCount = 0;
   bool _isSelectionMode = false;
   List<int> _tempSelectedUnits = [];
-  bool _isDragging = false;
-  int? _dragStartUnit;
   int _currentPage = 0;
   int _itemsPerPage = 100;
-  final PageController _pageController = PageController();
   final ScrollController _gridScrollController = ScrollController();
   bool _hasScrolledToAvailable = false;
-
-  // Add this getter for paginated units
-  List<PlotUnit> get paginatedUnits {
-    final start = _currentPage * _itemsPerPage;
-    final end = start + _itemsPerPage;
-
-    if (controller.units.isEmpty) return [];
-
-    if (start >= controller.units.length) {
-      _currentPage = 0;
-      return controller.units.take(_itemsPerPage).toList();
-    }
-
-    return controller.units.sublist(
-        start,
-        end > controller.units.length ? controller.units.length : end
-    );
-  }
-
-  int get totalPages => (controller.units.length / _itemsPerPage).ceil();
+  bool _isDisposed = false;
 
   @override
   void initState() {
     super.initState();
     // Listen for unit changes
     ever(controller.units, (_) {
+      if (_isDisposed) return; // Don't proceed if disposed
+
       if (controller.units.isNotEmpty && _currentPage * _itemsPerPage >= controller.units.length) {
-        _currentPage = 0;
+        if (mounted) {
+          setState(() {
+            _currentPage = 0;
+          });
+        }
       }
 
       // Auto-scroll to first available plot when units are loaded
       if (controller.units.isNotEmpty && !_hasScrolledToAvailable) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToFirstAvailablePlot();
+          if (!_isDisposed && mounted) {
+            _scrollToFirstAvailablePlot();
+          }
         });
       }
     });
@@ -71,13 +58,14 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _isDisposed = true;
     _gridScrollController.dispose();
     super.dispose();
   }
 
   // Auto-scroll to first available plot
   void _scrollToFirstAvailablePlot() {
+    if (_isDisposed || !mounted) return;
     if (_hasScrolledToAvailable || controller.units.isEmpty) return;
 
     // Find first available plot
@@ -95,13 +83,17 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
       // If it's not on current page, go to that page
       if (pageForAvailable != _currentPage) {
-        setState(() {
-          _currentPage = pageForAvailable;
-        });
+        if (mounted) {
+          setState(() {
+            _currentPage = pageForAvailable;
+          });
+        }
       }
 
       // Scroll to the position after a small delay
       Future.delayed(const Duration(milliseconds: 300), () {
+        if (_isDisposed || !mounted) return;
+
         if (_gridScrollController.hasClients) {
           // Calculate row position (assuming 10 plots per row)
           final rowIndex = (firstAvailableIndex % _itemsPerPage) ~/ 10;
@@ -120,8 +112,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   // Quick jump button functionality
-// Quick jump button functionality
   void _jumpToFirstAvailable() {
+    if (_isDisposed || !mounted) return;
     if (controller.units.isEmpty) return;
 
     // Find first available plot
@@ -136,11 +128,15 @@ class _ReserveSlotState extends State<ReserveSlot> {
     if (firstAvailableIndex >= 0) {
       final pageForAvailable = (firstAvailableIndex / _itemsPerPage).floor();
 
-      setState(() {
-        _currentPage = pageForAvailable;
-      });
+      if (mounted) {
+        setState(() {
+          _currentPage = pageForAvailable;
+        });
+      }
 
       Future.delayed(const Duration(milliseconds: 300), () {
+        if (_isDisposed || !mounted) return;
+
         if (_gridScrollController.hasClients) {
           final rowIndex = (firstAvailableIndex % _itemsPerPage) ~/ 10;
           final scrollOffset = rowIndex * 100.0;
@@ -474,7 +470,6 @@ class _ReserveSlotState extends State<ReserveSlot> {
                 setState(() {
                   _isSelectionMode = false;
                   _tempSelectedUnits.clear();
-                  _isDragging = false;
                 });
               },
               icon: Icon(Icons.close, size: 20.w),
@@ -628,10 +623,12 @@ class _ReserveSlotState extends State<ReserveSlot> {
     // Update controller's selected units
     controller.selectedUnits.value = List.from(_tempSelectedUnits);
 
-    setState(() {
-      _isSelectionMode = false;
-      _tempSelectedUnits.clear();
-    });
+    if (mounted) {
+      setState(() {
+        _isSelectionMode = false;
+        _tempSelectedUnits.clear();
+      });
+    }
 
     controller.calculateTotals();
   }
@@ -658,10 +655,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
                 _isSelectionMode
                     ? "Selecting (${_tempSelectedUnits.length})"
                     : "Selected (${controller.selectedCount.value})"),
-            _legendItem(AppColor.primary, "Booked (${controller.bookedCount.value})"),
-            // _legendItem(Colors.green, "Admin Booked (${controller.adminBookedCount.value})"),
+            _legendItem(AppColor.primary, "Booked (${controller.bookedCount.value + controller.adminBookedCount.value})"),
             _legendItem(Colors.grey.withOpacity(0.5), "Available (${controller.availableCount.value})"),
-            _legendItem(Colors.blue.withOpacity(0.5), "Total (${controller.totalPlotsCount.value})"),
+            _legendItem(Colors.blue.withOpacity(0.5), "Total Slot (${controller.totalPlotsCount.value})"),
           ],
         ),
       ],
@@ -692,21 +688,15 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
       return Column(
         children: [
-          // Page navigation
-          if (controller.units.length > 100) ...[
+          if (controller.units.length > _itemsPerPage) ...[
             _buildPageNavigation(controller),
             15.h.verticalSpace,
           ],
-
           Container(
-            height: 320,
-            child: Expanded(
-              child: _buildGridForCurrentPage(controller),
-            ),
+            height: 350.h,
+            child: _buildGridForCurrentPage(controller),
           ),
-
-          // Page info
-          if (controller.units.length > 100) ...[
+          if (controller.units.length > _itemsPerPage) ...[
             10.h.verticalSpace,
             _buildPageInfo(controller),
           ],
@@ -716,16 +706,13 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _buildPageNavigation(GiooPlotController controller) {
-    final totalPages = (controller.units.length / 100).ceil();
-
-    // Find first available plot for quick jump
+    final totalPages = (controller.units.length / _itemsPerPage).ceil();
     int firstAvailablePlot = -1;
     int pageWithFirstAvailable = 0;
-
     for (int i = 0; i < controller.units.length; i++) {
       if (controller.units[i].status == 'Available') {
         firstAvailablePlot = i + 1; // +1 for 1-based plot numbering
-        pageWithFirstAvailable = (i / 100).floor();
+        pageWithFirstAvailable = (i / _itemsPerPage).floor();
         break;
       }
     }
@@ -772,16 +759,18 @@ class _ReserveSlotState extends State<ReserveSlot> {
             ),
           ),
 
-        // Regular page navigation
+        // Regular page navigation with swipe support
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
               onPressed: _currentPage > 0 ? () {
-                setState(() {
-                  _currentPage--;
-                });
-                // Reset scroll position when changing pages - SAFE CHECK
+                if (mounted) {
+                  setState(() {
+                    _currentPage--;
+                  });
+                }
+                // Reset scroll position when changing pages
                 if (_gridScrollController.hasClients) {
                   _gridScrollController.jumpTo(0);
                 }
@@ -790,17 +779,46 @@ class _ReserveSlotState extends State<ReserveSlot> {
               color: _currentPage > 0 ? AppColor.orange : Colors.grey,
             ),
             20.w.horizontalSpace,
-            Text(
-              'Plots ${_currentPage * 100 + 1}-${min((_currentPage + 1) * 100, controller.units.length)}',
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+            GestureDetector(
+              onHorizontalDragEnd: (details) {
+                final totalPages = (controller.units.length / _itemsPerPage).ceil();
+                // Swipe right to left = next page
+                if (details.primaryVelocity! < 0) {
+                  if (_currentPage < totalPages - 1 && mounted) {
+                    setState(() {
+                      _currentPage++;
+                    });
+                    if (_gridScrollController.hasClients) {
+                      _gridScrollController.jumpTo(0);
+                    }
+                  }
+                }
+                // Swipe left to right = previous page
+                else if (details.primaryVelocity! > 0) {
+                  if (_currentPage > 0 && mounted) {
+                    setState(() {
+                      _currentPage--;
+                    });
+                    if (_gridScrollController.hasClients) {
+                      _gridScrollController.jumpTo(0);
+                    }
+                  }
+                }
+              },
+              child: Text(
+                'Plots ${_currentPage * _itemsPerPage + 1}-${min((_currentPage + 1) * _itemsPerPage, controller.units.length)}',
+                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+              ),
             ),
             20.w.horizontalSpace,
             IconButton(
               onPressed: _currentPage < totalPages - 1 ? () {
-                setState(() {
-                  _currentPage++;
-                });
-                // Reset scroll position when changing pages - SAFE CHECK
+                if (mounted) {
+                  setState(() {
+                    _currentPage++;
+                  });
+                }
+                // Reset scroll position when changing pages
                 if (_gridScrollController.hasClients) {
                   _gridScrollController.jumpTo(0);
                 }
@@ -815,27 +833,61 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _buildGridForCurrentPage(GiooPlotController controller) {
-    final start = _currentPage * 100;
-    final end = min(start + 100, controller.units.length);
+    final start = _currentPage * _itemsPerPage;
+    final end = min(start + _itemsPerPage, controller.units.length);
     final pageUnits = controller.units.sublist(start, end);
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 10,
-        crossAxisSpacing: 6.w,
-        mainAxisSpacing: 6.h,
-        childAspectRatio: 1.0,
-      ),
-      itemCount: pageUnits.length,
-      itemBuilder: (context, index) {
-        final unit = pageUnits[index];
-        final actualIndex = start + index;
-        final actualUnit = controller.units[actualIndex];
-
-        return _buildPlotUnitItem(controller, actualUnit, actualIndex);
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        final totalPages = (controller.units.length / _itemsPerPage).ceil();
+        // Swipe right to left = next page
+        if (details.primaryVelocity! < 0) {
+          if (_currentPage < totalPages - 1 && mounted) {
+            setState(() {
+              _currentPage++;
+            });
+            if (_gridScrollController.hasClients) {
+              _gridScrollController.jumpTo(0);
+            }
+          }
+        }
+        // Swipe left to right = previous page
+        else if (details.primaryVelocity! > 0) {
+          if (_currentPage > 0 && mounted) {
+            setState(() {
+              _currentPage--;
+            });
+            if (_gridScrollController.hasClients) {
+              _gridScrollController.jumpTo(0);
+            }
+          }
+        }
       },
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          // Allow scrolling within the grid
+          return false;
+        },
+        child: GridView.builder(
+          controller: _gridScrollController,
+          shrinkWrap: true,
+          physics: const ClampingScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 10,
+            crossAxisSpacing: 6.w,
+            mainAxisSpacing: 6.h,
+            childAspectRatio: 1.0,
+          ),
+          itemCount: pageUnits.length,
+          itemBuilder: (context, index) {
+            final unit = pageUnits[index];
+            final actualIndex = start + index;
+            final actualUnit = controller.units[actualIndex];
+
+            return _buildPlotUnitItem(controller, actualUnit, actualIndex);
+          },
+        ),
+      ),
     );
   }
 
@@ -869,7 +921,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
       color = AppColor.primary;
       icon = Icons.person;
     } else if (isTempSelected && _isSelectionMode) {
-      color = AppColor.orange.withOpacity(0.7);
+      color = AppColor.orange;
     } else {
       color = Colors.grey.withOpacity(0.5);
     }
@@ -958,7 +1010,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _buildPageInfo(GiooPlotController controller) {
-    final totalPages = (controller.units.length / 100).ceil();
+    final totalPages = (controller.units.length / _itemsPerPage).ceil();
     final availableCount = controller.availableCount.value;
 
     // For many pages, only show limited dots with current page indicator
@@ -1074,29 +1126,6 @@ class _ReserveSlotState extends State<ReserveSlot> {
     }
   }
 
-  // Update the drag handling logic
-  void _handleDragSelection(int unitId) {
-    // Don't allow selection if unit is booked/admin-block
-    final unit = controller.units.firstWhere((u) => u.id == unitId,
-        orElse: () => PlotUnit(id: -1, label: '', status: 'Booked', area: 0));
-
-    if (unit.status == 'Booked') {
-      return; // Skip booked units
-    }
-
-    if (_tempSelectedUnits.length >= selectedPlotCount &&
-        !_tempSelectedUnits.contains(unitId)) {
-      return; // Max limit reached
-    }
-
-    if (!_tempSelectedUnits.contains(unitId)) {
-      setState(() {
-        _tempSelectedUnits.add(unitId);
-        _tempSelectedUnits.sort();
-      });
-    }
-  }
-
   // Update the tap selection to handle edge cases
   void _handleTapSelection(int unitId) {
     final unit = controller.units.firstWhere((u) => u.id == unitId,
@@ -1113,14 +1142,18 @@ class _ReserveSlotState extends State<ReserveSlot> {
     }
 
     if (_tempSelectedUnits.contains(unitId)) {
-      setState(() {
-        _tempSelectedUnits.remove(unitId);
-      });
+      if (mounted) {
+        setState(() {
+          _tempSelectedUnits.remove(unitId);
+        });
+      }
     } else if (_tempSelectedUnits.length < selectedPlotCount) {
-      setState(() {
-        _tempSelectedUnits.add(unitId);
-        _tempSelectedUnits.sort();
-      });
+      if (mounted) {
+        setState(() {
+          _tempSelectedUnits.add(unitId);
+          _tempSelectedUnits.sort();
+        });
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1166,7 +1199,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
     );
   }
 
-  Widget _buildLocationDetail(GiooPlotController controller, GiooPlotDetail detail) {
+
+
+
+    Widget _buildLocationDetail(GiooPlotController controller, GiooPlotDetail detail) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1215,57 +1251,50 @@ class _ReserveSlotState extends State<ReserveSlot> {
     );
   }
 
-  Widget _buildStatusAndUnitInfo(GiooPlotController controller, GiooPlotDetail detail) {
+  Widget _buildStatusAndUnitInfo(
+      GiooPlotController controller,
+      GiooPlotDetail detail,
+      ) {
     final dateFormatter = DateFormat('dd MMM yyyy');
-    final timeFormatter = DateFormat('hh:mm a');
 
+    /// Only DATE (no time)
     final createdDate = dateFormatter.format(detail.createdAt);
-    final createdTime = timeFormatter.format(detail.createdAt);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
+        /// SELECTED UNITS
+        _infoItem(
+                  Icons.date_range,
+                  createdDate,
+                  AppColor.black,
+                ),
+        SizedBox(height: 5,),
+
+        _infoItem(
+          Icons.location_city_outlined,
+          controller.getSelectedUnitsText(),
+          AppColor.black,
+        ),
+
+
+
+        /// SHOW MORE / LESS
+        if (controller.selectedUnits.length > 5)
+          GestureDetector(
+            onTap: controller.toggleShowUnits,
+            child: Padding(
+              padding: EdgeInsets.only(left: 30.w, top: 6.h),
               child: Text(
-                detail.name,
+                controller.showAllUnits.value ? "Show Less" : "Show More",
                 style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.black),
+                  fontSize: 12.sp,
+                  color: AppColor.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-            Row(
-              children: [
-                Icon(Icons.check_circle, size: 16.w, color: AppColor.black),
-                5.w.horizontalSpace,
-                Text(
-                  "Approved Plot",
-                  style: TextStyle(fontSize: 12.sp, color: AppColor.black),
-                ),
-              ],
-            ),
-          ],
-        ),
-        15.h.verticalSpace,
-        Row(
-          children: [
-            Expanded(child: _infoItem(Icons.calendar_today_outlined, createdDate, AppColor.black)),
-            20.w.horizontalSpace,
-            Expanded(child: _infoItem(Icons.access_time, createdTime, AppColor.black)),
-          ],
-        ),
-        10.h.verticalSpace,
-        _infoItem(
-            Icons.location_city_outlined,
-            _isSelectionMode
-                ? (_tempSelectedUnits.isNotEmpty
-                ? "Selecting: ${_tempSelectedUnits.join(', ')}"
-                : "Select plots")
-                : controller.getSelectedUnitRange(),
-            AppColor.black
-        ),
+          ),
       ],
     );
   }

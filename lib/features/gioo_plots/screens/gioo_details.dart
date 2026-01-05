@@ -16,7 +16,8 @@ import '../widget/reserve_slot.dart';
 
 class GiooDetails extends StatefulWidget {
   final int? id;
-  GiooDetails({super.key, this.id});
+  final String? title;
+  GiooDetails({super.key, this.id,  this.title});
 
   @override
   State<GiooDetails> createState() => _GiooDetailsState();
@@ -38,7 +39,7 @@ class _GiooDetailsState extends State<GiooDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: DynamicAppBar(
-        title: "Plots Details",
+        title: widget.title??'Plot Details',
         showBackButton: true,
       ),
       body: Obx(() {
@@ -79,6 +80,15 @@ class _GiooDetailsState extends State<GiooDetails> {
       );
     }
 
+    // 🔥 dynamic values
+    final int visibleCount = buyers.length > 4 ? 4 : buyers.length;
+    const double itemHeight = 60;
+    const double separatorHeight = 8;
+
+    final double listHeight =
+        (visibleCount * itemHeight) +
+            ((visibleCount - 1) * separatorHeight);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -93,88 +103,85 @@ class _GiooDetailsState extends State<GiooDetails> {
           ),
         ),
 
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: buyers.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            final buyer = buyers[index] as Map<String, dynamic>;
+        /// 🔥 DYNAMIC HEIGHT LIST
+        SizedBox(
+          height: listHeight,
+          child: ListView.separated(
+            physics: buyers.length > 4
+                ? const BouncingScrollPhysics()
+                : const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            itemCount: visibleCount,
+            separatorBuilder: (_, __) =>
+            const SizedBox(height: separatorHeight),
+            itemBuilder: (context, index) {
+              final buyer = buyers[index];
 
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 26,
-                    backgroundImage: buyer['avatar'] != null &&
-                        buyer['avatar'].toString().isNotEmpty
-                        ? NetworkImage(buyer['avatar'])
-                        : null,
-                    child: buyer['avatar'] == null
-                        ? const Icon(Icons.person)
-                        : null,
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  // Name + Email
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          buyer['name'] ?? 'Unknown',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          buyer['email'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
                     ),
-                  ),
-
-                  // Phone icon
-                  if (buyer['phone'] != null)
-                    IconButton(
-                      icon: const Icon(Icons.call, size: 20),
-                      onPressed: () {
-                        launchUrl(
-                          Uri.parse('tel:${buyer['phone']}'),
-                        );
-                      },
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    /// Avatar
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundImage:
+                      buyer.avatar != null && buyer.avatar!.isNotEmpty
+                          ? NetworkImage(buyer.avatar!)
+                          : null,
+                      child: buyer.avatar == null
+                          ? const Icon(Icons.person, size: 20)
+                          : null,
                     ),
-                ],
-              ),
-            );
-          },
+
+                    const SizedBox(width: 10),
+
+                    /// Name + Email
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            buyer.name ?? 'Unknown',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            buyer.email ?? '',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
   }
-
 
   /// Avatar fallback
   Widget _avatarFallback() {

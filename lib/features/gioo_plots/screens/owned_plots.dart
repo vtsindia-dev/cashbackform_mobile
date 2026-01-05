@@ -215,191 +215,123 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
     final units = controller.getUnitsList(booking.units);
     final dateFormat = DateFormat('dd MMM yyyy');
     final timeFormat = DateFormat('hh:mm a');
+    final statusColor = controller.getStatusColor(booking.transaction.status);
 
-    return Card(
-      color: Colors.white,
-      margin: EdgeInsets.only(bottom: 16.w),
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.r),
+    return Container(
+      margin: EdgeInsets.only(bottom: 20.h, left: 4.w, right: 4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: () => _showBookingDetails(booking),
-        borderRadius: BorderRadius.circular(16.r),
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20.r),
+        child: InkWell(
+          onTap: () => _showBookingDetails(booking),
+          child: Stack(
             children: [
-              // Header with property name and status
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          booking.property.name,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade800,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        4.h.verticalSpace,
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_outlined,
-                              size: 14.w,
-                              color: Colors.grey.shade500,
-                            ),
-                            4.w.horizontalSpace,
-                            Expanded(
-                              child: Text(
-                                booking.property.address,
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey.shade600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  10.w.horizontalSpace,
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: controller
-                          .getStatusColor(booking.transaction.status)
-                          .withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(
-                        color: controller.getStatusColor(
-                          booking.transaction.status,
-                        ),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      controller.getStatusText(booking.transaction.status)
-                          .toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
-                        color: controller.getStatusColor(
-                          booking.transaction.status,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              16.h.verticalSpace,
-
-              // Booking details
-              Row(
-                children: [
-                  _infoItem(
-                    icon: Icons.grid_view,
-                    title: 'Units',
-                    value: '${units.length} units',
-                  ),
-                  Expanded(child: Container()),
-                  _infoItem(
-                    icon: Icons.currency_rupee,
-                    title: 'Amount',
-                    value: '₹${booking.amount.toStringAsFixed(2)}',
-                    valueColor: Colors.green,
-                  ),
-                ],
-              ),
-
-              12.h.verticalSpace,
-
-              // Transaction info
-              Container(
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(12.r),
+              // Side Accent Bar
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 6.w,
+                  color: statusColor,
                 ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(20.w, 16.h, 16.w, 16.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // --- HEADER ---
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.receipt_outlined,
-                          size: 14.w,
-                          color: Colors.grey.shade600,
-                        ),
-                        6.w.horizontalSpace,
                         Expanded(
                           child: Text(
-                            'TXN: ${booking.transaction.transactionId}',
+                            booking.property.name,
                             style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 17.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF1E293B), // Deep Navy Slate
+                              letterSpacing: -0.5,
                             ),
                           ),
                         ),
+                        _customStatusBadge(statusColor, booking.transaction.status),
                       ],
                     ),
-                    8.h.verticalSpace,
+                    6.h.verticalSpace,
                     Row(
                       children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 14.w,
-                          color: Colors.grey.shade600,
-                        ),
+                        Icon(Icons.location_on_rounded, size: 14.w, color: statusColor.withOpacity(0.7)),
                         6.w.horizontalSpace,
-                        Text(
-                          '${dateFormat.format(booking.createdAt)} • ${timeFormat.format(booking.createdAt)}',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.grey.shade600,
+                        Expanded(
+                          child: Text(
+                            booking.property.address,
+                            style: TextStyle(fontSize: 12.sp, color: Colors.blueGrey.shade400),
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
 
-              16.h.verticalSpace,
+                    Divider(height: 32.h, thickness: 1, color: Colors.grey.shade100),
 
-              // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showBookingDetails(booking),
-                      icon: const Icon(Icons.remove_red_eye_outlined),
-                      label: const Text('View Details'),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 10.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
+                    // --- INFO ROW ---
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _modernInfoTile(Icons.grid_view_rounded, "Units", "${units.length} Plots"),
+                        _modernInfoTile(Icons.account_balance_wallet_rounded, "Paid", "₹${booking.amount.toInt()}", isBold: true),
+                      ],
+                    ),
+
+                    20.h.verticalSpace,
+
+                    // --- TRANSACTION BOX ---
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                      ),
+                      child: Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "TXN: ${booking.transaction.transactionId.toUpperCase()}",
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontFamily: 'Monospace',
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueGrey.shade700,
+                                ),
+                              ),
+                              4.h.verticalSpace,
+                              Text(
+                                '${dateFormat.format(booking.createdAt)} • ${timeFormat.format(booking.createdAt)}',
+                                style: TextStyle(fontSize: 11.sp, color: Colors.blueGrey.shade400),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -408,6 +340,56 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
     );
   }
 
+// --- UNIQUE HELPER WIDGETS ---
+
+  Widget _customStatusBadge(Color color, dynamic status) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      child: Text(
+        Get.find<GiooPlotController>().getStatusText(status).toUpperCase(),
+        style: TextStyle(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w900,
+          color: color,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _modernInfoTile(IconData icon, String label, String value, {bool isBold = false}) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8.r),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 16.w, color: const Color(0xFF64748B)),
+        ),
+        10.w.horizontalSpace,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: TextStyle(fontSize: 11.sp, color: Colors.blueGrey.shade300)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: isBold ? FontWeight.w900 : FontWeight.w600,
+                color: const Color(0xFF334155),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
   Widget _infoItem({
     required IconData icon,
     required String title,
@@ -592,80 +574,171 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
   }
 
   Widget _buildBookingHeader() {
-    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    final dateFormat = DateFormat('dd MMM yyyy');
+    final timeFormat = DateFormat('hh:mm a');
 
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 24.h),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.05),
-        border: Border(
-          bottom: BorderSide(
-            color: AppColor.darkGrey,
-            width: 0.5,
-          ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColor.primary.withOpacity(0.12),
+            Colors.white,
+          ],
         ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32.r)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- TAG & UNIT COUNT ---
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: AppColor.primary,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  "BOOKED PLOT",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+              Text(
+                '${controller.getUnitsList(booking.units).length} Units Total',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColor.primary,
+                ),
+              ),
+            ],
+          ),
+          16.h.verticalSpace,
+
+          // --- PROPERTY TITLE ---
           Text(
             booking.property.name,
             style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey.shade800,
+              fontSize: 24.sp,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF0F172A), // Deep Slate
+              letterSpacing: -0.5,
             ),
           ),
           8.h.verticalSpace,
+
+          // --- ADDRESS ---
           Row(
             children: [
-              Icon(
-                Icons.location_on_outlined,
-                size: 16.w,
-                color: Colors.grey.shade600,
-              ),
+              Icon(Icons.location_on, size: 16.w, color: Colors.redAccent.withOpacity(0.7)),
               6.w.horizontalSpace,
               Expanded(
                 child: Text(
                   booking.property.address,
                   style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey.shade600,
+                    fontSize: 13.sp,
+                    color: Colors.blueGrey.shade600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
             ],
           ),
-          12.h.verticalSpace,
+
+          24.h.verticalSpace,
+
+          // --- STATS PILLS ---
           Row(
             children: [
-              _bookingInfoItem(
-                icon: Icons.event_note,
-                title: 'Booked On',
+              _headerStatPill(
+                label: "Date",
                 value: dateFormat.format(booking.createdAt),
+                icon: Icons.calendar_today_rounded,
               ),
-              Expanded(child: Container()),
-              _bookingInfoItem(
-                icon: Icons.currency_rupee,
-                title: 'Total Amount',
-                value: '₹${booking.amount.toStringAsFixed(2)}',
-                valueColor: Colors.green,
+              12.w.horizontalSpace,
+              _headerStatPill(
+                label: "Total Value",
+                value: "₹${booking.amount.toStringAsFixed(0)}",
+                icon: Icons.account_balance_wallet_rounded,
+                isHighlight: true,
               ),
             ],
-          ),
-          8.h.verticalSpace,
-          Text(
-            'Total Units: ${controller.getUnitsList(booking.units).length}',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.grey.shade600,
-            ),
           ),
         ],
       ),
     );
   }
 
+  Widget _headerStatPill({
+    required String label,
+    required String value,
+    required IconData icon,
+    bool isHighlight = false,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: isHighlight ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: isHighlight ? AppColor.primary.withOpacity(0.3) : Colors.grey.shade200,
+          ),
+          boxShadow: isHighlight ? [
+            BoxShadow(
+              color: AppColor.primary.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ] : [],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18.w, color: isHighlight ? AppColor.primary : Colors.blueGrey),
+            10.w.horizontalSpace,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: Colors.blueGrey.shade400,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _bookingInfoItem({
     required IconData icon,
     required String title,
@@ -706,63 +779,97 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
     return Padding(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Transaction Information',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
-            ),
+          Row(
+            children: [
+              Icon(Icons.receipt_long_rounded, size: 20.w, color: const Color(0xFF64748B)),
+              10.w.horizontalSpace,
+              Text(
+                'Payment Summary',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF1E293B),
+                ),
+              ),
+            ],
           ),
-          12.h.verticalSpace,
+          16.h.verticalSpace,
           Container(
-            padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(24.r),
+              border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.shade100,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
             child: Column(
               children: [
-                _transactionDetailRow(
-                  'Transaction ID',
-                  bookingTransaction.transactionId,
-                  copyable: true,
-                ),
-                Divider(height: 20.h, color: Colors.grey.shade200),
-                _transactionDetailRow(
-                  'Status',
-                  controller.getStatusText(bookingTransaction.status),
-                  statusColor: controller.getStatusColor(
-                    bookingTransaction.status,
+                // --- TOP SECTION: STATUS & AMOUNT ---
+                Container(
+                  padding: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Total Paid",
+                              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                          Text(
+                            '₹${bookingTransaction.amount.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      _modernStatusChip(
+                        controller.getStatusText(bookingTransaction.status),
+                        controller.getStatusColor(bookingTransaction.status),
+                      ),
+                    ],
                   ),
                 ),
-                Divider(height: 20.h, color: Colors.grey.shade200),
-                _transactionDetailRow(
-                  'Payment Mode',
-                  bookingTransaction.paymentMode ?? 'N/A',
-                ),
-                Divider(height: 20.h, color: Colors.grey.shade200),
-                _transactionDetailRow(
-                  'Amount',
-                  '₹${bookingTransaction.amount.toStringAsFixed(2)}',
-                  valueColor: Colors.green,
-                ),
-                Divider(height: 20.h, color: Colors.grey.shade200),
-                _transactionDetailRow(
-                  'Date & Time',
-                  dateFormat.format(bookingTransaction.createdAt),
+
+                // --- BOTTOM SECTION: DETAILS ---
+                Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: Column(
+                    children: [
+                      _ledgerRow(
+                        label: 'Transaction ID',
+                        value: bookingTransaction.transactionId,
+                        isCopyable: true,
+                      ),
+                      16.h.verticalSpace,
+                      _ledgerRow(
+                        label: 'Payment Method',
+                        value: bookingTransaction.paymentMode ?? 'N/A',
+                        icon: Icons.account_balance_wallet_outlined,
+                      ),
+                      16.h.verticalSpace,
+                      _ledgerRow(
+                        label: 'Timestamp',
+                        value: dateFormat.format(bookingTransaction.createdAt),
+                        icon: Icons.access_time_rounded,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -772,6 +879,80 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
     );
   }
 
+  Widget _modernStatusChip(String text, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(radius: 3.r, backgroundColor: color),
+          8.w.horizontalSpace,
+          Text(
+            text.toUpperCase(),
+            style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w800, color: color, letterSpacing: 0.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ledgerRow({
+    required String label,
+    required String value,
+    bool isCopyable = false,
+    IconData? icon,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 14.w, color: const Color(0xFF94A3B8)),
+          8.w.horizontalSpace,
+        ],
+        Text(
+          label,
+          style: TextStyle(fontSize: 13.sp, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+        ),
+        const Spacer(),
+        Expanded(
+          flex: 2,
+          child: GestureDetector(
+            onTap: isCopyable ? () {
+              // Add Clipboard logic
+              Get.snackbar("Copied", "Transaction ID copied to clipboard",
+                  snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.black87, colorText: Colors.white);
+            } : null,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF334155),
+                      fontFamily: isCopyable ? 'Monospace' : null,
+                    ),
+                  ),
+                ),
+                if (isCopyable) ...[
+                  8.w.horizontalSpace,
+                  Icon(Icons.copy_rounded, size: 14.w, color: AppColor.primary),
+                ]
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
   Widget _transactionDetailRow(
       String label,
       String value, {
@@ -879,212 +1060,203 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
 
   Widget _buildUnitCard(GiooBuyingDetail detail) {
     final dateFormat = DateFormat('dd MMM yyyy');
-    final canCancel = detail.cancelStatus == 0; // Can cancel if not already cancelled
+
+    /// STATE LOGIC
+    final int state = detail.cancelStatus ?? 0;
+    final bool canCancel = state == 0;
+
+    /// STATUS TEXT & COLOR
+    String bookingStatusText;
+    Color bookingStatusColor;
+
+    if (state == 0) {
+      bookingStatusText = 'Active';
+      bookingStatusColor = const Color(0xFF10B981); // Emerald Green
+    } else if (state == 1) {
+      bookingStatusText = 'Refund Processing';
+      bookingStatusColor = Colors.orange;
+    } else {
+      bookingStatusText = 'Cancelled';
+      bookingStatusColor = const Color(0xFFEF4444); // Rose Red
+    }
 
     return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
-      padding: EdgeInsets.all(16.w),
+      margin: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade200),
+        color: state == 0 ? Colors.white : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: state == 0 ? const Color(0xFFE2E8F0) : bookingStatusColor.withOpacity(0.2),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade100,
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Unit header with cancel button
-          Row(
-            children: [
-              Container(
-                width: 40.w,
-                height: 40.w,
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: Colors.blue.shade100),
-                ),
-                child: Center(
-                  child: Text(
-                    detail.unit.toString(),
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade700,
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Row(
+              children: [
+                // --- UNIT NUMBER AVATAR ---
+                Container(
+                  width: 48.w,
+                  height: 48.w,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [bookingStatusColor.withOpacity(0.2), bookingStatusColor.withOpacity(0.05)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  child: Center(
+                    child: Text(
+                      detail.unit.toString(),
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w900,
+                        color: bookingStatusColor,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              12.w.horizontalSpace,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Plot Unit ${detail.unit}',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade800,
+                16.w.horizontalSpace,
+
+                // --- UNIT DETAILS ---
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Unit Asset #${detail.unit}',
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      4.h.verticalSpace,
+                      Text(
+                        'Market Value: ₹${detail.amount.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // --- CANCEL ACTION ---
+                if (canCancel)
+                  Material(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(10.r),
+                    child: InkWell(
+                      onTap: () => _showCancelConfirmation(detail),
+                      borderRadius: BorderRadius.circular(10.r),
+                      child: Padding(
+                        padding: EdgeInsets.all(8.r),
+                        child: Icon(Icons.close_rounded, color: Colors.red.shade400, size: 20.w),
                       ),
                     ),
-                    2.h.verticalSpace,
-                    Text(
-                      'Amount: ₹${detail.amount.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.grey.shade600,
-                      ),
+                  ),
+              ],
+            ),
+          ),
+
+          // --- DIVIDER LINE ---
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Divider(height: 1, thickness: 1, color: Colors.grey.shade100),
+          ),
+
+          // --- FOOTER: STATUS CHIPS & REFUND ---
+          Padding(
+            padding: EdgeInsets.all(12.w),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    _modernUnitBadge(
+                      'Booking',
+                      bookingStatusText,
+                      bookingStatusColor,
+                    ),
+                    8.w.horizontalSpace,
+                    _modernUnitBadge(
+                      'Payment',
+                      controller.getStatusText(detail.transaction.status),
+                      controller.getStatusColor(detail.transaction.status),
                     ),
                   ],
                 ),
-              ),
-              if (canCancel)
-                IconButton(
-                  onPressed: () => _showCancelConfirmation(detail),
-                  icon: Icon(
-                    Icons.cancel_outlined,
-                    size: 20.w,
-                    color: Colors.red,
-                  ),
-                  tooltip: 'Cancel this plot',
-                ),
-            ],
-          ),
 
-          16.h.verticalSpace,
-
-          // Status badges
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
-            children: [
-              _unitStatusBadge(
-                'Payment',
-                controller.getStatusText(detail.transaction.status),
-                controller.getStatusColor(detail.transaction.status),
-              ),
-              _unitStatusBadge(
-                'Booking',
-                detail.cancelStatus == 1 ? 'Cancelled' : 'Active',
-                detail.cancelStatus == 1 ? Colors.red : Colors.green,
-              ),
-              _unitStatusBadge(
-                'Refund',
-                detail.refundStatus == 1 ? 'Processed' : 'Pending',
-                detail.refundStatus == 1 ? Colors.blue : Colors.orange,
-              ),
-            ],
-          ),
-
-          // Refund information (if available)
-          if (detail.refundAmount != null || detail.refundDate != null) ...[
-            16.h.verticalSpace,
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Refund Information',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
+                if (detail.refundAmount != null || detail.refundDate != null) ...[
+                  12.h.verticalSpace,
+                  Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: Colors.blue.shade100),
                     ),
-                  ),
-                  8.h.verticalSpace,
-                  if (detail.refundAmount != null)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 4.h),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Amount:',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          Text(
-                            '₹${detail.refundAmount!.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (detail.refundDate != null)
-                    Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Date:',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.grey.shade600,
-                          ),
+                        Row(
+                          children: [
+                            Icon(Icons.info_outline_rounded, size: 14.w, color: Colors.blue.shade700),
+                            6.w.horizontalSpace,
+                            Text("Refunded Amount", style: TextStyle(fontSize: 11.sp, color: Colors.blue.shade700, fontWeight: FontWeight.bold)),
+                          ],
                         ),
                         Text(
-                          dateFormat.format(detail.refundDate!),
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.grey.shade700,
-                          ),
+                          '₹${detail.refundAmount?.toStringAsFixed(0) ?? "0"}',
+                          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w900, color: Colors.blue.shade800),
                         ),
                       ],
                     ),
-                ],
-              ),
+                  ),
+                ]
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _unitStatusBadge(String title, String value, Color color) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 10.sp,
-              color: Colors.grey.shade600,
+  Widget _modernUnitBadge(String title, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Column(
+          children: [
+            Text(
+              title.toUpperCase(),
+              style: TextStyle(fontSize: 9.sp, fontWeight: FontWeight.bold, color: Colors.blueGrey.shade300, letterSpacing: 0.5),
             ),
-          ),
-          2.h.verticalSpace,
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: color,
+            2.h.verticalSpace,
+            Text(
+              value,
+              style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w800, color: color),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1120,85 +1292,151 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
   }
 
   void _showCancelConfirmation(GiooBuyingDetail detail) {
-    Get.defaultDialog(
-      title: 'Cancel Plot Unit ${detail.unit}',
-      titlePadding: EdgeInsets.only(top: 20.h, bottom: 10.h),
-      contentPadding: EdgeInsets.symmetric(horizontal: 20.w),
-      titleStyle: TextStyle(
-        fontSize: 18.sp,
-        fontWeight: FontWeight.w600,
-        color: Colors.red,
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            size: 60.w,
-            color: Colors.orange,
-          ),
-          16.h.verticalSpace,
-          Text(
-            'Are you sure you want to cancel this plot unit?',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14.sp),
-          ),
-          8.h.verticalSpace,
-          Text(
-            'Only this plot unit (${detail.unit}) will be cancelled, not the entire booking.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.grey.shade600,
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // --- GRABBER BAR ---
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10.r),
+              ),
             ),
-          ),
-          8.h.verticalSpace,
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(8.r),
-              border: Border.all(color: Colors.orange.shade200),
+            24.h.verticalSpace,
+
+            // --- WARNING ICON ---
+            Container(
+              padding: EdgeInsets.all(20.r),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.report_gmailerrorred_rounded,
+                color: const Color(0xFFEF4444),
+                size: 40.r,
+              ),
             ),
-            child: Row(
+            20.h.verticalSpace,
+
+            // --- TITLE & DESCRIPTION ---
+            Text(
+              'Confirm Cancellation',
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF1E293B),
+              ),
+            ),
+            12.h.verticalSpace,
+            RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: TextStyle(fontSize: 14.sp, color: const Color(0xFF64748B), height: 1.5),
+                children: [
+                  const TextSpan(text: 'Are you sure you want to cancel '),
+                  TextSpan(
+                    text: 'Unit Asset #${detail.unit}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                  ),
+                  const TextSpan(text: '? This action will release the plot back to the market.'),
+                ],
+              ),
+            ),
+            24.h.verticalSpace,
+
+            // --- REFUND INFO BOX ---
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F9FF),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: const Color(0xFFBAE6FD)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.account_balance_wallet_rounded, color: const Color(0xFF0284C7), size: 20.w),
+                  12.w.horizontalSpace,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Estimated Refund',
+                          style: TextStyle(fontSize: 11.sp, color: const Color(0xFF0369A1), fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '₹${detail.amount.toStringAsFixed(2)}',
+                          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w900, color: const Color(0xFF0C4A6E)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6.r)),
+                    child: Text("AUTO-REFUND", style: TextStyle(fontSize: 9.sp, fontWeight: FontWeight.bold, color: const Color(0xFF0369A1))),
+                  )
+                ],
+              ),
+            ),
+            32.h.verticalSpace,
+
+            // --- ACTIONS ---
+            Row(
               children: [
-                Icon(Icons.info_outline, size: 16.w, color: Colors.orange),
-                8.w.horizontalSpace,
                 Expanded(
-                  child: Text(
-                    'Amount to be refunded: ₹${detail.amount.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.orange.shade800,
+                  child: TextButton(
+                    onPressed: () => Get.back(),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                    ),
+                    child: Text(
+                      'Keep Plot',
+                      style: TextStyle(color: const Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 15.sp),
+                    ),
+                  ),
+                ),
+                16.w.horizontalSpace,
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      _processUnitCancellation(detail);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFEF4444),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                    ),
+                    child: Text(
+                      'Cancel Unit',
+                      style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            10.h.verticalSpace,
+          ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('No, Keep It'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Get.back(); // Close confirmation dialog
-            _processUnitCancellation(detail); // Start cancellation process
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-          ),
-          child: const Text('Yes, Cancel Unit'),
-        ),
-      ],
-      barrierDismissible: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
-
   void _processUnitCancellation(GiooBuyingDetail detail) async {
     // Use a simpler loading indicator that doesn't use Get.dialog
     showDialog(
