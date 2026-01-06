@@ -140,6 +140,7 @@ class City {
     );
   }
 }
+// property_type.dart
 
 class AppState {
   final int id;
@@ -182,7 +183,8 @@ class SyndicateDetail {
   final String area;
   final String price; // Price per sq.ft
   final String description;
-  final String documentPrice; // Document price
+  final String adminDocumentPrice; // Admin document price
+  final bool isDocumentVerified; // Document verification status
   final int unitSpilt;
   final String unit; // Unit areas in sq.ft
   final List<String> images;
@@ -197,8 +199,9 @@ class SyndicateDetail {
   final List<Document> documents;
   final List<Booking> bookings;
   final List<User> users;
+  final String? adminBlockAmount; // Admin block amount
 
-  SyndicateDetail( {
+  SyndicateDetail({
     required this.id,
     required this.name,
     this.propertyType,
@@ -212,7 +215,8 @@ class SyndicateDetail {
     required this.area,
     required this.price,
     required this.description,
-    required this.documentPrice,
+    required this.adminDocumentPrice,
+    required this.isDocumentVerified,
     required this.unitSpilt,
     required this.unit,
     required this.images,
@@ -227,12 +231,20 @@ class SyndicateDetail {
     required this.documents,
     required this.bookings,
     required this.users,
+    this.adminBlockAmount,
   });
 
   factory SyndicateDetail.fromJson(Map<String, dynamic> json) {
     // Helper functions for safe parsing
     String safeString(dynamic value) => value?.toString() ?? '';
     int safeInt(dynamic value) => (value is int) ? value : int.tryParse(value.toString()) ?? 0;
+    double safeDouble(dynamic value) => (value is num) ? value.toDouble() : double.tryParse(value.toString()) ?? 0.0;
+    bool safeBool(dynamic value) {
+      if (value is bool) return value;
+      if (value is String) return value.toLowerCase() == 'true' || value == '1';
+      if (value is num) return value == 1;
+      return false;
+    }
 
     // Parse images
     List<String> parseImages(dynamic images) {
@@ -267,6 +279,10 @@ class SyndicateDetail {
       return users.map((e) => User.fromJson(e)).toList();
     }
 
+    // Extract admin document price and verification status
+    final adminDocumentPrice = safeString(json['admin_document'] ?? '0');
+    final isDocumentVerified = safeBool(json['document_verified'] ?? false);
+
     return SyndicateDetail(
       id: safeInt(json['id']),
       name: safeString(json['name']),
@@ -280,8 +296,8 @@ class SyndicateDetail {
       area: safeString(json['area']),
       price: safeString(json['price']),
       description: safeString(json['description']),
-      // documentPrice: safeString(json['DocumentPrice'] ?? '0'),
-      documentPrice: safeString(json['admin_block_amount '] ?? '0'),
+      adminDocumentPrice: adminDocumentPrice,
+      isDocumentVerified: isDocumentVerified,
       unitSpilt: safeInt(json['unit_spilt']),
       unit: safeString(json['unit'] ?? ''),
       images: parseImages(json['image']),
@@ -297,6 +313,7 @@ class SyndicateDetail {
       bookings: parseBookings(json['booking']),
       users: parseUsers(json['user']),
       documentPayment: safeString(json['documentPayment'] ?? ''),
+      adminBlockAmount: safeString(json['admin_block_amount'] ?? '0'),
     );
   }
 
@@ -319,14 +336,35 @@ class SyndicateDetail {
     }
   }
 
-  // Get document price
+  // Get document price (admin_block_amount)
+  // Get document price (admin_block_amount)
   double get documentPriceValue {
     try {
-      return double.tryParse(documentPrice.replaceAll(',', '')) ?? 0.0;
+      return double.tryParse(adminDocumentPrice.replaceAll(',', '')) ?? 0.0;
     } catch (e) {
       return 0.0;
     }
   }
+
+// Get admin document price
+  double get adminDocumentPriceValue {
+    try {
+      return double.tryParse(adminDocumentPrice.replaceAll(',', '')) ?? 0.0;
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+// ✅ TOTAL = admin_document + admin_block_amount
+  double get totalDocumentPrice {
+    return adminDocumentPriceValue;
+  }
+
+// Get formatted total document price
+  String get formattedTotalDocumentPrice {
+    return "₹${totalDocumentPrice.toStringAsFixed(2)}";
+  }
+
 
   // Calculate price for a specific unit
   double calculateUnitPrice(int unitIndex) {
@@ -340,10 +378,16 @@ class SyndicateDetail {
     return "${unitAreas[unitIndex]} sq.ft";
   }
 
+  // Get total price for a specific unit including documents
+  double calculateTotalUnitPrice(int unitIndex) {
+    final unitPrice = calculateUnitPrice(unitIndex);
+    return unitPrice + totalDocumentPrice;
+  }
+
   String get formattedPricePerSqFt {
     return "₹${pricePerSqFt.toStringAsFixed(2)}/sq.ft";
   }
-}// Add the User class
+}
 class User {
   final int id;
   final int role;
@@ -520,5 +564,390 @@ class Booking {
   }
 }
 
+// syndicate_buying_models.dart
 
+// Update your SyndicateBuyingList model to match API response
 
+class SyndicateBuyingList {
+  final int id;
+  final int propertyId;
+  final int userId;
+  final String units;
+  final dynamic amount;
+  final dynamic transactionId;
+  final double? returnAmount; // Add this
+  final DateTime? returnDate; // Add this
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Transaction transaction;
+  final SyndicateProperty property;
+
+  SyndicateBuyingList({
+    required this.id,
+    required this.propertyId,
+    required this.userId,
+    required this.units,
+    required this.amount,
+    required this.transactionId,
+    this.returnAmount, // Add this
+    this.returnDate, // Add this
+    required this.createdAt,
+    required this.updatedAt,
+    required this.transaction,
+    required this.property,
+  });
+
+  factory SyndicateBuyingList.fromJson(Map<String, dynamic> json) {
+    return SyndicateBuyingList(
+      id: json['id'] ?? 0,
+      propertyId: json['property_id'] ?? 0,
+      userId: json['user_id'] ?? 0,
+      units: json['units']?.toString() ?? '',
+      amount: json['amount'],
+      transactionId: json['transaction_id'],
+      returnAmount: json['return_amount'] != null
+          ? double.tryParse(json['return_amount'].toString())
+          : null, // Add this
+      returnDate: json['return_date'] != null
+          ? DateTime.tryParse(json['return_date'].toString())
+          : null, // Add this
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
+      transaction: Transaction.fromJson(json['transaction'] ?? {}),
+      property: SyndicateProperty.fromJson(json['property'] ?? {}),
+    );
+  }
+
+  // Helper getters
+  double get amountValue {
+    if (amount is String) {
+      return double.tryParse(amount as String) ?? 0.0;
+    } else if (amount is int) {
+      return (amount as int).toDouble();
+    } else if (amount is double) {
+      return amount as double;
+    }
+    return 0.0;
+  }
+
+  String get transactionIdString {
+    return transactionId?.toString() ?? '';
+  }
+}
+// Update SyndicateProperty model based on API response
+class SyndicateProperty {
+  final int id;
+  final String name;
+  final dynamic type;
+  final String? map;
+  final String address;
+  final String? lat;
+  final String? long;
+  final String? city;
+  final String? state;
+  final String? area;
+  final String? price;
+  final String? description;
+  final int unitSpilt;
+  final String? unit;
+  final String? image;
+  final String? plotImage;
+  final String? work;
+  final String? agentId;
+  final int status;
+  final int featured;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final dynamic aminities;
+  final String? uldNo;
+  final String? startingPrice;
+  final List<dynamic> nearbyPlaces;
+  final int soldStatus;
+
+  SyndicateProperty({
+    required this.id,
+    required this.name,
+    required this.type,
+    this.map,
+    required this.address,
+    this.lat,
+    this.long,
+    this.city,
+    this.state,
+    this.area,
+    this.price,
+    this.description,
+    required this.unitSpilt,
+    this.unit,
+    this.image,
+    this.plotImage,
+    this.work,
+    this.agentId,
+    required this.status,
+    required this.featured,
+    required this.createdAt,
+    required this.updatedAt,
+    this.aminities,
+    this.uldNo,
+    this.startingPrice,
+    required this.nearbyPlaces,
+    required this.soldStatus,
+  });
+
+  factory SyndicateProperty.fromJson(Map<String, dynamic> json) {
+    return SyndicateProperty(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      type: json['type'],
+      map: json['map'],
+      address: json['address'] ?? '',
+      lat: json['lat'],
+      long: json['long'],
+      city: json['city']?.toString(),
+      state: json['state']?.toString(),
+      area: json['area']?.toString(),
+      price: json['price']?.toString(),
+      description: json['description']?.toString(),
+      unitSpilt: json['unit_spilt'] ?? 0,
+      unit: json['unit']?.toString(),
+      image: json['image']?.toString(),
+      plotImage: json['plot_image']?.toString(),
+      work: json['work']?.toString(),
+      agentId: json['agent_id']?.toString(),
+      status: json['status'] ?? 0,
+      featured: json['featured'] ?? 0,
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
+      aminities: json['aminities'],
+      uldNo: json['uld_no']?.toString(),
+      startingPrice: json['starting_price']?.toString(),
+      nearbyPlaces: json['nearby_places'] is List ? json['nearby_places'] : [],
+      soldStatus: json['sold_status'] ?? 0,
+    );
+  }
+
+  // Helper to get first image
+  String? get firstImage {
+    if (image == null) return null;
+    final images = image!.split(',');
+    return images.isNotEmpty ? images.first : null;
+  }
+
+  // Helper to parse unit areas
+  List<double> get unitAreas {
+    if (unit == null || unit!.isEmpty) return [];
+    try {
+      return unit!.split(',').map((e) => double.tryParse(e.trim()) ?? 0.0).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+}
+
+// Update Transaction model based on API
+class Transaction {
+  final int id;
+  final String transactionId;
+  final String paymentMode;
+  final String transactionDetails;
+  final String amount;
+  final dynamic isCompleted;
+  final String status;
+  final int propertyId;
+  final int userId;
+  final String type;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Map<String, dynamic> user;
+
+  Transaction({
+    required this.id,
+    required this.transactionId,
+    required this.paymentMode,
+    required this.transactionDetails,
+    required this.amount,
+    required this.isCompleted,
+    required this.status,
+    required this.propertyId,
+    required this.userId,
+    required this.type,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.user,
+  });
+
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
+      id: json['id'] ?? 0,
+      transactionId: json['transaction_id']?.toString() ?? '',
+      paymentMode: json['payment_mode']?.toString() ?? '',
+      transactionDetails: json['transaction_details']?.toString() ?? '',
+      amount: json['amount']?.toString() ?? '0',
+      isCompleted: json['is_completed'],
+      status: json['status']?.toString() ?? '',
+      propertyId: json['property_id'] ?? 0,
+      userId: json['user_id'] ?? 0,
+      type: json['type']?.toString() ?? '',
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
+      user: json['user'] is Map ? Map<String, dynamic>.from(json['user']) : {},
+    );
+  }
+
+  // Helper to get amount as double
+  double get amountValue {
+    return double.tryParse(amount) ?? 0.0;
+  }
+
+  // Helper to get user name
+  String get userName {
+    return user['name']?.toString() ?? '';
+  }
+}
+
+class SyndicateBuyingListResponse {
+  final bool status;
+  final String message;
+  final List<SyndicateBuyingList> data;
+  final Pagination pagination;
+
+  SyndicateBuyingListResponse({
+    required this.status,
+    required this.message,
+    required this.data,
+    required this.pagination,
+  });
+
+  factory SyndicateBuyingListResponse.fromJson(Map<String, dynamic> json) {
+    return SyndicateBuyingListResponse(
+      status: json['status'] ?? false,
+      message: json['message'] ?? '',
+      data: (json['data'] as List? ?? [])
+          .map((item) => SyndicateBuyingList.fromJson(item))
+          .toList(),
+      pagination: Pagination.fromJson(json['pagination'] ?? {}),
+    );
+  }
+}
+
+// Update your SyndicateBuyingDetail model in syndicate_model.dart
+class SyndicateBuyingDetail {
+  final int id;
+  final int transactionId;
+  final int propertyId;
+  final String unit;
+  final int cancelStatus;
+  final DateTime? refundDate;
+  final int refundStatus;
+  final String amount;
+  final dynamic refundAmount;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Transaction transaction;
+  final SyndicateProperty property;
+
+  SyndicateBuyingDetail({
+    required this.id,
+    required this.transactionId,
+    required this.propertyId,
+    required this.unit,
+    required this.cancelStatus,
+    this.refundDate,
+    required this.refundStatus,
+    required this.amount,
+    this.refundAmount,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.transaction,
+    required this.property,
+  });
+
+  factory SyndicateBuyingDetail.fromJson(Map<String, dynamic> json) {
+    return SyndicateBuyingDetail(
+      id: json['id'] ?? 0,
+      transactionId: json['transaction_id'] ?? 0,
+      propertyId: json['property_id'] ?? 0,
+      unit: json['unit']?.toString() ?? '',
+      cancelStatus: json['cancel_status'] ?? 0,
+      refundDate: json['refund_date'] != null && json['refund_date'] is String
+          ? DateTime.tryParse(json['refund_date'] as String)
+          : null,
+      refundStatus: json['refund_status'] ?? 0,
+      amount: json['amount']?.toString() ?? '0',
+      refundAmount: json['refund_amount'],
+      createdAt: DateTime.parse(json['created_at'] ?? ''),
+      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
+      transaction: Transaction.fromJson(json['transaction'] ?? {}),
+      property: SyndicateProperty.fromJson(json['property'] ?? {}),
+    );
+  }
+
+  // Helper getters
+  double get amountValue {
+    return double.tryParse(amount) ?? 0.0;
+  }
+
+  double get refundAmountValue {
+    if (refundAmount is String) {
+      return double.tryParse(refundAmount as String) ?? 0.0;
+    } else if (refundAmount is int) {
+      return (refundAmount as int).toDouble();
+    } else if (refundAmount is double) {
+      return refundAmount as double;
+    }
+    return 0.0;
+  }
+
+  bool get canCancel => cancelStatus == 0;
+  bool get isCancelled => cancelStatus == 1;
+  bool get hasRefund => refundAmount != null;
+}
+
+class SyndicateBuyingDetailResponse {
+  final bool status;
+  final String message;
+  final List<SyndicateBuyingDetail> data;
+  final Pagination pagination;
+
+  SyndicateBuyingDetailResponse({
+    required this.status,
+    required this.message,
+    required this.data,
+    required this.pagination,
+  });
+
+  factory SyndicateBuyingDetailResponse.fromJson(Map<String, dynamic> json) {
+    return SyndicateBuyingDetailResponse(
+      status: json['status'] ?? false,
+      message: json['message'] ?? '',
+      data: (json['data'] as List? ?? [])
+          .map((item) => SyndicateBuyingDetail.fromJson(item))
+          .toList(),
+      pagination: Pagination.fromJson(json['pagination'] ?? {}),
+    );
+  }
+}
+// Reuse Transaction class from your existing code
+
+class Pagination {
+  final int currentPage;
+  final int lastPage;
+  final int perPage;
+  final int total;
+
+  Pagination({
+    required this.currentPage,
+    required this.lastPage,
+    required this.perPage,
+    required this.total,
+  });
+
+  factory Pagination.fromJson(Map<String, dynamic> json) {
+    return Pagination(
+      currentPage: json['current_page'] ?? 1,
+      lastPage: json['last_page'] ?? 1,
+      perPage: json['per_page'] ?? 10,
+      total: json['total'] ?? 0,
+    );
+  }
+}

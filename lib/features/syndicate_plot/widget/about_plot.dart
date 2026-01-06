@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
 import '../controller/syndicate_controller.dart';
@@ -41,10 +43,8 @@ class AboutPlot extends StatelessWidget {
         child: Column(
           children: [
             _buildCarouselSection(images),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [_buildArrowButton(controller)],
-            ),
+            _buildArrowButton(controller),
+
             Obx(() => _buildExpandableSection(controller,
               projectName: projectName,
               location: location,
@@ -100,44 +100,92 @@ class AboutPlot extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 6.h, horizontal: 5.h),
       child: Obx(
-            () => GestureDetector(
-          onTap: controller.toggleExpansion,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColor.primary, AppColor.primarylite],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20.r),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            () => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  controller.isExpanded.value ? 'Hide Details' : 'View Details',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14.sp,
+                /// View / Hide Details Button
+                GestureDetector(
+                  onTap: controller.toggleExpansion,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColor.primary, AppColor.primarylite],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          controller.isExpanded.value
+                              ? 'Hide Details'
+                              : 'View Details',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                        Icon(
+                          controller.isExpanded.value
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 18.sp,
+                          color: Colors.black,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                SizedBox(width: 6.w),
-                Icon(
-                  controller.isExpanded.value
-                      ? Icons.arrow_upward
-                      : Icons.arrow_downward,
-                  size: 18.sp,
-                  color: Colors.black,
+
+                /// 🔹 SPACE BETWEEN BUTTONS
+                SizedBox(width: 12.w),
+
+                /// Share Button
+                GestureDetector(
+                  onTap: () {
+                    if (controller.syndicateDetail.value?.id == null) return;
+
+                    final cleanBaseUrl =
+                    ApiUrl.baseUrl.replaceAll('/public', '');
+
+                    final shareUrl =
+                        '$cleanBaseUrl/syndicate-plots/details/${controller.syndicateDetail.value!.id}';
+
+                    Share.share(shareUrl);
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.share, size: 18.sp, color: AppColor.black),
+                        SizedBox(width: 6.w),
+                        Text(
+                          "Share",
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
-            ),
-          ),
-        ),
+            )
+        ,
       ),
     );
   }
+
 
   Widget _buildExpandableSection(
       SyndicatePlotController controller, {

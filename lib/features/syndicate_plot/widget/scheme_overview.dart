@@ -33,8 +33,8 @@ class SchemeOverview extends StatelessWidget {
           padding: EdgeInsets.all(8.w),
           child: SubtitleWidget(
             showViewAll: false,
-            title: "Plot Purchase Overview Scheme",
-            highlightWord: "Overview Scheme",
+            title: "How it's Work",
+            highlightWord: "Work",
             onViewAllTap: () {
               print("View All clicked");
             },

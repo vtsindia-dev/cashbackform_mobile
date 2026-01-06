@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:ui';
+import 'package:action_slider/action_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -10,6 +12,8 @@ import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../../payment/controller/razorpay_controller.dart';
 import '../model/syndicate_model.dart';
+import '../widget/dotline.dart';
+import 'package:dio/dio.dart';
 
 class SyndicatePlotController extends GetxController {
   var isLoading = false.obs;
@@ -21,11 +25,45 @@ class SyndicatePlotController extends GetxController {
   var totalPages = 1.obs;
   var hasMoreData = true.obs;
   var totalItems = 0.obs;
+  var selectedCityId = 0.obs; // Changed from selectedCity
+  var selectedStateId = 0.obs; // Changed from selectedState
+  var selectedCityName = ''.obs;
+  var selectedStateName = ''.obs;
+  var isLoadingBuyingList = false.obs;
+  var isLoadingBuyingDetail = false.obs;
+  var isLoadingCancelRequest = false.obs;
+  var buyingList = <SyndicateBuyingList>[].obs;
+  var buyingDetailList = <SyndicateBuyingDetail>[].obs;
+  var buyingListPage = 1.obs;
+  var buyingDetailPage = 1.obs;
+  var totalBuyingPages = 1.obs;
+  var totalBuyingDetailPages = 1.obs;
+  var hasMoreBuyingData = true.obs;
+  var hasMoreBuyingDetailData = true.obs;
+  var selectedTransactionId = Rxn<int>();
+  final TextEditingController searchController = TextEditingController();
+  final RxString recentSearch = ''.obs;
   var searchQuery = ''.obs;
   var selectedCity = ''.obs;
   var selectedState = ''.obs;
   var minPrice = ''.obs;
   var maxPrice = ''.obs;
+  var minAreaSqft = ''.obs;
+  var maxAreaSqft = ''.obs;
+
+  // NEW: Property type filter
+  var selectedPropertyTypeId = 0.obs; // For property type ID
+  var selectedPropertyTypeName = ''.obs; // For display
+  var propertyTypes = <PropertyType>[].obs; // List of available property types
+
+  // For dynamic filtering UI
+  var priceMin = 0.0.obs;
+  var priceMax = 10000000.0.obs;
+  var sqftMin = 0.0.obs;
+  var sqftMax = 10000.0.obs;
+
+  Timer? _debounce;
+
   var errorMessage = ''.obs;
   var isExpanded = false.obs;
   var isExpandedrefral = false.obs;
@@ -35,7 +73,12 @@ class SyndicatePlotController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Initialize filter data from API
+    fetchSyndicatePlots();
+    // Load property types if available
+    loadPropertyTypes();
   }
+
   void refralExpansion() => isExpandedrefral.value = !isExpandedrefral.value;
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
 
@@ -54,7 +97,6 @@ class SyndicatePlotController extends GetxController {
     }
     return unitIds;
   }
-
 
   List<double> _parseUnitAreas(String unitString) {
     try {
@@ -101,6 +143,7 @@ class SyndicatePlotController extends GetxController {
         return const Color(0xFFB8D79A);
     }
   }
+
   Future<void> viewDocument(int id) async {
     try {
       final apiDoc = syndicateDetail.value?.documents.firstWhere((d) => d.id == id);
@@ -155,6 +198,51 @@ class SyndicatePlotController extends GetxController {
       SnackBarHelper.showError("Failed to open document");
     }
   }
+
+  // NEW: Load property types from plots data
+  Future<void> loadPropertyTypes() async {
+    try {
+      final url = '${ApiUrl.syndicatePlotList}?page_no=1&limit=100';
+      final response = await ApiService.getRequest(url);
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        if (responseData != null &&
+            responseData['data'] != null &&
+            responseData['data']['syndicate'] is List) {
+
+          final List syndicateData = responseData['data']['syndicate'];
+
+          /// ✅ Use Map to remove duplicates by ID
+          final Map<int, PropertyType> uniquePropertyTypes = {};
+
+          for (var plotData in syndicateData) {
+            final pt = plotData['property_type'];
+
+            if (pt != null && pt is Map && pt['id'] != null) {
+              final int id = pt['id'];
+
+              /// Only first occurrence will be kept
+              uniquePropertyTypes[id] = PropertyType(
+                id: id,
+                categoryName: pt['category_name'] ?? '',
+                status: pt['status'] ?? 0,
+              );
+            }
+          }
+
+          /// Convert map values to list
+          propertyTypes.value = uniquePropertyTypes.values.toList();
+
+          print('✅ Loaded ${propertyTypes.length} unique property types');
+        }
+      }
+    } catch (e) {
+      print('❌ Error loading property types: $e');
+    }
+  }
+  // Enhanced fetch method with filter data extraction
   Future<void> fetchSyndicatePlots({bool loadMore = false}) async {
     try {
       if (loadMore) {
@@ -174,6 +262,11 @@ class SyndicatePlotController extends GetxController {
             responseData['data']['syndicate'] != null) {
           final syndicateData = responseData['data']['syndicate'];
           final paginationData = responseData['data']['pagination'];
+
+          // Extract price and area ranges from plots for dynamic filter UI
+          _extractPriceRanges(syndicateData);
+          _extractAreaRanges(syndicateData);
+
           if (loadMore) {
             syndicatePlots.addAll(_parseSyndicatePlots(syndicateData));
           } else {
@@ -185,6 +278,8 @@ class SyndicatePlotController extends GetxController {
           hasMoreData.value = currentPage.value < totalPages.value;
           print('✅ Fetched ${syndicatePlots.length} syndicate plots');
           print('📄 Current page: $currentPage, Total pages: $totalPages, Total items: $totalItems');
+          print('💰 Price range: ₹${priceMin.value} - ₹${priceMax.value}');
+          print('📐 Area range: ${sqftMin.value} - ${sqftMax.value} sq.ft');
         } else {
           SnackBarHelper.showError("Invalid response format from server");
           print('❌ Invalid response format: $responseData');
@@ -206,6 +301,83 @@ class SyndicatePlotController extends GetxController {
     }
   }
 
+  void _extractPriceRanges(List<dynamic> syndicateData) {
+    try {
+      double minPriceValue = double.infinity;
+      double maxPriceValue = 0;
+
+      for (var plotData in syndicateData) {
+        try {
+          String priceStr = plotData['price']?.toString() ?? '';
+          if (priceStr.isNotEmpty) {
+            // Remove commas and convert to number
+            priceStr = priceStr.replaceAll(',', '');
+            double price = double.tryParse(priceStr) ?? 0;
+
+            if (price > 0) {
+              if (price < minPriceValue) minPriceValue = price;
+              if (price > maxPriceValue) maxPriceValue = price;
+            }
+          }
+        } catch (e) {
+          print('Error parsing price for plot: $e');
+        }
+      }
+
+      // Set sensible defaults if no prices found
+      if (minPriceValue == double.infinity) minPriceValue = 0;
+      if (maxPriceValue <= minPriceValue) maxPriceValue = minPriceValue + 1000000;
+
+      priceMin.value = minPriceValue;
+      priceMax.value = maxPriceValue;
+
+    } catch (e) {
+      print('❌ Error extracting price ranges: $e');
+      // Set safe defaults
+      priceMin.value = 0.0;
+      priceMax.value = 10000000.0;
+    }
+  }
+
+  // NEW: Extract area ranges from plots
+  void _extractAreaRanges(List<dynamic> syndicateData) {
+    try {
+      double minAreaValue = double.infinity;
+      double maxAreaValue = 0;
+
+      for (var plotData in syndicateData) {
+        try {
+          String areaStr = plotData['area']?.toString() ?? '';
+          if (areaStr.isNotEmpty) {
+            // Remove non-numeric characters and convert
+            areaStr = areaStr.replaceAll(RegExp(r'[^0-9.]'), '');
+            double area = double.tryParse(areaStr) ?? 0;
+
+            if (area > 0) {
+              if (area < minAreaValue) minAreaValue = area;
+              if (area > maxAreaValue) maxAreaValue = area;
+            }
+          }
+        } catch (e) {
+          print('Error parsing area for plot: $e');
+        }
+      }
+
+      // Set sensible defaults if no areas found
+      if (minAreaValue == double.infinity) minAreaValue = 0;
+      if (maxAreaValue <= minAreaValue) maxAreaValue = minAreaValue + 1000;
+
+      sqftMin.value = minAreaValue;
+      sqftMax.value = maxAreaValue;
+
+    } catch (e) {
+      print('❌ Error extracting area ranges: $e');
+      // Set safe defaults
+      sqftMin.value = 0.0;
+      sqftMax.value = 10000.0;
+    }
+  }
+
   Future<void> fetchSyndicateDetail(int id) async {
     try {
       _clearDetailData();
@@ -213,10 +385,22 @@ class SyndicatePlotController extends GetxController {
       isLoadingDetail(true);
       errorMessage('');
 
+      // Get token for authentication
+      final token = await SessionManager.getToken();
+
       final url = '${ApiUrl.syndicateDetails}/$id';
       print('🌐 Fetching Syndicate Detail URL: $url');
 
-      final response = await ApiService.getRequest(url);
+      // Create headers with bearer token if available
+      final Map<String, String> headers = {};
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+        print('🔐 Using token: ${token.substring(0, 20)}...');
+      } else {
+        print('⚠️ No token found, making unauthenticated request');
+      }
+
+      final response = await ApiService.getRequest(url, headers: headers);
 
       if (response.statusCode == 200) {
         final responseData = response.data;
@@ -231,6 +415,20 @@ class SyndicatePlotController extends GetxController {
           SnackBarHelper.showError("Invalid response format");
           print('❌ Invalid response format: $responseData');
         }
+      } else if (response.statusCode == 401) {
+        // Token expired or invalid
+        errorMessage('Session expired. Please login again.');
+        SnackBarHelper.showError("Session expired. Please login again.");
+        print('❌ 401 Unauthorized: Token invalid or expired');
+
+        // Clear session and redirect to login
+        await SessionManager.clearSession();
+        Get.offAllNamed('/login');
+      } else if (response.statusCode == 403) {
+        // Forbidden - token missing but endpoint requires auth
+        errorMessage('Authentication required');
+        SnackBarHelper.showError("Please login to view details");
+        print('❌ 403 Forbidden: Authentication required');
       } else if (response.statusCode == 404) {
         errorMessage('Syndicate details not found');
         SnackBarHelper.showError("Syndicate details not found");
@@ -245,11 +443,16 @@ class SyndicatePlotController extends GetxController {
       errorMessage('Network error: $e');
       SnackBarHelper.showError("Network error: $e");
       print('❌ Network error: $e');
+
+      // Check if it's a token-related error
+      if (e.toString().contains('401') || e.toString().contains('unauthorized')) {
+        await SessionManager.clearSession();
+        Get.offAllNamed('/login');
+      }
     } finally {
       isLoadingDetail(false);
     }
   }
-
   void _logBookingInfo() {
     final detail = syndicateDetail.value;
     if (detail != null) {
@@ -268,6 +471,7 @@ class SyndicatePlotController extends GetxController {
       print('   Selected: ${selectedPlots.length}');
     }
   }
+
   void _clearDetailData() {
     syndicateDetail.value = null;
     errorMessage('');
@@ -299,64 +503,215 @@ class SyndicatePlotController extends GetxController {
     selectedPlots.clear();
     update();
   }
+
   Future<void> loadMore() async {
     if (!isLoadMore.value && hasMoreData.value) {
       currentPage.value++;
       await fetchSyndicatePlots(loadMore: true);
     }
   }
+
   Future<void> refreshData() async {
     await fetchSyndicatePlots();
   }
+
+  // Enhanced search with debouncing like Gioo
+  void onSearchChanged(String value) {
+    searchQuery.value = value;
+    // Cancel previous timer
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+
+    // Set new timer for debouncing
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (value.trim().isNotEmpty) {
+        recentSearch.value = value.trim();
+        fetchSyndicatePlots();
+      }
+    });
+  }
+
+  void applySearch() {
+    if (searchQuery.value.trim().isEmpty) return;
+    recentSearch.value = searchQuery.value.trim();
+    fetchSyndicatePlots();
+  }
+
+  void clearRecentSearch() {
+    recentSearch.value = '';
+    searchQuery.value = '';
+    searchController.clear();
+    fetchSyndicatePlots();
+  }
+
   Future<void> searchPlots(String query) async {
     searchQuery.value = query;
     await fetchSyndicatePlots();
   }
-  Future<void> filterByCity(String city) async {
-    selectedCity.value = city;
+
+  Future<void> filterByCity(int cityId, String cityName) async {
+    selectedCityId.value = cityId;
+    selectedCityName.value = cityName;
     await fetchSyndicatePlots();
   }
-  Future<void> filterByState(String state) async {
-    selectedState.value = state;
+
+  Future<void> filterByState(int stateId, String stateName) async {
+    selectedStateId.value = stateId;
+    selectedStateName.value = stateName;
+    selectedCityId.value = 0; // Reset city when state changes
+    selectedCityName.value = '';
     await fetchSyndicatePlots();
   }
+
+
+
+
   Future<void> filterByPrice(String min, String max) async {
     minPrice.value = min;
     maxPrice.value = max;
     await fetchSyndicatePlots();
   }
-  Future<void> clearFilters() async {
-    searchQuery.value = '';
-    selectedCity.value = '';
-    selectedState.value = '';
-    minPrice.value = '';
-    maxPrice.value = '';
+
+  // NEW: Method for area filtering
+  Future<void> filterByArea(String min, String max) async {
+    minAreaSqft.value = min;
+    maxAreaSqft.value = max;
     await fetchSyndicatePlots();
   }
-  List<String> getAvailableCities() {
-    return syndicatePlots.map((plot) => plot.city?.cityName ?? '').where((city) => city.isNotEmpty).toSet().toList();}
-  List<String> getAvailableStates() {
-    return syndicatePlots.map((plot) => plot.state?.stateName ?? '').where((state) => state.isNotEmpty).toSet().toList();}
+
+  // NEW: Method for property type filtering
+  Future<void> filterByPropertyType(int typeId, String typeName) async {
+    selectedPropertyTypeId.value = typeId;
+    selectedPropertyTypeName.value = typeName;
+    await fetchSyndicatePlots();
+  }
+
+  // NEW: Clear property type filter
+  Future<void> clearPropertyTypeFilter() async {
+    selectedPropertyTypeId.value = 0;
+    selectedPropertyTypeName.value = '';
+    await fetchSyndicatePlots();
+  }
+
+  // Check if any filters are applied
+  bool hasFiltersApplied() {
+    return searchQuery.value.isNotEmpty ||
+        selectedCityId.value > 0 ||
+        selectedStateId.value > 0 ||
+        minPrice.value.isNotEmpty ||
+        maxPrice.value.isNotEmpty ||
+        minAreaSqft.value.isNotEmpty ||
+        maxAreaSqft.value.isNotEmpty ||
+        selectedPropertyTypeId.value > 0;
+  }
+
+  Future<void> clearFilters() async {
+    searchQuery.value = '';
+    selectedCityId.value = 0;
+    selectedCityName.value = '';
+    selectedStateId.value = 0;
+    selectedStateName.value = '';
+    minPrice.value = '';
+    maxPrice.value = '';
+    minAreaSqft.value = '';
+    maxAreaSqft.value = '';
+    selectedPropertyTypeId.value = 0;
+    selectedPropertyTypeName.value = '';
+    searchController.clear();
+    await fetchSyndicatePlots();
+  }
+
+  List<Map<String, dynamic>> getAvailableCities() {
+    final cityMap = <int, Map<String, dynamic>>{};
+
+    for (var plot in syndicatePlots) {
+      if (plot.city != null) {
+        cityMap[plot.city!.id] = {
+          'id': plot.city!.id,
+          'name': plot.city!.cityName,
+          'stateId': plot.city!.stateId,
+        };
+      }
+    }
+
+    return cityMap.values.toList();
+  }
+
+  // Update getAvailableStates to return proper objects
+  List<Map<String, dynamic>> getAvailableStates() {
+    final stateMap = <int, Map<String, dynamic>>{};
+
+    for (var plot in syndicatePlots) {
+      if (plot.state != null) {
+        stateMap[plot.state!.id] = {
+          'id': plot.state!.id,
+          'name': plot.state!.stateName,
+        };
+      }
+    }
+
+    return stateMap.values.toList();
+  }
+
+  // Update getCitiesByStateId to filter properly
+  List<Map<String, dynamic>> getCitiesByStateId(int stateId) {
+    final cityMap = <int, Map<String, dynamic>>{};
+
+    for (var plot in syndicatePlots) {
+      if (plot.city != null && plot.state != null && plot.state!.id == stateId) {
+        cityMap[plot.city!.id] = {
+          'id': plot.city!.id,
+          'name': plot.city!.cityName,
+          'stateId': plot.city!.stateId,
+        };
+      }
+    }
+
+    return cityMap.values.toList();
+  }
+  // NEW: Get available property types from loaded plots
+  List<PropertyType> getAvailablePropertyTypes() {
+    return propertyTypes;
+  }
+
+  // Enhanced query builder with all filters including property type and area
   String _buildQueryParams() {
     final params = <String>[];
+
     if (searchQuery.value.isNotEmpty) {
       params.add('search=${Uri.encodeComponent(searchQuery.value)}');
     }
-    if (selectedCity.value.isNotEmpty) {
-      params.add('city=${Uri.encodeComponent(selectedCity.value)}');
+
+    // Use IDs instead of names
+    if (selectedCityId.value > 0) {
+      params.add('city=${Uri.encodeComponent(selectedCityId.value.toString())}');
     }
-    if (selectedState.value.isNotEmpty) {
-      params.add('state=${Uri.encodeComponent(selectedState.value)}');
+
+    if (selectedStateId.value > 0) {
+      params.add('state=${Uri.encodeComponent(selectedStateId.value.toString())}');
     }
+
     if (minPrice.value.isNotEmpty) {
       params.add('min_price=${Uri.encodeComponent(minPrice.value)}');
     }
+
     if (maxPrice.value.isNotEmpty) {
       params.add('max_price=${Uri.encodeComponent(maxPrice.value)}');
     }
+
+    if (minAreaSqft.value.isNotEmpty) {
+      params.add('sqft_min=${Uri.encodeComponent(minAreaSqft.value)}');
+    }
+
+    if (maxAreaSqft.value.isNotEmpty) {
+      params.add('sqft_max=${Uri.encodeComponent(maxAreaSqft.value)}');
+    }
+
+    if (selectedPropertyTypeId.value > 0) {
+      params.add('property_type=${Uri.encodeComponent(selectedPropertyTypeId.value.toString())}');
+    }
+
     return params.isEmpty ? '' : '&${params.join('&')}';
   }
-
   List<SyndicatePlot> _parseSyndicatePlots(List<dynamic> data) {
     return data.map((item) => SyndicatePlot.fromJson(item)).toList();
   }
@@ -519,7 +874,7 @@ class SyndicatePlotController extends GetxController {
     );
 
     // Show payment summary dialog
-    showPlotPaymentSummaryDialog(amount, unitDetails);
+    showPlotPaymentSummaryBottomSheet(amount, unitDetails);
   }
 
   void initiateDocumentPayment(int documentId, String documentType) {
@@ -547,244 +902,370 @@ class SyndicatePlotController extends GetxController {
     showDocumentPaymentSummaryDialog(amount, documentType);
   }
 
-  void showPlotPaymentSummaryDialog(double amount, List<Map<String, dynamic>> unitDetails) {
+
+
+
+  void showPlotPaymentSummaryBottomSheet(double amount, List<Map<String, dynamic>> unitDetails) {
     final gstAmount = amount * 0.18;
     final totalAmount = amount + gstAmount;
-    final pricePerPlot = getPricePerPlot();
+    final razorpayController = Get.find<RazorpayController>();
 
-    Get.defaultDialog(
-      title: "Plot Payment Summary",
-      titleStyle: TextStyle(
-        fontSize: 18.sp,
-        fontWeight: FontWeight.bold,
-        color: Colors.blue,
-      ),
-      content: Container(
-        width: 320.w,
-        padding: EdgeInsets.all(15.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Property Info
-            _buildSummaryRowWidget("Property", syndicateDetail.value?.name ?? "N/A"),
-            _buildSummaryRowWidget("Price per Plot", "₹${pricePerPlot.toStringAsFixed(2)}"),
-            _buildSummaryRowWidget("Selected Plots", selectedPlots.length.toString()),
-
-            // Plot details with area
-            if (unitDetails.isNotEmpty) ...[
-              SizedBox(height: 10.h),
-              Text(
-                "Plot Details:",
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
+    Get.bottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -5)),
+          ],
+        ),
+        padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 30.h),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
               ),
-              SizedBox(height: 8.h),
-              ...unitDetails.map((unit) {
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              SizedBox(height: 24.h),
+
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "Plot ${unit['id']}",
-                        style: TextStyle(fontSize: 12.sp),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            unit['formattedArea'],
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          Text(
-                            unit['formattedPrice'],
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ),
+                      Text("Payment Summary",
+                          style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A))),
+                      Text("Review your plot investment", style: TextStyle(fontSize: 13.sp, color: Colors.grey[500])),
                     ],
                   ),
+                  _buildModernSecureBadge(),
+                ],
+              ),
+
+              SizedBox(height: 24.h),
+
+              // Main Summary Card
+              Container(
+                padding: EdgeInsets.all(20.w),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(24.r),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    _buildModernRow("Property", syndicateDetail.value?.name ?? "N/A", Icons.location_city_rounded),
+                    SizedBox(height: 12.h),
+                    _buildModernRow("Total Plots", "${unitDetails.length} Units", Icons.grid_view_rounded),
+
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      child: Divider(color: Colors.grey[200], thickness: 1),
+                    ),
+
+                    // Pricing Breakdown
+                    _buildPriceDetail("Base Amount", "₹${amount.toStringAsFixed(2)}"),
+                    SizedBox(height: 8.h),
+                    _buildPriceDetail("GST (18%)", "₹${gstAmount.toStringAsFixed(2)}"),
+
+                    SizedBox(height: 16.h),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Total Payable", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.blueGrey[800])),
+                        Text("₹${totalAmount.toStringAsFixed(2)}",
+                            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.w900, color: const Color(0xFF4338CA), letterSpacing: -0.5)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 24.h),
+
+              // Terms and Conditions Section
+              Obx(() => InkWell(
+                onTap: () => razorpayController.toggleTerms(),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: razorpayController.isTermsAccepted.value,
+                      onChanged: (v) => razorpayController.toggleTerms(),
+                      activeColor: const Color(0xFF4338CA),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    ),
+                    Expanded(
+                      child: Text("I agree to the payment terms and booking policy",
+                          style: TextStyle(fontSize: 12.sp, color: Colors.blueGrey[600])),
+                    ),
+                  ],
+                ),
+              )),
+
+              SizedBox(height: 20.h),
+
+              // Action Slider - Fixed with proper error handling
+              Obx(() {
+                final isTermsAccepted = razorpayController.isTermsAccepted.value;
+
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Prevent zero-width crash
+                    if (constraints.maxWidth <= 0) {
+                      return const SizedBox(height: 60);
+                    }
+
+                    return SizedBox(
+                      width: constraints.maxWidth,
+                      height: 60.h,
+                      child: ActionSlider.standard(
+                        height: 60.h,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        toggleColor: isTermsAccepted
+                            ? const Color(0xFF4338CA)
+                            : Colors.grey[400]!,
+                        icon: const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+
+                        // ✅ USE child INSTEAD OF textStyle
+                        child: Text(
+                          "Slide to Confirm Payment",
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF1E293B),
+                          ),
+                        ),
+
+                        action: (controller) async {
+                          if (!isTermsAccepted) {
+                            SnackBarHelper.showError("Please accept terms to proceed");
+                            controller.reset();
+                            return;
+                          }
+
+                          controller.loading();
+
+                          await Future.delayed(const Duration(milliseconds: 300));
+                          Get.back();
+                          razorpayController.initiatePayment();
+
+                          controller.success();
+                        },
+                      ),
+                    );
+                  },
                 );
-              }).toList(),
-            ],
+              }),
 
-            Divider(thickness: 1, height: 20.h),
+              SizedBox(height: 16.h),
 
-            // Simple Calculation
-            Text(
-              "Calculation:",
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              "${selectedPlots.length} plots × ₹${pricePerPlot.toStringAsFixed(2)} = ₹${amount.toStringAsFixed(2)}",
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.green,
-              ),
-            ),
-
-            Divider(thickness: 1, height: 20.h),
-
-            // Price Calculation
-            _buildPriceRowWidget("Base Amount", "₹${amount.toStringAsFixed(2)}"),
-            _buildPriceRowWidget("GST (18%)", "₹${gstAmount.toStringAsFixed(2)}", isBold: false),
-
-            Divider(thickness: 2, height: 20.h),
-
-            // Total Amount
-            _buildPriceRowWidget(
-              "Total Amount",
-              "₹${totalAmount.toStringAsFixed(2)}",
-              isBold: true,
-              isTotal: true,
-            ),
-
-            // Terms and Conditions
-            SizedBox(height: 15.h),
-            _buildTermsCheckboxWidget(),
-
-            SizedBox(height: 20.h),
-
-            // Payment Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                  _proceedToPlotPayment(totalAmount);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                ),
+              // Cancel button
+              GestureDetector(
+                onTap: () => Get.back(),
                 child: Text(
-                  "Proceed to Payment",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                    "Cancel and Return",
+                    style: TextStyle(color: Colors.grey[500], fontSize: 14.sp, decoration: TextDecoration.underline)
                 ),
               ),
-            ),
-
-            SizedBox(height: 10.h),
-
-            TextButton(
-              onPressed: Get.back,
-              child: Text(
-                "Cancel",
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+// Helper Widgets remain the same
+  Widget _buildModernRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18.sp, color: const Color(0xFF64748B)),
+        SizedBox(width: 10.w),
+        Text(label, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF64748B))),
+        const Spacer(),
+        Text(value, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B))),
+      ],
+    );
+  }
+
+  Widget _buildPriceDetail(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(fontSize: 13.sp, color: Colors.blueGrey[400])),
+        Text(value, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: Colors.blueGrey[700])),
+      ],
+    );
+  }
+
+  Widget _buildModernSecureBadge() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF2FF),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.shield_outlined, size: 14.sp, color: const Color(0xFF4338CA)),
+          SizedBox(width: 4.w),
+          Text("SECURE", style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w800, color: const Color(0xFF4338CA))),
+        ],
+      ),
+    );
+  }
+
+
 
   void showDocumentPaymentSummaryDialog(double amount, String documentType) {
-    final gstAmount = amount * 0.18;
-    final totalAmount = amount + gstAmount;
-
-    Get.defaultDialog(
-      title: "Document Payment Summary",
-      titleStyle: TextStyle(
-        fontSize: 18.sp,
-        fontWeight: FontWeight.bold,
-        color: Colors.blue,
-      ),
-      content: Container(
-        width: 320.w,
-        padding: EdgeInsets.all(15.w),
+    Get.bottomSheet(
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 32.h),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Document Info
-            _buildSummaryRowWidget("Document Type", documentType),
-            _buildSummaryRowWidget("Property", syndicateDetail.value?.name ?? "N/A"),
+            // Drag Handle
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+            ),
+            SizedBox(height: 24.h),
 
-            Divider(thickness: 1, height: 20.h),
-
-            // Price Calculation
-            _buildPriceRowWidget("Document Fee", "₹${amount.toStringAsFixed(2)}"),
-            _buildPriceRowWidget("GST (18%)", "₹${gstAmount.toStringAsFixed(2)}", isBold: false),
-
-            Divider(thickness: 2, height: 20.h),
-
-            // Total Amount
-            _buildPriceRowWidget(
-              "Total Amount",
-              "₹${totalAmount.toStringAsFixed(2)}",
-              isBold: true,
-              isTotal: true,
+            // Header with Icon
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Icon(Icons.description_outlined, color: const Color(0xFF6366F1), size: 24.w),
+                ),
+                SizedBox(width: 16.w),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Confirm Payment",
+                        style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
+                    Text("Review your document details",
+                        style: TextStyle(fontSize: 13.sp, color: Colors.grey[500])),
+                  ],
+                ),
+              ],
             ),
 
-            // Terms and Conditions
-            SizedBox(height: 15.h),
-            _buildTermsCheckboxWidget(),
+            SizedBox(height: 24.h),
+
+            // Details Card
+            Container(
+              padding: EdgeInsets.all(20.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: const Color(0xFFF1F5F9)),
+              ),
+              child: Column(
+                children: [
+                  _buildSummaryRow("Document Type", documentType),
+                  SizedBox(height: 12.h),
+                  _buildSummaryRow("Property", syndicateDetail.value?.name ?? "N/A"),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    child: DottedLine(dashColor: Colors.grey[300]!), // Using a dotted line for "receipt" feel
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Amount to Pay",
+                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Color(0xFF64748B))),
+                      Text("₹${amount.toStringAsFixed(2)}",
+                          style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
             SizedBox(height: 20.h),
+            _buildTermsCheckboxWidget(), // Ensure this widget is styled minimally
+            SizedBox(height: 24.h),
 
-            // Payment Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                  _proceedToDocumentPayment(totalAmount, documentType);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Get.back(),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                    ),
+                    child: Text("Cancel", style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
                   ),
                 ),
-                child: Text(
-                  "Proceed to Payment",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                SizedBox(width: 12.w),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      _proceedToDocumentPayment(amount, documentType);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E293B), // Dark Navy for premium look
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                    ),
+                    child: Text("Confirm & Pay", style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
                   ),
                 ),
-              ),
-            ),
-
-            SizedBox(height: 10.h),
-
-            TextButton(
-              onPressed: Get.back,
-              child: Text(
-                "Cancel",
-                style: TextStyle(color: Colors.grey),
-              ),
+              ],
             ),
           ],
         ),
       ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 
+// Helper for the clean rows
+  Widget _buildSummaryRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(fontSize: 13.sp, color: Color(0xFF64748B))),
+        Flexible(
+          child: Text(value,
+              textAlign: TextAlign.right,
+              style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+        ),
+      ],
+    );
+  }
   Widget _buildSummaryRowWidget(String label, String value) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
@@ -975,6 +1456,7 @@ class SyndicatePlotController extends GetxController {
       SnackBarHelper.showError("Failed to proceed with payment. Please try again.");
     }
   }
+
   Future<Map<String, String>> _getUserDetails() async {
     try {
       // Check if user is logged in
@@ -1060,10 +1542,494 @@ class SyndicatePlotController extends GetxController {
       }
     }
   }
+// Syndicate Buying List Methods
+  Future<void> fetchSyndicateBuyingList({bool loadMore = false}) async {
+    try {
+      // DEBUG: Check session status
+      await SessionManager.debugSession();
 
+      // Get token
+      final String? token = await SessionManager.getToken();
+
+      if (token == null || token.isEmpty) {
+        print('❌ No token found for syndicate buying list');
+        SnackBarHelper.showError('Authentication failed. Please login again.');
+        isLoadingBuyingList(false);
+        return;
+      }
+
+      if (loadMore) {
+        if (!hasMoreBuyingData.value) return;
+        buyingListPage.value++;
+      } else {
+        isLoadingBuyingList(true);
+        buyingListPage.value = 1;
+        hasMoreBuyingData.value = true;
+        buyingList.clear();
+      }
+
+      final url = '${ApiUrl.syndicateBuyingList}?page=${buyingListPage.value}';
+      print('🌐 Fetching Syndicate Buying List URL: $url');
+
+      // Add headers with token
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      final response = await ApiService.getRequest(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData != null && responseData['status'] == true) {
+          try {
+            final syndicateBuyingResponse = SyndicateBuyingListResponse.fromJson(responseData);
+
+            if (loadMore) {
+              buyingList.addAll(syndicateBuyingResponse.data);
+            } else {
+              buyingList.assignAll(syndicateBuyingResponse.data);
+            }
+
+            totalBuyingPages.value = syndicateBuyingResponse.pagination.lastPage;
+            hasMoreBuyingData.value = buyingListPage.value < totalBuyingPages.value;
+
+            print('✅ Fetched ${buyingList.length} syndicate buying records');
+            print('📄 Current page: $buyingListPage, Total pages: $totalBuyingPages');
+          } catch (e) {
+            print('❌ Error parsing syndicate buying list: $e');
+            SnackBarHelper.showError("Failed to parse buying list data");
+          }
+        } else {
+          SnackBarHelper.showError(
+              responseData?['message'] ?? "Failed to fetch syndicate buying list");
+          print('❌ API Error: ${responseData?['message']}');
+        }
+      } else if (response.statusCode == 401) {
+        print('🔐 Session expired (401) for buying list');
+        SnackBarHelper.showError("Session expired. Please login again.");
+      } else if (response.statusCode == 403) {
+        SnackBarHelper.showError("You don't have permission to view buying list");
+      } else {
+        SnackBarHelper.showError("Failed to fetch buying list: ${response.statusCode}");
+        print('❌ Error fetching buying list: ${response.data}');
+      }
+    } catch (e) {
+      SnackBarHelper.showError("Network error: $e");
+      print('❌ Network error fetching syndicate buying list: $e');
+    } finally {
+      isLoadingBuyingList(false);
+    }
+  }
+
+  Future<void> fetchSyndicateBuyingListDetails({
+    bool loadMore = false,
+    int? transactionId
+  }) async {
+    try {
+      if (transactionId != null) {
+        selectedTransactionId.value = transactionId;
+      }
+
+      final txnId = transactionId ?? selectedTransactionId.value;
+      if (txnId == null) {
+        SnackBarHelper.showError("Transaction ID is required");
+        return;
+      }
+
+      // Check token first
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) {
+        print('❌ No token found for syndicate details fetch');
+        SnackBarHelper.showError('Please login');
+        isLoadingBuyingDetail(false);
+        return;
+      }
+
+      if (loadMore) {
+        if (!hasMoreBuyingDetailData.value) return;
+        buyingDetailPage.value++;
+      } else {
+        isLoadingBuyingDetail(true);
+        buyingDetailPage.value = 1;
+        hasMoreBuyingDetailData.value = true;
+        buyingDetailList.clear();
+      }
+
+      final url = '${ApiUrl.syndicateBuyingDetails}?tran_id=$txnId&page=${buyingDetailPage.value}';
+      print('🌐 Fetching Syndicate Buying Details URL: $url');
+
+      // Add headers with token
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      final response = await ApiService.getRequest(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData['status'] == true) {
+          final detailResponse = SyndicateBuyingDetailResponse.fromJson(responseData);
+
+          if (loadMore) {
+            buyingDetailList.addAll(detailResponse.data);
+          } else {
+            buyingDetailList.assignAll(detailResponse.data);
+          }
+
+          totalBuyingDetailPages.value = detailResponse.pagination.lastPage;
+          hasMoreBuyingDetailData.value = buyingDetailPage.value < totalBuyingDetailPages.value;
+
+          print('✅ Fetched ${buyingDetailList.length} syndicate buying detail records');
+        } else {
+          SnackBarHelper.showError(
+              responseData['message'] ?? "Failed to fetch syndicate buying details");
+          print('❌ API Error: ${responseData['message']}');
+        }
+      } else if (response.statusCode == 401) {
+        print('🔐 Session expired (401) for details');
+        SnackBarHelper.showError("Session expired. Please login again.");
+      } else if (response.statusCode == 403) {
+        SnackBarHelper.showError("You don't have permission to view these details");
+      } else if (response.statusCode == 404) {
+        SnackBarHelper.showError("Syndicate transaction details not found");
+      } else {
+        SnackBarHelper.showError(
+            "Failed to fetch syndicate buying details: ${response.statusCode}");
+        print('❌ Error fetching syndicate buying details: ${response.data}');
+      }
+    } catch (e) {
+      SnackBarHelper.showError("Network error: $e");
+      print('❌ Network error fetching syndicate buying details: $e');
+    } finally {
+      isLoadingBuyingDetail(false);
+    }
+  }
+
+  Future<void> cancelSyndicateBuyingRequest(int buyingId) async {
+    try {
+      isLoadingCancelRequest(true);
+
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) {
+        print('❌ No token found for syndicate cancellation');
+        SnackBarHelper.showError('Please login');
+        isLoadingCancelRequest(false);
+        return;
+      }
+
+      final url = '${ApiUrl.syndicateBuyingCancelRequest}/$buyingId';
+      print('🌐 Cancelling Syndicate Buying Request URL: $url');
+
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      final response = await ApiService.getRequest(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData['status'] == true) {
+          SnackBarHelper.showSuccess(responseData['message'] ??
+              'Syndicate cancellation request submitted successfully');
+
+          // Update the item in buying detail list
+          final index = buyingDetailList.indexWhere((item) => item.id == buyingId);
+          if (index != -1) {
+            final updatedDetail = buyingDetailList[index];
+            final data = responseData['data'] ?? {};
+
+            // Create updated transaction
+            final updatedTransaction = Transaction(
+              id: updatedDetail.transaction.id,
+              transactionId: updatedDetail.transaction.transactionId,
+              paymentMode: updatedDetail.transaction.paymentMode,
+              transactionDetails: updatedDetail.transaction.transactionDetails,
+              amount: updatedDetail.transaction.amount,
+              isCompleted: updatedDetail.transaction.isCompleted,
+              status: data['cancel_status'] == 1 ? 'cancelled' : updatedDetail.transaction.status,
+              propertyId: updatedDetail.transaction.propertyId,
+              userId: updatedDetail.transaction.userId,
+              type: updatedDetail.transaction.type,
+              createdAt: updatedDetail.transaction.createdAt,
+              updatedAt: DateTime.now(),
+              user: updatedDetail.transaction.user,
+            );
+
+            // Update the buying detail
+            buyingDetailList[index] = SyndicateBuyingDetail(
+              id: updatedDetail.id,
+              transactionId: updatedDetail.transactionId,
+              propertyId: updatedDetail.propertyId,
+              unit: updatedDetail.unit,
+              cancelStatus: data['cancel_status'] ?? updatedDetail.cancelStatus,
+              refundDate: data['refund_date'] != null
+                  ? DateTime.tryParse(data['refund_date'].toString())
+                  : updatedDetail.refundDate,
+              refundStatus: data['refund_status'] ?? updatedDetail.refundStatus,
+              amount: updatedDetail.amount,
+              refundAmount: data['refund_amount'] ?? updatedDetail.refundAmount,
+              createdAt: updatedDetail.createdAt,
+              updatedAt: DateTime.now(),
+              transaction: updatedTransaction,
+              property: updatedDetail.property,
+            );
+
+            // Refresh the list
+            buyingDetailList.refresh();
+            print('✅ Updated syndicate detail $buyingId with cancellation status');
+          }
+        } else {
+          SnackBarHelper.showError(responseData['message'] ??
+              'Failed to submit syndicate cancellation request');
+        }
+      } else if (response.statusCode == 401) {
+        print('🔐 Session expired (401) during syndicate cancellation');
+        SnackBarHelper.showError("Session expired. Please login again.");
+      } else if (response.statusCode == 403) {
+        SnackBarHelper.showError(
+            "You don't have permission to cancel this syndicate plot");
+      } else if (response.statusCode == 404) {
+        SnackBarHelper.showError("Syndicate plot not found");
+      } else if (response.statusCode == 422) {
+        SnackBarHelper.showError("Invalid request. Please check the details");
+      } else {
+        SnackBarHelper.showError(
+            "Failed to cancel syndicate plot: ${response.statusCode}");
+        print('❌ Error cancelling syndicate plot: ${response.data}');
+      }
+    } catch (e) {
+      SnackBarHelper.showError("Network error: $e");
+      print('❌ Network error cancelling syndicate plot: $e');
+    } finally {
+      isLoadingCancelRequest(false);
+    }
+  }// Helper method to load more buying list data
+  Future<void> loadMoreBuyingList() async {
+    if (!isLoadingBuyingList.value && hasMoreBuyingData.value) {
+      await fetchSyndicateBuyingList(loadMore: true);
+    }
+  }
+
+// Helper method to load more buying detail data
+  Future<void> loadMoreBuyingDetail() async {
+    if (!isLoadingBuyingDetail.value && hasMoreBuyingDetailData.value) {
+      await fetchSyndicateBuyingListDetails(loadMore: true);
+    }
+  }
+
+// Refresh buying list
+  Future<void> refreshBuyingList() async {
+    await fetchSyndicateBuyingList();
+  }
+
+// Navigate to buying details screen
+  void navigateToSyndicateBuyingDetails(int transactionId) {
+    selectedTransactionId.value = transactionId;
+    Get.toNamed('/syndicate-buying-details', arguments: transactionId);
+    fetchSyndicateBuyingListDetails(transactionId: transactionId);
+  }
+
+// Show cancellation confirmation dialog
+  void showCancelConfirmationDialog(int buyingId, String propertyName) {
+    Get.defaultDialog(
+      title: "Cancel Syndicate Booking",
+      titleStyle: TextStyle(
+        fontSize: 18.sp,
+        fontWeight: FontWeight.bold,
+        color: Colors.red,
+      ),
+      content: Column(
+        children: [
+          Text(
+            "Are you sure you want to cancel your booking for:",
+            style: TextStyle(fontSize: 14.sp),
+          ),
+          SizedBox(height: 10.h),
+          Text(
+            propertyName,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 15.h),
+          Text(
+            "Note: Cancellation charges may apply as per terms.",
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.orange,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+      confirm: ElevatedButton(
+        onPressed: () {
+          Get.back();
+          cancelSyndicateBuyingRequest(buyingId);
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+        ),
+        child: Text("Confirm Cancel"),
+      ),
+      cancel: TextButton(
+        onPressed: Get.back,
+        child: Text("Go Back"),
+      ),
+    );
+  }
+
+// Format transaction date
+  String formatTransactionDate(DateTime date) {
+    return "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}";
+  }
+
+// Check if cancellation is allowed (based on your business rules)
+  bool canCancelBooking(SyndicateBuyingList booking) {
+    // Example: Allow cancellation only if not already cancelled
+    return booking.transaction.status.toLowerCase() != 'cancelled';
+  }
+
+// Calculate refund amount (you might want to adjust this based on your business logic)
+  double calculateRefundAmount(SyndicateBuyingList booking, double cancellationChargePercent) {
+    final totalAmount = double.tryParse(booking.amount) ?? 0.0;
+    final refundAmount = totalAmount * ((100 - cancellationChargePercent) / 100);
+    return refundAmount;
+  }
   @override
   void onClose() {
     _clearDetailData();
+    _debounce?.cancel();
+    searchController.dispose();
     super.onClose();
+  }
+  Future<Map<String, dynamic>> fetchStoreReferral(String email, int propertyId) async {
+    try {
+      // Get authentication token
+      final token = await SessionManager.getToken();
+
+      if (token == null || token.isEmpty) {
+        print('❌ No authentication token found');
+        SnackBarHelper.showError('Please login to use referral feature');
+        return {'success': false, 'message': 'Authentication required'};
+      }
+
+      // Create Dio instance with headers
+      final dio = Dio();
+      dio.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      // Prepare request data
+      final Map<String, dynamic> requestData = {
+        'email': email,
+        'property_id': propertyId.toString(),
+      };
+
+      print('🌐 Store Referral API Request:');
+      print('   URL: ${ApiUrl.baseUrl}/api/v2/store-referral');
+      print('   Email: $email');
+      print('   Property ID: $propertyId');
+      print('   Token: ${token.substring(0, 20)}...');
+
+      // Make POST request directly with Dio
+      final response = await dio.post(
+        '${ApiUrl.baseUrl}/api/v2/store-referral',
+        data: requestData,
+      );
+
+      // Check response
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        print('✅ Store Referral API Response: $responseData');
+
+        if (responseData['status'] == true) {
+          SnackBarHelper.showSuccess(responseData['message'] ?? 'Referral stored successfully');
+          return {
+            'success': true,
+            'message': responseData['message'],
+            'data': responseData['data'] ?? {},
+          };
+        } else {
+          SnackBarHelper.showError(responseData['message'] ?? 'Failed to store referral');
+          return {
+            'success': false,
+            'message': responseData['message'] ?? 'Failed to store referral',
+          };
+        }
+      } else if (response.statusCode == 401) {
+        print('🔐 Unauthorized - Token may be expired');
+        SnackBarHelper.showError('Session expired. Please login again.');
+
+        // Clear session and redirect to login
+        await SessionManager.clearSession();
+        Get.offAllNamed('/login');
+
+        return {
+          'success': false,
+          'message': 'Session expired',
+        };
+      } else if (response.statusCode == 422) {
+        // Validation error
+        final responseData = response.data;
+        final errors = responseData['errors'] ?? {};
+        final errorMessage = errors.isNotEmpty
+            ? errors.values.first.first?.toString()
+            : responseData['message'] ?? 'Validation failed';
+
+        SnackBarHelper.showError(errorMessage);
+        return {
+          'success': false,
+          'message': errorMessage,
+          'errors': errors,
+        };
+      } else {
+        final responseData = response.data;
+        final errorMsg = responseData?['message'] ?? 'Failed to store referral. Status: ${response.statusCode}';
+        SnackBarHelper.showError(errorMsg);
+        print('❌ Store Referral API Error: ${response.statusCode} - ${response.data}');
+
+        return {
+          'success': false,
+          'message': errorMsg,
+        };
+      }
+    } on DioException catch (e) {
+      // Handle Dio-specific errors
+      print('❌ Dio Error: ${e.type} - ${e.message}');
+
+      if (e.response != null) {
+        print('Response status: ${e.response!.statusCode}');
+        print('Response data: ${e.response!.data}');
+
+        return {
+          'success': false,
+          'message': 'Server error: ${e.response!.statusCode}',
+        };
+      }
+
+      SnackBarHelper.showError('Network error: ${e.message}');
+      return {
+        'success': false,
+        'message': 'Network error: ${e.message}',
+      };
+    } catch (e) {
+      print('❌ Store Referral Network Error: $e');
+      SnackBarHelper.showError('Error: $e');
+
+      return {
+        'success': false,
+        'message': 'Error: $e',
+      };
+    }
   }
 }

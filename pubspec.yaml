@@ -52,6 +52,11 @@ dependencies:
   carousel_slider: ^5.1.1
   razorpay_flutter: ^1.4.0
   share_plus: ^12.0.1
+  action_slider: ^0.7.0
+  audioplayers: ^6.5.1
+  confetti: ^0.8.0
+  shimmer: ^3.0.0
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -81,6 +86,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
      - assets/images/
+     - assets/sounds/payment done.mp3
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

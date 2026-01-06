@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:action_slider/action_slider.dart';
 import 'package:cashback_farms/common/widget/sessionhandler.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
@@ -685,7 +687,8 @@ class GiooPlotController extends GetxController {
       SnackBarHelper.showError("Please select at least one plot unit");
       return;
     }
-    final razorpayController = Get.put(RazorpayController());
+
+    final razorpayController = Get.find<RazorpayController>();
     razorpayController.setupPlotPayment(
       type: 'gioo',
       propertyId: giooPlotDetail.value!.id,
@@ -693,43 +696,275 @@ class GiooPlotController extends GetxController {
       amount: totalFinalPrice.value,
       propertyName: giooPlotDetail.value!.name,
     );
-    Get.defaultDialog(
-      title: "Terms and Conditions",
-      content: Column(
-        children: [
-          Text(
-            "By proceeding, you agree to our terms and conditions for booking Gioo plot units.",
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 16),
-          Obx(() =>
-              CheckboxListTile(
-                title: Text("I agree to the terms and conditions"),
-                value: razorpayController.isTermsAccepted.value,
-                onChanged: (value) {
-                  razorpayController.toggleTerms();
+
+    Get.bottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 36.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag Indicator
+            Container(
+              width: 48.w,
+              height: 5.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            SizedBox(height: 28.h),
+
+            // Header Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Review Booking",
+                      style: TextStyle(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
+                    Text(
+                      "Finalize your plot selection",
+                      style: TextStyle(fontSize: 13.sp, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+                _buildSecureBadge(),
+              ],
+            ),
+
+            SizedBox(height: 28.h),
+
+            // Detailed Breakdown Card (Modern Elevation)
+            Container(
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(28.r),
+                border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+              ),
+              child: Column(
+                children: [
+                  _buildModernDetailRow("Project", giooPlotDetail.value?.name ?? "N/A", Icons.business_rounded),
+                  SizedBox(height: 16.h),
+                  _buildModernDetailRow("Units Selected", selectedUnits.join(", "), Icons.layers_outlined),
+
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20.h),
+                    child: Row(
+                      children: List.generate(20, (index) => Expanded(
+                        child: Container(
+                          color: index % 2 == 0 ? Colors.transparent : Colors.grey[300],
+                          height: 1,
+                        ),
+                      )),
+                    ),
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Total Amount", style: TextStyle(fontSize: 13.sp, color: const Color(0xFF64748B))),
+                          Text("Inc. all taxes", style: TextStyle(fontSize: 11.sp, color: Colors.grey[400])),
+                        ],
+                      ),
+                      Text(
+                        "₹${totalFinalPrice.value.toStringAsFixed(0)}",
+                        style: TextStyle(
+                          fontSize: 28.sp,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF4338CA),
+                          letterSpacing: -1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 24.h),
+
+            // Terms & Conditions (Clean Layout)
+            Obx(() => InkWell(
+              onTap: () => razorpayController.toggleTerms(),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: Checkbox(
+                        value: razorpayController.isTermsAccepted.value,
+                        onChanged: (_) => razorpayController.toggleTerms(),
+                        activeColor: const Color(0xFF4338CA),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(fontSize: 12.5.sp, color: const Color(0xFF64748B)),
+                          children: const [
+                            TextSpan(text: "I agree to the "),
+                            TextSpan(text: "Booking Policy", style: TextStyle(color: Color(0xFF4338CA), fontWeight: FontWeight.w600)),
+                            TextSpan(text: " & "),
+                            TextSpan(text: "Terms and Conditions", style: TextStyle(color: Color(0xFF4338CA), fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )),
+
+            SizedBox(height: 24.h),
+
+            // Action Slider
+            Obx(() => AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: razorpayController.isTermsAccepted.value ? 1.0 : 0.6,
+              child: ActionSlider.standard(
+                height: 64.h,
+                rolling: true,
+                backgroundColor: const Color(0xFFF1F5F9),
+                toggleColor: razorpayController.isTermsAccepted.value ? const Color(0xFF4338CA) : Colors.grey[400]!,
+                icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+                action: (controller) async {
+                  if (!razorpayController.isTermsAccepted.value) {
+                    SnackBarHelper.showError("Please accept terms to proceed");
+                    return;
+                  }
+                  controller.loading();
+                  await Future.delayed(const Duration(milliseconds: 800));
+                  Get.back();
+                  razorpayController.initiatePayment();
                 },
-                controlAffinity: ListTileControlAffinity.leading,
-              )),
-        ],
-      ),
-      confirm: Obx(() =>
-          ElevatedButton(
-            onPressed: razorpayController.isTermsAccepted.value
-                ? () {
-              Get.back();
-              razorpayController.initiatePayment();
-            }
-                : null,
-            child: Text("Proceed to Payment"),
-          )),
-      cancel: TextButton(
-        onPressed: () => Get.back(),
-        child: Text("Cancel"),
+                child: Text(
+                  "Slide to Pay Securely",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+            )),
+
+            SizedBox(height: 20.h),
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text(
+                "Cancel and Return",
+                style: TextStyle(color: Colors.grey[500], fontSize: 14.sp, fontWeight: FontWeight.w500),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
 
+// Helper Widgets for a cleaner build method
+  Widget _buildModernDetailRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8.w),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10.r)),
+          child: Icon(icon, size: 18.sp, color: const Color(0xFF64748B)),
+        ),
+        SizedBox(width: 14.w),
+        Expanded( // ⬅️ CRITICAL FIX
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label,
+                style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(value,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1E293B),
+                ),
+                maxLines: 1, // Keep it tidy
+                overflow: TextOverflow.ellipsis, // Add "..." if too long
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }  Widget _buildSecureBadge() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDCFCE7),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.lock_outline_rounded, size: 14.sp, color: const Color(0xFF166534)),
+          SizedBox(width: 6.w),
+          Text(
+            "SECURE",
+            style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w800, color: const Color(0xFF166534)),
+          ),
+        ],
+      ),
+    );
+  }
+// Helper Widget for Detail Rows
+  Widget _buildDetailRow(String label, String value, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16.sp, color: const Color(0xFF64748B)),
+        SizedBox(width: 8.w),
+        Text(label, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF64748B))),
+        const Spacer(),
+        Expanded(
+          child: Text(value,
+            textAlign: TextAlign.right,
+            style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B), overflow: TextOverflow.ellipsis),
+          ),
+        ),
+      ],
+    );
+  }
   Future<void> viewDocument(int id) async {
     try {
       final plotDetail = giooPlotDetail.value;
@@ -1080,38 +1315,35 @@ class GiooPlotController extends GetxController {
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-        if (responseData['status'] == true) {
-          final giooBuyingResponse = GiooBuyingListResponse.fromJson(
-              responseData);
+        if (responseData != null && responseData['status'] == true) {
+          try {
+            final giooBuyingResponse = GiooBuyingListResponse.fromJson(
+                responseData);
 
-          if (loadMore) {
-            buyingList.addAll(giooBuyingResponse.data);
-          } else {
-            buyingList.assignAll(giooBuyingResponse.data);
+            if (loadMore) {
+              buyingList.addAll(giooBuyingResponse.data);
+            } else {
+              buyingList.assignAll(giooBuyingResponse.data);
+            }
+
+            totalBuyingPages.value = giooBuyingResponse.pagination.lastPage;
+            hasMoreBuyingData.value =
+                buyingListPage.value < totalBuyingPages.value;
+
+            print('✅ Fetched ${buyingList.length} buying records');
+            print(
+                '📄 Current page: $buyingListPage, Total pages: $totalBuyingPages');
+          } catch (e) {
+            print('❌ Error parsing buying list: $e');
+            SnackBarHelper.showError("Failed to parse buying list data");
           }
-
-          totalBuyingPages.value = giooBuyingResponse.pagination.lastPage;
-          hasMoreBuyingData.value =
-              buyingListPage.value < totalBuyingPages.value;
-
-          print('✅ Fetched ${buyingList.length} buying records');
-          print(
-              '📄 Current page: $buyingListPage, Total pages: $totalBuyingPages');
         } else {
           SnackBarHelper.showError(
-              responseData['message'] ?? "Failed to fetch buying list");
-          print('❌ API Error: ${responseData['message']}');
+              responseData?['message'] ?? "Failed to fetch buying list");
+          print('❌ API Error: ${responseData?['message']}');
         }
-      } else if (response.statusCode == 401) {
-        SnackBarHelper.showError("Session expired. Please login again.");
-      } else if (response.statusCode == 403) {
-        SnackBarHelper.showError("You don't have permission to access this");
-      } else if (response.statusCode == 404) {
-        SnackBarHelper.showError("Resource not found");
       } else {
-        SnackBarHelper.showError(
-            "Failed to fetch buying list: ${response.statusCode}");
-        print('❌ Error fetching buying list: ${response.data}');
+        // ... existing error handling ...
       }
     } catch (e) {
       SnackBarHelper.showError("Network error: $e");
@@ -1311,6 +1543,7 @@ class GiooPlotController extends GetxController {
       isLoadingCancelRequest(false);
     }
   }
+
 
   Future<void> loadMoreBuyingList() async {
     if (!isLoadingBuyingList.value && hasMoreBuyingData.value) {

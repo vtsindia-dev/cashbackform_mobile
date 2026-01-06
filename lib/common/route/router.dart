@@ -18,6 +18,7 @@ import '../../features/profile/screen/profile.dart';
 import '../../features/service/screen/my_service_enquiry.dart';
 import '../../features/service/screen/service.dart';
 import '../../features/splash/screens/splash.dart';
+import '../../features/syndicate_plot/screens/owned_syndicate_plot.dart';
 import '../../features/syndicate_plot/screens/syndicate_plot.dart';
 
 class AppRoutes {
@@ -41,6 +42,7 @@ class AppRoutes {
   static const String myServiceList = '/myServiceList';
   static const String myMaterialList = '/myMaterialList';
   static const String ownedplotlist = '/ownedplotlist';
+  static const String ownedSyndicatePlotList = '/ownedSyndicatePlotList';
   static List<GetPage> routes = [
     GetPage(
       name: splash,
@@ -80,6 +82,10 @@ class AppRoutes {
     GetPage(
       name: ownedplotlist,
       page: () => GiooBuyingListWidget(),
+      transition: Transition.cupertino,
+    ), GetPage(
+      name: ownedSyndicatePlotList,
+      page: () => SyndicateBuyingListWidget(),
       transition: Transition.cupertino,
     ), GetPage(
       name: service,
@@ -161,6 +167,7 @@ class AppRoutes {
   ];
   static void toDashboard() => Get.offAllNamed(dashboard);
   static void toOwnedGioPlotList() => Get.offAllNamed(ownedplotlist);
+  static void toOwnedSyndicatePlotList() => Get.offAllNamed(ownedSyndicatePlotList);
   static void toLogin() => Get.offAllNamed(login);
   static void toProfile() => Get.toNamed(profile);
   static void toHome() => Get.offAllNamed(home);

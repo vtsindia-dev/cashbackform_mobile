@@ -1,8 +1,6 @@
-// widgets/gioo_buying_list_widget.dart
-import 'dart:async';
-
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -27,8 +25,6 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.fetchGiooBuyingList();
     });
-
-    // Setup scroll listener for pagination
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
           _scrollController.position.maxScrollExtent) {
@@ -39,13 +35,11 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
       }
     });
   }
-
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,22 +50,18 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
       body: _buildBody(),
     );
   }
-
   Widget _buildBody() {
     return Obx(() {
       if (controller.isLoadingBuyingList.value &&
           controller.buyingList.isEmpty) {
         return _buildLoading();
       }
-
       if (controller.buyingList.isEmpty) {
         return _buildEmptyState();
       }
-
       return _buildBookingList();
     });
   }
-
   Widget _buildLoading() {
     return Center(
       child: Column(
@@ -93,7 +83,6 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
       ),
     );
   }
-
   Widget _buildEmptyState() {
     return RefreshIndicator(
       onRefresh: () => controller.fetchGiooBuyingList(),
@@ -257,7 +246,7 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
                       children: [
                         Expanded(
                           child: Text(
-                            booking.property.name,
+                            booking.property?.name??'No Property Name',
                             style: TextStyle(
                               fontSize: 17.sp,
                               fontWeight: FontWeight.w800,
@@ -276,7 +265,7 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
                         6.w.horizontalSpace,
                         Expanded(
                           child: Text(
-                            booking.property.address,
+                            booking.property?.address??'No Address',
                             style: TextStyle(fontSize: 12.sp, color: Colors.blueGrey.shade400),
                           ),
                         ),
@@ -634,7 +623,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
 
           // --- PROPERTY TITLE ---
           Text(
-            booking.property.name,
+            booking.property?.name??'No Property Name',
             style: TextStyle(
               fontSize: 24.sp,
               fontWeight: FontWeight.w900,
@@ -651,7 +640,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
               6.w.horizontalSpace,
               Expanded(
                 child: Text(
-                  booking.property.address,
+                  booking.property?.address??' No Address',
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: Colors.blueGrey.shade600,
@@ -914,19 +903,37 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
           Icon(icon, size: 14.w, color: const Color(0xFF94A3B8)),
           8.w.horizontalSpace,
         ],
+
         Text(
           label,
-          style: TextStyle(fontSize: 13.sp, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: const Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
+          ),
         ),
+
         const Spacer(),
+
         Expanded(
           flex: 2,
           child: GestureDetector(
-            onTap: isCopyable ? () {
-              // Add Clipboard logic
-              Get.snackbar("Copied", "Transaction ID copied to clipboard",
-                  snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.black87, colorText: Colors.white);
-            } : null,
+            onTap: isCopyable
+                ? () {
+              Clipboard.setData(
+                ClipboardData(text: value),
+              );
+
+              Get.snackbar(
+                "Copied",
+                "Transaction ID copied to clipboard",
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: Colors.black87,
+                colorText: Colors.white,
+                duration: const Duration(seconds: 2),
+              );
+            }
+                : null,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -938,14 +945,19 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF334155),
-                      fontFamily: isCopyable ? 'Monospace' : null,
+                      fontFamily: isCopyable ? 'RobotoMono' : null,
                     ),
                   ),
                 ),
+
                 if (isCopyable) ...[
                   8.w.horizontalSpace,
-                  Icon(Icons.copy_rounded, size: 14.w, color: AppColor.primary),
-                ]
+                  Icon(
+                    Icons.copy_rounded,
+                    size: 14.w,
+                    color: AppColor.primary,
+                  ),
+                ],
               ],
             ),
           ),
@@ -953,6 +965,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
       ],
     );
   }
+
   Widget _transactionDetailRow(
       String label,
       String value, {
@@ -1103,7 +1116,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
             padding: EdgeInsets.all(16.w),
             child: Row(
               children: [
-                // --- UNIT NUMBER AVATAR ---
                 Container(
                   width: 48.w,
                   height: 48.w,

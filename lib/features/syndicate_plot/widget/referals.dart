@@ -15,13 +15,13 @@ class Referrals extends StatefulWidget {
   State<Referrals> createState() => _ReferralsState();
 
   final GlobalKey reservePlotsKey;
-
-  static const String referralCode = "DINGE202837";
 }
 
 class _ReferralsState extends State<Referrals> {
+  final TextEditingController _referralEmailController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _referralCodeController = TextEditingController();
+  var _isLoading = false.obs;
 
   @override
   Widget build(BuildContext context) {
@@ -51,121 +51,163 @@ class _ReferralsState extends State<Referrals> {
   }
 
   Widget _buildReferralSection() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Refer Friends & Join the Scheme Group",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 19.sp,
+              color: AppColor.black,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            "Invite your friends or family to join this scheme and purchase plots together. "
+                "When your reference successfully reserves a plot, both of you get exclusive benefits "
+                "and can join the private group chat to discuss the project, updates, and progress.",
+            style: TextStyle(fontSize: 12.sp, color: AppColor.black),
+          ),
+          SizedBox(height: 10.h),
+
+          // Email Input Field ONLY
+          _buildEmailInputField(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailInputField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Refer Friends & Join the Scheme Group",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 19.sp,
-            color: AppColor.black,
+          "Friend's Email",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
+        ),
+        SizedBox(height: 6.h),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0.h),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: TextFormField(
+            controller: _referralEmailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              hintText: "Enter friend's email address",
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 16.h),
+              prefixIcon: Icon(Icons.email, size: 18.sp, color: Colors.grey[600]),
+            ),
+            style: TextStyle(fontSize: 12.sp),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter email address';
+              }
+              if (!GetUtils.isEmail(value)) {
+                return 'Please enter a valid email';
+              }
+              return null;
+            },
           ),
         ),
         SizedBox(height: 6.h),
-        Text(
-          "Invite your friends or family to join this scheme and purchase plots together. "
-              "When your reference successfully reserves a plot, both of you get exclusive benefits "
-              "and can join the private group chat to discuss the project, updates, and progress.",
-          style: TextStyle(fontSize: 12.sp, color: AppColor.black),
+        Obx(() => _isLoading.value
+            ? Center(
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.w,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
+            ),
+          ),
+        )
+            : GestureDetector(
+          onTap: _sendReferralInvite,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColor.primary, AppColor.primarylite],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4.r,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.send, size: 16.sp, color: Colors.black),
+                SizedBox(width: 8.w),
+                Text(
+                  "Send Referral Invite",
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        SizedBox(height: 10.h),
-        Row(
-          children: [
-            Text(
-              "Refer Code: ",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
-            ),
-            SelectableText(
-              Referrals.referralCode,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-            ),
-            SizedBox(width: 6.w),
-            GestureDetector(
-              onTap: () {
-                Clipboard.setData(const ClipboardData(text: Referrals.referralCode));
-                SnackBarHelper.showSuccess("Copied");
-              },
-              child: Container(
-                padding: EdgeInsets.all(6.w),
-                decoration: BoxDecoration(
-                  color: Colors.green[100],
-                  borderRadius: BorderRadius.circular(6.r),
-                ),
-                child: Icon(Icons.copy, size: 18.sp, color: Colors.green[700]),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 10.h),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: TextField(
-                  controller: _referralCodeController,
-                  decoration: InputDecoration(
-                    hintText: "Enter Referral Code",
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-                  ),
-                  style: TextStyle(fontSize: 11.sp),
-                ),
-              ),
-            ),
-            SizedBox(width: 8.w),
-            GestureDetector(
-              onTap: () {
-                // TODO: Implement join functionality
-                Get.snackbar("Success", "Joined Successfully",colorText: Colors.white,backgroundColor: AppColor.green);
-                _referralCodeController.clear();
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColor.primary, AppColor.primarylite],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4.r,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    "Join",
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ],
     );
   }
 
+  Future<void> _sendReferralInvite() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final controller = Get.find<SyndicatePlotController>();
+    final detail = controller.syndicateDetail.value;
+
+    if (detail == null) {
+      SnackBarHelper.showError('Property details not available');
+      return;
+    }
+
+    _isLoading.value = true;
+
+    try {
+      // Call the controller method with friend's email and property ID
+      final result = await controller.fetchStoreReferral(
+        _referralEmailController.text.trim(),
+        detail.id,
+      );
+
+      if (result['success'] == true) {
+        // Controller already shows success message
+        _referralEmailController.clear();
+      } else {
+        // Controller already shows error message
+        print('Referral failed: ${result['message']}');
+      }
+    } catch (e) {
+      // Fallback error handling
+      SnackBarHelper.showError('Error: $e');
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  // The rest of your existing methods remain EXACTLY THE SAME...
   Widget _buildBookedSlotsSection(SyndicatePlotController controller) {
     final detail = controller.syndicateDetail.value;
     final totalPlots = detail?.unitSpilt ?? 0;
@@ -305,14 +347,12 @@ class _ReferralsState extends State<Referrals> {
       ),
       child: Stack(
         children: [
-          // Background
           Container(
             decoration: BoxDecoration(
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(4.r),
             ),
           ),
-          // Progress
           AnimatedContainer(
             duration: 500.ms,
             width: MediaQuery.of(Get.context!).size.width * 0.7 * progress,
@@ -470,7 +510,6 @@ class _ReferralsState extends State<Referrals> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Animated icon with gradient
           Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
@@ -507,7 +546,6 @@ class _ReferralsState extends State<Referrals> {
 
           SizedBox(height: 20.h),
 
-          // Title with better typography
           Text(
             "No Bookings Yet",
             style: TextStyle(
@@ -521,7 +559,6 @@ class _ReferralsState extends State<Referrals> {
 
           SizedBox(height: 8.h),
 
-          // Description with better styling
           Text(
             "This scheme is waiting for its first investors.\nBe the pioneer and book your plot today!",
             style: TextStyle(
@@ -535,7 +572,6 @@ class _ReferralsState extends State<Referrals> {
 
           SizedBox(height: 20.h),
 
-          // Call-to-action button
           Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -596,7 +632,6 @@ class _ReferralsState extends State<Referrals> {
 
           SizedBox(height: 12.h),
 
-          // Additional info text
           Text(
             "Join early and get exclusive benefits!",
             style: TextStyle(
@@ -618,10 +653,11 @@ class _ReferralsState extends State<Referrals> {
         context,
         duration: const Duration(milliseconds: 1000),
         curve: Curves.easeInOut,
-        alignment: 0.7, // Changed from 0.1 to 0.0 to scroll to top
+        alignment: 0.7,
       );
     }
   }
+
   List<Map<String, dynamic>> _getUniqueUsersFromBookings(SyndicatePlotController controller) {
     final detail = controller.syndicateDetail.value;
     if (detail == null) return [];
@@ -661,6 +697,7 @@ class _ReferralsState extends State<Referrals> {
 
     return userMap.values.toList();
   }
+
   Set<int> _parseUnitIds(String unitsString) {
     final Set<int> unitIds = <int>{};
     try {

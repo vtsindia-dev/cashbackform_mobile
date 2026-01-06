@@ -351,7 +351,7 @@ class Property {
 
 class NearbyPlace {
   final int placeId;
-  final int distance;
+  final double distance;
 
   NearbyPlace({
     required this.placeId,
@@ -361,10 +361,11 @@ class NearbyPlace {
   factory NearbyPlace.fromJson(Map<String, dynamic> json) {
     return NearbyPlace(
       placeId: json['place_id'] ?? 0,
-      distance: json['distance'] ?? 0,
+      distance: double.tryParse(json['distance']?.toString() ?? '0') ?? 0.0,
     );
   }
 }
+
 
 class User {
   final int id;
@@ -835,6 +836,7 @@ class Document {
 
 
 // models/gioo_buying_model.dart
+
 class GiooBuyingList {
   final int id;
   final int propertyId;
@@ -847,7 +849,7 @@ class GiooBuyingList {
   final DateTime createdAt;
   final DateTime updatedAt;
   final Transaction transaction;
-  final Property property;
+  final Property? property;
 
   GiooBuyingList({
     required this.id,
@@ -861,7 +863,7 @@ class GiooBuyingList {
     required this.createdAt,
     required this.updatedAt,
     required this.transaction,
-    required this.property,
+    this.property,
   });
 
   factory GiooBuyingList.fromJson(Map<String, dynamic> json) {
@@ -876,15 +878,18 @@ class GiooBuyingList {
           ? double.tryParse(json['return_amount'].toString())
           : null,
       returnDate: json['return_date'] != null
-          ? DateTime.parse(json['return_date'])
+          ? DateTime.tryParse(json['return_date'].toString())
           : null,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-      transaction: Transaction.fromJson(json['transaction']),
-      property: Property.fromJson(json['property']),
+      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+      transaction: Transaction.fromJson(json['transaction'] ?? {}),
+      property: json['property'] != null
+          ? Property.fromJson(json['property'])
+          : null,
     );
   }
 }
+
 
 class Transaction {
   final int id;
@@ -922,78 +927,23 @@ class Transaction {
       id: json['id'] ?? 0,
       transactionId: json['transaction_id'] ?? '',
       paymentMode: json['payment_mode'] ?? '',
-      transactionDetails: json['transaction_details'] ?? '',
+      transactionDetails: (json['transaction_details'] ?? '')
+          .toString()
+          .replaceAll('"', ''),
       amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
       isCompleted: json['is_completed'],
       status: json['status'] ?? '',
       propertyId: json['property_id'] ?? 0,
       userId: json['user_id'] ?? 0,
       type: json['type'] ?? '',
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-      user: User.fromJson(json['user']),
+      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+      user: User.fromJson(json['user'] ?? {}),
     );
   }
 }
 
 
-// Models for buying details
-class GiooBuyingDetail {
-  final int id;
-  final int transactionId;
-  final int propertyId;
-  final int unit;
-  final int cancelStatus;
-  final DateTime? refundDate;
-  final int refundStatus;
-  final double amount;
-  final double? refundAmount;
-  final int returnStatus;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final Transaction transaction;
-  final Property property;
-
-  GiooBuyingDetail({
-    required this.id,
-    required this.transactionId,
-    required this.propertyId,
-    required this.unit,
-    required this.cancelStatus,
-    this.refundDate,
-    required this.refundStatus,
-    required this.amount,
-    this.refundAmount,
-    required this.returnStatus,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.transaction,
-    required this.property,
-  });
-
-  factory GiooBuyingDetail.fromJson(Map<String, dynamic> json) {
-    return GiooBuyingDetail(
-      id: json['id'] ?? 0,
-      transactionId: json['transaction_id'] ?? 0,
-      propertyId: json['property_id'] ?? 0,
-      unit: json['unit'] ?? 0,
-      cancelStatus: json['cancel_status'] ?? 0,
-      refundDate: json['refund_date'] != null
-          ? DateTime.parse(json['refund_date'])
-          : null,
-      refundStatus: json['refund_status'] ?? 0,
-      amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
-      refundAmount: json['refund_amount'] != null
-          ? double.tryParse(json['refund_amount'].toString())
-          : null,
-      returnStatus: json['return_status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-      transaction: Transaction.fromJson(json['transaction']),
-      property: Property.fromJson(json['property']),
-    );
-  }
-}
 
 // Response models
 class GiooBuyingListResponse {
@@ -1013,29 +963,7 @@ class GiooBuyingListResponse {
       data: (json['data'] as List<dynamic>?)
           ?.map((item) => GiooBuyingList.fromJson(item))
           .toList() ?? [],
-      pagination: Pagination.fromJson(json['pagination']),
-    );
-  }
-}
-
-class GiooBuyingDetailResponse {
-  final bool status;
-  final List<GiooBuyingDetail> data;
-  final Pagination pagination;
-
-  GiooBuyingDetailResponse({
-    required this.status,
-    required this.data,
-    required this.pagination,
-  });
-
-  factory GiooBuyingDetailResponse.fromJson(Map<String, dynamic> json) {
-    return GiooBuyingDetailResponse(
-      status: json['status'] ?? false,
-      data: (json['data'] as List<dynamic>?)
-          ?.map((item) => GiooBuyingDetail.fromJson(item))
-          .toList() ?? [],
-      pagination: Pagination.fromJson(json['pagination']),
+      pagination: Pagination.fromJson(json['pagination'] ?? {}),
     );
   }
 }
@@ -1062,3 +990,88 @@ class Pagination {
     );
   }
 }
+
+// Models for buying details
+class GiooBuyingDetail {
+  final int id;
+  final int transactionId;
+  final int propertyId;
+  final int unit;
+  final int cancelStatus;
+  final DateTime? refundDate;
+  final int refundStatus;
+  final double amount;
+  final double? refundAmount;
+  final int returnStatus;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Transaction transaction;
+  final Property? property;
+
+  GiooBuyingDetail({
+    required this.id,
+    required this.transactionId,
+    required this.propertyId,
+    required this.unit,
+    required this.cancelStatus,
+    this.refundDate,
+    required this.refundStatus,
+    required this.amount,
+    this.refundAmount,
+    required this.returnStatus,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.transaction,
+     this.property,
+  });
+
+  factory GiooBuyingDetail.fromJson(Map<String, dynamic> json) {
+    return GiooBuyingDetail(
+      id: json['id'] ?? 0,
+      transactionId: json['transaction_id'] ?? 0,
+      propertyId: json['property_id'] ?? 0,
+      unit: json['unit'] ?? 0,
+      cancelStatus: json['cancel_status'] ?? 0,
+      refundDate: json['refund_date'] != null
+          ? DateTime.parse(json['refund_date'])
+          : null,
+      refundStatus: json['refund_status'] ?? 0,
+      amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
+      refundAmount: json['refund_amount'] != null
+          ? double.tryParse(json['refund_amount'].toString())
+          : null,
+      returnStatus: json['return_status'] ?? 0,
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      transaction: Transaction.fromJson(json['transaction']),
+      property: json['property'] != null ? Property.fromJson(json['property']) : null, // Handle null property
+    );
+  }
+}
+
+// Response models
+
+
+class GiooBuyingDetailResponse {
+  final bool status;
+  final List<GiooBuyingDetail> data;
+  final Pagination pagination;
+
+  GiooBuyingDetailResponse({
+    required this.status,
+    required this.data,
+    required this.pagination,
+  });
+
+  factory GiooBuyingDetailResponse.fromJson(Map<String, dynamic> json) {
+    return GiooBuyingDetailResponse(
+      status: json['status'] ?? false,
+      data: (json['data'] as List<dynamic>?)
+          ?.map((item) => GiooBuyingDetail.fromJson(item))
+          .toList() ?? [],
+      pagination: Pagination.fromJson(json['pagination']),
+    );
+  }
+}
+
+
