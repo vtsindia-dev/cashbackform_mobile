@@ -42,7 +42,6 @@ class ApiUrl {
   static const String terms = "$baseUrl/api/v2/terms";
   static const String privacy = "$baseUrl/api/v2/privacy";
 
-
   static const String carouselBanners = '$baseUrl/api/v2/carousel_banner';
   static const String featuredSyndicates = '$baseUrl/api/v2/synticate/featured';
   static const String featuredMarket = '$baseUrl/api/v2/market/featured';

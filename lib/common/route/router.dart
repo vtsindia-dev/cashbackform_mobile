@@ -15,6 +15,8 @@ import '../../features/plot_market/screens/myplot_list.dart';
 import '../../features/plot_market/screens/plot_market.dart';
 import '../../features/plot_market/screens/plotmarket_details.dart';
 import '../../features/profile/screen/profile.dart';
+import '../../features/residential_plots/view/residential_details.dart';
+import '../../features/residential_plots/view/residential_plots.dart';
 import '../../features/service/screen/my_service_enquiry.dart';
 import '../../features/service/screen/service.dart';
 import '../../features/splash/screens/splash.dart';
@@ -32,6 +34,8 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String register = '/register';
   static const String syndicate = '/syndicate';
+  static const String residentialList = '/residentialList';
+  static const String residentialDetails = '/residentialDetails';
   static const String gioo = '/gioo';
   static const String plotMarket = '/plotMarket';
   static const String syndicateDetails = '/syndicateDetails';
@@ -96,6 +100,11 @@ class AppRoutes {
       name: syndicate,
       page: () => SyndicatePlot(),
       transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: residentialList,
+      page: () => ResidentialPropertiesScreen(),
+      transition: Transition.cupertino,
     ),   GetPage(
       name: myProperty,
       page: () => MarketPlotsScreen(),
@@ -145,6 +154,17 @@ class AppRoutes {
       transition: Transition.cupertino,
     ),
     GetPage(
+      name: residentialDetails,
+      page: (){
+        final arguments = Get.arguments;
+        final id = arguments != null ? arguments['id'] : null;
+        final title = arguments != null ? arguments['title'] : null;
+
+        return ResidentialPlotDetailsScreen(propertyId: id,propertyTitle: title,);
+      },
+      transition: Transition.cupertino,
+    ),
+    GetPage(
       name: plotMarketDetails,
       page: () {
         final arguments = Get.arguments;
@@ -169,6 +189,8 @@ class AppRoutes {
   static void toOwnedGioPlotList() => Get.offAllNamed(ownedplotlist);
   static void toOwnedSyndicatePlotList() => Get.offAllNamed(ownedSyndicatePlotList);
   static void toLogin() => Get.offAllNamed(login);
+  static void toResidentialList() => Get.offAllNamed(residentialList);
+  static void toResidentialDetails() => Get.offAllNamed(residentialDetails);
   static void toProfile() => Get.toNamed(profile);
   static void toHome() => Get.offAllNamed(home);
   static void toMyServiceList() => Get.offAllNamed(myServiceList);

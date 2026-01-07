@@ -335,4 +335,27 @@ class ApiService {
       rethrow;
     }
   }
+  // In your ApiService class
+  static Future<Response> EnquirypostRequest(String url, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? headers,
+  }) async {
+    try {
+      final options = Options(
+        headers: headers,
+        contentType: Headers.jsonContentType,
+      );
+
+      return await dio.post(
+        url,
+        data: data,
+        options: options,
+      );
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        return e.response!;
+      }
+      rethrow;
+    }
+  }
 }

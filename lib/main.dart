@@ -5,6 +5,7 @@ import 'common/route/router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 class MyApp extends StatelessWidget {

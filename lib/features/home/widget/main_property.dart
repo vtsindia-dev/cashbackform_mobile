@@ -94,7 +94,7 @@ class PropertyMain extends StatelessWidget {
     } else if (title == "Syndicate Plots") {
       Get.toNamed(AppRoutes.syndicate);
     } else {
-      Get.toNamed(AppRoutes.service);
+      Get.toNamed(AppRoutes.residentialList);
     }
   }
 

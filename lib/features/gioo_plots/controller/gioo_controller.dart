@@ -348,7 +348,7 @@ class GiooPlotController extends GetxController {
         }
       }
       if (typeIds.isNotEmpty) {
-        params.add('property_type=${typeIds.join(",")}');
+        params.add('plot_type=${typeIds.join(",")}');
       }
     }
 
