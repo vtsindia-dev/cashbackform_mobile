@@ -39,7 +39,6 @@ class ResidentialPropertyController extends GetxController {
   var selectedAmenities = <String>[].obs;
   var selectedTransactionType = ''.obs;
   var selectedPostedBy = ''.obs;
-  var selectedPropertyTypeName = ''.obs;
   var showFilters = false.obs;
   var showAdvancedFilters = false.obs;
   var sortBy = 'created_at'.obs;
@@ -49,14 +48,10 @@ class ResidentialPropertyController extends GetxController {
   var detailErrorMessage = ''.obs;
   final isExpanded = false.obs;
   final isDescriptionExpanded = false.obs;
-  void toggleExpansion() {
-    isExpanded.toggle();
-  }
-  void toggleDescription() {
-    isDescriptionExpanded.toggle();
-  }
   var isEnquiryLoading = false.obs;
   var enquirySent = false.obs;
+
+  final TextEditingController searchController = TextEditingController();
 
   @override
   void onInit() {
@@ -64,10 +59,15 @@ class ResidentialPropertyController extends GetxController {
     fetchProperties();
     loadFilterData();
   }
+
+  void toggleExpansion() => isExpanded.toggle();
+
+  void toggleDescription() => isDescriptionExpanded.toggle();
+
   void scrollAmenitiesLeft() {
     amenitiesScrollController.animateTo(
       amenitiesScrollController.offset - 100,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
   }
@@ -75,7 +75,7 @@ class ResidentialPropertyController extends GetxController {
   void scrollAmenitiesRight() {
     amenitiesScrollController.animateTo(
       amenitiesScrollController.offset + 100,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
   }
@@ -87,44 +87,52 @@ class ResidentialPropertyController extends GetxController {
         currentPage.value = 1;
         hasMoreData.value = true;
       }
+
       if (loadMore) {
         isLoadMore(true);
       } else {
         isLoading(true);
       }
+
       errorMessage('');
       final url = '${ApiUrl.baseUrl}/api/v2/plots?${_buildQueryParams()}';
       print('🌐 Fetching Properties URL: $url');
+
       final response = await ApiService.getRequest(url);
+
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == true) {
           final propertyList = _parseProperties(responseData['data']['plots'] ?? []);
+
           if (loadMore) {
             properties.addAll(propertyList);
           } else {
             properties.assignAll(propertyList);
           }
+
           if (responseData['data']['property_category'] != null) {
             propertyCategories.assignAll(
                 _parsePropertyCategories(responseData['data']['property_category'])
             );
           }
+
           if (responseData['data']['state_list'] != null) {
             statesList.assignAll(
                 _parseStateList(responseData['data']['state_list'])
             );
           }
-          if (responseData['data']['price_min'] != null &&
-              responseData['data']['price_max'] != null) {
+
+          if (responseData['data']['price_min'] != null && responseData['data']['price_max'] != null) {
             priceMin.value = double.tryParse(responseData['data']['price_min'].toString()) ?? 0.0;
             priceMax.value = double.tryParse(responseData['data']['price_max'].toString()) ?? 10000000.0;
           }
-          if (responseData['data']['sqft_min'] != null &&
-              responseData['data']['sqft_max'] != null) {
+
+          if (responseData['data']['sqft_min'] != null && responseData['data']['sqft_max'] != null) {
             sqftMin.value = responseData['data']['sqft_min'] ?? 0;
             sqftMax.value = responseData['data']['sqft_max'] ?? 10000;
           }
+
           if (responseData['data']['pagination'] != null) {
             final pagination = responseData['data']['pagination'];
             currentPage.value = pagination['current_page'] ?? 1;
@@ -133,10 +141,8 @@ class ResidentialPropertyController extends GetxController {
             perPage.value = pagination['per_page'] ?? 10;
             hasMoreData.value = currentPage.value < totalPages.value;
           }
+
           print('✅ Fetched ${properties.length} properties');
-          print('📊 Total: $totalItems | Page: $currentPage/$totalPages');
-          print('💰 Price Range: ₹${priceMin.value} - ₹${priceMax.value}');
-          print('📐 Area Range: ${sqftMin.value} - ${sqftMax.value} sq.ft');
         } else {
           errorMessage(responseData['message'] ?? 'Failed to fetch properties');
           SnackBarHelper.showError(errorMessage.value);
@@ -154,23 +160,16 @@ class ResidentialPropertyController extends GetxController {
       isLoadMore(false);
     }
   }
+
   Future<void> loadMoreProperties() async {
     if (!isLoadMore.value && hasMoreData.value) {
       currentPage.value++;
       await fetchProperties(loadMore: true);
     }
   }
+
   Future<void> refreshProperties() async {
     await fetchProperties(refresh: true);
-  }
-  List<Property> _parseProperties(List<dynamic> data) {
-    return data.map((item) => Property.fromJson(item)).toList();
-  }
-  List<PropertyCategory> _parsePropertyCategories(List<dynamic> data) {
-    return data.map((item) => PropertyCategory.fromJson(item)).toList();
-  }
-  List<StateList> _parseStateList(List<dynamic> data) {
-    return data.map((item) => StateList.fromJson(item)).toList();
   }
 
   Future<void> fetchPropertyDetail(int propertyId) async {
@@ -179,7 +178,9 @@ class ResidentialPropertyController extends GetxController {
       detailErrorMessage('');
       final url = '${ApiUrl.baseUrl}/api/v2/plot_details/$propertyId';
       print('🌐 Fetching Property Detail URL: $url');
+
       final response = await ApiService.getRequest(url);
+
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == true) {
@@ -209,6 +210,7 @@ class ResidentialPropertyController extends GetxController {
     Get.toNamed('/property-detail', arguments: propertyId);
     fetchPropertyDetail(propertyId);
   }
+
   Future<void> loadFilterData() async {
     try {
       isLoadingFilters(true);
@@ -239,9 +241,10 @@ class ResidentialPropertyController extends GetxController {
       print('❌ Error fetching cities: $e');
     }
   }
+
   Future<void> filterByState(int stateId) async {
     selectedStateId.value = stateId;
-    selectedCityId.value = 0; // Reset city when state changes
+    selectedCityId.value = 0;
     citiesList.clear();
     currentPage.value = 1;
     await fetchProperties();
@@ -249,47 +252,19 @@ class ResidentialPropertyController extends GetxController {
       await fetchCitiesByState(stateId);
     }
   }
+
   Future<void> filterByCity(int cityId) async {
     selectedCityId.value = cityId;
     currentPage.value = 1;
     await fetchProperties();
   }
+
   Future<void> filterByCategory(int categoryId) async {
     selectedCategoryId.value = categoryId;
     currentPage.value = 1;
     await fetchProperties();
   }
-  Future<void> filterByPrice(double min, double max) async {
-    selectedMinPrice.value = min.toStringAsFixed(0);
-    selectedMaxPrice.value = max.toStringAsFixed(0);
-    currentPage.value = 1;
-    await fetchProperties();
-  }
-  Future<void> filterByArea(int min, int max) async {
-    selectedMinArea.value = min.toString();
-    selectedMaxArea.value = max.toString();
-    currentPage.value = 1;
-    await fetchProperties();
-  }
-  Future<void> filterByTransactionType(String type) async {
-    selectedTransactionType.value = type;
-    currentPage.value = 1;
-    await fetchProperties();
-  }
-  Future<void> filterByPostedBy(String postedBy) async {
-    selectedPostedBy.value = postedBy;
-    currentPage.value = 1;
-    await fetchProperties();
-  }
-  void toggleAmenityFilter(String amenityId) {
-    if (selectedAmenities.contains(amenityId)) {
-      selectedAmenities.remove(amenityId);
-    } else {
-      selectedAmenities.add(amenityId);
-    }
-    currentPage.value = 1;
-    fetchProperties();
-  }
+
   void onSearchChanged(String query) {
     searchQuery.value = query;
     if (_searchDebounce?.isActive ?? false) _searchDebounce?.cancel();
@@ -304,18 +279,29 @@ class ResidentialPropertyController extends GetxController {
       }
     });
   }
+
   void clearSearch() {
     searchQuery.value = '';
     searchController.clear();
     currentPage.value = 1;
     fetchProperties();
   }
+
+  void onSearchSubmitted(String value) {
+    if (value.trim().isNotEmpty) {
+      searchQuery.value = value.trim();
+      currentPage.value = 1;
+      fetchProperties();
+    }
+  }
+
   Future<void> sortProperties(String field, {String order = 'desc'}) async {
     sortBy.value = field;
     sortOrder.value = order;
     currentPage.value = 1;
     await fetchProperties();
   }
+
   Future<void> clearAllFilters() async {
     selectedStateId.value = 0;
     selectedCityId.value = 0;
@@ -334,37 +320,117 @@ class ResidentialPropertyController extends GetxController {
     currentPage.value = 1;
     await fetchProperties();
   }
-  bool get hasFiltersApplied {
-    return selectedStateId.value > 0 ||
-        selectedCityId.value > 0 ||
-        selectedCategoryId.value > 0 ||
-        selectedMinPrice.value.isNotEmpty ||
-        selectedMaxPrice.value.isNotEmpty ||
-        selectedMinArea.value.isNotEmpty ||
-        selectedMaxArea.value.isNotEmpty ||
-        selectedAmenities.isNotEmpty ||
-        selectedTransactionType.value.isNotEmpty ||
-        selectedPostedBy.value.isNotEmpty ||
-        searchQuery.value.isNotEmpty;
+
+  void toggleFilters() => showFilters.value = !showFilters.value;
+
+  void toggleAdvancedFilters() => showAdvancedFilters.value = !showAdvancedFilters.value;
+
+  Future<void> applyFilters() async {
+    showFilters.value = false;
+    currentPage.value = 1;
+    await fetchProperties();
   }
-  int get activeFilterCount {
-    int count = 0;
-    if (selectedStateId.value > 0) count++;
-    if (selectedCityId.value > 0) count++;
-    if (selectedCategoryId.value > 0) count++;
-    if (selectedMinPrice.value.isNotEmpty || selectedMaxPrice.value.isNotEmpty) count++;
-    if (selectedMinArea.value.isNotEmpty || selectedMaxArea.value.isNotEmpty) count++;
-    if (selectedAmenities.isNotEmpty) count++;
-    if (selectedTransactionType.value.isNotEmpty) count++;
-    if (selectedPostedBy.value.isNotEmpty) count++;
-    if (searchQuery.value.isNotEmpty) count++;
-    return count;
+
+  Future<void> resetFilters() async {
+    selectedMinPrice.value = '';
+    selectedMaxPrice.value = '';
+    selectedMinArea.value = '';
+    selectedMaxArea.value = '';
+    selectedAmenities.clear();
+    selectedTransactionType.value = '';
+    selectedPostedBy.value = '';
+    currentPage.value = 1;
+    await fetchProperties();
   }
+
+  Future<void> sendEnquiry() async {
+    try {
+      if (propertyDetail.value == null) {
+        SnackBarHelper.showError('Property details not loaded');
+        return;
+      }
+
+      if (isEnquiryLoading.value) return;
+      isEnquiryLoading.value = true;
+
+      final token = await SessionManager.getToken();
+      final userId = await SessionManager.getUserId();
+
+      if (userId == null) {
+        isEnquiryLoading.value = false;
+        SnackBarHelper.showError('User information not found');
+        return;
+      }
+
+      if (token == null || token.isEmpty) {
+        isEnquiryLoading.value = false;
+        SnackBarHelper.showError('Please login to send enquiry');
+        return;
+      }
+
+      final Map<String, dynamic> requestData = {
+        'property_id': propertyDetail.value!.id,
+      };
+
+      final url = '${ApiUrl.baseUrl}/api/v2/plot_enquiry';
+      print('🌐 Sending enquiry to: $url');
+
+      final response = await ApiService.EnquirypostRequest(
+        url,
+        data: requestData,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = response.data;
+        if (responseData['status'] == true) {
+          enquirySent.value = true;
+          SnackBarHelper.showSuccess(
+            responseData['message'] ?? 'Enquiry sent successfully!',
+          );
+          Future.delayed(const Duration(milliseconds: 500), () {
+            isEnquiryLoading.value = false;
+          });
+        } else {
+          SnackBarHelper.showError(
+            responseData['message'] ?? 'Failed to send enquiry',
+          );
+          isEnquiryLoading.value = false;
+        }
+      } else {
+        SnackBarHelper.showError(
+          'Failed to send enquiry. Status: ${response.statusCode}',
+        );
+        isEnquiryLoading.value = false;
+      }
+    } catch (e) {
+      print('❌ Enquiry error: $e');
+      SnackBarHelper.showError('Error sending enquiry: $e');
+      isEnquiryLoading.value = false;
+    }
+  }
+
+  List<Property> _parseProperties(List<dynamic> data) {
+    return data.map((item) => Property.fromJson(item)).toList();
+  }
+
+  List<PropertyCategory> _parsePropertyCategories(List<dynamic> data) {
+    return data.map((item) => PropertyCategory.fromJson(item)).toList();
+  }
+
+  List<StateList> _parseStateList(List<dynamic> data) {
+    return data.map((item) => StateList.fromJson(item)).toList();
+  }
+
   String _buildQueryParams() {
     final params = <String>[
       'page=${currentPage.value}',
       'per_page=${perPage.value}',
     ];
+
     if (searchQuery.value.isNotEmpty) {
       params.add('search=${Uri.encodeComponent(searchQuery.value)}');
     }
@@ -403,23 +469,58 @@ class ResidentialPropertyController extends GetxController {
 
     return params.join('&');
   }
+
+  // Helper getters
+  bool get hasFiltersApplied {
+    return selectedStateId.value > 0 ||
+        selectedCityId.value > 0 ||
+        selectedCategoryId.value > 0 ||
+        selectedMinPrice.value.isNotEmpty ||
+        selectedMaxPrice.value.isNotEmpty ||
+        selectedMinArea.value.isNotEmpty ||
+        selectedMaxArea.value.isNotEmpty ||
+        selectedAmenities.isNotEmpty ||
+        selectedTransactionType.value.isNotEmpty ||
+        selectedPostedBy.value.isNotEmpty ||
+        searchQuery.value.isNotEmpty;
+  }
+
+  int get activeFilterCount {
+    int count = 0;
+    if (selectedStateId.value > 0) count++;
+    if (selectedCityId.value > 0) count++;
+    if (selectedCategoryId.value > 0) count++;
+    if (selectedMinPrice.value.isNotEmpty || selectedMaxPrice.value.isNotEmpty) count++;
+    if (selectedMinArea.value.isNotEmpty || selectedMaxArea.value.isNotEmpty) count++;
+    if (selectedAmenities.isNotEmpty) count++;
+    if (selectedTransactionType.value.isNotEmpty) count++;
+    if (selectedPostedBy.value.isNotEmpty) count++;
+    if (searchQuery.value.isNotEmpty) count++;
+    return count;
+  }
+
   Property? getPropertyById(int id) {
     return properties.firstWhereOrNull((p) => p.id == id);
   }
+
   List<Property> getPropertiesByCategory(int categoryId) {
     return properties.where((p) => p.categoryId == categoryId).toList();
   }
+
   List<Property> get verifiedProperties {
     return properties.where((p) => p.isVerified).toList();
   }
+
   List<Property> get featuredProperties {
-    return properties.take(5).toList(); // Temporary: take first 5
+    return properties.take(5).toList();
   }
+
   List<Property> get recentlyAddedProperties {
     return properties
-        .where((p) => p.createdAt.isAfter(DateTime.now().subtract(Duration(days: 30))))
+        .where((p) => p.createdAt.isAfter(DateTime.now().subtract(const Duration(days: 30))))
         .toList();
   }
+
   List<AmenityItem> get availableAmenities {
     final amenityMap = <int, AmenityItem>{};
     for (final property in properties) {
@@ -431,147 +532,12 @@ class ResidentialPropertyController extends GetxController {
     }
     return amenityMap.values.toList();
   }
-  final TextEditingController searchController = TextEditingController();
-  void onSearchSubmitted(String value) {
-    if (value.trim().isNotEmpty) {
-      searchQuery.value = value.trim();
-      currentPage.value = 1;
-      fetchProperties();
-    }
-  }
-  void toggleFilters() {
-    showFilters.value = !showFilters.value;
-  }
-  void toggleAdvancedFilters() {
-    showAdvancedFilters.value = !showAdvancedFilters.value;
-  }
-  Future<void> applyFilters() async {
-    showFilters.value = false;
-    currentPage.value = 1;
-    await fetchProperties();
-  }
-  Future<void> resetFilters() async {
-    selectedMinPrice.value = '';
-    selectedMaxPrice.value = '';
-    selectedMinArea.value = '';
-    selectedMaxArea.value = '';
-    selectedAmenities.clear();
-    selectedTransactionType.value = '';
-    selectedPostedBy.value = '';
-    currentPage.value = 1;
-    await fetchProperties();
-  }
 
-
-  Future<void> sendEnquiry() async {
-    try {
-      if (propertyDetail.value == null) {
-        SnackBarHelper.showError('Property details not loaded');
-        return;
-      }
-
-      if (isEnquiryLoading.value) return; // Prevent multiple clicks
-      isEnquiryLoading.value = true;
-
-      final token = await SessionManager.getToken();
-      final userId = await SessionManager.getUserId();
-
-      if (userId == null) {
-        isEnquiryLoading.value = false;
-        SnackBarHelper.showError('User information not found');
-        return;
-      }
-
-      if (token == null || token.isEmpty) {
-        isEnquiryLoading.value = false;
-        SnackBarHelper.showError('Please login to send enquiry');
-        return;
-      }
-
-      final Map<String, dynamic> requestData = {
-        // 'user_id': userId,
-        'property_id': propertyDetail.value!.id,
-      };
-
-      // Debug info
-      print('📝 Sending Enquiry:');
-      print('👤 User ID: $userId');
-      print('🏠 Property ID: ${propertyDetail.value!.id}');
-      print('🔐 Token: ${token.substring(0, 20)}...');
-      print('📦 Request Data: $requestData');
-
-      // API endpoint
-      final url = '${ApiUrl.baseUrl}/api/v2/plot_enquiry';
-      print('🌐 Sending enquiry to: $url');
-
-      // Send request with Bearer token in headers AND request data
-      final response = await ApiService.EnquirypostRequest(
-        url,
-        data: requestData, // ✅ Important: send the data here
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final responseData = response.data;
-        if (responseData['status'] == true) {
-          enquirySent.value = true;
-          SnackBarHelper.showSuccess(
-            responseData['message'] ?? 'Enquiry sent successfully!',
-          );
-          print('✅ Enquiry sent successfully');
-
-          // Reset loading state after success
-          Future.delayed(const Duration(milliseconds: 500), () {
-            isEnquiryLoading.value = false;
-          });
-        } else {
-          SnackBarHelper.showError(
-            responseData['message'] ?? 'Failed to send enquiry',
-          );
-          isEnquiryLoading.value = false;
-        }
-      } else {
-        SnackBarHelper.showError(
-          'Failed to send enquiry. Status: ${response.statusCode}',
-        );
-        isEnquiryLoading.value = false;
-      }
-    } catch (e) {
-      print('❌ Enquiry error: $e');
-      SnackBarHelper.showError('Error sending enquiry: $e');
-      isEnquiryLoading.value = false;
-    }
-  }
   @override
   void onClose() {
     _searchDebounce?.cancel();
     searchController.dispose();
     amenitiesScrollController.dispose();
-
     super.onClose();
-  }
-}
-
-
-
-class CityModel {
-  final int id;
-  final String name;
-  final int stateId;
-
-  CityModel({
-    required this.id,
-    required this.name,
-    required this.stateId,
-  });
-
-  factory CityModel.fromJson(Map<String, dynamic> json) {
-    return CityModel(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? json['city_name'] ?? '',
-      stateId: json['state_id'] ?? 0,
-    );
   }
 }

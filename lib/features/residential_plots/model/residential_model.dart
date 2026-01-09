@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geocoding/geocoding.dart';
 // ======================================================
 // HELPER FUNCTIONS FOR SAFE TYPE CASTING
 // ======================================================
@@ -155,7 +158,7 @@ class Property {
   final String? openSides;
   final String? overlooking;
   final int categoryId;
-  final List<NearbyPlace> nearbyPlaces;
+  List<Map<String, dynamic>>? nearbyPlaces;
   final String transactionType;
   final String? ownership;
   final String? roadWidth;
@@ -259,9 +262,9 @@ class Property {
       openSides: json['open_sides'] as String?,
       overlooking: json['overlooking'] as String?,
       categoryId: safeIntCast(json['category_id']),
-      nearbyPlaces: (json['nearby_places'] as List<dynamic>? ?? [])
-          .map((e) => NearbyPlace.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      nearbyPlaces: json['nearby_places'] != null
+          ? List<Map<String, dynamic>>.from(json['nearby_places'])
+          : null,
       transactionType: json['transaction_type'] as String? ?? 'new',
       ownership: json['ownership'] as String?,
       roadWidth: json['road_width'] as String?,
@@ -322,12 +325,17 @@ class Property {
   bool get isAdminPosted => userType == 'admin';
   bool get isCustomerPosted => userType == 'customer';
 
-  // Get facilities as map for easy access
+  // Get facilities as map for easy access - FIXED VERSION
   Map<String, String> get facilitiesMap {
     final map = <String, String>{};
+    // facilities is List<FacilityValue>, not a String
     for (final facility in facilities) {
       if (facility.value != null && facility.value!.isNotEmpty) {
-        map[facility.name ?? 'Unknown'] = facility.value!;
+        // Use the facility name from the fac list
+        final facilityName = facility.fac.isNotEmpty
+            ? facility.fac.first.name
+            : facility.name ?? 'Unknown';
+        map[facilityName] = facility.value!;
       }
     }
     return map;
@@ -336,7 +344,10 @@ class Property {
   // Get specific facility value
   String? getFacilityValue(String facilityName) {
     for (final facility in facilities) {
-      if (facility.name?.toLowerCase() == facilityName.toLowerCase()) {
+      final currentFacilityName = facility.fac.isNotEmpty
+          ? facility.fac.first.name
+          : facility.name;
+      if (currentFacilityName?.toLowerCase() == facilityName.toLowerCase()) {
         return facility.value;
       }
     }
@@ -378,6 +389,7 @@ class Property {
 // SUPPORTING MODELS
 // ======================================================
 
+// UPDATED: Added subCategories field
 class PropertyCategory {
   final int id;
   final String categoryName;
@@ -388,6 +400,7 @@ class PropertyCategory {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
+  final List<PropertySubCategory>? subCategories; // NEW FIELD
 
   PropertyCategory({
     required this.id,
@@ -399,9 +412,17 @@ class PropertyCategory {
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
+    this.subCategories, // NEW FIELD
   });
 
   factory PropertyCategory.fromJson(Map<String, dynamic> json) {
+    List<PropertySubCategory>? subCategories;
+    if (json['sub_categories'] != null && json['sub_categories'] is List) {
+      subCategories = (json['sub_categories'] as List)
+          .map((item) => PropertySubCategory.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }
+
     return PropertyCategory(
       id: safeIntCast(json['id']),
       categoryName: json['category_name'] as String? ?? '',
@@ -409,13 +430,12 @@ class PropertyCategory {
       facilities: json['facilities'] as String?,
       documents: json['documents'] as String?,
       status: safeIntCast(json['status']),
-      createdAt:
-      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt:
-      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
       deletedAt: json['deleted_at'] != null
           ? DateTime.parse(json['deleted_at'].toString())
           : null,
+      subCategories: subCategories, // NEW FIELD
     );
   }
 
@@ -440,6 +460,30 @@ class PropertyCategory {
   bool get isActive => status == 1;
 }
 
+// NEW MODEL: Property SubCategory
+class PropertySubCategory {
+  final int id;
+  final String name;
+  final String? icon;
+  final int? categoryId;
+
+  PropertySubCategory({
+    required this.id,
+    required this.name,
+    this.icon,
+    this.categoryId,
+  });
+
+  factory PropertySubCategory.fromJson(Map<String, dynamic> json) {
+    return PropertySubCategory(
+      id: safeIntCast(json['id']),
+      name: json['name'] as String? ?? '',
+      icon: json['icon'] as String?,
+      categoryId: safeNullableIntCast(json['category_id']),
+    );
+  }
+}
+
 class StateList {
   final int id;
   final String stateName;
@@ -460,10 +504,8 @@ class StateList {
       id: safeIntCast(json['id']),
       stateName: json['state_name'] as String? ?? '',
       status: safeIntCast(json['status']),
-      createdAt:
-      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt:
-      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
     );
   }
 
@@ -524,22 +566,6 @@ class Pagination {
   int get totalPages => lastPage;
 }
 
-class NearbyPlace {
-  final int placeId;
-  final int distance;
-
-  NearbyPlace({
-    required this.placeId,
-    required this.distance,
-  });
-
-  factory NearbyPlace.fromJson(Map<String, dynamic> json) {
-    return NearbyPlace(
-      placeId: safeIntCast(json['place_id']),
-      distance: safeIntCast(json['distance']),
-    );
-  }
-}
 
 class FacilityValue {
   final int id;
@@ -570,10 +596,8 @@ class FacilityValue {
       value: json['value'] as String?,
       facilityId: safeIntCast(json['facility_id']),
       plotId: safeIntCast(json['plot_id']),
-      createdAt:
-      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt:
-      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
       images: json['images'] as String? ?? '',
       name: json['name'] as String?,
       fac: (json['fac'] as List<dynamic>? ?? [])
@@ -586,6 +610,7 @@ class FacilityValue {
   String? get facilityImage => fac.isNotEmpty ? fac.first.image : images;
 }
 
+// UPDATED: Added options field for dropdown/radio
 class Facility {
   final int id;
   final String name;
@@ -596,6 +621,7 @@ class Facility {
   final String? file;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<FacilityOption>? options; // NEW FIELD
 
   Facility({
     required this.id,
@@ -607,32 +633,84 @@ class Facility {
     this.file,
     required this.createdAt,
     required this.updatedAt,
+    this.options, // NEW FIELD
   });
 
   factory Facility.fromJson(Map<String, dynamic> json) {
+    List<FacilityOption>? options;
+
+    // Parse options from facility_options if available
+    if (json['facility_options'] != null && json['facility_options'] is List) {
+      options = (json['facility_options'] as List)
+          .map((item) => FacilityOption.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }
+    // Otherwise parse from value field for dropdown/radio
+    else if (json['value'] != null && (json['type'] == 'dropdown' || json['type'] == 'radio')) {
+      final valueStr = json['value'].toString();
+      final values = valueStr.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      options = values.asMap().entries.map((entry) {
+        return FacilityOption(
+          id: entry.key,
+          value: entry.value,
+          label: entry.value,
+        );
+      }).toList();
+    }
+
     return Facility(
       id: safeIntCast(json['id']),
       name: json['name'] as String? ?? '',
-      type: json['type'] as String? ?? 'text',
+      type: (json['type'] as String? ?? 'text').toLowerCase(),
       isRequired: safeIntCast(json['is_required']),
       value: json['value'] as String?,
       image: json['image'] as String?,
       file: json['file'] as String?,
-      createdAt:
-      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt:
-      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      options: options, // NEW FIELD
     );
   }
 
   List<String> get dropdownValues {
+    if (options != null && options!.isNotEmpty) {
+      return options!.map((opt) => opt.label).toList();
+    }
     if (value == null || value!.isEmpty) return [];
     return value!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  }
+
+  List<FacilityOption> get radioOptions {
+    return options ?? [];
   }
 
   bool get isDropdown => type == 'dropdown';
   bool get isText => type == 'text';
   bool get isRadio => type == 'radio';
+  bool get isCheckbox => type == 'checkbox';
+  bool get isNumber => type == 'number';
+  bool get isDate => type == 'date';
+}
+
+// NEW MODEL: Facility Option for dropdown/radio
+class FacilityOption {
+  final int id;
+  final String value;
+  final String label;
+
+  FacilityOption({
+    required this.id,
+    required this.value,
+    required this.label,
+  });
+
+  factory FacilityOption.fromJson(Map<String, dynamic> json) {
+    return FacilityOption(
+      id: safeIntCast(json['id']),
+      value: json['value']?.toString() ?? '',
+      label: json['label'] ?? json['value']?.toString() ?? '',
+    );
+  }
 }
 
 class NearbyLocation {
@@ -657,10 +735,8 @@ class NearbyLocation {
       id: safeIntCast(json['id']),
       title: json['title'] as String? ?? '',
       image: json['image'] as String? ?? '',
-      createdAt:
-      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt:
-      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
       pivot: json['pivot'] != null
           ? LocationPivot.fromJson(json['pivot'] as Map<String, dynamic>)
           : null,
@@ -671,7 +747,7 @@ class NearbyLocation {
 class LocationPivot {
   final int plotId;
   final int nearbyLocationId;
-    final int distance;
+  final int distance;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -688,10 +764,8 @@ class LocationPivot {
       plotId: safeIntCast(json['plot_id']),
       nearbyLocationId: safeIntCast(json['nearby_location_id']),
       distance: safeIntCast(json['distance']),
-      createdAt:
-      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt:
-      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
     );
   }
 }
@@ -700,6 +774,7 @@ class AmenityItem {
   final int id;
   final String title;
   final String image;
+  final String? type; // Add type field
   final DateTime createdAt;
   final DateTime updatedAt;
   final AmenityPivot? pivot;
@@ -708,6 +783,7 @@ class AmenityItem {
     required this.id,
     required this.title,
     required this.image,
+    this.type,
     required this.createdAt,
     required this.updatedAt,
     this.pivot,
@@ -718,18 +794,17 @@ class AmenityItem {
       id: safeIntCast(json['id']),
       title: json['title'] as String? ?? '',
       image: json['image'] as String? ?? '',
-      createdAt:
-      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt:
-      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      type: json['type'] as String?, // Parse type
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
       pivot: json['pivot'] != null
           ? AmenityPivot.fromJson(json['pivot'] as Map<String, dynamic>)
           : null,
     );
   }
-}
 
-class AmenityPivot {
+  bool get isDocument => (type?.toLowerCase() == 'file' || type?.toLowerCase() == 'document');
+}class AmenityPivot {
   final int plotId;
   final int amenityId;
   final DateTime createdAt;
@@ -746,73 +821,423 @@ class AmenityPivot {
     return AmenityPivot(
       plotId: safeIntCast(json['plot_id']),
       amenityId: safeIntCast(json['amenity_id']),
-      createdAt:
-      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt:
-      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
     );
   }
 }
 
 // ======================================================
-// ENUMS FOR BETTER TYPE SAFETY
+// FORM BUILDER MODELS
 // ======================================================
 
-enum PropertyType {
-  independentHouse(8, 'Independent House/ Villa'),
-  plotsLands(9, 'Plots/ Lands'),
-  apartments(10, 'Apartments/ Flats'),
-  custom(12, 'Test Category');
-
+class CityModel {
   final int id;
-  final String displayName;
+  final String name;
+  final int stateId;
 
-  const PropertyType(this.id, this.displayName);
+  CityModel({
+    required this.id,
+    required this.name,
+    required this.stateId,
+  });
 
-  static PropertyType fromId(int id) {
-    return values.firstWhere(
-          (type) => type.id == id,
-      orElse: () => custom,
+  factory CityModel.fromJson(Map<String, dynamic> json) {
+    return CityModel(
+      id: safeIntCast(json['id']),
+      name: json['name'] ?? json['city_name'] ?? '',
+      stateId: safeIntCast(json['state_id']),
     );
   }
 }
 
-enum PropertyStatus {
-  newLaunch('New Launch'),
-  underConstruction('Under Construction'),
-  readyToMove('Ready to Move');
+// UPDATED: Added more fields for document validation
+class Document {
+  final int id;
+  final String name;
+  final String? file;
+  final String? type;
+  final int status;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? description;
+  final String? helpText;
+  final List<String>? allowedFormats;
+  final int? maxSize;
+  final int isRequired;
+  final String? title; // For amenity-style documents
+  final String? image; // For amenity-style documents
 
-  final String displayName;
+  Document({
+    required this.id,
+    required this.name,
+    this.file,
+    this.type,
+    required this.status,
+    required this.createdAt,
+    required this.updatedAt,
+    this.description,
+    this.helpText,
+    this.allowedFormats,
+    this.maxSize,
+    required this.isRequired,
+    this.title,
+    this.image,
+  });
 
-  const PropertyStatus(this.displayName);
+  factory Document.fromJson(Map<String, dynamic> json) {
+    // Handle both document and amenity structures
+    final name = json['name'] as String? ?? json['title'] as String? ?? '';
+
+    return Document(
+      id: safeIntCast(json['id']),
+      name: name,
+      file: json['file'] as String?,
+      type: json['type'] as String? ?? 'file',
+      status: safeIntCast(json['status'] ?? 1),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      description: json['description'] as String?,
+      helpText: json['help_text'] as String?,
+      allowedFormats: _parseAllowedFormats(json['allowed_formats']),
+      maxSize: safeNullableIntCast(json['max_size']),
+      isRequired: safeIntCast(json['is_required'] ?? 0),
+      title: json['title'] as String?,
+      image: json['image'] as String?,
+    );
+  }
+
+  static List<String>? _parseAllowedFormats(dynamic value) {
+    if (value == null) return null;
+    if (value is String) {
+      return value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    }
+    if (value is List) {
+      return value.map((e) => e.toString()).toList();
+    }
+    return null;
+  }
+
+  String get allowedFormatsText {
+    if (allowedFormats == null || allowedFormats!.isEmpty) {
+      return 'PDF, JPG, PNG';
+    }
+    return allowedFormats!.map((f) => f.toUpperCase()).join(', ');
+  }
+
+  bool get isActive => status == 1;
+
+  // Get display name - prefer title if available (for amenity-style docs)
+  String get displayName => title ?? name;
+}class Place {
+  final Coordinates coordinates;
+  final String name;
+  final String address;
+  final String? placeId;
+
+  Place({
+    required this.coordinates,
+    required this.name,
+    required this.address,
+    this.placeId,
+  });
+
+  factory Place.fromGeocoding(Placemark placemark, double lat, double lng) {
+    return Place(
+      coordinates: Coordinates(lat, lng),
+      name: placemark.street ?? placemark.locality ?? 'Unknown',
+      address: _buildAddress(placemark),
+    );
+  }
+
+  factory Place.fromSearch(Map<String, dynamic> json) {
+    return Place(
+      coordinates: Coordinates(
+        json['geometry']['location']['lat'],
+        json['geometry']['location']['lng'],
+      ),
+      name: json['name'] ?? '',
+      address: json['formatted_address'] ?? json['vicinity'] ?? '',
+      placeId: json['place_id'],
+    );
+  }
+
+  static String _buildAddress(Placemark placemark) {
+    List<String> parts = [];
+    if (placemark.street != null && placemark.street!.isNotEmpty) {
+      parts.add(placemark.street!);
+    }
+    if (placemark.locality != null && placemark.locality!.isNotEmpty) {
+      parts.add(placemark.locality!);
+    }
+    if (placemark.administrativeArea != null && placemark.administrativeArea!.isNotEmpty) {
+      parts.add(placemark.administrativeArea!);
+    }
+    if (placemark.postalCode != null && placemark.postalCode!.isNotEmpty) {
+      parts.add(placemark.postalCode!);
+    }
+    if (placemark.country != null && placemark.country!.isNotEmpty) {
+      parts.add(placemark.country!);
+    }
+    return parts.join(', ');
+  }
 }
 
-enum TransactionType {
-  newProperty('new'),
-  resale('resale');
+class Coordinates {
+  final double latitude;
+  final double longitude;
 
-  final String value;
+  Coordinates(this.latitude, this.longitude);
 
-  const TransactionType(this.value);
+  LatLng toLatLng() => LatLng(latitude, longitude);
 }
 
-enum PostedBy {
-  owner('Owner'),
-  builder('Builder'),
-  dealer('Dealer'),
-  featureDealer('Feature Dealer');
+// ======================================================
+// API RESPONSE MODELS
+// ======================================================
 
-  final String value;
+class CategoryResponse {
+  final bool status;
+  final List<PropertyCategory> data;
 
-  const PostedBy(this.value);
+  CategoryResponse({
+    required this.status,
+    required this.data,
+  });
+
+  factory CategoryResponse.fromJson(Map<String, dynamic> json) {
+    return CategoryResponse(
+      status: safeBoolCast(json['status']),
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((item) => PropertyCategory.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }
 
-enum FurnishingStatus {
-  unfurnished('Unfurnished'),
-  semiFurnished('Semi-furnished'),
-  furnished('Furnished');
+class FacilitiesResponse {
+  final bool status;
+  final String message;
+  final List<Facility> data;
 
-  final String value;
+  FacilitiesResponse({
+    required this.status,
+    required this.message,
+    required this.data,
+  });
 
-  const FurnishingStatus(this.value);
+  factory FacilitiesResponse.fromJson(Map<String, dynamic> json) {
+    return FacilitiesResponse(
+      status: safeBoolCast(json['status']),
+      message: json['message'] as String? ?? '',
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((item) => Facility.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class DocumentsResponse {
+  final bool status;
+  final String message;
+  final List<Document> data;
+
+  DocumentsResponse({
+    required this.status,
+    required this.message,
+    required this.data,
+  });
+
+  factory DocumentsResponse.fromJson(Map<String, dynamic> json) {
+    return DocumentsResponse(
+      status: safeBoolCast(json['status']),
+      message: json['message'] as String? ?? '',
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((item) => Document.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class AmenitiesResponse {
+  final int status; // Changed from bool to int
+  final List<AmenityItem> data;
+
+  AmenitiesResponse({
+    required this.status,
+    required this.data,
+  });
+
+  factory AmenitiesResponse.fromJson(Map<String, dynamic> json) {
+    return AmenitiesResponse(
+      status: safeIntCast(json['status']),
+      data: (json['data']['amenities'] as List<dynamic>? ?? []) // Access 'amenities' array
+          .map((item) => AmenityItem.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+class StatesResponse {
+  final bool status;
+  final List<StateList> data;
+
+  StatesResponse({
+    required this.status,
+    required this.data,
+  });
+
+  factory StatesResponse.fromJson(Map<String, dynamic> json) {
+    return StatesResponse(
+      status: safeBoolCast(json['status']),
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((item) => StateList.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class CitiesResponse {
+  final bool status;
+  final List<CityModel> data;
+
+  CitiesResponse({
+    required this.status,
+    required this.data,
+  });
+
+  factory CitiesResponse.fromJson(Map<String, dynamic> json) {
+    return CitiesResponse(
+      status: safeBoolCast(json['status']),
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((item) => CityModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class FormSubmissionResponse {
+  final bool status;
+  final String message;
+  final Map<String, dynamic>? data;
+
+  FormSubmissionResponse({
+    required this.status,
+    required this.message,
+    this.data,
+  });
+
+  factory FormSubmissionResponse.fromJson(Map<String, dynamic> json) {
+    return FormSubmissionResponse(
+      status: safeBoolCast(json['status']),
+      message: json['message'] as String? ?? '',
+      data: json['data'] as Map<String, dynamic>?,
+    );
+  }
+}
+
+// ======================================================
+// FORM DATA MODEL
+// ======================================================
+
+class PropertyFormData {
+  final String propertyName;
+  final int categoryId;
+  final String location;
+  final double lat;
+  final double lng;
+  final double price;
+  final String aboutProperty;
+  final int areaSqft;
+  final String userType;
+  final int? state;
+  final int? city;
+  final int? subCategoryId;
+  final List<int> amenities;
+  final Map<String, dynamic> facilities;
+  final List<String>? galleryImages;
+  final Map<String, dynamic>? documents;
+
+  PropertyFormData({
+    required this.propertyName,
+    required this.categoryId,
+    required this.location,
+    required this.lat,
+    required this.lng,
+    required this.price,
+    required this.aboutProperty,
+    required this.areaSqft,
+    required this.userType,
+    this.state,
+    this.city,
+    this.subCategoryId,
+    required this.amenities,
+    required this.facilities,
+    this.galleryImages,
+    this.documents,
+  });
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['property_name'] = propertyName;
+    data['category_id'] = categoryId;
+    data['location'] = location;
+    data['lat'] = lat.toString();
+    data['lng'] = lng.toString();
+    data['price'] = price;
+    data['about_property'] = aboutProperty;
+    data['area_sqft'] = areaSqft;
+    data['user_type'] = userType;
+
+    if (state != null && state! > 0) data['state'] = state;
+    if (city != null && city! > 0) data['city'] = city;
+    if (subCategoryId != null && subCategoryId! > 0) data['sub_category_id'] = subCategoryId;
+
+    if (amenities.isNotEmpty) {
+      data['amenities'] = amenities.join(',');
+    }
+
+    if (facilities.isNotEmpty) {
+      final facilityMap = <String, dynamic>{};
+      for (var entry in facilities.entries) {
+        facilityMap[entry.key] = entry.value;
+      }
+      data['facilities'] = facilityMap;
+    }
+
+    if (galleryImages != null && galleryImages!.isNotEmpty) {
+      data['gallery_images'] = galleryImages;
+    }
+
+    if (documents != null && documents!.isNotEmpty) {
+      data['documents'] = documents;
+    }
+
+    return data;
+  }
+}
+
+class NearbyPlace {
+  final int id;
+  final String title;
+  final String image;
+  final String createdAt;
+  final String updatedAt;
+
+  NearbyPlace({
+    required this.id,
+    required this.title,
+    required this.image,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory NearbyPlace.fromJson(Map<String, dynamic> json) {
+    return NearbyPlace(
+      id: json['id'] ?? 0,
+      title: json['title'] ?? '',
+      image: json['image'] ?? '',
+      createdAt: json['created_at'] ?? '',
+      updatedAt: json['updated_at'] ?? '',
+    );
+  }
 }

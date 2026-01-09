@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
+
 import '../api_constant.dart';
 class ApiService {
   static final dio = Dio(
@@ -358,4 +359,63 @@ class ApiService {
       rethrow;
     }
   }
+  static Future<Response> postMultipartRequest({
+    required String url,
+    required Map<String, dynamic> data,
+    Map<String, dynamic>? headers,
+  }) async {
+    try {
+      // Convert regular map to FormData for Dio
+      FormData formData = FormData.fromMap({});
+
+      // Add all fields to formData
+      data.forEach((key, value) {
+        if (value is File) {
+          // Add files with proper field names
+          formData.files.add(MapEntry(
+            key,
+            MultipartFile.fromFileSync(value.path),
+          ));
+        } else if (value is List<File>) {
+          // Handle multiple files (e.g., gallery images)
+          for (int i = 0; i < value.length; i++) {
+            if (value[i].existsSync()) {
+              formData.files.add(MapEntry(
+                'gallery_images[$i]',
+                MultipartFile.fromFileSync(value[i].path),
+              ));
+            }
+          }
+        } else {
+          // Add regular form fields
+          if (value != null) {
+            formData.fields.add(MapEntry(key, value.toString()));
+          }
+        }
+      });
+
+      // Prepare headers
+      final options = Options(
+        headers: headers,
+        contentType: 'multipart/form-data',
+      );
+
+      print('📤 Multipart Request to: $url');
+      print('📦 Files count: ${formData.files.length}');
+      print('📝 Fields count: ${formData.fields.length}');
+
+      return await dio.post(
+        url,
+        data: formData,
+        options: options,
+      );
+    } catch (e) {
+      print('❌ Multipart request error: $e');
+      if (e is DioException && e.response != null) {
+        return e.response!;
+      }
+      rethrow;
+    }
+  }
+
 }

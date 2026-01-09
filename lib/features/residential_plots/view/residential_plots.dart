@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
 import '../controller/residential_controller.dart';
+import '../model/residential_model.dart';
 import '../widget/residential_plotlist.dart';
 
 class ResidentialPropertiesScreen extends StatefulWidget {
@@ -67,10 +68,8 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   List<CityModel> _filteredCities = [];
   late String _selectedTransactionType;
   late String _selectedPostedBy;
-
   bool _priceChanged = false;
   bool _areaChanged = false;
-
   bool _showAllStates = false;
   bool _showAllCities = false;
   bool _showAllCategories = false;

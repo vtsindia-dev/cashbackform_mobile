@@ -15,6 +15,9 @@ import '../../features/plot_market/screens/myplot_list.dart';
 import '../../features/plot_market/screens/plot_market.dart';
 import '../../features/plot_market/screens/plotmarket_details.dart';
 import '../../features/profile/screen/profile.dart';
+import '../../features/residential_plots/view/add_residential.dart';
+import '../../features/residential_plots/view/my_enquiry.dart';
+import '../../features/residential_plots/view/my_residential_plots.dart';
 import '../../features/residential_plots/view/residential_details.dart';
 import '../../features/residential_plots/view/residential_plots.dart';
 import '../../features/service/screen/my_service_enquiry.dart';
@@ -47,10 +50,18 @@ class AppRoutes {
   static const String myMaterialList = '/myMaterialList';
   static const String ownedplotlist = '/ownedplotlist';
   static const String ownedSyndicatePlotList = '/ownedSyndicatePlotList';
+  static const String addResidential = '/addResidential';
+  static const String myResidential = '/myResidential';
+  static const String myResidentialEnquiry = '/myResidentialEnquiry';
   static List<GetPage> routes = [
     GetPage(
       name: splash,
       page: () => SplashScreen(),
+      transition: Transition.fade,
+    ),
+    GetPage(
+      name: myResidentialEnquiry,
+      page: () => PlotEnquiryScreen(),
       transition: Transition.fade,
     ),
     GetPage(
@@ -105,6 +116,10 @@ class AppRoutes {
       name: residentialList,
       page: () => ResidentialPropertiesScreen(),
       transition: Transition.cupertino,
+    ),  GetPage(
+      name: myResidential,
+      page: () => MyPlotsScreen(),
+      transition: Transition.cupertino,
     ),   GetPage(
       name: myProperty,
       page: () => MarketPlotsScreen(),
@@ -139,6 +154,15 @@ class AppRoutes {
         final arguments = Get.arguments;
         final id = arguments != null ? arguments['id'] : null;
         return SyndicateDetails(id: id);
+      },
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: addResidential,
+      page: () {
+        final arguments = Get.arguments;
+        final id = arguments != null ? arguments['id'] : null;
+        return AddEditPropertyScreen(propertyId: id);
       },
       transition: Transition.cupertino,
     ),
@@ -194,8 +218,11 @@ class AppRoutes {
   static void toProfile() => Get.toNamed(profile);
   static void toHome() => Get.offAllNamed(home);
   static void toMyServiceList() => Get.offAllNamed(myServiceList);
+  static void addResidentialPlot() => Get.offAllNamed(addResidential);
   static void toMyMaterialList() => Get.offAllNamed(myMaterialList);
+  static void toMyResidenialEnquiry() => Get.offAllNamed(myResidentialEnquiry);
   static void togioo() => Get.offAllNamed(gioo);
+  static void toResidential() => Get.offAllNamed(myResidential);
   static void toMarketPlot() => Get.offAllNamed(plotMarket);
   static void toMyProperty() => Get.offAllNamed(myProperty);
   static void toMarketDetails() => Get.offAllNamed(materialDetails);
