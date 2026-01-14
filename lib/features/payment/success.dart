@@ -208,7 +208,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Ticker
                       borderRadius: BorderRadius.circular(16.r),
                     ),
                     child: ElevatedButton(
-                      onPressed: () => Get.back(),
+                      onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,

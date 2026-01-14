@@ -7,6 +7,7 @@ import 'package:intl/intl.dart'; // Add this to your pubspec.yaml
 import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
 import '../controller/residential_add_controller.dart';
+import '../controller/residential_controller.dart';
 import '../model/residential_model.dart';
 
 class PlotEnquiryScreen extends StatelessWidget {
@@ -15,6 +16,7 @@ class PlotEnquiryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ResidentialPropertyFormController());
+    final controller2 = Get.put(ResidentialPropertyController());
 
     return Scaffold(
       backgroundColor: AppColor.backgroundLight,
@@ -94,10 +96,10 @@ class PlotEnquiryScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text(
-                  "Enquired on Jan 08", // You can parse property.createdAt if needed
-                  style: TextStyle(fontSize: 11.sp, color: AppColor.grey),
-                ),
+                // Text(
+                //   "Enquired on Jan 08", // You can parse property.createdAt if needed
+                //   style: TextStyle(fontSize: 11.sp, color: AppColor.grey),
+                // ),
               ],
             ),
           ),
@@ -212,7 +214,8 @@ class PlotEnquiryScreen extends StatelessWidget {
                 const Spacer(),
                 GestureDetector(
                   onTap: () {
-                    // Navigate to details
+                    Get.toNamed('residentialDetails', arguments: {"id": property.id, "title": property.propertyName});
+
                   },
                   child: Text(
                     "View Plot",

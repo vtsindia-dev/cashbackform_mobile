@@ -136,7 +136,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 MoveEffect(begin: Offset(-20, 0), duration: 600.ms),
               ],
               child: Text(
-                _userFullName,
+                 _userFullName,
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,

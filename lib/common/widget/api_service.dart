@@ -6,8 +6,8 @@ import '../api_constant.dart';
 class ApiService {
   static final dio = Dio(
     BaseOptions(
-      connectTimeout: Duration(seconds: 20),
-      receiveTimeout: Duration(seconds: 20),
+      connectTimeout: Duration(seconds: 50),
+      receiveTimeout: Duration(seconds: 50),
       headers: {"Accept": "application/json"},
       validateStatus: (status) => true,
     ),
@@ -276,7 +276,6 @@ class ApiService {
   static String getCurrentBaseUrl() {
     return ApiUrl.baseUrl;
   }
-  // Add this to your ApiService class
   static Future<Response> postRequestWithToken(
       String url,
       {

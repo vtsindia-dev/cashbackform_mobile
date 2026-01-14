@@ -284,12 +284,12 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                           delay: 0,
                         ),
 
-                        // Status
-                        _buildDetailRow(
-                          label: 'Status',
-                          value: status,
-                          delay: 0,
-                        ),
+                        // // Status
+                        // _buildDetailRow(
+                        //   label: 'Status',
+                        //   value: status,
+                        //   delay: 0,
+                        // ),
 
                         // Property Type
                         _buildDetailRow(
@@ -332,20 +332,20 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                           value: postedBy,
                           delay: 0,
                         ),
-                        if (ownership.isNotEmpty)
-                          _buildDetailRow(
-                            label: 'Ownership',
-                            value: ownership,
-                            delay: 0,
-                          ),
-
-                        // Facing
-                        if (facing.isNotEmpty)
-                          _buildDetailRow(
-                            label: 'Facing',
-                            value: facing,
-                            delay: 50,
-                          ),
+                        // if (ownership.isNotEmpty)
+                        //   _buildDetailRow(
+                        //     label: 'Ownership',
+                        //     value: ownership,
+                        //     delay: 0,
+                        //   ),
+                        //
+                        // // Facing
+                        // if (facing.isNotEmpty)
+                        //   _buildDetailRow(
+                        //     label: 'Facing',
+                        //     value: facing,
+                        //     delay: 50,
+                        //   ),
 
                         // Completion Date
                         if (completionDate != null)
@@ -475,6 +475,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                                     ),
                                   ),
                                   SizedBox(height: 6.h),
+                                  description.length > 200 ?
                                   GestureDetector(
                                     onTap: controller.toggleDescription,
                                     child: Row(
@@ -496,7 +497,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                                         ),
                                       ],
                                     ),
-                                  ),
+                                  ) : Container(),
                                 ],
                               ),
                               secondChild: Column(
@@ -738,171 +739,170 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
               margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
 
               decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        blurRadius: 15.r,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    blurRadius: 15.r,
+                    offset: const Offset(0, 4),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                      vertical: 15.h,
+                    ),
+                    child: _buildSectionHeader('Amenities'),
+                  ),
+                  SizedBox(height: 8.h),
+                  Stack(
                     children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 20.w,
-                          vertical: 15.h,
-                        ),
-                        child: _buildSectionHeader('Amenities'),
-                      ),
-                      SizedBox(height: 8.h),
-                      Stack(
-                        children: [
-                          Container(
-                            height: 100.h,
-                            padding: EdgeInsets.symmetric(horizontal: 16.w),
-                            child: ListView.builder(
-                              controller: controller.amenitiesScrollController,
-                              scrollDirection: Axis.horizontal,
-                              itemCount: amenities.length,
-                              itemBuilder: (context, index) {
-                                final amenity = amenities[index];
-                                final imageUrl = amenity['image'] ?? '';
-                                final title = amenity['title'] ?? '';
+                      Container(
+                        height: 100.h,
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: ListView.builder(
+                          controller: controller.amenitiesScrollController,
+                          scrollDirection: Axis.horizontal,
+                          itemCount: amenities.length,
+                          itemBuilder: (context, index) {
+                            final amenity = amenities[index];
+                            final imageUrl = amenity['image'] ?? '';
+                            final title = amenity['title'] ?? '';
 
-                                return Container(
-                                  width: 80.w,
-                                  margin: EdgeInsets.only(right: 12.w),
-                                  padding: EdgeInsets.all(10.r),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(15.r),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.1),
-                                        blurRadius: 10.r,
-                                        offset: const Offset(0, 2),
+                            return Container(
+                              width: 80.w,
+                              margin: EdgeInsets.only(right: 12.w),
+                              padding: EdgeInsets.all(10.r),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(15.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.1),
+                                    blurRadius: 10.r,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: Colors.grey.shade200,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Amenity Icon/Image - Multi-format support
+                                  Container(
+                                    width: 40.w,
+                                    height: 40.w,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        10.r,
                                       ),
-                                    ],
-                                    border: Border.all(
-                                      color: Colors.grey.shade200,
-                                      width: 1,
+                                      color: AppColor.primary.withOpacity(
+                                        0.1,
+                                      ),
                                     ),
+                                    child: _buildAmenityImage(imageUrl),
                                   ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // Amenity Icon/Image - Multi-format support
-                                      Container(
-                                        width: 40.w,
-                                        height: 40.w,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            10.r,
-                                          ),
-                                          color: AppColor.primary.withOpacity(
-                                            0.1,
-                                          ),
-                                        ),
-                                        child: _buildAmenityImage(imageUrl),
-                                      ),
-                                      SizedBox(height: 6.h),
+                                  SizedBox(height: 6.h),
 
-                                      // Amenity Title
-                                      Text(
-                                        title,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 10.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black87,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
+                                  // Amenity Title
+                                  Text(
+                                    title,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                );
-                              },
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Left Navigation Arrow
+                      if (amenities.length > 3)
+                        Positioned(
+                          left: 8.w,
+                          top: 30.h,
+                          child: GestureDetector(
+                            onTap: () {
+                              controller.scrollAmenitiesLeft();
+                            },
+                            child: Container(
+                              width: 30.w,
+                              height: 40.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    blurRadius: 5.r,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.arrow_back_ios_rounded,
+                                size: 18.sp,
+                                color: AppColor.primary,
+                              ),
                             ),
                           ),
+                        ),
 
-                          // Left Navigation Arrow
-                          if (amenities.length > 3)
-                            Positioned(
-                              left: 8.w,
-                              top: 30.h,
-                              child: GestureDetector(
-                                onTap: () {
-                                  controller.scrollAmenitiesLeft();
-                                },
-                                child: Container(
-                                  width: 30.w,
-                                  height: 40.h,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20.r),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        blurRadius: 5.r,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
+                      // Right Navigation Arrow
+                      if (amenities.length > 3)
+                        Positioned(
+                          right: 8.w,
+                          top: 30.h,
+                          child: GestureDetector(
+                            onTap: () {
+                              controller.scrollAmenitiesRight();
+                            },
+                            child: Container(
+                              width: 30.w,
+                              height: 40.h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    blurRadius: 5.r,
+                                    offset: const Offset(0, 2),
                                   ),
-                                  child: Icon(
-                                    Icons.arrow_back_ios_rounded,
-                                    size: 18.sp,
-                                    color: AppColor.primary,
-                                  ),
-                                ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 18.sp,
+                                color: AppColor.primary,
                               ),
                             ),
-
-                          // Right Navigation Arrow
-                          if (amenities.length > 3)
-                            Positioned(
-                              right: 8.w,
-                              top: 30.h,
-                              child: GestureDetector(
-                                onTap: () {
-                                  controller.scrollAmenitiesRight();
-                                },
-                                child: Container(
-                                  width: 30.w,
-                                  height: 40.h,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20.r),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        blurRadius: 5.r,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    Icons.arrow_forward_ios_rounded,
-                                    size: 18.sp,
-                                    color: AppColor.primary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 15.h),
+                          ),
+                        ),
                     ],
                   ),
-                )
+                  SizedBox(height: 15.h),
+                ],
+              ),
+            )
                 .animate()
                 .fadeIn(duration: 500.ms)
                 .slideY(begin: 0.2, end: 0, duration: 600.ms),
-
 
         ],
       );

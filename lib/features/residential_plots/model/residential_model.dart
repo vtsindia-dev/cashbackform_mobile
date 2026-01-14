@@ -144,6 +144,7 @@ class Property {
   final String location;
   final int? city;
   final int? state;
+  final int? subCategoryId;
   final String? lat;
   final String? lng;
   final double price;
@@ -212,6 +213,7 @@ class Property {
     this.roadWidth,
     required this.boundaryWall,
     this.features,
+    this.subCategoryId, // ADD THIS
     required this.aboutProperty,
     required this.landApproval,
     required this.constructionGuidelines,
@@ -259,6 +261,7 @@ class Property {
           .map((e) => e.toString())
           .toList(),
       gated: safeBoolCast(json['gated']),
+      subCategoryId: safeNullableIntCast(json['sub_category_id']), // ADD THIS
       openSides: json['open_sides'] as String?,
       overlooking: json['overlooking'] as String?,
       categoryId: safeIntCast(json['category_id']),
@@ -301,7 +304,6 @@ class Property {
     );
   }
 
-  // Helper getters
   String get formattedPrice {
     if (price >= 10000000) {
       return '₹${(price / 10000000).toStringAsFixed(2)} Cr';

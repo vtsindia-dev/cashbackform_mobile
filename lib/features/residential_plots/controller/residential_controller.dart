@@ -50,7 +50,7 @@ class ResidentialPropertyController extends GetxController {
   final isDescriptionExpanded = false.obs;
   var isEnquiryLoading = false.obs;
   var enquirySent = false.obs;
-
+  final amenitiesScrollOffset = 0.0.obs;
   final TextEditingController searchController = TextEditingController();
 
   @override
@@ -267,19 +267,28 @@ class ResidentialPropertyController extends GetxController {
 
   void onSearchChanged(String query) {
     searchQuery.value = query;
+
     if (_searchDebounce?.isActive ?? false) _searchDebounce?.cancel();
+
     _searchDebounce = Timer(const Duration(milliseconds: 500), () {
-      if (query.trim().isNotEmpty) {
+      // Only search if query has at least 5 characters
+      if (query.trim().length >= 4) {
         currentPage.value = 1;
         fetchProperties();
-      } else if (query.isEmpty && searchQuery.value.isNotEmpty) {
+      }
+      // Clear search if query is empty and we previously had a search query
+      else if (query.isEmpty && searchQuery.value.isNotEmpty) {
         searchQuery.value = '';
         currentPage.value = 1;
         fetchProperties();
       }
+      // If query is between 1-4 characters, do nothing (wait for more input)
+      else if (query.trim().isNotEmpty && query.trim().length < 5) {
+        // Optionally: You could show a hint message here
+        // like "Type at least 5 characters to search"
+      }
     });
   }
-
   void clearSearch() {
     searchQuery.value = '';
     searchController.clear();

@@ -523,13 +523,23 @@ class SyndicatePlotController extends GetxController {
 
     // Set new timer for debouncing
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (value.trim().isNotEmpty) {
+      // Only search if query has at least 5 characters
+      if (value.trim().length >= 5) {
         recentSearch.value = value.trim();
         fetchSyndicatePlots();
       }
+      // Clear search if query is empty (optional - depends on your needs)
+      else if (value.isEmpty && searchQuery.value.isNotEmpty) {
+        searchQuery.value = '';
+        recentSearch.value = '';
+        fetchSyndicatePlots(); // Fetch all plots when cleared
+      }
+      // If query is 1-4 characters, do nothing
+      else if (value.trim().isNotEmpty && value.trim().length < 5) {
+        // Optionally: Show hint or do nothing
+      }
     });
   }
-
   void applySearch() {
     if (searchQuery.value.trim().isEmpty) return;
     recentSearch.value = searchQuery.value.trim();
@@ -707,7 +717,7 @@ class SyndicatePlotController extends GetxController {
     }
 
     if (selectedPropertyTypeId.value > 0) {
-      params.add('property_type=${Uri.encodeComponent(selectedPropertyTypeId.value.toString())}');
+      params.add('plot_type=${Uri.encodeComponent(selectedPropertyTypeId.value.toString())}');
     }
 
     return params.isEmpty ? '' : '&${params.join('&')}';

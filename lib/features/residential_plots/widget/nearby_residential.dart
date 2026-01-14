@@ -107,7 +107,7 @@ class _NearbyProjectState extends State<NearbyProject> with SingleTickerProvider
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(0.w),
               child: Container(
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(

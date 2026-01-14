@@ -59,6 +59,8 @@ dependencies:
   iconsax: ^0.0.8
   latlong2: ^0.9.1
   flutter_map: ^8.2.2
+  cached_network_image: ^3.4.1
+  flutter_3d_controller: ^2.3.0
 
 
   # The following adds the Cupertino Icons font to your application.

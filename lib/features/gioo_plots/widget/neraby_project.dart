@@ -444,14 +444,14 @@ class NearbyProject extends StatelessWidget {
                     color: AppColor.textMain,
                   ),
                 ),
-                4.h.verticalSpace,
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
+                // 4.h.verticalSpace,
+                // Text(
+                //   subtitle,
+                //   style: TextStyle(
+                //     fontSize: 10.sp,
+                //     color: Colors.grey.shade600,
+                //   ),
+                // ),
               ],
             ),
           ),

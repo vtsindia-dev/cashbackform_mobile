@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
-// Assuming these are your local imports
 import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
 import '../controller/residential_add_controller.dart';
 import '../model/residential_model.dart';
 import 'add_residential.dart';
-
 class MyPlotsScreen extends StatelessWidget {
   const MyPlotsScreen({Key? key}) : super(key: key);
 
@@ -19,7 +17,6 @@ class MyPlotsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColor.backgroundLight,
-      // Using your custom DynamicAppBar component
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.h),
         child: DynamicAppBar(
@@ -310,22 +307,71 @@ class MyPlotsScreen extends StatelessWidget {
   }
 
   void _showDeleteConfirmation(ResidentialPropertyFormController controller, int id, int index) {
-    Get.defaultDialog(
-      title: "Confirm Delete",
-      titleStyle: TextStyle(color: AppColor.textMain, fontWeight: FontWeight.bold),
-      middleText: "Do you want to permanently remove this property?",
-      middleTextStyle: TextStyle(color: AppColor.textSecondary),
-      backgroundColor: AppColor.white,
-      radius: 20.r,
-      textConfirm: "DELETE",
-      textCancel: "CANCEL",
-      confirmTextColor: AppColor.white,
-      cancelTextColor: AppColor.primary,
-      buttonColor: AppColor.red,
-      onConfirm: () {
-        controller.deleteProperty(id, index);
-        Get.back();
-      },
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Warning Icon
+              CircleAvatar(
+                radius: 30.r,
+                backgroundColor: AppColor.red.withOpacity(0.1),
+                child: Icon(Icons.delete_sweep_rounded, color: AppColor.red, size: 30.sp),
+              ),
+              SizedBox(height: 16.h),
+
+              // Text Content
+              Text(
+                "Delete Property?",
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: AppColor.textMain),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                "This action cannot be undone. Are you sure you want to remove this listing?",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14.sp, color: AppColor.textSecondary),
+              ),
+              SizedBox(height: 24.h),
+
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColor.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: Text("CANCEL", style: TextStyle(color: AppColor.primary)),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back(); // Close confirmation dialog
+                        controller.deleteProperty(id, index); // Start deletion
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.red,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: const Text("DELETE", style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-  }
-}
+  }}

@@ -75,6 +75,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   bool _showAllCategories = false;
   final int _initialItemCount = 4;
   bool _loadingCities = false;
+  bool _isApplying = false;
 
   @override
   void initState() {
@@ -190,18 +191,18 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                       color: Colors.blueAccent,
                       child: _buildCategoryChips()
                   ),
-                  const SizedBox(height: 32),
-                  _buildAnimatedSection(2, "TRANSACTION TYPE",
-                      icon: Icons.swap_horiz_rounded,
-                      color: Colors.purple,
-                      child: _buildTransactionTypeSelector()
-                  ),
-                  const SizedBox(height: 32),
-                  _buildAnimatedSection(3, "POSTED BY",
-                      icon: Icons.person_rounded,
-                      color: Colors.teal,
-                      child: _buildPostedBySelector()
-                  ),
+                  // const SizedBox(height: 32),
+                  // _buildAnimatedSection(2, "TRANSACTION TYPE",
+                  //     icon: Icons.swap_horiz_rounded,
+                  //     color: Colors.purple,
+                  //     child: _buildTransactionTypeSelector()
+                  // ),
+                  // const SizedBox(height: 32),
+                  // _buildAnimatedSection(3, "POSTED BY",
+                  //     icon: Icons.person_rounded,
+                  //     color: Colors.teal,
+                  //     child: _buildPostedBySelector()
+                  // ),
                   const SizedBox(height: 32),
                   _buildAnimatedSection(4, "PRICE BUDGET",
                       icon: Icons.payments_rounded,
@@ -517,47 +518,101 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   Widget _buildFooter() {
     return Container(
       padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
-      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -5)
+        )],
+      ),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF819E4F),
+          backgroundColor: _isApplying
+              ? const Color(0xFF819E4F).withOpacity(0.7)
+              : const Color(0xFF819E4F),
           minimumSize: const Size(double.infinity, 60),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           elevation: 8,
           shadowColor: const Color(0xFF819E4F).withOpacity(0.4),
         ),
-        onPressed: () {
-          // Apply filters to controller
-          widget.controller.selectedStateId.value = _selectedStateId;
-          widget.controller.selectedCityId.value = _selectedCityId;
-          widget.controller.selectedCategoryId.value = _selectedCategories.isNotEmpty ? _selectedCategories.first : 0;
-
-          // Price
-          widget.controller.selectedMinPrice.value = _priceChanged ? _priceRange.start.toInt().toString() : "";
-          widget.controller.selectedMaxPrice.value = _priceChanged ? _priceRange.end.toInt().toString() : "";
-
-          // Area
-          widget.controller.selectedMinArea.value = _areaChanged ? _areaRange.start.toInt().toString() : "";
-          widget.controller.selectedMaxArea.value = _areaChanged ? _areaRange.end.toInt().toString() : "";
-
-          // Other filters
-          widget.controller.selectedTransactionType.value = _selectedTransactionType;
-          widget.controller.selectedPostedBy.value = _selectedPostedBy;
-
-          // Apply filters
-          widget.controller.currentPage.value = 1;
-          widget.controller.fetchProperties();
-
-          // Close the modal with a delay to avoid snackbar conflict
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            }
-          });
-        },
-        child: const Text("Apply Filters", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+        onPressed: _isApplying ? null : _applyFilters,
+        child: _isApplying
+            ? SizedBox(
+          height: 24,
+          width: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        )
+            : const Text(
+          "Apply Filters",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
       ),
     );
+  }
+
+  Future<void> _applyFilters() async {
+    if (_isApplying) return;
+
+    setState(() {
+      _isApplying = true;
+    });
+
+    try {
+      // Apply filters to controller
+      widget.controller.selectedStateId.value = _selectedStateId;
+      widget.controller.selectedCityId.value = _selectedCityId;
+      widget.controller.selectedCategoryId.value = _selectedCategories.isNotEmpty ? _selectedCategories.first : 0;
+
+      // Price
+      widget.controller.selectedMinPrice.value = _priceChanged ? _priceRange.start.toInt().toString() : "";
+      widget.controller.selectedMaxPrice.value = _priceChanged ? _priceRange.end.toInt().toString() : "";
+
+      // Area
+      widget.controller.selectedMinArea.value = _areaChanged ? _areaRange.start.toInt().toString() : "";
+      widget.controller.selectedMaxArea.value = _areaChanged ? _areaRange.end.toInt().toString() : "";
+
+      // Other filters
+      widget.controller.selectedTransactionType.value = _selectedTransactionType;
+      widget.controller.selectedPostedBy.value = _selectedPostedBy;
+
+      // Apply filters
+      widget.controller.currentPage.value = 1;
+      await widget.controller.fetchProperties();
+
+      // Close the modal with a delay
+      if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+      }
+    } catch (e) {
+      // Handle error if needed
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to apply filters: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isApplying = false;
+        });
+      }
+    }
   }
 }
 
@@ -634,18 +689,38 @@ class _CompactFilterSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            InkWell(
-              onTap: controller.applyFilters,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF819E4F), Color(0xFF9CB45A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                    borderRadius: BorderRadius.circular(20)
+            Obx(() {
+              final hasQuery = controller.searchQuery.value.isNotEmpty;
+              return InkWell(
+                onTap: hasQuery ? controller.applyFilters : null, // Disable if no query
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                      gradient: hasQuery
+                          ? const LinearGradient(
+                          colors: [Color(0xFF819E4F), Color(0xFF9CB45A)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight
+                      )
+                          : LinearGradient(
+                          colors: [Colors.grey.shade300, Colors.grey.shade400],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight
+                      ),
+                      borderRadius: BorderRadius.circular(20)
+                  ),
+                  child: Text(
+                      "Search",
+                      style: TextStyle(
+                          color: hasQuery ? Colors.black : Colors.grey.shade600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12
+                      )
+                  ),
                 ),
-                child: const Text("Search", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
-              ),
-            ),
+              );
+            }),
             const SizedBox(width: 6),
             GestureDetector(
                 onTap: () => _showFilterSheet(context, controller),
@@ -661,7 +736,6 @@ class _CompactFilterSection extends StatelessWidget {
     );
   }
 }
-
 class _BottomActionBar extends StatelessWidget {
   final ResidentialPropertyController controller;
   const _BottomActionBar({required this.controller});

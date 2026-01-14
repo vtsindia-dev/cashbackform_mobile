@@ -255,28 +255,66 @@ class RazorpayController extends GetxController {
     Get.dialog(
       WillPopScope(
         onWillPop: () async => false,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: Center(
           child: Container(
-            color: Colors.white.withOpacity(0.8),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: Color(0xFF4338CA)),
-                  SizedBox(height: 24.h),
-                  Text("Confirming with Bank...", style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
-                  Text("Please do not refresh or go back", style: TextStyle(fontSize: 13.sp, color: Colors.grey[600])),
-                ],
-              ),
+            margin: EdgeInsets.symmetric(horizontal: 40.w),
+            padding: EdgeInsets.symmetric(vertical: 32.h, horizontal: 24.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                )
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // High-end custom loader or branded color
+                const SizedBox(
+                  height: 48,
+                  width: 48,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4338CA)),
+                    backgroundColor: Color(0xFFE2E8F0),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  "Secure Verification",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1E293B),
+                    decoration: TextDecoration.none, // Removes yellow underline in dialogs
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  "We're confirming your details with the bank. This usually takes a few seconds.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    height: 1.5,
+                    color: const Color(0xFF64748B),
+                    fontWeight: FontWeight.normal,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
       barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.4),
     );
   }
-
   void _showSyncErrorSheet(String error) {
     if (Get.isDialogOpen ?? false) Get.back();
 

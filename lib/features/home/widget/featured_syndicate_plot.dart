@@ -120,7 +120,7 @@ class FeaturesSyndicateProperties extends StatelessWidget {
                             : 'Premium Syndicate Property',
                         onTap: () {
                           print("View: ${syndicate.name}");
-                          Get.toNamed('/syndicateDetails', arguments: {"id": syndicate.id});
+                          Get.toNamed('/syndicateDetails', arguments: {"id": syndicate.id,"title": syndicate.name});
 
                         },
                         isFavourite: true,

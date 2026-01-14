@@ -153,7 +153,8 @@ class AppRoutes {
       page: () {
         final arguments = Get.arguments;
         final id = arguments != null ? arguments['id'] : null;
-        return SyndicateDetails(id: id);
+        final title = arguments != null ? arguments['title'] : null;
+        return SyndicateDetails(id: id ,title: title,);
       },
       transition: Transition.cupertino,
     ),

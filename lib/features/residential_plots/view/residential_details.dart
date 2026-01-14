@@ -6,6 +6,7 @@ import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
 import '../controller/residential_controller.dart';
+import '../widget/3d_viewer.dart';
 import '../widget/about_residential.dart';
 import '../widget/nearby_residential.dart';
 
@@ -53,8 +54,9 @@ class _ResidentialPlotDetailsScreenState extends State<ResidentialPlotDetailsScr
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: NearbyProject(),
                   ),
+                  Property3DImageViewer(),
                   // Add extra padding at bottom for floating button
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 60.h),
                 ],
               ),
             ),

@@ -336,8 +336,6 @@ class SyndicateDetail {
     }
   }
 
-  // Get document price (admin_block_amount)
-  // Get document price (admin_block_amount)
   double get documentPriceValue {
     try {
       return double.tryParse(adminDocumentPrice.replaceAll(',', '')) ?? 0.0;
