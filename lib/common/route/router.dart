@@ -15,6 +15,7 @@ import '../../features/plot_market/screens/myplot_list.dart';
 import '../../features/plot_market/screens/plot_market.dart';
 import '../../features/plot_market/screens/plotmarket_details.dart';
 import '../../features/profile/screen/profile.dart';
+import '../../features/rental_yeild/view/rental_yield_plots.dart';
 import '../../features/residential_plots/view/add_residential.dart';
 import '../../features/residential_plots/view/my_enquiry.dart';
 import '../../features/residential_plots/view/my_residential_plots.dart';
@@ -53,6 +54,7 @@ class AppRoutes {
   static const String addResidential = '/addResidential';
   static const String myResidential = '/myResidential';
   static const String myResidentialEnquiry = '/myResidentialEnquiry';
+  static const String rentalYieldList = '/rentalYieldList';
   static List<GetPage> routes = [
     GetPage(
       name: splash,
@@ -127,6 +129,10 @@ class AppRoutes {
     ), GetPage(
       name: myServiceList,
       page: () => MyServicesList(),
+      transition: Transition.cupertino,
+    ), GetPage(
+      name: rentalYieldList,
+      page: () => RentalYieldScreen(),
       transition: Transition.cupertino,
     ),
     GetPage(
@@ -228,6 +234,7 @@ class AppRoutes {
   static void toMyProperty() => Get.offAllNamed(myProperty);
   static void toMarketDetails() => Get.offAllNamed(materialDetails);
   static void toSyndicate() => Get.offAllNamed(syndicate);
+  static void toRentalYield() => Get.offAllNamed(rentalYieldList);
   static void toRegister({String? phone}) {
     print("AppRoutes.toRegister called with phone: $phone");
     Get.toNamed(register, arguments: {'phone': phone});

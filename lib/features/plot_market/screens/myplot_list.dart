@@ -233,7 +233,7 @@ class _MarketPlotsScreenState extends State<MarketPlotsScreen> {
                 borderSide: BorderSide.none,
               ),
             ),
-            onChanged: controller.searchPlots,
+            // onChanged: controller.searchPlots,
           ),
 
           SizedBox(height: 8),

@@ -269,7 +269,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "GST (18%):",
+                                "GST (18%) :",
                                 style: TextStyle(fontSize: 12.sp),
                               ),
                               Text(
@@ -306,9 +306,6 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                       ),
                     ),
                   ],
-
-
-                  // Reserve Button
                   SizedBox(height: 15.h),
                   Center(
                     child: InkWell(

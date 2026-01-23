@@ -78,6 +78,7 @@ class FeaturesSyndicateProperties extends StatelessWidget {
                     final scrollController = scrollNotification.metrics;
                     if (scrollController.pixels >=
                         scrollController.maxScrollExtent - 100) {
+
                       if (controller.syndicateHasMore.value &&
                           !controller.isLoadingMoreSyndicates.value) {
                         controller.loadMoreFeaturedSyndicates();

@@ -80,15 +80,6 @@ class _GiooDetailsState extends State<GiooDetails> {
       );
     }
 
-    // 🔥 dynamic values
-    final int visibleCount = buyers.length > 4 ? 4 : buyers.length;
-    const double itemHeight = 60;
-    const double separatorHeight = 8;
-
-    final double listHeight =
-        (visibleCount * itemHeight) +
-            ((visibleCount - 1) * separatorHeight);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -103,24 +94,25 @@ class _GiooDetailsState extends State<GiooDetails> {
           ),
         ),
 
-        /// 🔥 DYNAMIC HEIGHT LIST
-        SizedBox(
-          height: listHeight,
+        /// 🔥 SCROLLABLE LIST
+        Container(
+          constraints: BoxConstraints(
+            maxHeight: 300, // Set a maximum height for scrolling
+            minHeight: buyers.length <= 4 ?
+            (buyers.length * 60 + (buyers.length - 1) * 8) :
+            300, // Adjust height based on number of items
+          ),
           child: ListView.separated(
-            physics: buyers.length > 4
-                ? const BouncingScrollPhysics()
-                : const NeverScrollableScrollPhysics(),
+            physics: const BouncingScrollPhysics(), // Always enable scroll
             padding: EdgeInsets.zero,
-            itemCount: visibleCount,
-            separatorBuilder: (_, __) =>
-            const SizedBox(height: separatorHeight),
+            itemCount: buyers.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final buyer = buyers[index];
 
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -137,8 +129,7 @@ class _GiooDetailsState extends State<GiooDetails> {
                     /// Avatar
                     CircleAvatar(
                       radius: 22,
-                      backgroundImage:
-                      buyer.avatar != null && buyer.avatar!.isNotEmpty
+                      backgroundImage: buyer.avatar != null && buyer.avatar!.isNotEmpty
                           ? NetworkImage(buyer.avatar!)
                           : null,
                       child: buyer.avatar == null
@@ -182,7 +173,6 @@ class _GiooDetailsState extends State<GiooDetails> {
       ],
     );
   }
-
   /// Avatar fallback
   Widget _avatarFallback() {
     return Container(
@@ -197,15 +187,15 @@ class _GiooDetailsState extends State<GiooDetails> {
   }
 
 
+
   Widget _buildNoDataAvailable() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
           SizedBox(height: 16),
           Text(
-            "No Data Available",
+            "No Data  ",
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -225,4 +215,6 @@ class _GiooDetailsState extends State<GiooDetails> {
       ),
     );
   }
+
+
 }

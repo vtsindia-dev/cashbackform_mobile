@@ -928,7 +928,8 @@ class GiooPlotController extends GetxController {
         ),
       ],
     );
-  }  Widget _buildSecureBadge() {
+  }
+  Widget _buildSecureBadge() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(

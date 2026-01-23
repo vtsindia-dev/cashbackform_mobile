@@ -22,6 +22,7 @@ class MarketPlot  {
   final DateTime createdAt;
   final DateTime updatedAt;
   final dynamic propertyType;
+  final int? verfication;
 
   MarketPlot({
     required this.id,
@@ -47,6 +48,7 @@ class MarketPlot  {
     required this.createdAt,
     required this.updatedAt,
     required this.propertyType,
+    this.verfication
   });
 
   factory MarketPlot.fromJson(Map<String, dynamic> json) {
@@ -74,6 +76,7 @@ class MarketPlot  {
       createdAt: DateTime.parse(json['created_at']?.toString() ?? ''),
       updatedAt: DateTime.parse(json['updated_at']?.toString() ?? ''),
       propertyType: json['property_type'],
+      verfication: json['property_type'],
     );
   }
 

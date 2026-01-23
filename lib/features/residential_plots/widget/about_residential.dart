@@ -19,7 +19,7 @@ class AboutResidentialProperty extends StatefulWidget {
 
 class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
   bool isExpanded = false;
-  final List<Color> cardColors = [
+  final List<Color> cardColors =  [
     const Color(0xFFFFE0E0), // Soft Red
     const Color(0xFFE0F2FF), // Soft Blue
     const Color(0xFFE8F5E9), // Soft Green

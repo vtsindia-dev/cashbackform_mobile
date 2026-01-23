@@ -13,12 +13,9 @@ class NearbyProject extends StatelessWidget {
   final ScrollController amenitiesScrollController = ScrollController();
   final ScrollController nearbyScrollController = ScrollController();
 
-  // Function to open Google Maps with coordinates
   Future<void> _launchGoogleMaps(dynamic lat, dynamic lng) async {
     double? latitude;
     double? longitude;
-
-    // Helper function to safely convert any type to double
     double? _toDouble(dynamic value) {
       if (value == null) return null;
       if (value is int) {
@@ -32,14 +29,8 @@ class NearbyProject extends StatelessWidget {
       }
       return null;
     }
-
-    // Convert lat to double
     latitude = _toDouble(lat);
-
-    // Convert lng to double
     longitude = _toDouble(lng);
-
-    // Fallback to controller values if needed
     if (latitude == null || longitude == null) {
       final detail = controller.giooPlotDetail.value;
       if (detail != null) {
@@ -50,32 +41,23 @@ class NearbyProject extends StatelessWidget {
         longitude = 0.0;
       }
     }
-
-    // Check if coordinates are valid
     if (latitude == 0.0 && longitude == 0.0) {
       Get.snackbar("Error", "Location coordinates not available");
       return;
     }
-
-    // Google Maps URL
     final googleMapsUrl = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
     );
-
-    // Alternative: Apple Maps for iOS
     final appleMapsUrl = Uri.parse(
       'https://maps.apple.com/?q=$latitude,$longitude',
     );
-
     try {
-      // Try Google Maps first
       if (await canLaunchUrl(googleMapsUrl)) {
         await launchUrl(
           googleMapsUrl,
           mode: LaunchMode.externalApplication,
         );
       } else if (await canLaunchUrl(appleMapsUrl)) {
-        // Fallback to Apple Maps
         await launchUrl(
           appleMapsUrl,
           mode: LaunchMode.externalApplication,
@@ -86,6 +68,41 @@ class NearbyProject extends StatelessWidget {
     } catch (e) {
       Get.snackbar("Error", "Failed to open maps: ${e.toString()}");
     }
+  }
+
+  String _formatDistance(dynamic distance) {
+    if (distance == null) return "";
+    if (distance is String) {
+      // Remove any extra spaces
+      final trimmed = distance.trim();
+
+      // Check if it already contains "km" (case insensitive)
+      if (trimmed.toLowerCase().contains("km")) {
+        return trimmed;
+      }
+
+      // Try to parse as number and add km
+      final parsed = double.tryParse(trimmed);
+      if (parsed != null) {
+        // Format to 1 decimal place if needed
+        return parsed % 1 == 0 ?
+        "${parsed.toInt()} km" :
+        "${parsed.toStringAsFixed(1)} km";
+      }
+
+      // If can't parse, just add km
+      return "$trimmed km";
+    }
+
+    // If it's a number
+    if (distance is num) {
+      final doubleValue = distance.toDouble();
+      return doubleValue % 1 == 0 ?
+      "${doubleValue.toInt()} km" :
+      "${doubleValue.toStringAsFixed(1)} km";
+    }
+
+    return "";
   }
 
   @override
@@ -197,7 +214,7 @@ class NearbyProject extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Amenities Nearby",
+                    "Amenities",
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.bold,
@@ -253,11 +270,10 @@ class NearbyProject extends StatelessWidget {
               scrollController: amenitiesScrollController,
               getImage: (item) => (item as Amenity).image,
               getTitle: (item) => (item as Amenity).title ?? "",
-              getSubtitle: (item) => (item as Amenity).distance != null
-                  ? "${(item as Amenity).distance} km"
-                  : "",
+              getSubtitle: (item) => "", // EMPTY for amenities - no distance shown
               fallbackIcon: Icons.category_outlined,
               emptyMessage: "No amenities available",
+              showKm: false, // Set to false for amenities
             ),
 
             25.h.verticalSpace,
@@ -268,7 +284,7 @@ class NearbyProject extends StatelessWidget {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Text(
-                "Around This Plot",
+                "Nearby to This Plot",
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.bold,
@@ -280,16 +296,28 @@ class NearbyProject extends StatelessWidget {
             15.h.verticalSpace,
 
             // ------------------------------------
-            // NEARBY LOCATIONS LIST - Using SAME small card design as amenities
+            // NEARBY LOCATIONS LIST - Using SAME small card design
             // ------------------------------------
             _buildHorizontalSmallCardList(
               items: nearbyLocations,
               scrollController: nearbyScrollController,
               getImage: (item) => (item as NearbyLocation).image,
               getTitle: (item) => (item as NearbyLocation).title,
-              getSubtitle: (item) => "Nearby location",
+              getSubtitle: (item) {
+                final nearbyItem = item as NearbyLocation;
+
+                // Get distance from pivot
+                if (nearbyItem.pivot?.distance != null) {
+                  return _formatDistance(nearbyItem.pivot!.distance);
+                }
+
+                // If pivot is null or distance is null, check for direct distance field
+                final distance = nearbyItem.pivot.distance;
+                return _formatDistance(distance);
+              },
               fallbackIcon: Icons.location_on,
               emptyMessage: "No nearby locations available",
+              showKm: true, // Set to true for nearby locations
             ),
 
             20.h.verticalSpace,
@@ -300,7 +328,7 @@ class NearbyProject extends StatelessWidget {
   }
 
   // ------------------------------------
-  // HORIZONTAL SMALL CARD LIST (for both amenities and nearby locations)
+  // HORIZONTAL SMALL CARD LIST
   // ------------------------------------
   Widget _buildHorizontalSmallCardList({
     required List<dynamic> items,
@@ -310,6 +338,7 @@ class NearbyProject extends StatelessWidget {
     required String Function(dynamic) getSubtitle,
     required IconData fallbackIcon,
     required String emptyMessage,
+    bool showKm = false,
   }) {
     if (items.isEmpty) {
       return Padding(
@@ -325,7 +354,7 @@ class NearbyProject extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 70.h, // Same height as amenities section
+      height: showKm ? 80.h : 70.h, // Taller height if showing km
       child: Row(
         children: [
           // Left arrow button
@@ -352,6 +381,7 @@ class NearbyProject extends StatelessWidget {
                   title: title,
                   subtitle: subtitle,
                   icon: fallbackIcon,
+                  showKm: showKm,
                 );
               },
             ),
@@ -368,16 +398,19 @@ class NearbyProject extends StatelessWidget {
   }
 
   // ------------------------------------
-  // SMALL CARD DESIGN (same as original amenities design)
+  // SMALL CARD DESIGN
   // ------------------------------------
   Widget _buildSmallCard({
     String? image,
     required String title,
     required String subtitle,
     IconData? icon,
+    bool showKm = false,
   }) {
+    final hasDistance = subtitle.isNotEmpty && showKm;
+
     return Container(
-      width: 140.w, // Same width as amenities cards
+      width: 140.w,
       margin: EdgeInsets.symmetric(horizontal: 4.w),
       padding: EdgeInsets.all(8.w),
       decoration: BoxDecoration(
@@ -391,70 +424,97 @@ class NearbyProject extends StatelessWidget {
           )
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Image/Icon container
-          Container(
-            padding: EdgeInsets.all(8.w),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: image != null && image.isNotEmpty
-                ? Image.network(
-              image,
-              width: 32.w,
-              height: 32.h,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return _buildSmallCardFallbackIcon(icon);
-              },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return SizedBox(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Image/Icon container
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: image != null && image.isNotEmpty
+                    ? Image.network(
+                  image,
                   width: 32.w,
                   height: 32.h,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                        : null,
-                  ),
-                );
-              },
-            )
-                : _buildSmallCardFallbackIcon(icon),
-          ),
-          6.w.horizontalSpace,
-          // Text content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.textMain,
-                  ),
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildSmallCardFallbackIcon(icon);
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return SizedBox(
+                      width: 32.w,
+                      height: 32.h,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                )
+                    : _buildSmallCardFallbackIcon(icon),
+              ),
+              6.w.horizontalSpace,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.textMain,
+                      ),
+                    ),
+                    if (hasDistance) ...[
+                      2.h.verticalSpace,
+                      Padding(
+                        padding: EdgeInsets.only(left: 0.w),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 10.sp,
+                              color: AppColor.primary,
+                            ),
+                            2.w.horizontalSpace,
+                            Flexible(
+                              child: Text(
+                                subtitle,
+                                style: TextStyle(
+                                  fontSize: 9.sp,
+                                  color: AppColor.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                  ],
                 ),
-                // 4.h.verticalSpace,
-                // Text(
-                //   subtitle,
-                //   style: TextStyle(
-                //     fontSize: 10.sp,
-                //     color: Colors.grey.shade600,
-                //   ),
-                // ),
-              ],
-            ),
+              ),
+            ],
           ),
+
+          // Distance (subtitle) below the row - ONLY for nearby locations (showKm = true)
         ],
       ),
     );

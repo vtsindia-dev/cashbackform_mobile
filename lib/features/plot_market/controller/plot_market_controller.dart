@@ -12,36 +12,112 @@ import '../../../common/widget/toster.dart';
 import '../../payment/controller/razorpay_controller.dart';
 import '../model/plot_market.dart';
 import '../screens/add_plot.dart';
+
 class PlotMarketController extends GetxController {
   var isLoading = false.obs;
   var isLoadMore = false.obs;
   var isLoadingDetail = false.obs;
   var marketPlots = <MarketPlot>[].obs;
   var marketDetail = Rxn<MarketPlotDetail>();
+
+  // Pagination
   var currentPage = 1.obs;
   var totalPages = 1.obs;
   var hasMoreData = true.obs;
   var totalItems = 0.obs;
+
+  // Filters
   var searchQuery = ''.obs;
-  var selectedCity = ''.obs;
-  var selectedState = ''.obs;
+  var selectedCity = Rxn<City>();
+  var selectedState = Rxn<AppState>();
+  var selectedPlotTypes = <PropertyType>[].obs;
   var minPrice = ''.obs;
   var maxPrice = ''.obs;
+  var minAreaSqft = ''.obs;
+  var maxAreaSqft = ''.obs;
+
+  // Filter data from API
+  var states = <AppState>[].obs;
+  var cities = <City>[].obs;
+  var plotTypes = <PropertyType>[].obs;
+
+  // Dynamic price ranges - These will be updated from API response
+  var priceMin = 0.0.obs;
+  var priceMax = 10000000.0.obs;
+  var areaMin = 0.0.obs;
+  var areaMax = 10000.0.obs;
+
+  // Other
   var errorMessage = ''.obs;
   var isExpanded = true.obs;
-  var verificationAmount = 499.0.obs; // Verification fee amount
+  var verificationAmount = 499.0.obs; // Default value
 
-  void toggleExpansion() => isExpanded.value = !isExpanded.value;
+  // UI State
+  var isEnquiryLoading = false.obs;
+  var enquiryCount = 0.obs;
+  var message = ''.obs;
+  final TextEditingController searchController = TextEditingController();
+  var recentSearch = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     fetchMarketPlots();
+    // Note: We don't need fetchFilterData() initially since plot types come with market plots
   }
 
-  var isEnquiryLoading = false.obs;
-  var enquiryCount = 0.obs;
-  var message = ''.obs;
+  // Fetch filter data (states only, plot types come from market plot response)
+  Future<void> fetchFilterData() async {
+    try {
+      // Fetch states
+      final statesResponse = await ApiService.getRequest(ApiUrl.states);
+      if (statesResponse.statusCode == 200) {
+        final statesData = statesResponse.data;
+        if (statesData['data'] != null && statesData['data'] is List) {
+          states.value = (statesData['data'] as List)
+              .map((item) => AppState.fromJson(item))
+              .toList();
+          print('✅ Loaded ${states.length} states');
+        }
+      }
+
+      // Note: Plot types will be loaded from market plot response in fetchMarketPlots()
+    } catch (e) {
+      print('❌ Error fetching filter data: $e');
+    }
+  }
+
+  // Fetch cities for selected state
+  Future<void> fetchCitiesForState(int stateId) async {
+    try {
+      final url = '${ApiUrl.cities}/$stateId';
+      final response = await ApiService.getRequest(url);
+      if (response.statusCode == 200) {
+        final citiesData = response.data;
+        if (citiesData['data'] != null && citiesData['data'] is List) {
+          cities.value = (citiesData['data'] as List)
+              .map((item) => City.fromJson(item))
+              .toList();
+          print('✅ Loaded ${cities.length} cities for state $stateId');
+        }
+      }
+    } catch (e) {
+      print('❌ Error fetching cities: $e');
+    }
+  }
+
+  // When state changes, fetch its cities
+  void onStateChanged(AppState? state) {
+    selectedState.value = state;
+    selectedCity.value = null; // Reset city when state changes
+    cities.clear(); // Clear previous cities
+
+    if (state != null) {
+      fetchCitiesForState(state.id);
+    }
+  }
+
+  void toggleExpansion() => isExpanded.value = !isExpanded.value;
 
   Future<void> sendEnquiry() async {
     isEnquiryLoading.value = true;
@@ -67,7 +143,6 @@ class PlotMarketController extends GetxController {
         Get.snackbar(
           'Success',
           "Enquiry Submitted successfully",
-          // message.value,
           backgroundColor: Colors.green,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
@@ -135,10 +210,12 @@ class PlotMarketController extends GetxController {
       isLoadingDetail(false);
     }
   }
+
   void _clearDetailData() {
     marketDetail.value = null;
     errorMessage('');
   }
+
   void _logDetailInfo() {
     final detail = marketDetail.value;
     if (detail != null) {
@@ -207,6 +284,7 @@ class PlotMarketController extends GetxController {
       SnackBarHelper.showError("Failed to open document");
     }
   }
+
   Future<void> fetchMarketPlots({bool loadMore = false}) async {
     try {
       if (loadMore) {
@@ -218,7 +296,7 @@ class PlotMarketController extends GetxController {
       }
 
       final url = '${ApiUrl.marketPlotList}?page_no=${currentPage.value}${_buildQueryParams()}';
-      print('Fetching URL: $url');
+      print('🌐 Fetching URL: $url');
 
       final response = await ApiService.getRequest(url);
       if (response.statusCode == 200) {
@@ -230,11 +308,27 @@ class PlotMarketController extends GetxController {
           final marketData = responseData['data']['market'];
           final paginationData = responseData['data']['pagination'];
 
+          // Parse market plots
           if (loadMore) {
             marketPlots.addAll(_parseMarketPlots(marketData));
           } else {
             marketPlots.assignAll(_parseMarketPlots(marketData));
           }
+
+          // IMPORTANT: Extract plot types from the response
+          if (!loadMore && responseData['data']['property_type'] != null) {
+            final propertyTypesData = responseData['data']['property_type'];
+            if (propertyTypesData is List) {
+              plotTypes.value = (propertyTypesData as List)
+                  .map((item) => PropertyType.fromJson(item))
+                  .toList();
+              print('✅ Loaded ${plotTypes.length} plot types from market response');
+            }
+          }
+
+          // Extract dynamic ranges from response if available
+          _extractDynamicRanges(responseData['data']);
+
           currentPage.value = paginationData['current_page'] ?? 1;
           totalPages.value = paginationData['last_page'] ?? 1;
           totalItems.value = paginationData['total'] ?? 0;
@@ -242,6 +336,9 @@ class PlotMarketController extends GetxController {
 
           print('✅ Fetched ${marketPlots.length} market plots');
           print('📄 Current page: $currentPage, Total pages: $totalPages, Total items: $totalItems');
+          print('💰 Price range: ₹$priceMin - ₹$priceMax');
+          print('📏 Area range: ${areaMin.value} - ${areaMax.value} sqft');
+          print('🏠 Plot types available: ${plotTypes.length}');
 
         } else {
           SnackBarHelper.showError("Invalid response format from server");
@@ -265,6 +362,44 @@ class PlotMarketController extends GetxController {
     }
   }
 
+  void _extractDynamicRanges(Map<String, dynamic>? data) {
+    try {
+      if (data != null) {
+        // Extract price ranges
+        if (data['price_min'] != null) {
+          priceMin.value = double.tryParse(data['price_min'].toString()) ?? 0.0;
+          print('💰 Extracted price_min from API: ${priceMin.value}');
+        }
+        if (data['price_max'] != null) {
+          priceMax.value = double.tryParse(data['price_max'].toString()) ?? 10000000.0;
+          print('💰 Extracted price_max from API: ${priceMax.value}');
+        }
+
+        // Extract area ranges - Note: your JSON shows "sqft_min" and "sqft_max"
+        if (data['sqft_min'] != null) {
+          areaMin.value = double.tryParse(data['sqft_min'].toString()) ?? 0.0;
+          print('📏 Extracted sqft_min from API: ${areaMin.value}');
+        }
+        if (data['sqft_max'] != null) {
+          areaMax.value = double.tryParse(data['sqft_max'].toString()) ?? 10000.0;
+          print('📏 Extracted sqft_max from API: ${areaMax.value}');
+        }
+
+        // Also check for area_min and area_max as fallback
+        if (data['area_min'] != null && areaMin.value == 0.0) {
+          areaMin.value = double.tryParse(data['area_min'].toString()) ?? 0.0;
+          print('📏 Extracted area_min from API: ${areaMin.value}');
+        }
+        if (data['area_max'] != null && areaMax.value == 10000.0) {
+          areaMax.value = double.tryParse(data['area_max'].toString()) ?? 10000.0;
+          print('📏 Extracted area_max from API: ${areaMax.value}');
+        }
+      }
+    } catch (e) {
+      print('❌ Error extracting dynamic ranges: $e');
+    }
+  }
+
   Future<void> loadMore() async {
     if (!isLoadMore.value && hasMoreData.value) {
       currentPage.value++;
@@ -276,69 +411,107 @@ class PlotMarketController extends GetxController {
     await fetchMarketPlots();
   }
 
-  Future<void> searchPlots(String query) async {
-    searchQuery.value = query;
-    await fetchMarketPlots();
+  void onSearchChanged(String value) {
+    searchQuery.value = value;
   }
 
-  Future<void> filterByCity(String city) async {
-    selectedCity.value = city;
-    await fetchMarketPlots();
+  void applySearch() {
+    if (searchQuery.value.trim().isEmpty) return;
+    recentSearch.value = searchQuery.value.trim();
+    fetchMarketPlots();
   }
 
-  Future<void> filterByState(String state) async {
-    selectedState.value = state;
-    await fetchMarketPlots();
+  void clearRecentSearch() {
+    recentSearch.value = '';
+    searchQuery.value = '';
+    searchController.clear();
+    fetchMarketPlots();
   }
 
-  Future<void> filterByPrice(String min, String max) async {
-    minPrice.value = min;
-    maxPrice.value = max;
-    await fetchMarketPlots();
+  void togglePlotTypeSelection(PropertyType plotType) {
+    if (selectedPlotTypes.contains(plotType)) {
+      selectedPlotTypes.remove(plotType);
+    } else {
+      selectedPlotTypes.add(plotType);
+    }
   }
 
+  // Check if any filters are applied
+  bool hasFiltersApplied() {
+    return searchQuery.value.isNotEmpty ||
+        selectedState.value != null ||
+        selectedCity.value != null ||
+        selectedPlotTypes.isNotEmpty ||
+        minPrice.value.isNotEmpty ||
+        maxPrice.value.isNotEmpty ||
+        minAreaSqft.value.isNotEmpty ||
+        maxAreaSqft.value.isNotEmpty;
+  }
+
+  // Get active filter count for UI
+  int getActiveFilterCount() {
+    int count = selectedPlotTypes.length;
+    if (searchQuery.value.isNotEmpty) count++;
+    if (selectedState.value != null) count++;
+    if (selectedCity.value != null) count++;
+    if (minPrice.value.isNotEmpty || maxPrice.value.isNotEmpty) count++;
+    if (minAreaSqft.value.isNotEmpty || maxAreaSqft.value.isNotEmpty) count++;
+    return count;
+  }
+
+  // Clear all filters
   Future<void> clearFilters() async {
     searchQuery.value = '';
-    selectedCity.value = '';
-    selectedState.value = '';
+    selectedState.value = null;
+    selectedCity.value = null;
+    selectedPlotTypes.clear();
     minPrice.value = '';
     maxPrice.value = '';
+    minAreaSqft.value = '';
+    maxAreaSqft.value = '';
+    searchController.clear();
+    cities.clear();
     await fetchMarketPlots();
-  }
-
-  List<String> getAvailableCities() {
-    return marketPlots
-        .map((plot) => plot.city?.cityName ?? '')
-        .where((city) => city.isNotEmpty)
-        .toSet()
-        .toList();
-  }
-
-  List<String> getAvailableStates() {
-    return marketPlots
-        .map((plot) => plot.state?.stateName ?? '')
-        .where((state) => state.isNotEmpty)
-        .toSet()
-        .toList();
   }
 
   String _buildQueryParams() {
     final params = <String>[];
 
+    // Search
     if (searchQuery.value.isNotEmpty) {
       params.add('search=${Uri.encodeComponent(searchQuery.value)}');
     }
-    if (selectedCity.value.isNotEmpty) {
-      params.add('city=${Uri.encodeComponent(selectedCity.value)}');
+
+    // State
+    if (selectedState.value != null) {
+      params.add('state=${selectedState.value!.id}');
     }
-    if (selectedState.value.isNotEmpty) {
-      params.add('state=${Uri.encodeComponent(selectedState.value)}');
+
+    // City
+    if (selectedCity.value != null) {
+      params.add('city=${selectedCity.value!.id}');
     }
+
+    // Plot Types
+    if (selectedPlotTypes.isNotEmpty) {
+      final typeIds = selectedPlotTypes.map((type) => type.id).toList();
+      params.add('plot_type=${typeIds.join(',')}');
+    }
+
+    // Price Range
     if (minPrice.value.isNotEmpty) {
       params.add('min_price=${Uri.encodeComponent(minPrice.value)}');
     }
     if (maxPrice.value.isNotEmpty) {
       params.add('max_price=${Uri.encodeComponent(maxPrice.value)}');
+    }
+
+    // Area Range
+    if (minAreaSqft.value.isNotEmpty) {
+      params.add('area_sqft_min=${Uri.encodeComponent(minAreaSqft.value)}');
+    }
+    if (maxAreaSqft.value.isNotEmpty) {
+      params.add('area_sqft_max=${Uri.encodeComponent(maxAreaSqft.value)}');
     }
 
     return params.isEmpty ? '' : '&${params.join('&')}';
@@ -464,6 +637,7 @@ class PlotMarketController extends GetxController {
       isLoading(false);
     }
   }
+
   Future<bool> deleteMarketPlot(int id) async {
     try {
       isLoading(true);
@@ -489,10 +663,94 @@ class PlotMarketController extends GetxController {
       isLoading(false);
     }
   }
+
   void openEditForm(MarketPlot plot) {
     Get.to(() => MarketPlotForm(plot: plot));
   }
 
+  // Fetch verification amount from API (NOTE: your model has "verfication" not "verification")
+  Future<double> _fetchVerificationAmount() async {
+    try {
+      print('🌐 Fetching verification amount...');
+
+      // Since your MarketPlot model has "verfication" field, we'll use that
+      // Check if any plot has a verification fee set
+      for (var plot in marketPlots) {
+        if (plot.verfication != null && plot.verfication! > 0) {
+          verificationAmount.value = plot.verfication!.toDouble();
+          print('✅ Found verification amount in plot data: ₹${verificationAmount.value}');
+          return verificationAmount.value;
+        }
+      }
+
+      // If not found in plot data, try to fetch from API
+      final url = '${ApiUrl.baseUrl}verification-fee'; // Make sure this endpoint exists
+      print('🌐 Trying to fetch verification amount from: $url');
+
+      try {
+        final response = await ApiService.getRequest(url);
+
+        if (response.statusCode == 200) {
+          final responseData = response.data;
+
+          if (responseData['status'] == true) {
+            double amount = 499.0; // Default fallback
+
+            if (responseData['data'] != null) {
+              final data = responseData['data'];
+
+              // Check for different possible field names
+              if (data['verification_fee'] != null) {
+                amount = double.tryParse(data['verification_fee'].toString()) ?? 499.0;
+                print('✅ Got verification amount from API: ₹$amount');
+              }
+              else if (data['verfication_fee'] != null) { // Note the spelling
+                amount = double.tryParse(data['verfication_fee'].toString()) ?? 499.0;
+                print('✅ Got verification amount from API (verfication_fee): ₹$amount');
+              }
+              else if (data['amount'] != null) {
+                amount = double.tryParse(data['amount'].toString()) ?? 499.0;
+                print('✅ Got verification amount from API (amount): ₹$amount');
+              }
+              else if (data['fee'] != null) {
+                amount = double.tryParse(data['fee'].toString()) ?? 499.0;
+                print('✅ Got verification amount from API (fee): ₹$amount');
+              }
+              else if (data['verification_amount'] != null) {
+                amount = double.tryParse(data['verification_amount'].toString()) ?? 499.0;
+                print('✅ Got verification amount from API (verification_amount): ₹$amount');
+              }
+              else {
+                print('⚠️ No verification amount found in API response');
+              }
+            }
+            else if (responseData['verification_fee'] != null) {
+              amount = double.tryParse(responseData['verification_fee'].toString()) ?? 499.0;
+              print('✅ Got verification amount from root level: ₹$amount');
+            }
+            else {
+              print('⚠️ API response data is null');
+            }
+
+            verificationAmount.value = amount;
+            return amount;
+          } else {
+            print('❌ API returned false status: ${responseData['message']}');
+            return verificationAmount.value;
+          }
+        } else {
+          print('❌ Failed to fetch verification amount. Status: ${response.statusCode}');
+          return verificationAmount.value;
+        }
+      } catch (apiError) {
+        print('❌ Error calling verification API: $apiError');
+        return verificationAmount.value;
+      }
+    } catch (e) {
+      print('❌ Error in _fetchVerificationAmount: $e');
+      return verificationAmount.value;
+    }
+  }
 
   Future<void> initiateVerificationPayment(MarketPlot plot) async {
     try {
@@ -510,26 +768,33 @@ class PlotMarketController extends GetxController {
         return;
       }
 
-      // If you have a pending status (like 2), check for it here
-      // if (plot.verifyStatus == 2) {
-      //   Get.snackbar(
-      //     "Verification Pending",
-      //     "This plot is already under verification review.",
-      //     snackPosition: SnackPosition.BOTTOM,
-      //     backgroundColor: Colors.orange,
-      //     colorText: Colors.white,
-      //   );
-      //   return;
-      // }
+      // Get verification amount (try multiple sources)
+      double amountToCharge = 499.0; // Default
 
-      // Setup verification payment (₹499)
+      // 1. Try from plot's verfication field (note the spelling)
+      if (plot.verfication != null && plot.verfication! > 0) {
+        amountToCharge = plot.verfication!.toDouble();
+        print('💰 Using plot-specific verification fee (verfication field): ₹$amountToCharge');
+      }
+      // 2. Try from fetched API amount
+      else if (verificationAmount.value > 0) {
+        amountToCharge = verificationAmount.value;
+        print('💰 Using pre-fetched verification amount: ₹$amountToCharge');
+      }
+      // 3. Try to fetch fresh from API
+      else {
+        amountToCharge = await _fetchVerificationAmount();
+        print('💰 Using freshly fetched verification amount: ₹$amountToCharge');
+      }
+
+      // Setup verification payment
       razorpayController.setupMarketVerificationPayment(
         marketPlotId: plot.id,
-        amount: 499.0,
+        amount: amountToCharge,
         propertyName: plot.name,
       );
 
-      // Show verification payment dialog
+      // Show verification payment dialog with dynamic amount
       Get.dialog(
         AlertDialog(
           shape: RoundedRectangleBorder(
@@ -595,7 +860,7 @@ class PlotMarketController extends GetxController {
 
               SizedBox(height: 16.h),
 
-              // Price
+              // Price - Dynamic amount
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -607,7 +872,7 @@ class PlotMarketController extends GetxController {
                     ),
                   ),
                   Text(
-                    "₹499",
+                    "₹${amountToCharge.toStringAsFixed(0)}",
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.bold,
@@ -701,22 +966,26 @@ class PlotMarketController extends GetxController {
 
   Widget _buildBenefitItem(String text) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.check_circle, size: 16.sp, color: Colors.green),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 12.sp),
+        padding: EdgeInsets.symmetric(vertical: 4.h),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.check_circle, size: 16.sp, color: Colors.green),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(fontSize: 12.sp),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        )
     );
   }
+
+
+
+
 
   void _showTermsDialog() {
     Get.dialog(
@@ -724,7 +993,7 @@ class PlotMarketController extends GetxController {
         title: Text("Terms and Conditions"),
         content: SingleChildScrollView(
           child: Text(
-            "1. Verification fee is non-refundable.\n"
+                "1. Verification fee is non-refundable.\n"
                 "2. Verification process takes 2-3 business days.\n"
                 "3. We verify plot details, documents, and ownership.\n"
                 "4. Verified status can be revoked if false information is provided.\n"
@@ -745,6 +1014,7 @@ class PlotMarketController extends GetxController {
   void openAddForm() {
     Get.to(() => MarketPlotForm());
   }
+
   @override
   void onClose() {
     _clearDetailData();

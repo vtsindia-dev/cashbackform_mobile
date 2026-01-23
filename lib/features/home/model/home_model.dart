@@ -198,7 +198,6 @@ class FeaturedSyndicate {
   String get propertyTypeName => propertyType.categoryName;
 }
 
-// Featured Market Property Model
 class FeaturedMarketProperty {
   final int id;
   final String name;
@@ -217,7 +216,6 @@ class FeaturedMarketProperty {
   final DateTime createdAt;
   final DateTime updatedAt;
   final FeaturedPropertyType? propertyType;
-
   FeaturedMarketProperty({
     required this.id,
     required this.name,

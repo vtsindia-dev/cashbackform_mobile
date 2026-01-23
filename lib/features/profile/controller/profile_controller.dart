@@ -23,7 +23,7 @@ class ProfileController extends GetxController {
   final dobController = TextEditingController();
   final pinCodeController = TextEditingController();
   final addressController = TextEditingController();
-  var selectedGender = 0.obs; // 0 = not selected, 1 = male, 2 = female, 3 = other
+  var selectedGender = 0.obs;
   final ImagePicker _picker = ImagePicker();
   var profileImage = Rxn<File>();
   var profileImageUrl = ''.obs;
@@ -186,8 +186,6 @@ class ProfileController extends GetxController {
       isUpdating(false);
     }
   }
-
-  // Pick profile image from gallery
   Future<void> pickProfileImage() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -205,8 +203,6 @@ class ProfileController extends GetxController {
       SnackBarHelper.showError('Failed to pick image: $e');
     }
   }
-
-  // Take profile photo with camera
   Future<void> takeProfilePhoto() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -224,8 +220,6 @@ class ProfileController extends GetxController {
       SnackBarHelper.showError('Failed to take photo: $e');
     }
   }
-
-  // Prefill form data from profile
   void _prefillFormData() {
     if (profile.value == null) return;
 

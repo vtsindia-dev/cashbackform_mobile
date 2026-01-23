@@ -121,8 +121,6 @@ class SessionManager {
       rethrow;
     }
   }
-
-  // Verify session was saved correctly
   static Future<void> _verifySessionSaved() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -140,7 +138,7 @@ class SessionManager {
     for (final key in allKeys) {
       if (key == _tokenKey) {
         final token = prefs.getString(key);
-        print('   $key: ${token?.substring(0, min(token?.length ?? 0, 20))}...');
+        print('   $key: ${token?.substring(0, min(token.length ?? 0, 20))}...');
       } else {
         print('   $key: ${prefs.get(key)}');
       }
@@ -216,8 +214,6 @@ class SessionManager {
       return null;
     }
   }
-
-  // Get user data
   static Future<Map<String, dynamic>?> getUserData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -229,8 +225,6 @@ class SessionManager {
         print('❌ User not logged in');
         return null;
       }
-
-      // Try to get from JSON first
       final jsonData = prefs.getString(_userDataKey);
       if (jsonData != null && jsonData.isNotEmpty) {
         try {
@@ -241,8 +235,6 @@ class SessionManager {
           print('❌ Error parsing JSON: $e');
         }
       }
-
-      // Fallback to individual fields
       final userData = {
         'id': prefs.getString(_userIdKey),
         'first_name': prefs.getString(_firstNameKey),
@@ -267,22 +259,14 @@ class SessionManager {
       return null;
     }
   }
-
-  // Clear session (logout)
   static Future<void> clearSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
       print('🗑️ === CLEARING SESSION ===');
-
-      // Get values before clearing for logging
       final tokenBefore = prefs.getString(_tokenKey);
       final userIdBefore = prefs.getString(_userIdKey);
-
       print('   Token before clear: $tokenBefore');
       print('   User ID before clear: $userIdBefore');
-
-      // Clear all session keys
       await prefs.remove(_isLoggedInKey);
       await prefs.remove(_userIdKey);
       await prefs.remove(_firstNameKey);
@@ -298,47 +282,35 @@ class SessionManager {
       await prefs.remove(_loginTimeKey);
       await prefs.remove(_tokenKey);
       await prefs.remove(_userDataKey);
-
-      // Verify cleared
       final tokenAfter = prefs.getString(_tokenKey);
       final userIdAfter = prefs.getString(_userIdKey);
-
       print('   Token after clear: $tokenAfter');
       print('   User ID after clear: $userIdAfter');
       print('   All keys after clear: ${prefs.getKeys()}');
-
       print('✅ Session cleared successfully');
       print('🗑️ === END SESSION CLEAR ===');
     } catch (e) {
       print('❌ Error clearing session: $e');
     }
   }
-
-  // Check if session is expired
   static Future<bool> isSessionExpired() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final loginTimeString = prefs.getString(_loginTimeKey);
-
       if (loginTimeString == null) {
         print('⚠️ No login time found, session considered expired');
         return true;
       }
-
       try {
         final loginDateTime = DateTime.parse(loginTimeString);
         final now = DateTime.now();
         final difference = now.difference(loginDateTime);
-
-        // Session expires after 30 days
         final isExpired = difference.inDays > 30;
-
         print('⏰ Session expiry check:');
         print('   Login time: $loginDateTime');
         print('   Current time: $now');
         print('   Days since login: ${difference.inDays}');
         print('   Is expired: $isExpired');
-
         return isExpired;
       } catch (e) {
         print('❌ Error parsing login time: $e');
@@ -349,8 +321,6 @@ class SessionManager {
       return true;
     }
   }
-
-  // Get specific user field
   static Future<String?> getUserField(String field) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -362,43 +332,30 @@ class SessionManager {
       return null;
     }
   }
-
-  // Debug method to print all session data
   static Future<void> debugSession() async {
     print('🔍 Debugging session...');
-
-    // Get token WITHOUT clearing it
     final token = await getToken();
     final userId = await getUserId();
     final allKeys = await _getAllKeys();
-
     print('    Token before check: ${token != null ? "${token.substring(0, 10)}..." : "null"}');
     print('    User ID before check: $userId');
     print('    Total stored keys: ${allKeys.length}');
-
-    // DO NOT call clearSession() here
-    // await clearSession(); // REMOVE THIS LINE IF IT EXISTS
   }
-
-  // Helper method to get all stored keys (for debugging)
   static Future<Map<String, dynamic>> _getAllKeys() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final allKeys = prefs.getKeys();
       final Map<String, dynamic> keyValues = {};
-
       for (var key in allKeys) {
         final value = prefs.get(key);
         keyValues[key] = value;
       }
-
       return keyValues;
     } catch (e) {
       print('Error getting all keys: $e');
       return {};
     }
   }
-  // Update specific field
   static Future<void> updateField(String key, dynamic value) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -414,44 +371,33 @@ class SessionManager {
       } else if (value is List<String>) {
         await prefs.setStringList(key, value);
       }
-
       print('✏️ Updated field "$key" to: $value');
     } catch (e) {
       print('❌ Error updating field "$key": $e');
     }
   }
-
-  // Force save token (useful for debugging)
   static Future<void> forceSaveToken(String token) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, token);
       await prefs.setBool(_isLoggedInKey, true);
       await prefs.setString(_userIdKey, 'debug_user');
-
       print('🔧 Force saved token: ${token.substring(0, min(token.length, 20))}...');
       await debugSession();
     } catch (e) {
       print('❌ Error force saving token: $e');
     }
   }
-
   static Future<String?> getUserId() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
       print('👤 === GETTING USER ID ===');
-
       final userId = prefs.getString(_userIdKey);
-
       print('   User ID from storage: $userId');
       print('   User ID is null: ${userId == null}');
       print('   User ID is empty: ${userId?.isEmpty ?? true}');
-
       if (userId == null || userId.isEmpty) {
         print('⚠️ WARNING: User ID is null or empty!');
-
-        // Debug: try to get from user data JSON
         final jsonData = prefs.getString(_userDataKey);
         if (jsonData != null && jsonData.isNotEmpty) {
           try {
@@ -460,7 +406,6 @@ class SessionManager {
                 userData['user_id']?.toString() ??
                 userData['userId']?.toString();
             if (idFromJson != null && idFromJson.isNotEmpty) {
-              // Save it for future use
               await prefs.setString(_userIdKey, idFromJson);
               print('✅ User ID retrieved from JSON and saved: $idFromJson');
               return idFromJson;
@@ -469,13 +414,10 @@ class SessionManager {
             print('❌ Error parsing JSON for user ID: $e');
           }
         }
-
         return null;
       }
-
       print('✅ User ID retrieved successfully: $userId');
       print('👤 === END USER ID RETRIEVAL ===');
-
       return userId;
     } catch (e) {
       print('❌ Error getting user ID: $e');

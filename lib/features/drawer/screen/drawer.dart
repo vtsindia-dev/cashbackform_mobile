@@ -88,6 +88,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   _menuOption(context, asset: Images.plotRegistered, title: 'Buyed Syndicate Plots', onTap: () => Get.toNamed('/ownedSyndicatePlotList')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Residential Plots', onTap: () => Get.toNamed('/myResidential')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Residential Enquiry', onTap: () => Get.toNamed('/myResidentialEnquiry')),
+                  _menuOption(context, asset: Images.plotRegistered, title: 'Rental Yield', onTap: () => Get.toNamed('/rentalYieldList')),
                   _menuOption(context, asset: Images.aboutUs, title: 'About Us', onTap: () => Get.to(()=>AboutUs())),
                   _menuOption(context, asset: Images.contactUs, title: 'Contact Us', onTap: () => Get.to(()=>ContactUs())),
                   _menuOption(context, asset: Images.logout, title: 'Logout', onTap: () => _showLogoutConfirmation(context)),

@@ -181,12 +181,12 @@ class SyndicateDetail {
   final City? city;
   final AppState? state;
   final String area;
-  final String price; // Price per sq.ft
+  final String price;
   final String description;
-  final String adminDocumentPrice; // Admin document price
-  final bool isDocumentVerified; // Document verification status
+  final String adminDocumentPrice;
+  final bool isDocumentVerified;
   final int unitSpilt;
-  final String unit; // Unit areas in sq.ft
+  final String unit;
   final List<String> images;
   final String plotImage;
   final String work;
@@ -199,8 +199,7 @@ class SyndicateDetail {
   final List<Document> documents;
   final List<Booking> bookings;
   final List<User> users;
-  final String? adminBlockAmount; // Admin block amount
-
+  final String? adminBlockAmount;
   SyndicateDetail({
     required this.id,
     required this.name,

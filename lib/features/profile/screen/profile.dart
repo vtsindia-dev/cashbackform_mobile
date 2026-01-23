@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
+import '../../../common/widget/loader.dart';
 import '../../../common/widget/toster.dart';
 import '../controller/profile_controller.dart';
 
@@ -20,22 +21,30 @@ class ProfileForm extends StatelessWidget {
         title: "My Profile",
         showBackButton: true,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(height: 10.h),
-            _buildProfileImageSection(controller),
-            SizedBox(height: 24.h),
-            _buildFormFields(controller),
-            SizedBox(height: 30.h),
-            _buildUpdateButton(controller),
-            SizedBox(height: 15.h),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(
+            child: GifLoader(message: "Loading...", size: 100),
+          );
+        }
 
-          ],
-        ),
-      ),
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              SizedBox(height: 10.h),
+              _buildProfileImageSection(controller),
+              SizedBox(height: 24.h),
+              _buildFormFields(controller),
+              SizedBox(height: 30.h),
+              _buildUpdateButton(controller),
+              SizedBox(height: 15.h),
+            ],
+          ),
+        );
+      }),
     );
   }
+
 
   Widget _buildProfileImageSection(ProfileController controller) {
     return Column(
@@ -793,7 +802,7 @@ class ProfileForm extends StatelessWidget {
                 title: 'Remove Photo',
                 color: Colors.red,
                 onTap: () async {
-                  Get.back(); // close bottom sheet / dialog
+                  Get.back();
                   await controller.removeProfileImage();
                 },
               ),

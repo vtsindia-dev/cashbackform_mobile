@@ -24,7 +24,7 @@ class _DashboardState extends State<Dashboard> {
   double _fabDotAnimation = 0.0;
 
   final List<Widget> _screens = [
-     Home(),
+    Home(),
     Service(),
     MaterialStore(),
     Menu()
@@ -175,7 +175,7 @@ class _DashboardState extends State<Dashboard> {
                             child: Transform.scale(
                               scale: 0.5 + 0.5 * _menuAnimationValue,
                               child: _buildPlotMenuItem(
-                                  Images.plotMarketplace,
+                                Images.plotMarketplace,
                                 "Plot Marketplace",
                                     () => _onPlotMenuItemTap(0),
                                 alignment: Alignment.bottomLeft,

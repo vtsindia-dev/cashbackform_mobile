@@ -10,13 +10,25 @@ import '../controller/residential_add_controller.dart';
 import '../controller/residential_controller.dart';
 import '../model/residential_model.dart';
 
-class PlotEnquiryScreen extends StatelessWidget {
+class PlotEnquiryScreen extends StatefulWidget {
   const PlotEnquiryScreen({Key? key}) : super(key: key);
 
   @override
+  State<PlotEnquiryScreen> createState() => _PlotEnquiryScreenState();
+}
+
+class _PlotEnquiryScreenState extends State<PlotEnquiryScreen> {
+  final controller = Get.put(ResidentialPropertyFormController());
+  final controller2 = Get.put(ResidentialPropertyController());
+
+  @override
+  void initState() {
+    controller.fetchEnquiredProperties();
+    super.initState();
+  }
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ResidentialPropertyFormController());
-    final controller2 = Get.put(ResidentialPropertyController());
+
 
     return Scaffold(
       backgroundColor: AppColor.backgroundLight,

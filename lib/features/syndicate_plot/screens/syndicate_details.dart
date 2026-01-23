@@ -44,6 +44,7 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
         if (controller.isLoadingDetail.value) {
           return const Center(child: GifLoader(message: "Loading...", size: 100));
         }
+
         if (controller.syndicateDetail.value == null) {
           return _buildNoDataAvailable();
         }

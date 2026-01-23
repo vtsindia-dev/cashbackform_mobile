@@ -473,8 +473,7 @@ class AboutGiooPlot extends StatelessWidget {
                         ),
                         SizedBox(height: 8.h),
                         Obx(() {
-                          final isExpanded =
-                              controller.isDescriptionExpanded.value;
+                          final isExpanded = controller.isDescriptionExpanded.value;
 
                           return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,

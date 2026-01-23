@@ -42,7 +42,7 @@ class ApiUrl {
   static const String terms = "$baseUrl/api/v2/terms";
   static const String privacy = "$baseUrl/api/v2/privacy";
 
-  static const String carouselBanners = '$baseUrl/api/v2/carousel_banner';
+  static const String carouselBanners = '$baseUrl/api/v2/ ';
   static const String featuredSyndicates = '$baseUrl/api/v2/synticate/featured';
   static const String featuredMarket = '$baseUrl/api/v2/market/featured';
   static const String featuredGioo = "$baseUrl/api/v2/geo/featured";
@@ -54,5 +54,14 @@ class ApiUrl {
   static const String syndicateBuyingList = '$baseUrl/api/v2/syndicate_buying_list';
   static const String syndicateBuyingDetails = '$baseUrl/api/v2/syndicate_buying_list_details';
   static const String syndicateBuyingCancelRequest = '$baseUrl/api/v2/syndicate_buying_cancel_request';
-// static const String featuredMarket = '$baseUrl//api/v2/market/featured';
+
+
+
+
+  static const String states = '${baseUrl}/api/v2/state';
+  static const String cities = '${baseUrl}/api/v2/city'; // Will append state ID: /city/24
+  static const String propertyTypes = '${baseUrl}/api/v2/property-type'; // For plot types
+
+  // Verification
+  static const String verificationAmount = '${baseUrl}/api/v2/verification-fee';
 }

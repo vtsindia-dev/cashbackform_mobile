@@ -108,17 +108,16 @@ class _SplashScreenState extends State<SplashScreen>
         }
       } else {
         print('❌ User not logged in or userData is null');
-        print('   - isLoggedIn: $isLoggedIn');
+        print('  - isLoggedIn: $isLoggedIn');
         print('   - userData is null: ${userData == null}');
         Get.offAllNamed(AppRoutes.login);
       }
-    } catch (e) {
+    }
+    catch (e) {
       print('❌ Error checking authentication: $e');
       Get.offAllNamed(AppRoutes.login);
     }
   }
-
-
   @override
   void dispose() {
     _animationController.dispose();

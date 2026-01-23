@@ -1074,32 +1074,46 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
   Widget _buildUnitCard(GiooBuyingDetail detail) {
     final dateFormat = DateFormat('dd MMM yyyy');
 
-    /// STATE LOGIC
-    final int state = detail.cancelStatus ?? 0;
-    final bool canCancel = state == 0;
+    // STATUS LOGIC BASED ON REACT CODE
+    final int cancelStatus = detail.cancelStatus ?? 0;
+    final int refundStatus = detail.refundStatus ?? 0;
+    final bool isActive = cancelStatus == 0;
+    final bool isRequestSent = cancelStatus == 1;
+    final bool isCancelled = cancelStatus == 2;
 
-    /// STATUS TEXT & COLOR
+    /// STATUS TEXT & COLOR - Updated to match React logic
     String bookingStatusText;
     Color bookingStatusColor;
 
-    if (state == 0) {
+    if (cancelStatus == 0) {
       bookingStatusText = 'Active';
       bookingStatusColor = const Color(0xFF10B981); // Emerald Green
-    } else if (state == 1) {
-      bookingStatusText = 'Refund Processing';
+    } else if (cancelStatus == 1) {
+      bookingStatusText = 'Request Sent';
       bookingStatusColor = Colors.orange;
+    } else if (cancelStatus == 2) {
+      if (refundStatus == 0) {
+        bookingStatusText = 'Cancelled';
+        bookingStatusColor = const Color(0xFFEF4444); // Rose Red
+      } else if (refundStatus == 1) {
+        bookingStatusText = 'Refunded';
+        bookingStatusColor = Colors.green;
+      } else {
+        bookingStatusText = 'Cancelled';
+        bookingStatusColor = const Color(0xFFEF4444);
+      }
     } else {
-      bookingStatusText = 'Cancelled';
-      bookingStatusColor = const Color(0xFFEF4444); // Rose Red
+      bookingStatusText = 'Unknown';
+      bookingStatusColor = Colors.grey;
     }
 
     return Container(
       margin: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
       decoration: BoxDecoration(
-        color: state == 0 ? Colors.white : const Color(0xFFF8FAFC),
+        color: isActive ? Colors.white : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: state == 0 ? const Color(0xFFE2E8F0) : bookingStatusColor.withOpacity(0.2),
+          color: isActive ? const Color(0xFFE2E8F0) : bookingStatusColor.withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
@@ -1116,6 +1130,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
             padding: EdgeInsets.all(16.w),
             child: Row(
               children: [
+                // Unit Badge
                 Container(
                   width: 48.w,
                   height: 48.w,
@@ -1140,7 +1155,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                 ),
                 16.w.horizontalSpace,
 
-                // --- UNIT DETAILS ---
+                // Unit Details
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1162,12 +1177,25 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                           color: const Color(0xFF64748B),
                         ),
                       ),
+
+                      // Show status messages based on React logic
+                      if (cancelStatus == 2 && refundStatus == 0) ...[
+                        4.h.verticalSpace,
+                        Text(
+                          'Refund will be sent in 2 Days',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.amber.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
 
-                // --- CANCEL ACTION ---
-                if (canCancel)
+                // Cancel Action Button (only show for active status - cancelStatus == 0)
+                if (cancelStatus == 0)
                   Material(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(10.r),
@@ -1180,17 +1208,92 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                // Show Request Sent indicator (cancelStatus == 1)
+                if (cancelStatus == 1)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.hourglass_top_rounded, size: 14.w, color: Colors.orange.shade700),
+                        4.w.horizontalSpace,
+                        Text(
+                          'Request Sent',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.orange.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Show Cancelled indicator (cancelStatus == 2)
+                if (cancelStatus == 2 && refundStatus == 0)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.cancel_rounded, size: 14.w, color: Colors.red.shade700),
+                        4.w.horizontalSpace,
+                        Text(
+                          'Cancelled',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.red.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Show Refunded Successfully (refundStatus == 1)
+                if (refundStatus == 1)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle_rounded, size: 14.w, color: Colors.green.shade700),
+                        4.w.horizontalSpace,
+                        Text(
+                          'Refunded',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
 
-          // --- DIVIDER LINE ---
+          // Divider
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Divider(height: 1, thickness: 1, color: Colors.grey.shade100),
           ),
 
-          // --- FOOTER: STATUS CHIPS & REFUND ---
+          // Footer: Status Chips & Refund Info
           Padding(
             padding: EdgeInsets.all(12.w),
             child: Column(
@@ -1211,6 +1314,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                   ],
                 ),
 
+                // Show refund amount if available
                 if (detail.refundAmount != null || detail.refundDate != null) ...[
                   12.h.verticalSpace,
                   Container(
@@ -1227,7 +1331,10 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                           children: [
                             Icon(Icons.info_outline_rounded, size: 14.w, color: Colors.blue.shade700),
                             6.w.horizontalSpace,
-                            Text("Refunded Amount", style: TextStyle(fontSize: 11.sp, color: Colors.blue.shade700, fontWeight: FontWeight.bold)),
+                            Text(
+                              refundStatus == 1 ? "Refunded Amount" : "Refund Amount",
+                              style: TextStyle(fontSize:  11.sp, color: Colors.blue.shade700, fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
                         Text(
@@ -1245,7 +1352,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
       ),
     );
   }
-
   Widget _modernUnitBadge(String title, String value, Color color) {
     return Expanded(
       child: Container(

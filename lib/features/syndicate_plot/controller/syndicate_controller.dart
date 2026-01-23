@@ -363,7 +363,6 @@ class SyndicatePlotController extends GetxController {
         }
       }
 
-      // Set sensible defaults if no areas found
       if (minAreaValue == double.infinity) minAreaValue = 0;
       if (maxAreaValue <= minAreaValue) maxAreaValue = minAreaValue + 1000;
 
@@ -372,7 +371,6 @@ class SyndicatePlotController extends GetxController {
 
     } catch (e) {
       print('❌ Error extracting area ranges: $e');
-      // Set safe defaults
       sqftMin.value = 0.0;
       sqftMax.value = 10000.0;
     }
@@ -384,14 +382,10 @@ class SyndicatePlotController extends GetxController {
 
       isLoadingDetail(true);
       errorMessage('');
-
-      // Get token for authentication
       final token = await SessionManager.getToken();
 
       final url = '${ApiUrl.syndicateDetails}/$id';
       print('🌐 Fetching Syndicate Detail URL: $url');
-
-      // Create headers with bearer token if available
       final Map<String, String> headers = {};
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
@@ -399,15 +393,12 @@ class SyndicatePlotController extends GetxController {
       } else {
         print('⚠️ No token found, making unauthenticated request');
       }
-
       final response = await ApiService.getRequest(url, headers: headers);
-
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData != null && responseData['data'] != null) {
           syndicateDetail.value = SyndicateDetail.fromJson(responseData['data']);
           print('✅ Fetched syndicate detail: ${syndicateDetail.value?.name}');
-
           generatePlotsFromApiData();
           _logBookingInfo();
         } else {
@@ -420,12 +411,9 @@ class SyndicatePlotController extends GetxController {
         errorMessage('Session expired. Please login again.');
         SnackBarHelper.showError("Session expired. Please login again.");
         print('❌ 401 Unauthorized: Token invalid or expired');
-
-        // Clear session and redirect to login
         await SessionManager.clearSession();
         Get.offAllNamed('/login');
       } else if (response.statusCode == 403) {
-        // Forbidden - token missing but endpoint requires auth
         errorMessage('Authentication required');
         SnackBarHelper.showError("Please login to view details");
         print('❌ 403 Forbidden: Authentication required');
@@ -444,7 +432,6 @@ class SyndicatePlotController extends GetxController {
       SnackBarHelper.showError("Network error: $e");
       print('❌ Network error: $e');
 
-      // Check if it's a token-related error
       if (e.toString().contains('401') || e.toString().contains('unauthorized')) {
         await SessionManager.clearSession();
         Get.offAllNamed('/login');

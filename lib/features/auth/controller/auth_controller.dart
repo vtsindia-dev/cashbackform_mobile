@@ -249,7 +249,7 @@ class AuthController extends GetxController with CodeAutoFill {
         } else if (loginResponse.statusCode == 404) {
           SnackBarHelper.showInfo("New user! Redirecting to registration...");
           await cancel();
-          Get.toNamed('/register', arguments: {"phone": phoneNumber.value});
+          Get.toNamed('/register', arguments: {"phone": phoneNumber .value});
         } else {
           SnackBarHelper.showError("Login failed");
         }
@@ -298,7 +298,7 @@ class AuthController extends GetxController with CodeAutoFill {
       print('Registration Response Status: ${response.statusCode}');
       print('Registration Response Data: ${response.data}');
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         SnackBarHelper.showSuccess("Registration successful!");
 
         final userData = response.data['data']['user'];

@@ -21,7 +21,6 @@ class ResidentialPlotDetailsScreen extends StatefulWidget {
 
 class _ResidentialPlotDetailsScreenState extends State<ResidentialPlotDetailsScreen> {
   final ResidentialPropertyController controller = Get.find<ResidentialPropertyController>();
-
   @override
   void initState() {
     super.initState();
