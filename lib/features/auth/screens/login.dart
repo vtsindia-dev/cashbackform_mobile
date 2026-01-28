@@ -18,6 +18,23 @@ class _LoginState extends State<Login> {
   final AuthController authController = Get.put(AuthController());
   bool isTermsAccepted = false;
   @override
+  void initState() {
+    super.initState();
+    // Listen to phone number changes
+    authController.phoneController.addListener(() {
+      // When user manually types, reset the auto-fill flag
+      if (authController.hasShownPhoneHint.value) {
+        authController.hasShownPhoneHint.value = false;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    authController.phoneController.removeListener(() {});
+    super.dispose();
+  }
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
@@ -119,6 +136,18 @@ class _LoginState extends State<Login> {
                     labelStyle: TextStyle(color: AppColor.primary),
                     isDense: true,
                   ),
+                  // Add onTap to reset the flag
+                  onTap: () {
+                    if (authController.hasShownPhoneHint.value) {
+                      authController.hasShownPhoneHint.value = false;
+                    }
+                  },
+                  // Or use onChanged
+                  onChanged: (value) {
+                    if (authController.hasShownPhoneHint.value) {
+                      authController.hasShownPhoneHint.value = false;
+                    }
+                  },
                 ),
               ),
               Padding(
@@ -393,8 +422,5 @@ class _LoginState extends State<Login> {
       ],
     );
   }
-  @override
-  void dispose() {
-    super.dispose();
-  }
+
 }

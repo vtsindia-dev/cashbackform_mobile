@@ -180,7 +180,6 @@ class RazorpayController extends GetxController {
       isProcessing.value = false;
     }
   }
-
   Future<void> _handleSyndicatePaymentSuccess(PaymentSuccessResponse response, String token) async {
     final apiResponse = await ApiService.postRequestWithToken(
       _currentPaymentUrl.value,
@@ -424,7 +423,6 @@ class RazorpayController extends GetxController {
       ),
     );
   }
-
   Widget _buildErrorRow(String label, String value, {bool isCopyable = false, Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -1,12 +1,11 @@
+import 'package:cashback_farms/features/rental_yeild/model/rental_yeild_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
-import '../../residential_plots/widget/residential_plotlist.dart';
 import '../controller/rental_yield_controller.dart';
-import '../rental_yield_list.dart';
+import '../widget/rental_yield_list.dart';
 
 
 class RentalYieldScreen extends StatefulWidget { // Changed class name
@@ -400,7 +399,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
           children: [
             _buildSelectorItem(label: "All Cities", isSelected: _selectedCityId == 0, onTap: () => setState(() => _selectedCityId = 0)),
             ...citiesToShow.map((city) => _buildSelectorItem(
-                label: city.name,
+                label: city.cityName,
                 isSelected: _selectedCityId == city.id,
                 onTap: () => setState(() => _selectedCityId = city.id)
             )),
@@ -439,6 +438,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       ],
     );
   }
+
 
   Widget _buildFurnishingSelector() {
     final options = ['Fully Furnished', 'Semi Furnished', 'Unfurnished'];

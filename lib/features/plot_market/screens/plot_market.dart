@@ -1,3 +1,4 @@
+import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -99,15 +100,9 @@ class PlotMarket extends StatelessWidget {
           GestureDetector(
             onTap: controller.applySearch,
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Text(
-                "Search",
-                style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF819E4F), Color(0xFF9CB45A)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(20)),
+              child: const Text("Search", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
             ),
           ),
           SizedBox(width: 8.w),
@@ -118,12 +113,12 @@ class PlotMarket extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.all(8.w),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: AppColor.primary.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.filter_alt_outlined, color: Colors.blue, size: 18.w),
+                  Icon(Icons.filter_alt_outlined, color: AppColor.primary, size: 18.w),
                   SizedBox(width: 4.w),
 
                   // Show filter count badge
@@ -215,7 +210,6 @@ class PlotMarket extends StatelessWidget {
     showModalBottomSheet(
       context: Get.context!,
       isScrollControlled: true,
-
       backgroundColor: Colors.transparent,
       builder: (context) => _ModernFilterSheet(controller: controller),
     );
@@ -236,7 +230,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   late RangeValues _areaRange;
   late List<PropertyType> _selectedTypes;
   late AppState? _selectedState;
-  late  City? _selectedCity;
+  late City? _selectedCity;
 
   bool _priceChanged = false;
   bool _areaChanged = false;
@@ -246,10 +240,27 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   bool _showAllPlotTypes = false;
   final int _initialItemCount = 4;
 
+  // Use regular variables instead of Rx for local state
+  bool _isLoadingStates = false;
+  bool _isLoadingCities = false;
+
   @override
   void initState() {
     super.initState();
     _initFilters();
+    _ensureStatesLoaded();
+  }
+
+  void _ensureStatesLoaded() async {
+    if (widget.controller.states.isEmpty && !_isLoadingStates) {
+      setState(() {
+        _isLoadingStates = true;
+      });
+      await widget.controller.fetchStates();
+      setState(() {
+        _isLoadingStates = false;
+      });
+    }
   }
 
   void _initFilters() {
@@ -308,12 +319,12 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                         children: [
                           _buildLabelTag("STATE"),
                           const SizedBox(height: 10),
-                          _buildStateSelector(),
+                          Obx(() => _buildStateSelector()),
                           if (_selectedState != null) ...[
                             const SizedBox(height: 20),
                             _buildLabelTag("CITY"),
                             const SizedBox(height: 10),
-                            _buildCitySelector(),
+                            Obx(() => _buildCitySelector()),
                           ],
                         ],
                       )
@@ -430,7 +441,17 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   }
 
   Widget _buildStateSelector() {
+    if (_isLoadingStates) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 40.h),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final statesToShow = _showAllStates ? widget.controller.states : widget.controller.states.take(_initialItemCount).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -445,17 +466,29 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                   setState(() {
                     _selectedState = null;
                     _selectedCity = null;
+                    widget.controller.cities.clear(); // Clear cities when no state selected
                   });
                 }
             ),
             ...statesToShow.map((state) => _buildSelectorItem(
                 label: state.stateName,
                 isSelected: _selectedState?.id == state.id,
-                onTap: () {
+                onTap: () async {
                   setState(() {
                     _selectedState = state;
                     _selectedCity = null;
-                    widget.controller.onStateChanged(state);
+                    _isLoadingCities = true;
+                  });
+
+                  // Call onStateChanged and wait for cities to load
+                  widget.controller.onStateChanged(state);
+
+                  // Add a small delay and then update UI
+                  await Future.delayed(Duration(milliseconds: 100));
+
+                  // Use GetX to listen for cities changes
+                  setState(() {
+                    _isLoadingCities = false;
                   });
                 }
             )),
@@ -471,7 +504,43 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   }
 
   Widget _buildCitySelector() {
-    final citiesToShow = _showAllCities ? widget.controller.cities : widget.controller.cities.take(_initialItemCount).toList();
+
+    // Loading cities
+    if (widget.controller.isCityLoading.value) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 40.h),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // No state selected yet
+    if (_selectedState == null) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        child: Text(
+          "Select state first",
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    // No cities
+    if (widget.controller.cities.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        child: Text(
+          "No cities found",
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    final citiesToShow = _showAllCities
+        ? widget.controller.cities
+        : widget.controller.cities.take(_initialItemCount).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -479,22 +548,37 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
           spacing: 8.w,
           runSpacing: 8.h,
           children: [
+
+            /// ALL CITIES
             _buildSelectorItem(
-                label: "All Cities",
-                isSelected: _selectedCity == null,
-                onTap: () => setState(() => _selectedCity = null)
+              label: "All Cities",
+              isSelected: _selectedCity == null,
+              onTap: () {
+                setState(() {
+                  _selectedCity = null;
+                  widget.controller.selectedCity.value = null;
+                });
+              },
             ),
+
+            /// CITY LIST
             ...citiesToShow.map((city) => _buildSelectorItem(
-                label: city.cityName,
-                isSelected: _selectedCity?.id == city.id,
-                onTap: () => setState(() => _selectedCity = city)
+              label: city.cityName,
+              isSelected: _selectedCity?.id == city.id,
+              onTap: () {
+                setState(() {
+                  _selectedCity = city;
+                  widget.controller.selectedCity.value = city;
+                });
+              },
             )),
           ],
         ),
+
         if (widget.controller.cities.length > _initialItemCount)
           _buildSeeMore(
-                  () => setState(() => _showAllCities = !_showAllCities),
-              _showAllCities
+                () => setState(() => _showAllCities = !_showAllCities),
+            _showAllCities,
           ),
       ],
     );

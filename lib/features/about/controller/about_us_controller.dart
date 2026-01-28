@@ -17,7 +17,6 @@ class AboutController extends GetxController {
 
   Future<void> fetchAboutPage() async {
     isLoading.value = true;
-
     try {
       final response = await dio.Dio().get(
         ApiUrl.aboutUs,
@@ -27,11 +26,9 @@ class AboutController extends GetxController {
           },
         ),
       );
-
       final data = response.data;
-
       if (response.statusCode == 200 && data['status'] == true) {
-        title.value = data['data']['title'] ?? '';
+        title.value = data[' ']['title'] ?? '';
         content.value = data['data']['content'] ?? '';
       }
     } catch (e) {

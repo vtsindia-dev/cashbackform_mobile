@@ -25,6 +25,7 @@ class PlotMarketController extends GetxController {
   var totalPages = 1.obs;
   var hasMoreData = true.obs;
   var totalItems = 0.obs;
+  var isCityLoading = false.obs;
 
   // Filters
   var searchQuery = ''.obs;
@@ -63,13 +64,12 @@ class PlotMarketController extends GetxController {
   void onInit() {
     super.onInit();
     fetchMarketPlots();
-    // Note: We don't need fetchFilterData() initially since plot types come with market plots
+    fetchStates(); // Load states on init
   }
 
-  // Fetch filter data (states only, plot types come from market plot response)
-  Future<void> fetchFilterData() async {
+  // Fetch states from API
+  Future<void> fetchStates() async {
     try {
-      // Fetch states
       final statesResponse = await ApiService.getRequest(ApiUrl.states);
       if (statesResponse.statusCode == 200) {
         final statesData = statesResponse.data;
@@ -80,42 +80,51 @@ class PlotMarketController extends GetxController {
           print('✅ Loaded ${states.length} states');
         }
       }
-
-      // Note: Plot types will be loaded from market plot response in fetchMarketPlots()
     } catch (e) {
-      print('❌ Error fetching filter data: $e');
+      print('❌ Error fetching states: $e');
     }
   }
 
   // Fetch cities for selected state
   Future<void> fetchCitiesForState(int stateId) async {
     try {
+      isCityLoading.value = true;
+      cities.clear();
+
       final url = '${ApiUrl.cities}/$stateId';
       final response = await ApiService.getRequest(url);
+
       if (response.statusCode == 200) {
         final citiesData = response.data;
+
         if (citiesData['data'] != null && citiesData['data'] is List) {
-          cities.value = (citiesData['data'] as List)
-              .map((item) => City.fromJson(item))
-              .toList();
+          cities.assignAll(
+            (citiesData['data'] as List)
+                .map((item) => City.fromJson(item))
+                .toList(),
+          );
+
           print('✅ Loaded ${cities.length} cities for state $stateId');
         }
       }
     } catch (e) {
       print('❌ Error fetching cities: $e');
+      cities.clear();
+    } finally {
+      isCityLoading.value = false;
     }
   }
 
-  // When state changes, fetch its cities
-  void onStateChanged(AppState? state) {
+  void onStateChanged(AppState? state) async {
     selectedState.value = state;
-    selectedCity.value = null; // Reset city when state changes
-    cities.clear(); // Clear previous cities
+    selectedCity.value = null;
+    cities.clear();
 
     if (state != null) {
-      fetchCitiesForState(state.id);
+      await fetchCitiesForState(state.id);
     }
   }
+
 
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
 
@@ -983,17 +992,13 @@ class PlotMarketController extends GetxController {
     );
   }
 
-
-
-
-
   void _showTermsDialog() {
     Get.dialog(
       AlertDialog(
         title: Text("Terms and Conditions"),
         content: SingleChildScrollView(
           child: Text(
-                "1. Verification fee is non-refundable.\n"
+            "1. Verification fee is non-refundable.\n"
                 "2. Verification process takes 2-3 business days.\n"
                 "3. We verify plot details, documents, and ownership.\n"
                 "4. Verified status can be revoked if false information is provided.\n"

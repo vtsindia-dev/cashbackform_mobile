@@ -11,6 +11,7 @@ import '../../features/dashboard/screens/dashboard.dart';
 import '../../features/gioo_plots/screens/owned_plots.dart';
 import '../../features/home/screens/home.dart';
 import '../../features/material_store/screens/materialstore_details.dart';
+import '../../features/menu/content_screens/contactus.dart';
 import '../../features/plot_market/screens/myplot_list.dart';
 import '../../features/plot_market/screens/plot_market.dart';
 import '../../features/plot_market/screens/plotmarket_details.dart';
@@ -55,6 +56,7 @@ class AppRoutes {
   static const String myResidential = '/myResidential';
   static const String myResidentialEnquiry = '/myResidentialEnquiry';
   static const String rentalYieldList = '/rentalYieldList';
+  static const String contactus = '/contactus';
   static List<GetPage> routes = [
     GetPage(
       name: splash,
@@ -213,6 +215,11 @@ class AppRoutes {
       },
       transition: Transition.cupertino,
     ),
+    GetPage(
+      name: contactus,
+      page: () => ContactUsScreen(),
+      transition: Transition.cupertino,
+    ),
 
 
   ];
@@ -235,6 +242,7 @@ class AppRoutes {
   static void toMarketDetails() => Get.offAllNamed(materialDetails);
   static void toSyndicate() => Get.offAllNamed(syndicate);
   static void toRentalYield() => Get.offAllNamed(rentalYieldList);
+  static void toContactUs() => Get.offAllNamed(contactus);
   static void toRegister({String? phone}) {
     print("AppRoutes.toRegister called with phone: $phone");
     Get.toNamed(register, arguments: {'phone': phone});

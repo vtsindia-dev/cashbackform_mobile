@@ -107,6 +107,7 @@ class GiooPlotController extends GetxController {
   void onInit() {
     super.onInit();
     fetchGiooPlots();
+
     fetchGiooBuyingList();
   }
 
@@ -363,12 +364,12 @@ class GiooPlotController extends GetxController {
 
     // --- UPDATED AREA FILTERS ---
     if (minAreaSqft.value.isNotEmpty) {
-      params.add('sqft_min=${Uri.encodeComponent(minAreaSqft.value)}');
+      params.add('area_sqft=${Uri.encodeComponent(minAreaSqft.value)}');
     }
 
     // Adding sqft_max in case you decide to use a range slider for area too
     if (maxAreaSqft.value.isNotEmpty) {
-      params.add('sqft_max=${Uri.encodeComponent(maxAreaSqft.value)}');
+      params.add('area_sqft=${Uri.encodeComponent(maxAreaSqft.value)}');
     }
 
     return params.isEmpty ? '' : '&${params.join('&')}';

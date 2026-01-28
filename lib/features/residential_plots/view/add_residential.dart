@@ -1100,7 +1100,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
           ),
           SizedBox(height: 8.h),
           Text(
-            'Select nearby places and enter distance in meters',
+            'Select nearby places and enter distance in Km',
             style: TextStyle(
               fontSize: 12.sp,
               color: AppColor.textSecondary,
@@ -1166,7 +1166,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                                 child: TextFormField(
                                   controller: distanceController,
                                   decoration: InputDecoration(
-                                    hintText: 'Distance in meters',
+                                    hintText: 'Distance in KM',
                                     filled: true,
                                     fillColor: AppColor.backgroundLight,
                                     border: OutlineInputBorder(

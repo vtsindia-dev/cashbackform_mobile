@@ -1204,7 +1204,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10.r),
                       child: Padding(
                         padding: EdgeInsets.all(8.r),
-                        child: Icon(Icons.close_rounded, color: Colors.red.shade400, size: 20.w),
+                        child: Text('Cancel',style: TextStyle( color: Colors.red.shade400,),),
                       ),
                     ),
                   ),

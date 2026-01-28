@@ -10,6 +10,7 @@ import '../../../common/route/router.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../../home/controller/delete_account_controller.dart';
+import '../../profile/controller/profile_controller.dart';
 
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
@@ -21,7 +22,8 @@ class CustomDrawer extends StatefulWidget {
 class _CustomDrawerState extends State<CustomDrawer> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
-
+  final ProfileController profileController = Get.put(ProfileController()); // Add ProfileController
+  DeleteAccountController deleteAccountController = Get.put(DeleteAccountController());
 
   @override
   void initState() {
@@ -44,7 +46,15 @@ class _CustomDrawerState extends State<CustomDrawer> {
     }
   }
 
+  // Use ProfileController data if available, otherwise use session data
   String get _userFullName {
+    // First try to get from ProfileController
+    if (profileController.profile.value != null) {
+      final profile = profileController.profile.value!;
+      return profile.fullName;
+    }
+
+    // Fallback to session data
     if (userData == null) return 'User';
     final firstName = userData!['first_name'] ?? '';
     final lastName = userData!['last_name'] ?? '';
@@ -53,18 +63,29 @@ class _CustomDrawerState extends State<CustomDrawer> {
   }
 
   String get _userEmail {
+    // First try to get from ProfileController
+    if (profileController.profile.value != null) {
+      return profileController.profile.value!.email;
+    }
+
+    // Fallback to session data
     return userData?['email'] ?? 'Loading...';
   }
 
   String get _userProfileImage {
+    // First try to get from ProfileController
+    if (profileController.profile.value != null &&
+        profileController.profile.value!.profileImage != null &&
+        profileController.profile.value!.profileImage!.isNotEmpty) {
+      return profileController.profile.value!.profileImage!;
+    }
+
+    // Fallback to session data or default
     return userData?['profile_image'] ?? "https://i.pravatar.cc/300?img=12";
   }
-  DeleteAccountController deleteAccountController = Get.put(DeleteAccountController());
 
   @override
   Widget build(BuildContext context) {
-
-
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.72,
       child: Drawer(
@@ -83,14 +104,13 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   _menuOption(context, asset: Images.materialStore, title: 'Material Store', onTap: () => Get.toNamed('/materialStore')),
                   _menuOption(context, asset: Images.productEnquiry, title: 'My Product Enquiry', onTap: () => Get.toNamed('/myMaterialList')),
                   _menuOption(context, asset: Images.service, title: 'My Service Enquiry', onTap: () => Get.toNamed('/myServiceList')),
-                  _menuOption(context, asset: Images.plotRegistered, title: 'My Property', onTap: () => Get.toNamed('/myProperty')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'Buyed Gioo Plots', onTap: () => Get.toNamed('/ownedplotlist')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'Buyed Syndicate Plots', onTap: () => Get.toNamed('/ownedSyndicatePlotList')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Residential Plots', onTap: () => Get.toNamed('/myResidential')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Residential Enquiry', onTap: () => Get.toNamed('/myResidentialEnquiry')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'Rental Yield', onTap: () => Get.toNamed('/rentalYieldList')),
                   _menuOption(context, asset: Images.aboutUs, title: 'About Us', onTap: () => Get.to(()=>AboutUs())),
-                  _menuOption(context, asset: Images.contactUs, title: 'Contact Us', onTap: () => Get.to(()=>ContactUs())),
+                  _menuOption(context, asset: Images.contactUs, title: 'Contact Us', onTap: () => Get.toNamed('/contactus')),
                   _menuOption(context, asset: Images.logout, title: 'Logout', onTap: () => _showLogoutConfirmation(context)),
                   _menuOption(context, asset: Images.delete, title: 'Delete Account', delete: true, onTap: () => _showDeleteAccountConfirmation(context),
                   ),
@@ -104,63 +124,79 @@ class _CustomDrawerState extends State<CustomDrawer> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColor.primary,
-            AppColor.primary.withOpacity(0.88),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: SafeArea(
-        child: Column(
-          children: [
-            ImagePickerWidget(
-              isPicker: false,
-              imageUrl: _userProfileImage,
-            )
-                .animate()
-                .scale(begin: const Offset(0.3, 0.3), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
-                .fadeIn(duration: 600.ms)
-                .then()
-                .shimmer(duration: 1200.ms, color: Colors.white.withOpacity(0.4)),
-            const SizedBox(height: 12),
+    return Obx(() {
+      final profile = profileController.profile.value;
+      final isProfileLoading = profileController.isLoading.value;
 
-            Animate(
-              effects: [
-                FadeEffect(duration: 600.ms),
-                MoveEffect(begin: Offset(-20, 0), duration: 600.ms),
-              ],
-              child: Text(
-                 _userFullName,
-                style: const TextStyle(
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColor.primary,
+              AppColor.primary.withOpacity(0.88),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              ImagePickerWidget(
+                isPicker: false,
+                imageUrl: _userProfileImage,
+              )
+                  .animate()
+                  .scale(begin: const Offset(0.3, 0.3), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
+                  .fadeIn(duration: 600.ms)
+                  .then()
+                  .shimmer(duration: 1200.ms, color: Colors.white.withOpacity(0.4)),
+              const SizedBox(height: 12),
+
+              // Show loader if profile is loading
+              if (isProfileLoading && profile == null)
+                const Text("Loading...",   style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
+                ),)
+              else
+                Animate(
+                  effects: [
+                    FadeEffect(duration: 600.ms),
+                    MoveEffect(begin: Offset(-20, 0), duration: 600.ms),
+                  ],
+                  child: Text(
+                    _userFullName,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 4),
+
+              Animate(
+                effects: [
+                  FadeEffect(duration: 600.ms, delay: 150.ms),
+                  MoveEffect(begin: Offset(-20, 0), duration: 600.ms, delay: 150.ms),
+                ],
+                child: Text(
+                  _userEmail,
+                  style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9)),
                 ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Animate(
-              effects: [
-                FadeEffect(duration: 600.ms, delay: 150.ms),
-                MoveEffect(begin: Offset(-20, 0), duration: 600.ms, delay: 150.ms),
-              ],
-              child: Text(
-                _userEmail,
-                style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9)),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
+
   Widget _menuOption(
       BuildContext context, {
         required String asset,
@@ -218,6 +254,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
       ],
     );
   }
+
   void _showLogoutConfirmation(BuildContext context) {
     Navigator.pop(context);
     showDialog(
@@ -257,7 +294,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 'Are you sure you want to logout?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
+                    fontSize: 16,
                     color: AppColor.black,
                     fontWeight: FontWeight.bold
                 ),
@@ -433,7 +470,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
     );
   }
 
-
   Future<void> _performLogout() async {
     try {
       Get.dialog(
@@ -449,9 +485,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
     } catch (e) {
       Get.back();
       SnackBarHelper.showError("Failed to logout: $e");
-
     }
   }
+
   Future<void> _performDeleteAccount() async {
     try {
       Get.dialog(

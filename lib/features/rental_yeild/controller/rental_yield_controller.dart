@@ -1,12 +1,17 @@
-// rental_yield_controller.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:dio/dio.dart';
+
+import '../model/rental_yeild_model.dart';
 
 class RentalYieldController extends GetxController {
   // Loading state
   RxBool isLoading = false.obs;
+
+  // API Configuration
+  final String baseUrl = 'https://admincashback.vrikshatech.in/public/api/v2';
+  final Dio _dio = Dio();
 
   // Search
   TextEditingController searchController = TextEditingController();
@@ -16,7 +21,7 @@ class RentalYieldController extends GetxController {
   // Filters
   RxInt selectedStateId = 0.obs;
   RxInt selectedCityId = 0.obs;
-  RxInt selectedPropertyTypeId = 0.obs;
+  RxInt selectedPropertyTypeId = 0.obs; // ADDED
   RxString selectedMinPrice = ''.obs;
   RxString selectedMaxPrice = ''.obs;
   RxString selectedMinRent = ''.obs;
@@ -25,53 +30,35 @@ class RentalYieldController extends GetxController {
   RxString selectedMaxYield = ''.obs;
   RxString selectedMinArea = ''.obs;
   RxString selectedMaxArea = ''.obs;
-  RxString selectedFurnishingStatus = ''.obs;
-  RxString selectedPropertyAge = ''.obs;
-  RxInt selectedBedrooms = 0.obs;
-  RxBool includeCommercial = false.obs;
+  RxString selectedFurnishingStatus = ''.obs; // ADDED
+  RxString selectedPropertyAge = ''.obs; // ADDED
+  RxInt selectedBedrooms = 0.obs; // ADDED
+  RxBool includeCommercial = false.obs; // ADDED
 
   // Properties list
   RxList<RentalYieldModel> properties = <RentalYieldModel>[].obs;
   RxList<RentalYieldModel> filteredProperties = <RentalYieldModel>[].obs;
 
-  // Static data lists
+  // Static data from API
   RxList<StateModel> statesList = <StateModel>[].obs;
   RxList<CityModel> citiesList = <CityModel>[].obs;
-  RxList<PropertyTypeModel> propertyTypes = <PropertyTypeModel>[].obs;
+  RxList<PropertyTypeModel> propertyTypes = <PropertyTypeModel>[].obs; // ADDED
 
-  // Range values
+  // Range values from API
   RxDouble priceMin = 0.0.obs;
   RxDouble priceMax = 100.0.obs;
   RxDouble rentMin = 0.0.obs;
   RxDouble rentMax = 50.0.obs;
   RxDouble yieldMin = 0.0.obs;
   RxDouble yieldMax = 10.0.obs;
-  RxInt sqftMin = 0.obs;
-  RxInt sqftMax = 5000.obs;
+  RxInt sqftMin = 0.obs; // CHANGED from Double to Int
+  RxInt sqftMax = 5000.obs; // CHANGED from Double to Int
 
   // Pagination
   RxInt currentPage = 1.obs;
+  RxInt totalPages = 1.obs;
   RxBool hasMore = true.obs;
-
-  // Check if filters are applied
-  bool get hasFiltersApplied {
-    return selectedStateId.value > 0 ||
-        selectedCityId.value > 0 ||
-        selectedPropertyTypeId.value > 0 ||
-        selectedMinPrice.value.isNotEmpty ||
-        selectedMaxPrice.value.isNotEmpty ||
-        selectedMinRent.value.isNotEmpty ||
-        selectedMaxRent.value.isNotEmpty ||
-        selectedMinYield.value.isNotEmpty ||
-        selectedMaxYield.value.isNotEmpty ||
-        selectedMinArea.value.isNotEmpty ||
-        selectedMaxArea.value.isNotEmpty ||
-        selectedFurnishingStatus.value.isNotEmpty ||
-        selectedPropertyAge.value.isNotEmpty ||
-        selectedBedrooms.value > 0 ||
-        includeCommercial.value ||
-        searchQuery.value.isNotEmpty;
-  }
+  RxInt totalItems = 0.obs;
 
   @override
   void onInit() {
@@ -92,333 +79,217 @@ class RentalYieldController extends GetxController {
     super.onClose();
   }
 
-  void _initializeStaticData() {
-    // Initialize states
-    statesList.assignAll([
-      StateModel(id: 1, stateName: "Delhi"),
-      StateModel(id: 2, stateName: "Maharashtra"),
-      StateModel(id: 3, stateName: "Karnataka"),
-      StateModel(id: 4, stateName: "Tamil Nadu"),
-      StateModel(id: 5, stateName: "Uttar Pradesh"),
-      StateModel(id: 6, stateName: "Gujarat"),
-      StateModel(id: 7, stateName: "Rajasthan"),
-      StateModel(id: 8, stateName: "West Bengal"),
-      StateModel(id: 9, stateName: "Telangana"),
-      StateModel(id: 10, stateName: "Kerala"),
-    ]);
-
-    // Initialize cities
-    citiesList.assignAll([
-      CityModel(id: 1, name: "New Delhi", stateId: 1),
-      CityModel(id: 2, name: "Mumbai", stateId: 2),
-      CityModel(id: 3, name: "Pune", stateId: 2),
-      CityModel(id: 4, name: "Bangalore", stateId: 3),
-      CityModel(id: 5, name: "Chennai", stateId: 4),
-      CityModel(id: 6, name: "Hyderabad", stateId: 9),
-      CityModel(id: 7, name: "Ahmedabad", stateId: 6),
-      CityModel(id: 8, name: "Kolkata", stateId: 8),
-      CityModel(id: 9, name: "Jaipur", stateId: 7),
-      CityModel(id: 10, name: "Lucknow", stateId: 5),
-      CityModel(id: 11, name: "Noida", stateId: 5),
-      CityModel(id: 12, name: "Gurgaon", stateId: 1),
-      CityModel(id: 13, name: "Chandigarh", stateId: 1),
-      CityModel(id: 14, name: "Goa", stateId: 2),
-      CityModel(id: 15, name: "Indore", stateId: 6),
-    ]);
-
-    // Initialize property types
-    propertyTypes.assignAll([
-      PropertyTypeModel(id: 1, typeName: "Apartment"),
-      PropertyTypeModel(id: 2, typeName: "Independent House"),
-      // PropertyModel(id: 3, typeName: "Villa"),
-      PropertyTypeModel(id: 4, typeName: "Studio"),
-      PropertyTypeModel(id: 5, typeName: "Penthouse"),
-      PropertyTypeModel(id: 6, typeName: "Farm House"),
-      PropertyTypeModel(id: 7, typeName: "Row House"),
-      PropertyTypeModel(id: 8, typeName: "Duplex"),
-      PropertyTypeModel(id: 9, typeName: "Commercial Office"),
-      PropertyTypeModel(id: 10, typeName: "Shop"),
-    ]);
-
-    // Initialize range values
-    priceMin.value = 20.0; // 20L
-    priceMax.value = 500.0; // 500L
-    rentMin.value = 5.0; // 5K
-    rentMax.value = 200.0; // 200K
-    yieldMin.value = 2.0; // 2%
-    yieldMax.value = 8.0; // 8%
-    sqftMin.value = 300;
-    sqftMax.value = 4000;
+  Future<void> _initializeStaticData() async {
+    try {
+      await fetchStates();
+      await fetchPropertyTypes(); // ADDED
+    } catch (e) {
+      print('Error initializing static data: $e');
+    }
   }
 
-  // Static rental yield data
-  final List<RentalYieldModel> _staticProperties = [
-    RentalYieldModel(
-      id: 1,
-      title: "Luxury 3BHK Apartment",
-      address: "Bandra West, Mumbai",
-      price: 150.0, // in Lakhs
-      monthlyRent: 75.0, // in Thousands
-      annualYield: 6.0, // percentage
-      area: 1200,
-      areaUnit: "sqft",
-      propertyType: "Apartment",
-      bedrooms: 3,
-      bathrooms: 3,
-      furnishingStatus: "Fully Furnished",
-      propertyAge: "0-5 years",
-      cityId: 2,
-      stateId: 2,
-      images: [
-        "https://images.unsplash.com/photo-1613977257363-707ba9348227",
-        "https://images.unsplash.com/photo-1616594039964-ae9021a400a0",
-      ],
-      amenities: ["Swimming Pool", "Gym", "Park", "24/7 Security"],
-      description: "Premium apartment with sea view, modern amenities and excellent connectivity.",
-      isCommercial: false,
-    ),
-    RentalYieldModel(
-      id: 2,
-      title: "Spacious 2BHK Flat",
-      address: "Koramangala, Bangalore",
-      price: 85.0,
-      monthlyRent: 35.0,
-      annualYield: 4.9,
-      area: 950,
-      areaUnit: "sqft",
-      propertyType: "Apartment",
-      bedrooms: 2,
-      bathrooms: 2,
-      furnishingStatus: "Semi Furnished",
-      propertyAge: "5-10 years",
-      cityId: 4,
-      stateId: 3,
-      images: [
-        "https://images.unsplash.com/photo-1558036117-15e82a2c9a9a",
-      ],
-      amenities: ["Gym", "Club House", "Power Backup"],
-      description: "Well maintained apartment in prime location with good rental demand.",
-      isCommercial: false,
-    ),
-    RentalYieldModel(
-      id: 3,
-      title: "Independent Villa",
-      address: "Gurgaon Sector 54",
-      price: 320.0,
-      monthlyRent: 120.0,
-      annualYield: 4.5,
-      area: 2500,
-      areaUnit: "sqft",
-      propertyType: "Villa",
-      bedrooms: 4,
-      bathrooms: 4,
-      furnishingStatus: "Fully Furnished",
-      propertyAge: "0-5 years",
-      cityId: 12,
-      stateId: 1,
-      images: [
-        "https://images.unsplash.com/photo-1613490493576-7fde63acd811",
-      ],
-      amenities: ["Private Garden", "Swimming Pool", "Home Theater", "Security"],
-      description: "Luxury villa with private garden and premium amenities.",
-      isCommercial: false,
-    ),
-    RentalYieldModel(
-      id: 4,
-      title: "Studio Apartment",
-      address: "South Delhi",
-      price: 45.0,
-      monthlyRent: 25.0,
-      annualYield: 6.7,
-      area: 500,
-      areaUnit: "sqft",
-      propertyType: "Studio",
-      bedrooms: 1,
-      bathrooms: 1,
-      furnishingStatus: "Fully Furnished",
-      propertyAge: "0-5 years",
-      cityId: 1,
-      stateId: 1,
-      images: [
-        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688",
-      ],
-      amenities: ["Modular Kitchen", "AC", "WiFi"],
-      description: "Compact and efficient studio apartment for working professionals",
-      isCommercial: false,
-    ),
-    RentalYieldModel(
-      id: 5,
-      title: "Penthouse with Terrace",
-      address: "Pune, Kalyani Nagar",
-      price: 280.0,
-      monthlyRent: 95.0,
-      annualYield: 4.1,
-      area: 1800,
-      areaUnit: "sqft",
-      propertyType: "Penthouse",
-      bedrooms: 3,
-      bathrooms: 3,
-      furnishingStatus: "Fully Furnished",
-      propertyAge: "5-10 years",
-      cityId: 3,
-      stateId: 2,
-      images: [
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750",
-      ],
-      amenities: ["Private Terrace", "Jacuzzi", "Bar", "City View"],
-      description: "Exclusive penthouse with panoramic city views and luxury amenities.",
-      isCommercial: false,
-    ),
-    RentalYieldModel(
-      id: 6,
-      title: "Commercial Office Space",
-      address: "Connaught Place, Delhi",
-      price: 420.0,
-      monthlyRent: 250.0,
-      annualYield: 7.1,
-      area: 1800,
-      areaUnit: "sqft",
-      propertyType: "Commercial Office",
-      bedrooms: 0,
-      bathrooms: 3,
-      furnishingStatus: "Unfurnished",
-      propertyAge: "10-20 years",
-      cityId: 1,
-      stateId: 1,
-      images: [
-        "https://images.unsplash.com/photo-1497366754035-f200968a6e72",
-      ],
-      amenities: ["Reception", "Conference Room", "Parking", "Elevator"],
-      description: "Prime commercial office space in central business district.",
-      isCommercial: true,
-    ),
-    RentalYieldModel(
-      id: 7,
-      title: "2BHK Row House",
-      address: "Ahmedabad, SG Highway",
-      price: 65.0,
-      monthlyRent: 22.0,
-      annualYield: 4.1,
-      area: 1100,
-      areaUnit: "sqft",
-      propertyType: "Row House",
-      bedrooms: 2,
-      bathrooms: 2,
-      furnishingStatus: "Unfurnished",
-      propertyAge: "0-5 years",
-      cityId: 7,
-      stateId: 6,
-      images: [
-        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2",
-      ],
-      amenities: ["Car Parking", "Garden", "Security"],
-      description: "Modern row house in developing area with good appreciation potential.",
-      isCommercial: false,
-    ),
-    RentalYieldModel(
-      id: 8,
-      title: "Luxury 1BHK",
-      address: "Chennai, OMR",
-      price: 70.0,
-      monthlyRent: 32.0,
-      annualYield: 5.5,
-      area: 750,
-      areaUnit: "sqft",
-      propertyType: "Apartment",
-      bedrooms: 1,
-      bathrooms: 1,
-      furnishingStatus: "Fully Furnished",
-      propertyAge: "0-5 years",
-      cityId: 5,
-      stateId: 4,
-      images: [
-        "https://images.unsplash.com/photo-1505843513577-22bb7d21e455",
-      ],
-      amenities: ["Swimming Pool", "Gym", "AC", "Modular Kitchen"],
-      description: "Compact luxury apartment for IT professionals near tech parks.",
-      isCommercial: false,
-    ),
-    RentalYieldModel(
-      id: 9,
-      title: "Retail Shop",
-      address: "Hyderabad, Banjara Hills",
-      price: 95.0,
-      monthlyRent: 50.0,
-      annualYield: 6.3,
-      area: 400,
-      areaUnit: "sqft",
-      propertyType: "Shop",
-      bedrooms: 0,
-      bathrooms: 1,
-      furnishingStatus: "Unfurnished",
-      propertyAge: "5-10 years",
-      cityId: 6,
-      stateId: 9,
-      images: [ "https://images.unsplash.com/photo-1563013544-824ae1b704d3",
-        ],
-      amenities: ["Display Windows", "Storage", "Parking"],
-      description: "Prime retail space in upscale shopping area with high footfall.",
-      isCommercial: true,
-    ),
-    RentalYieldModel(
-      id: 10,
-      title: "Farm House",
-      address: "Outskirts of Jaipur",
-      price: 180.0,
-      monthlyRent: 40.0,
-      annualYield: 2.7,
-      area: 3500,
-      areaUnit: "sqft",
-      propertyType: "Farm House",
-      bedrooms: 4,
-      bathrooms: 4,
-      furnishingStatus: "Fully Furnished",
-      propertyAge: "20+ years",
-      cityId: 9,
-      stateId: 7,
-      images: [
-        "https://images.unsplash.com/photo-1518780664697-55e3ad937233",
-      ],
-      amenities: ["Garden", "Pool", "Servant Quarter", "Farm Land"],
-      description: "Peaceful farm house away from city with organic farming potential.",
-      isCommercial: false,
-    ),
-
-  ];
-
-  Future<void> fetchProperties() async {
-    isLoading.value = true;
-
-    // Simulate API delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Apply pagination logic
-    int start = (currentPage.value - 1) * 10;
-    int end = start + 10;
-
-    if (start >= _staticProperties.length) {
-      hasMore.value = false;
-      properties.assignAll([]);
-    } else {
-      List<RentalYieldModel> newProperties = _staticProperties.sublist(
-        start,
-        end < _staticProperties.length ? end : _staticProperties.length,
-      );
-
-      if (currentPage.value == 1) {
-        properties.assignAll(newProperties);
-      } else {
-        properties.addAll(newProperties);
+  Future<void> fetchStates() async {
+    try {
+      final response = await _dio.get('$baseUrl/states');
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as List;
+        statesList.assignAll(data.map((state) => StateModel.fromJson(state)).toList());
       }
+    } catch (e) {
+      print('Error fetching states: $e');
+      // Fallback to static states from rental API response
+      await fetchProperties();
+    }
+  }
 
-      hasMore.value = end < _staticProperties.length;
+  Future<void> fetchPropertyTypes() async { // ADDED
+    try {
+      // This is a mock - you'll need to create this endpoint or use existing one
+      final response = await _dio.get('$baseUrl/property-types');
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as List;
+        propertyTypes.assignAll(data.map((type) => PropertyTypeModel.fromJson(type)).toList());
+      } else {
+        // Default property types
+        propertyTypes.assignAll([
+          PropertyTypeModel(id: 1, typeName: 'Apartment'),
+          PropertyTypeModel(id: 2, typeName: 'Villa'),
+          PropertyTypeModel(id: 3, typeName: 'Independent House'),
+          PropertyTypeModel(id: 4, typeName: 'Plot'),
+        ]);
+      }
+    } catch (e) {
+      print('Error fetching property types: $e');
+      // Default property types as fallback
+      propertyTypes.assignAll([
+        PropertyTypeModel(id: 1, typeName: 'Apartment'),
+        PropertyTypeModel(id: 2, typeName: 'Villa'),
+        PropertyTypeModel(id: 3, typeName: 'Independent House'),
+        PropertyTypeModel(id: 4, typeName: 'Plot'),
+      ]);
+    }
+  }
+
+  Future<void> fetchProperties({bool loadMore = false}) async {
+    if (!loadMore) {
+      isLoading.value = true;
+      currentPage.value = 1;
     }
 
-    _applyFilters();
-    isLoading.value = false;
+    try {
+      final Map<String, dynamic> params = {
+        'page': currentPage.value,
+        'per_page': 10,
+      };
+
+      // Add filters
+      if (selectedStateId.value > 0) {
+        params['state_id'] = selectedStateId.value;
+      }
+      if (selectedCityId.value > 0) {
+        params['city_id'] = selectedCityId.value;
+      }
+      if (selectedPropertyTypeId.value > 0) {
+        params['property_type_id'] = selectedPropertyTypeId.value;
+      }
+      if (searchQuery.value.isNotEmpty) {
+        params['search'] = searchQuery.value;
+      }
+      if (selectedMinPrice.value.isNotEmpty) {
+        params['min_price'] = selectedMinPrice.value;
+      }
+      if (selectedMaxPrice.value.isNotEmpty) {
+        params['max_price'] = selectedMaxPrice.value;
+      }
+      if (selectedMinRent.value.isNotEmpty) {
+        params['min_rent'] = selectedMinRent.value;
+      }
+      if (selectedMaxRent.value.isNotEmpty) {
+        params['max_rent'] = selectedMaxRent.value;
+      }
+      if (selectedMinYield.value.isNotEmpty) {
+        params['min_yield'] = selectedMinYield.value;
+      }
+      if (selectedMaxYield.value.isNotEmpty) {
+        params['max_yield'] = selectedMaxYield.value;
+      }
+      if (selectedMinArea.value.isNotEmpty) {
+        params['min_area'] = selectedMinArea.value;
+      }
+      if (selectedMaxArea.value.isNotEmpty) {
+        params['max_area'] = selectedMaxArea.value;
+      }
+      if (selectedFurnishingStatus.value.isNotEmpty) {
+        params['furnishing_status'] = selectedFurnishingStatus.value;
+      }
+      if (selectedPropertyAge.value.isNotEmpty) {
+        params['property_age'] = selectedPropertyAge.value;
+      }
+      if (selectedBedrooms.value > 0) {
+        params['bedrooms'] = selectedBedrooms.value;
+      }
+      if (includeCommercial.value) {
+        params['include_commercial'] = 1;
+      }
+
+      final response = await _dio.get(
+        '$baseUrl/rental',
+        queryParameters: params,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = response.data['data'];
+
+        // Update range values from API
+        priceMin.value = double.parse(data['price_min']?.toString() ?? '0');
+        priceMax.value = double.parse(data['price_max']?.toString() ?? '100');
+
+        // Assuming API returns rent/yield/area min/max
+        rentMin.value = double.parse(data['rent_min']?.toString() ?? '0');
+        rentMax.value = double.parse(data['rent_max']?.toString() ?? '50000');
+        yieldMin.value = double.parse(data['yield_min']?.toString() ?? '0');
+        yieldMax.value = double.parse(data['yield_max']?.toString() ?? '20');
+        sqftMin.value = int.parse(data['sqft_min']?.toString() ?? '0');
+        sqftMax.value = int.parse(data['sqft_max']?.toString() ?? '5000');
+
+        // Extract rental properties
+        final List<dynamic> rentalData = data['rental'];
+        final List<RentalYieldModel> newProperties = rentalData
+            .map((item) => RentalYieldModel.fromJson(item))
+            .toList();
+
+        // Update pagination info
+        final pagination = data['pagination'];
+        totalPages.value = pagination['last_page'] ?? 1;
+        totalItems.value = pagination['total'] ?? 0;
+        hasMore.value = currentPage.value < totalPages.value;
+
+        // Update properties list
+        if (loadMore) {
+          properties.addAll(newProperties);
+        } else {
+          properties.assignAll(newProperties);
+        }
+
+        // Update states list from API if empty
+        if (statesList.isEmpty && data['state_list'] != null) {
+          statesList.assignAll(
+            (data['state_list'] as List)
+                .map((state) => StateModel.fromJson(state))
+                .toList(),
+          );
+        }
+
+        // Update cities list from API
+        if (data['city_list'] != null) {
+          citiesList.assignAll(
+            (data['city_list'] as List)
+                .map((city) => CityModel.fromJson(city))
+                .toList(),
+          );
+        }
+
+        // Apply filters after fetching
+        _applyFilters();
+      } else {
+        throw Exception('Failed to load properties');
+      }
+    } catch (e) {
+      print('Error fetching properties: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to load properties. Please try again.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchCitiesByState(int stateId) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/cities',
+        queryParameters: {'state_id': stateId},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'];
+        citiesList.assignAll(data.map((city) => CityModel.fromJson(city)).toList());
+      }
+    } catch (e) {
+      print('Error fetching cities: $e');
+      citiesList.clear();
+    }
   }
 
   void _applyFilters() {
+    if (properties.isEmpty) {
+      filteredProperties.assignAll(properties);
+      return;
+    }
+
     List<RentalYieldModel> result = List.from(properties);
 
     // Apply state filter
@@ -433,30 +304,35 @@ class RentalYieldController extends GetxController {
 
     // Apply property type filter
     if (selectedPropertyTypeId.value > 0) {
+      // Since propertyType is a string in model, we need to map it
+      // This assumes your API returns consistent property type names
       result = result.where((property) =>
-      property.propertyType.toLowerCase() ==
-          propertyTypes.firstWhere((type) => type.id == selectedPropertyTypeId.value).typeName.toLowerCase()
+      property.propertyType?.toLowerCase() ==
+          propertyTypes.firstWhere(
+                  (type) => type.id == selectedPropertyTypeId.value,
+              orElse: () => PropertyTypeModel(id: 0, typeName: '')
+          ).typeName.toLowerCase()
       ).toList();
     }
 
     // Apply price filter
     if (selectedMinPrice.value.isNotEmpty) {
-      double minPrice = double.parse(selectedMinPrice.value);
+      double minPrice = double.parse(selectedMinPrice.value) * 100000; // Convert lakhs to actual
       result = result.where((property) => property.price >= minPrice).toList();
     }
     if (selectedMaxPrice.value.isNotEmpty) {
-      double maxPrice = double.parse(selectedMaxPrice.value);
+      double maxPrice = double.parse(selectedMaxPrice.value) * 100000; // Convert lakhs to actual
       result = result.where((property) => property.price <= maxPrice).toList();
     }
 
     // Apply rent filter
     if (selectedMinRent.value.isNotEmpty) {
       double minRent = double.parse(selectedMinRent.value);
-      result = result.where((property) => property.monthlyRent >= minRent).toList();
+      result = result.where((property) => property.rentAmount >= minRent).toList();
     }
     if (selectedMaxRent.value.isNotEmpty) {
       double maxRent = double.parse(selectedMaxRent.value);
-      result = result.where((property) => property.monthlyRent <= maxRent).toList();
+      result = result.where((property) => property.rentAmount <= maxRent).toList();
     }
 
     // Apply yield filter
@@ -472,24 +348,25 @@ class RentalYieldController extends GetxController {
     // Apply area filter
     if (selectedMinArea.value.isNotEmpty) {
       double minArea = double.parse(selectedMinArea.value);
-      result = result.where((property) => property.area >= minArea).toList();
+      result = result.where((property) => property.area != null && property.area! >= minArea).toList();
     }
     if (selectedMaxArea.value.isNotEmpty) {
       double maxArea = double.parse(selectedMaxArea.value);
-      result = result.where((property) => property.area <= maxArea).toList();
+      result = result.where((property) => property.area != null && property.area! <= maxArea).toList();
     }
 
     // Apply furnishing filter
     if (selectedFurnishingStatus.value.isNotEmpty) {
       result = result.where((property) =>
-      property.furnishingStatus.toLowerCase() == selectedFurnishingStatus.value.toLowerCase()
+      property.furnishingStatus?.toLowerCase() == selectedFurnishingStatus.value.toLowerCase()
       ).toList();
     }
 
     // Apply property age filter
     if (selectedPropertyAge.value.isNotEmpty) {
+      // This would need custom logic based on how age is stored
       result = result.where((property) =>
-      property.propertyAge == selectedPropertyAge.value
+      property.propertyAge?.toLowerCase() == selectedPropertyAge.value.toLowerCase()
       ).toList();
     }
 
@@ -498,53 +375,17 @@ class RentalYieldController extends GetxController {
       result = result.where((property) => property.bedrooms == selectedBedrooms.value).toList();
     }
 
-    // Apply commercial filter
-    if (!includeCommercial.value) {
-      result = result.where((property) => !property.isCommercial).toList();
-    }
-
     // Apply search filter
     if (searchQuery.value.isNotEmpty) {
       String query = searchQuery.value.toLowerCase();
       result = result.where((property) =>
-      property.title.toLowerCase().contains(query) ||
+      property.name.toLowerCase().contains(query) ||
           property.address.toLowerCase().contains(query) ||
           property.description.toLowerCase().contains(query)
       ).toList();
     }
 
     filteredProperties.assignAll(result);
-  }
-
-  Future<void> fetchCitiesByState(int stateId) async {
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    if (stateId == 0) {
-      citiesList.assignAll(_getAllCities());
-    } else {
-      citiesList.assignAll(_getAllCities().where((city) => city.stateId == stateId).toList());
-    }
-  }
-
-  List<CityModel> _getAllCities() {
-    return [
-      CityModel(id: 1, name: "New Delhi", stateId: 1),
-      CityModel(id: 2, name: "Mumbai", stateId: 2),
-      CityModel(id: 3, name: "Pune", stateId: 2),
-      CityModel(id: 4, name: "Bangalore", stateId: 3),
-      CityModel(id: 5, name: "Chennai", stateId: 4),
-      CityModel(id: 6, name: "Hyderabad", stateId: 9),
-      CityModel(id: 7, name: "Ahmedabad", stateId: 6),
-      CityModel(id: 8, name: "Kolkata", stateId: 8),
-      CityModel(id: 9, name: "Jaipur", stateId: 7),
-      CityModel(id: 10, name: "Lucknow", stateId: 5),
-      CityModel(id: 11, name: "Noida", stateId: 5),
-      CityModel(id: 12, name: "Gurgaon", stateId: 1),
-      CityModel(id: 13, name: "Chandigarh", stateId: 1),
-      CityModel(id: 14, name: "Goa", stateId: 2),
-      CityModel(id: 15, name: "Indore", stateId: 6),
-    ];
   }
 
   // Search methods
@@ -597,81 +438,45 @@ class RentalYieldController extends GetxController {
   Future<void> loadMore() async {
     if (hasMore.value && !isLoading.value) {
       currentPage.value++;
-      await fetchProperties();
+      await fetchProperties(loadMore: true);
     }
+  }
+
+  // Check if filters are applied
+  bool get hasFiltersApplied {
+    return selectedStateId.value > 0 ||
+        selectedCityId.value > 0 ||
+        selectedPropertyTypeId.value > 0 ||
+        selectedMinPrice.value.isNotEmpty ||
+        selectedMaxPrice.value.isNotEmpty ||
+        selectedMinRent.value.isNotEmpty ||
+        selectedMaxRent.value.isNotEmpty ||
+        selectedMinYield.value.isNotEmpty ||
+        selectedMaxYield.value.isNotEmpty ||
+        selectedMinArea.value.isNotEmpty ||
+        selectedMaxArea.value.isNotEmpty ||
+        selectedFurnishingStatus.value.isNotEmpty ||
+        selectedPropertyAge.value.isNotEmpty ||
+        selectedBedrooms.value > 0 ||
+        includeCommercial.value ||
+        searchQuery.value.isNotEmpty;
   }
 }
 
-// Supporting Models
-class StateModel {
-  final int id;
-  final String stateName;
-
-  StateModel({required this.id, required this.stateName});
-}
-
-class CityModel {
-  final int id;
-  final String name;
-  final int stateId;
-
-  CityModel({required this.id, required this.name, required this.stateId});
-}
-
+// ADD THIS MODEL to rental_yield_model.dart or here
 class PropertyTypeModel {
   final int id;
   final String typeName;
 
-  PropertyTypeModel({required this.id, required this.typeName});
-}
-
-
-// rental_yield_model.dart
-
-class RentalYieldModel {
-  final int id;
-  final String title;
-  final String address;
-  final double price; // in Lakhs
-  final double monthlyRent; // in Thousands
-  final double annualYield; // percentage
-  final int area;
-  final String areaUnit;
-  final String propertyType;
-  final int bedrooms;
-  final int bathrooms;
-  final String furnishingStatus;
-  final String propertyAge;
-  final int cityId;
-  final int stateId;
-  final List<String> images;
-  final List<String> amenities;
-  final String description;
-  final bool isCommercial;
-
-  // Additional calculated properties
-  double get yearlyRent => monthlyRent * 12; // in Thousands
-  double get yieldAmount => (price * 100) * (annualYield / 100); // in Lakhs
-
-  RentalYieldModel({
+  PropertyTypeModel({
     required this.id,
-    required this.title,
-    required this.address,
-    required this.price,
-    required this.monthlyRent,
-    required this.annualYield,
-    required this.area,
-    this.areaUnit = "sqft",
-    required this.propertyType,
-    required this.bedrooms,
-    required this.bathrooms,
-    required this.furnishingStatus,
-    required this.propertyAge,
-    required this.cityId,
-    required this.stateId,
-    required this.images,
-    required this.amenities,
-    required this.description,
-    required this.isCommercial,
+    required this.typeName,
   });
+
+  factory PropertyTypeModel.fromJson(Map<String, dynamic> json) {
+    return PropertyTypeModel(
+      id: json['id'] ?? json['property_type_id'] ?? 0,
+      typeName: json['type_name'] ?? json['property_type'] ?? '',
+    );
+  }
 }

@@ -76,8 +76,7 @@ class MarketPlot  {
       createdAt: DateTime.parse(json['created_at']?.toString() ?? ''),
       updatedAt: DateTime.parse(json['updated_at']?.toString() ?? ''),
       propertyType: json['property_type'],
-      verfication: json['property_type'],
-    );
+      verfication: json['property_type'] != null ? json['property_type']['id'] as int? : null,    );
   }
 
   // Helper method to parse images

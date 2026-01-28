@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:cashback_farms/features/about/screens/about_us.dart';
-import 'package:cashback_farms/features/menu/dashboard_menu_controller.dart';
+import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -8,7 +8,11 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/colours.dart';
+import '../../../common/images.dart';
+import '../../../common/route/router.dart';
 import '../../../common/widget/appbar.dart';
+import '../../../common/widget/sessionhandler.dart';
+import '../../../common/widget/toster.dart';
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -32,8 +36,6 @@ class _MenuState extends State<Menu> {
 
   @override
   Widget build(BuildContext context) {
-    ScreenUtil.init(context);
-
 
     return Scaffold(
       appBar: DynamicAppBar(
@@ -319,7 +321,8 @@ class _MenuState extends State<Menu> {
     return Column(
       children: [
         _menuTile(Icons.info, "About Us", () => Get.to(()=>AboutUs())),
-        _menuTile(Icons.history, "Transaction Details",()=>Get.toNamed("/transaction")),
+        _menuTile(Icons.contact_emergency, "Contact Us", () => Get.toNamed("/contactus")),
+        // _menuTile(Icons.history, "Transaction Details", () => Get.toNamed("/transaction")),
         _menuTile(
           Icons.support_agent,
           "Support",
@@ -333,7 +336,7 @@ class _MenuState extends State<Menu> {
             }
           },
         ),
-        _menuTile(Icons.logout, "Logout", isLogout: true, () => Get.offAllNamed("/login")),
+        _menuTile(Icons.logout, "Logout", isLogout: true, () => _showLogoutConfirmation),
       ],
     );
   }
@@ -373,6 +376,120 @@ class _MenuState extends State<Menu> {
         ),
       ),
     );
+  }
+}
+void _showLogoutConfirmation(BuildContext context) {
+  Navigator.pop(context);
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: AppColor.white,
+
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColor.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(40),
+              ),
+              child: Image.asset(
+                Images.logout,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Logout',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColor.primary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Are you sure you want to logout?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 16,
+                  color: AppColor.black,
+                  fontWeight: FontWeight.bold
+              ),
+            ),
+            const SizedBox(height: 25),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      side: BorderSide(color: Colors.grey.shade400),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                          color: AppColor.black,
+                          fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await _performLogout();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+Future<void> _performLogout() async {
+  try {
+    Get.dialog(
+      const Center(
+        child: CircularProgressIndicator(),
+      ),
+      barrierDismissible: false,
+    );
+    await SessionManager.clearSession();
+    Get.offAllNamed(AppRoutes.login);
+    SnackBarHelper.showSuccess("You have been successfully logged out");
+
+  } catch (e) {
+    Get.back();
+    SnackBarHelper.showError("Failed to logout: $e");
   }
 }
 

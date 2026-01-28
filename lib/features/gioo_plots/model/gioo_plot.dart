@@ -366,7 +366,6 @@ class NearbyPlace {
   }
 }
 
-
 class User {
   final int id;
   final int role;
@@ -442,8 +441,6 @@ class User {
     );
   }
 }
-
-// Add these new models for the JSON response
 class WeeklyGraph {
   final String day;
   final int total;
@@ -460,7 +457,6 @@ class WeeklyGraph {
     );
   }
 }
-
 class MonthlyGraph {
   final String month;
   final int total;
@@ -477,9 +473,6 @@ class MonthlyGraph {
     );
   }
 }
-
-// In your model file (gioo_plot.dart)
-
 class OverallBooked {
   final int totalBookedUnits;
   final double growth; // Changed from int to double
@@ -496,7 +489,6 @@ class OverallBooked {
     );
   }
 }
-
 class WeeklyBooked {
   final String weeklyProfit;
   final int unitsBooked;
@@ -519,7 +511,6 @@ class WeeklyBooked {
     );
   }
 }
-
 class NearbyLocation {
   final int id;
   final String title;
@@ -548,7 +539,6 @@ class NearbyLocation {
     );
   }
 }
-
 class Pivot {
   final int geoPropertyId;
   final int nearbyLocationId;
@@ -574,8 +564,6 @@ class Pivot {
     );
   }
 }
-
-// Complete GiooPlotDetail model
 class GiooPlotDetail {
   final int id;
   final String name;
@@ -740,8 +728,6 @@ class GiooPlotDetail {
     );
   }
 }
-
-// The rest of your models remain the same...
 class AdminBlock {
   final String units;
   AdminBlock({
@@ -779,7 +765,6 @@ class Booking {
     );
   }
 }
-
 class Amenity {
   final int id;
   final String title;
@@ -807,7 +792,6 @@ class Amenity {
     );
   }
 }
-
 class Document {
   final int id;
   final int propertyId;
@@ -833,10 +817,6 @@ class Document {
     );
   }
 }
-
-
-// models/gioo_buying_model.dart
-
 class GiooBuyingList {
   final int id;
   final int propertyId;

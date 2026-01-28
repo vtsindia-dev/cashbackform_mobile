@@ -1,10 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
-// ======================================================
-// HELPER FUNCTIONS FOR SAFE TYPE CASTING
-// ======================================================
-
 int safeIntCast(dynamic value) {
   if (value == null) return 0;
   if (value is int) return value;
@@ -12,7 +7,6 @@ int safeIntCast(dynamic value) {
   if (value is String) return int.tryParse(value) ?? 0;
   return 0;
 }
-
 int? safeNullableIntCast(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;
@@ -23,7 +17,6 @@ int? safeNullableIntCast(dynamic value) {
   }
   return null;
 }
-
 double safeDoubleCast(dynamic value) {
   if (value == null) return 0.0;
   if (value is double) return value;
@@ -31,7 +24,6 @@ double safeDoubleCast(dynamic value) {
   if (value is String) return double.tryParse(value) ?? 0.0;
   return 0.0;
 }
-
 double? safeNullableDoubleCast(dynamic value) {
   if (value == null) return null;
   if (value is double) return value;
@@ -51,11 +43,6 @@ bool safeBoolCast(dynamic value) {
   }
   return false;
 }
-
-// ======================================================
-// PROPERTY LIST MODELS
-// ======================================================
-
 class PropertyListResponse {
   final bool status;
   final PropertyListData data;
@@ -285,7 +272,7 @@ class Property {
       verifyStatus: safeIntCast(json['verify_status']),
       userType: json['user_type'] as String? ?? 'customer',
       customerId: safeNullableIntCast(json['customer_id']),
-      documents: json['documents'] as String?,
+      documents: json['docuents'] as String?,
       isActive: safeBoolCast(json['is_active']),
       createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
       updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),

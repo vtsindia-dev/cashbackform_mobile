@@ -216,6 +216,7 @@ class ProfileForm extends StatelessWidget {
             controller: controller.phoneController,
             label: 'Phone Number',
             hint: '+1 234 567 8900',
+            isPhoneNumber: true,
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
             isRequired: true,
@@ -300,7 +301,10 @@ class ProfileForm extends StatelessWidget {
     bool isRequired = false,
     bool enabled = true,
     required int index,
+    bool isPhoneNumber = false, // Add this parameter
   }) {
+    bool isFieldEnabled = enabled && !isPhoneNumber; // Phone number is always read-only
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -339,7 +343,8 @@ class ProfileForm extends StatelessWidget {
           ),
           child: TextField(
             controller: controller,
-            enabled: enabled,
+            enabled: isFieldEnabled,
+            readOnly: isPhoneNumber, // Set read-only for phone number
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
@@ -354,7 +359,7 @@ class ProfileForm extends StatelessWidget {
               )
                   : null,
               filled: true,
-              fillColor: enabled ? Colors.white : AppColor.backgroundLight,
+              fillColor: isFieldEnabled ? Colors.white : AppColor.backgroundLight,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide.none,
@@ -377,7 +382,7 @@ class ProfileForm extends StatelessWidget {
                 horizontal: 16.w,
                 vertical: 16.h,
               ),
-              suffixIcon: !enabled
+              suffixIcon: !isFieldEnabled
                   ? Icon(
                 Icons.lock_outline,
                 size: 16.sp,
@@ -388,7 +393,7 @@ class ProfileForm extends StatelessWidget {
             keyboardType: keyboardType,
             style: TextStyle(
               fontSize: 14.sp,
-              color: enabled ? AppColor.textMain : AppColor.textSecondary,
+              color: isFieldEnabled ? AppColor.textMain : AppColor.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -400,7 +405,6 @@ class ProfileForm extends StatelessWidget {
           .then(delay: (index * 50).ms),
     );
   }
-
   Widget _buildGenderSelector(ProfileController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -795,18 +799,18 @@ class ProfileForm extends StatelessWidget {
               },
             ),
             SizedBox(height: 12.h),
-            if (controller.profileImage.value != null ||
-                controller.profileImageUrl.value.isNotEmpty)
-              _buildImageOption(
-                icon: Icons.delete_outline,
-                title: 'Remove Photo',
-                color: Colors.red,
-                onTap: () async {
-                  Get.back();
-                  await controller.removeProfileImage();
-                },
-              ),
-            SizedBox(height: 16.h),
+            // if (controller.profileImage.value != null ||
+            //     controller.profileImageUrl.value.isNotEmpty)
+            //   _buildImageOption(
+            //     icon: Icons.delete_outline,
+            //     title: 'Remove Photo',
+            //     color: Colors.red,
+            //     onTap: () async {
+            //       Get.back();
+            //       await controller.removeProfileImage();
+            //     },
+            //   ),
+            // SizedBox(height: 16.h),
             TextButton(
               onPressed: () => Get.back(),
               child: Text(

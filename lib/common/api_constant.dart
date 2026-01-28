@@ -55,7 +55,8 @@ class ApiUrl {
   static const String syndicateBuyingDetails = '$baseUrl/api/v2/syndicate_buying_list_details';
   static const String syndicateBuyingCancelRequest = '$baseUrl/api/v2/syndicate_buying_cancel_request';
 
-
+  static const String contactEnquiry = '$baseUrl/api/v2/contact-enquiry';
+  static const String settings = '$baseUrl/api/v2/settings';
 
 
   static const String states = '${baseUrl}/api/v2/state';

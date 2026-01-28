@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../Properties/widget/property_card.dart';
-import 'controller/rental_yield_controller.dart';
+import '../../Properties/widget/property_card.dart';
+import '../controller/rental_yield_controller.dart';
+import '../model/rental_yeild_model.dart';
 
 class RentalYieldList extends StatelessWidget {
   const RentalYieldList({super.key});
@@ -136,9 +137,9 @@ class RentalYieldList extends StatelessWidget {
 
     return PropertyCard(
       imageUrl: property.images.isNotEmpty ? property.images[0] : '',
-      title: property.title,
+      title: property.name,
       price: '₹${property.price.toStringAsFixed(1)}L', // Property price
-      area: '${property.area} ${property.areaUnit}',
+      area: '${property.area} ${property.area}',
       location: property.address,
       description: description,
       onTap: () {

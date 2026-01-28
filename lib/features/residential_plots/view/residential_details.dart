@@ -54,12 +54,10 @@ class _ResidentialPlotDetailsScreenState extends State<ResidentialPlotDetailsScr
                     child: NearbyProject(),
                   ),
                   Property3DImageViewer(),
-                  // Add extra padding at bottom for floating button
                   SizedBox(height: 60.h),
                 ],
               ),
             ),
-            // Floating button at bottom center
             Positioned(
               left: 0,
               right: 0,

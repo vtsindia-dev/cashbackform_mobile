@@ -71,8 +71,9 @@ class AuthController extends GetxController with CodeAutoFill {
   }
   Future<void> getPhoneNumberHint() async {
     try {
-      if (hasShownPhoneHint.value) return;
       print('Requesting phone number hint...');
+
+      // Check phone permission
       var phoneStatus = await Permission.phone.status;
       if (!phoneStatus.isGranted) {
         phoneStatus = await Permission.phone.request();
@@ -81,6 +82,8 @@ class AuthController extends GetxController with CodeAutoFill {
           return;
         }
       }
+
+      // Request phone number hint
       String? phoneNumber = await SmsAutoFill().hint;
       print('Phone hint result: $phoneNumber');
 
@@ -88,7 +91,6 @@ class AuthController extends GetxController with CodeAutoFill {
         String processedNumber = _processPhoneNumber(phoneNumber);
         if (processedNumber.isNotEmpty) {
           phoneController.text = processedNumber;
-          hasShownPhoneHint.value = true;
           SnackBarHelper.showSuccess("Phone number auto-filled!");
           print('Auto-filled phone number: $processedNumber');
         } else {
@@ -101,8 +103,7 @@ class AuthController extends GetxController with CodeAutoFill {
       debugPrint("Failed to get phone hint: $e");
       SnackBarHelper.showError("Auto-fill not available");
     }
-  }
-  String _processPhoneNumber(String phoneHint) {
+  }  String _processPhoneNumber(String phoneHint) {
     try {
       print('Raw phone hint: $phoneHint');
       String digitsOnly = phoneHint.replaceAll(RegExp(r'[^\d+]'), '');

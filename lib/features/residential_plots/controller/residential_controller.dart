@@ -86,17 +86,29 @@ class ResidentialPropertyController extends GetxController {
         properties.clear();
         currentPage.value = 1;
         hasMoreData.value = true;
+        isLoadMore(false); // Ensure load more is reset
+      }
+
+      // Don't fetch if already loading more or no more data
+      if (loadMore && (!hasMoreData.value || isLoadMore.value)) {
+        return;
       }
 
       if (loadMore) {
         isLoadMore(true);
+        currentPage.value++; // Increment page only when loading more
       } else {
         isLoading(true);
+        // Don't reset currentPage here unless it's a refresh
+        if (!refresh) {
+          currentPage.value = 1;
+        }
       }
 
       errorMessage('');
       final url = '${ApiUrl.baseUrl}/api/v2/plots?${_buildQueryParams()}';
       print('🌐 Fetching Properties URL: $url');
+      print('📄 Current Page: $currentPage');
 
       final response = await ApiService.getRequest(url);
 
@@ -105,12 +117,25 @@ class ResidentialPropertyController extends GetxController {
         if (responseData['status'] == true) {
           final propertyList = _parseProperties(responseData['data']['plots'] ?? []);
 
+          // Check for duplicates before adding
           if (loadMore) {
-            properties.addAll(propertyList);
+            // Filter out any properties that already exist in the list
+            final newProperties = propertyList.where((newProp) =>
+            !properties.any((existingProp) => existingProp.id == newProp.id)
+            ).toList();
+
+            if (newProperties.isNotEmpty) {
+              properties.addAll(newProperties);
+              print('➕ Added ${newProperties.length} new properties (filtered duplicates)');
+            } else {
+              print('⚠️ No new properties to add (all were duplicates)');
+            }
           } else {
             properties.assignAll(propertyList);
+            print('🔄 Replaced properties list with ${properties.length} items');
           }
 
+          // Handle other data (categories, states, etc.)
           if (responseData['data']['property_category'] != null) {
             propertyCategories.assignAll(
                 _parsePropertyCategories(responseData['data']['property_category'])
@@ -133,16 +158,30 @@ class ResidentialPropertyController extends GetxController {
             sqftMax.value = responseData['data']['sqft_max'] ?? 10000;
           }
 
+          // Update pagination info
           if (responseData['data']['pagination'] != null) {
             final pagination = responseData['data']['pagination'];
-            currentPage.value = pagination['current_page'] ?? 1;
-            totalPages.value = pagination['last_page'] ?? 1;
-            totalItems.value = pagination['total'] ?? 0;
+            final int apiCurrentPage = pagination['current_page'] ?? 1;
+            final int apiLastPage = pagination['last_page'] ?? 1;
+            final int apiTotal = pagination['total'] ?? 0;
+
+            // Ensure our current page matches API's current page
+            if (apiCurrentPage != currentPage.value) {
+              print('⚠️ Page mismatch: Local=$currentPage, API=$apiCurrentPage');
+              currentPage.value = apiCurrentPage;
+            }
+
+            totalPages.value = apiLastPage;
+            totalItems.value = apiTotal;
             perPage.value = pagination['per_page'] ?? 10;
-            hasMoreData.value = currentPage.value < totalPages.value;
+
+            // Update hasMoreData based on API response
+            hasMoreData.value = apiCurrentPage < apiLastPage;
+
+            print('📊 Pagination: Page $apiCurrentPage of $apiLastPage, Total: $apiTotal');
           }
 
-          print('✅ Fetched ${properties.length} properties');
+          print('✅ Fetched ${propertyList.length} properties, Total in list: ${properties.length}');
         } else {
           errorMessage(responseData['message'] ?? 'Failed to fetch properties');
           SnackBarHelper.showError(errorMessage.value);
@@ -155,19 +194,23 @@ class ResidentialPropertyController extends GetxController {
       errorMessage('Network error: $e');
       SnackBarHelper.showError('Network error occurred');
       print('❌ Error fetching properties: $e');
+
+      // If loadMore fails, decrement the page counter
+      if (loadMore) {
+        currentPage.value--;
+      }
     } finally {
       isLoading(false);
       isLoadMore(false);
     }
   }
-
   Future<void> loadMoreProperties() async {
-    if (!isLoadMore.value && hasMoreData.value) {
-      currentPage.value++;
+    // Prevent multiple simultaneous loadMore calls
+    if (hasMoreData.value && !isLoadMore.value && !isLoading.value) {
+      print('⬇️ Loading more properties...');
       await fetchProperties(loadMore: true);
     }
   }
-
   Future<void> refreshProperties() async {
     await fetchProperties(refresh: true);
   }
@@ -270,9 +313,9 @@ class ResidentialPropertyController extends GetxController {
 
     if (_searchDebounce?.isActive ?? false) _searchDebounce?.cancel();
 
-    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+    _searchDebounce = Timer(const Duration(milliseconds: 10000000), () {
       // Only search if query has at least 5 characters
-      if (query.trim().length >= 4) {
+      if (query.trim().length >= 15) {
         currentPage.value = 1;
         fetchProperties();
       }
