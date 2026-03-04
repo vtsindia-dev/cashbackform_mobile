@@ -5,15 +5,30 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
+import '../../menu/controller/dashboard_menu_controller.dart';
 import '../controller/residential_add_controller.dart';
 import '../model/residential_model.dart';
 import 'add_residential.dart';
-class MyPlotsScreen extends StatelessWidget {
+
+class MyPlotsScreen extends StatefulWidget {
   const MyPlotsScreen({Key? key}) : super(key: key);
 
   @override
+  State<MyPlotsScreen> createState() => _MyPlotsScreenState();
+}
+
+class _MyPlotsScreenState extends State<MyPlotsScreen> {
+  final controller = Get.put(ResidentialPropertyFormController());
+  final dashboardController = Get.put(DashboardController());
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      dashboardController.fetchBusinessSettings();
+    });    super.initState();
+  }
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ResidentialPropertyFormController());
 
     return Scaffold(
       backgroundColor: AppColor.backgroundLight,
@@ -27,7 +42,7 @@ class MyPlotsScreen extends StatelessWidget {
       body: Stack(
         children: [
           // Subtle background decoration
-          _buildOrganicDecor(),
+          // _buildOrganicDecor(),
 
           Obx(() {
             if (controller.isLoading.value) {
@@ -84,7 +99,7 @@ class MyPlotsScreen extends StatelessWidget {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Ensures card doesn't take infinite height
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // --- Image Section ---
@@ -94,7 +109,6 @@ class MyPlotsScreen extends StatelessWidget {
                 height: 190.h,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  // Matching the top radius of the card
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
                 ),
                 child: ClipRRect(
@@ -102,7 +116,7 @@ class MyPlotsScreen extends StatelessWidget {
                   child: property.galleryImages.isNotEmpty
                       ? Image.network(
                     property.galleryImages[0],
-                    fit: BoxFit.cover, // Forces image to fill the 190.h area
+                    fit: BoxFit.cover,
                     width: double.infinity,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
@@ -116,12 +130,42 @@ class MyPlotsScreen extends StatelessWidget {
                       : _buildImagePlaceholder(),
                 ),
               ),
+
+              // Verification Badge (if verified)
+              if (property.isVerified)
+                Positioned(
+                  top: 12.h,
+                  left: 12.w,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.verified, size: 12.sp, color: Colors.white),
+                        SizedBox(width: 4.w),
+                        Text(
+                          "VERIFIED",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
               // Status Badge
-              // Positioned(
-              //   top: 12.h,
-              //   right: 12.w,
-              //   child: _buildStatusPill(property.status ?? 'Pending'),
-              // ),
+              Positioned(
+                top: 12.h,
+                right: 12.w,
+                child: _buildStatusPill(property.status ?? 'Pending'),
+              ),
             ],
           ),
 
@@ -179,13 +223,35 @@ class MyPlotsScreen extends StatelessWidget {
                   children: [
                     _featurePill(Iconsax.maximize_1, '${property.areaSqft} Sqft'),
                     const Spacer(),
-                    _circleAction(Iconsax.edit_2, AppColor.accent, () {
-                      Get.to(() => AddEditPropertyScreen(propertyId: property.id));
-                    }),
+
+                    // Verify Button (only if not verified)
+                    if (!property.isVerified)
+                      _circleAction(
+                        Iconsax.verify,
+                        AppColor.primary,
+                            () {
+                          controller.initiateVerificationPayment(property);
+                        },
+                      ),
+
+                    if (!property.isVerified) SizedBox(width: 12.w),
+
+                    _circleAction(
+                      Iconsax.edit_2,
+                      AppColor.accent,
+                          () {
+                        Get.to(() => AddEditPropertyScreen(propertyId: property.id));
+                      },
+                    ),
                     SizedBox(width: 12.w),
-                    _circleAction(Iconsax.trash, AppColor.red, () {
-                      _showDeleteConfirmation(controller, property.id, index);
-                    }),
+
+                    _circleAction(
+                      Iconsax.trash,
+                      AppColor.red,
+                          () {
+                        _showDeleteConfirmation(controller, property.id, index);
+                      },
+                    ),
                   ],
                 ),
               ],
@@ -196,7 +262,7 @@ class MyPlotsScreen extends StatelessWidget {
     );
   }
 
-// Helper for the image placeholder to keep code clean
+  // Helper for the image placeholder
   Widget _buildImagePlaceholder() {
     return Container(
       color: AppColor.lightGrey,
@@ -210,30 +276,38 @@ class MyPlotsScreen extends StatelessWidget {
       ),
     );
   }
-  // Widget _buildStatusPill(String status) {
-  //   Color color = AppColor.warning;
-  //   if (status.toLowerCase() == 'active' || status.toLowerCase() == 'approved') {
-  //     color = AppColor.success;
-  //   }
-  //
-  //   return Container(
-  //     width: 20.w,
-  //     padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-  //     decoration: BoxDecoration(
-  //       color: color.withOpacity(0.9),
-  //       borderRadius: BorderRadius.circular(12.r),
-  //     ),
-  //     child: Text(
-  //       status.toUpperCase(),
-  //       style: TextStyle(
-  //         color: AppColor.white,
-  //         fontSize: 10.sp,
-  //         fontWeight: FontWeight.bold,
-  //         letterSpacing: 0.5,
-  //       ),
-  //     ),
-  //   );
-  // }
+
+  Widget _buildStatusPill(String status) {
+    Color color = AppColor.warning;
+    String statusText = status;
+
+    if (status.toLowerCase() == 'active' || status.toLowerCase() == 'approved') {
+      color = AppColor.success;
+      statusText = 'ACTIVE';
+    } else if (status.toLowerCase() == 'pending') {
+      color = AppColor.warning;
+      statusText = 'PENDING';
+    } else if (status.toLowerCase() == 'rejected') {
+      color = AppColor.red;
+      statusText = 'REJECTED';
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Text(
+        statusText.toUpperCase(),
+        style: TextStyle(
+          color: AppColor.white,
+          fontSize: 10.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
 
   Widget _featurePill(IconData icon, String label) {
     return Container(
@@ -300,6 +374,11 @@ class MyPlotsScreen extends StatelessWidget {
           Text(
             "No properties found",
             style: TextStyle(color: AppColor.textSecondary, fontSize: 16.sp),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            "Add your first residential property",
+            style: TextStyle(color: AppColor.textSecondary.withOpacity(0.7), fontSize: 12.sp),
           ),
         ],
       ),
@@ -374,4 +453,5 @@ class MyPlotsScreen extends StatelessWidget {
         ),
       ),
     );
-  }}
+  }
+}

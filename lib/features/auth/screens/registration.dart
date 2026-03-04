@@ -236,70 +236,70 @@ class _RegistrationState extends State<Registration> {
               )),
             ],
           ),
-          const SizedBox(height: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Account Type',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w500,
-                ),
-              )
-                  .animate()
-                  .fadeIn(duration: 700.ms, delay: 600.ms)
-                  .slideX(begin: -20, end: 0, duration: 700.ms, delay: 600.ms),
-              const SizedBox(height: 8),
-              Obx(() => Animate(
-                effects: [
-                  FadeEffect(duration: 800.ms, delay: 650.ms),
-                  SlideEffect(begin: Offset(-30, 0), duration: 800.ms, delay: 650.ms),
-                  ScaleEffect(begin: Offset(0.95, 0.95), duration: 800.ms, delay: 650.ms),
-                ],
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                      width: 2,
-                    ),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: DropdownButtonFormField<int>(
-                    value: controller.selectedRole.value,
-                    items: const [
-                      DropdownMenuItem(value: 1, child: Text('Customer')),
-                      DropdownMenuItem(value: 2, child: Text('Agent')),
-                      DropdownMenuItem(value: 3, child: Text('Vendor')),
-                      DropdownMenuItem(value: 4, child: Text('Service Provider')),
-                    ],
-                    onChanged: (value) => controller.selectedRole.value = value!,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      prefixIcon: Icon(Icons.account_circle, color: AppColor.primary),
-                    ),
-                    dropdownColor: Colors.white,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.montserrat().fontFamily,
-
-                      color: Colors.grey.shade800,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              )),
-            ],
-          ),
+          // const SizedBox(height: 15),
+          // Column(
+          //   crossAxisAlignment: CrossAxisAlignment.start,
+          //   children: [
+          //     Text(
+          //       'Account Type',
+          //       style: TextStyle(
+          //         fontSize: 14,
+          //         color: Colors.grey.shade700,
+          //         fontWeight: FontWeight.w500,
+          //       ),
+          //     )
+          //         .animate()
+          //         .fadeIn(duration: 700.ms, delay: 600.ms)
+          //         .slideX(begin: -20, end: 0, duration: 700.ms, delay: 600.ms),
+          //     const SizedBox(height: 8),
+          //     Obx(() => Animate(
+          //       effects: [
+          //         FadeEffect(duration: 800.ms, delay: 650.ms),
+          //         SlideEffect(begin: Offset(-30, 0), duration: 800.ms, delay: 650.ms),
+          //         ScaleEffect(begin: Offset(0.95, 0.95), duration: 800.ms, delay: 650.ms),
+          //       ],
+          //       child: Container(
+          //         decoration: BoxDecoration(
+          //           borderRadius: BorderRadius.circular(12),
+          //           border: Border.all(
+          //             color: Colors.grey.shade300,
+          //             width: 2,
+          //           ),
+          //           color: Colors.white,
+          //           boxShadow: [
+          //             BoxShadow(
+          //               color: Colors.black.withOpacity(0.05),
+          //               blurRadius: 10,
+          //               offset: const Offset(0, 4),
+          //             ),
+          //           ],
+          //         ),
+          //         child: DropdownButtonFormField<int>(
+          //           value: controller.selectedRole.value,
+          //           items: const [
+          //             DropdownMenuItem(value: 1, child: Text('Customer')),
+          //             DropdownMenuItem(value: 2, child: Text('Agent')),
+          //             DropdownMenuItem(value: 3, child: Text('Vendor')),
+          //             DropdownMenuItem(value: 4, child: Text('Service Provider')),
+          //           ],
+          //           onChanged: (value) => controller.selectedRole.value = value!,
+          //           decoration: InputDecoration(
+          //             border: InputBorder.none,
+          //             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          //             prefixIcon: Icon(Icons.account_circle, color: AppColor.primary),
+          //           ),
+          //           dropdownColor: Colors.white,
+          //           style: TextStyle(
+          //             fontFamily: GoogleFonts.montserrat().fontFamily,
+          //
+          //             color: Colors.grey.shade800,
+          //             fontSize: 16,
+          //           ),
+          //         ),
+          //       ),
+          //     )),
+          //   ],
+          // ),
           const SizedBox(height: 15),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -208,12 +208,12 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                       // Share Button
                       GestureDetector(
                         onTap: () {
-                          final cleanBaseUrl = ApiUrl.baseUrl.replaceAll(
+                          final cleanBaseUrl = ApiUrl.WebsidebaseUrl.replaceAll(
                             '/public',
                             '',
                           );
                           Share.share(
-                            '$cleanBaseUrl/properties/details/${property.id}',
+                            '$cleanBaseUrl/residential-property/details/${property.id}',
                           );
                         },
                         child: Container(
@@ -292,11 +292,11 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                         // ),
 
                         // Property Type
-                        _buildDetailRow(
-                          label: 'Property Type',
-                          value: transactionType,
-                          delay: 0,
-                        ),
+                        // _buildDetailRow(
+                        //   label: 'Property Type',
+                        //   value: transactionType,
+                        //   delay: 0,
+                        // ),
 
                         // Area
                         _buildDetailRow(

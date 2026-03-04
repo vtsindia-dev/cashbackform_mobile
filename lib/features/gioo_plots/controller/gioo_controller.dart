@@ -70,6 +70,10 @@ class GiooPlotController extends GetxController {
 
   var selectedTransactionId = Rxn<int>();
 
+  // City loading state
+  var isLoadingCities = false.obs;
+  final Map<int, List<City>> _citiesCache = {};
+
   RxInt get selectedCount =>
       units.where((u) => u.status == 'Selected').length.obs;
 
@@ -107,7 +111,6 @@ class GiooPlotController extends GetxController {
   void onInit() {
     super.onInit();
     fetchGiooPlots();
-
     fetchGiooBuyingList();
   }
 
@@ -157,7 +160,76 @@ class GiooPlotController extends GetxController {
     minAreaSqft.value = '';
     selectedState.value = null;
     selectedCity.value = null;
+    cities.clear(); // Clear cities when filters are cleared
     fetchGiooPlots();
+  }
+
+  // ===============================
+  // CITY FETCHING METHODS
+  // ===============================
+
+  Future<void> fetchCitiesForState(int stateId) async {
+    try {
+      if (_citiesCache.containsKey(stateId)) {
+        // Use cached cities
+        cities.value = _citiesCache[stateId]!;
+        print('✅ Using cached cities for state $stateId: ${cities.length} cities');
+        return;
+      }
+
+      isLoadingCities(true);
+
+      final url = '${ApiUrl.cities}/$stateId';
+      print('🌐 Fetching cities for state $stateId: $url');
+
+      final response = await ApiService.getRequest(url);
+
+      if (response.statusCode == 200 && response.data != null) {
+        final responseData = response.data;
+
+        if (responseData['status'] == 200 || responseData['status'] == true) {
+          final List<dynamic> citiesData = responseData['data'] ?? [];
+          final List<City> cityList = citiesData
+              .map((item) => City.fromJson(item))
+              .toList();
+
+          // Sort cities by name
+          cityList.sort((a, b) => a.cityName.compareTo(b.cityName));
+
+          // Cache the cities
+          _citiesCache[stateId] = cityList;
+
+          // Update observable list
+          cities.value = cityList;
+
+          print('✅ Fetched ${cities.length} cities for state $stateId');
+        } else {
+          print('⚠️ No cities found for state $stateId');
+          cities.value = [];
+        }
+      } else {
+        print('❌ Failed to fetch cities: ${response.statusCode}');
+        cities.value = [];
+      }
+    } catch (e) {
+      print('❌ Error fetching cities: $e');
+      SnackBarHelper.showError("Failed to load cities");
+      cities.value = [];
+    } finally {
+      isLoadingCities(false);
+    }
+  }
+
+  // Method to handle state selection
+  void onStateSelected(AppState? state) {
+    selectedState.value = state;
+    selectedCity.value = null; // Clear city when state changes
+
+    if (state != null) {
+      fetchCitiesForState(state.id);
+    } else {
+      cities.clear();
+    }
   }
 
   Future<void> fetchGiooPlots({bool loadMore = false}) async {
@@ -267,8 +339,8 @@ class GiooPlotController extends GetxController {
         sqftMax.value = sqftMin.value + 1000;
       }
 
-      // Extract cities from plots
-      _extractCitiesFromPlots(data);
+      // Don't extract cities from plots anymore - we fetch them separately
+      // _extractCitiesFromPlots(data);
 
       print('💰 Price range: ₹${priceMin.value} - ₹${priceMax.value}');
       print('📏 Area range: ${sqftMin.value} - ${sqftMax.value} sqft');
@@ -281,36 +353,6 @@ class GiooPlotController extends GetxController {
       sqftMin.value = 0.0;
       sqftMax.value = 5000.0;
     }
-  }
-
-  void _extractCitiesFromPlots(Map<String, dynamic> data) {
-    try {
-      if (data['geo'] != null && data['geo'] is List) {
-        final List<City> uniqueCities = [];
-        final Set<int> seenCityIds = {};
-
-        for (var plotData in data['geo'] as List) {
-          if (plotData['city'] != null && plotData['city'] is Map) {
-            final city = City.fromJson(plotData['city']);
-            if (!seenCityIds.contains(city.id)) {
-              seenCityIds.add(city.id);
-              uniqueCities.add(city);
-            }
-          }
-        }
-
-        // Sort cities by name
-        uniqueCities.sort((a, b) => a.cityName.compareTo(b.cityName));
-        cities.value = uniqueCities;
-        print('✅ Extracted ${cities.length} unique cities from plots');
-      }
-    } catch (e) {
-      print('❌ Error extracting cities: $e');
-    }
-  }
-
-  List<City> getCitiesForState(int stateId) {
-    return cities.where((city) => city.stateId == stateId).toList();
   }
 
   String _buildQueryParams() {
@@ -362,18 +404,18 @@ class GiooPlotController extends GetxController {
       params.add('max_price=${Uri.encodeComponent(maxPrice.value)}');
     }
 
-    // --- UPDATED AREA FILTERS ---
+    // Area filters
     if (minAreaSqft.value.isNotEmpty) {
-      params.add('area_sqft=${Uri.encodeComponent(minAreaSqft.value)}');
+      params.add('min_sqft=${Uri.encodeComponent(minAreaSqft.value)}');
     }
 
-    // Adding sqft_max in case you decide to use a range slider for area too
     if (maxAreaSqft.value.isNotEmpty) {
-      params.add('area_sqft=${Uri.encodeComponent(maxAreaSqft.value)}');
+      params.add('max_sqft=${Uri.encodeComponent(maxAreaSqft.value)}');
     }
 
     return params.isEmpty ? '' : '&${params.join('&')}';
   }
+
   void updateStats(String type) {
     selectedStatsType.value = type;
 
@@ -680,6 +722,7 @@ class GiooPlotController extends GetxController {
     } catch (e) {
       print('❌ Error setting up payment: $e');
       SnackBarHelper.showError("Failed to setup payment: $e");
+      SnackBarHelper.showError("");
     }
   }
 
@@ -895,7 +938,6 @@ class GiooPlotController extends GetxController {
     );
   }
 
-// Helper Widgets for a cleaner build method
   Widget _buildModernDetailRow(String label, String value, IconData icon) {
     return Row(
       children: [
@@ -905,7 +947,7 @@ class GiooPlotController extends GetxController {
           child: Icon(icon, size: 18.sp, color: const Color(0xFF64748B)),
         ),
         SizedBox(width: 14.w),
-        Expanded( // ⬅️ CRITICAL FIX
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -921,8 +963,8 @@ class GiooPlotController extends GetxController {
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF1E293B),
                 ),
-                maxLines: 1, // Keep it tidy
-                overflow: TextOverflow.ellipsis, // Add "..." if too long
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -930,6 +972,7 @@ class GiooPlotController extends GetxController {
       ],
     );
   }
+
   Widget _buildSecureBadge() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
@@ -949,24 +992,7 @@ class GiooPlotController extends GetxController {
       ),
     );
   }
-// Helper Widget for Detail Rows
-  Widget _buildDetailRow(String label, String value, IconData icon) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16.sp, color: const Color(0xFF64748B)),
-        SizedBox(width: 8.w),
-        Text(label, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF64748B))),
-        const Spacer(),
-        Expanded(
-          child: Text(value,
-            textAlign: TextAlign.right,
-            style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B), overflow: TextOverflow.ellipsis),
-          ),
-        ),
-      ],
-    );
-  }
+
   Future<void> viewDocument(int id) async {
     try {
       final plotDetail = giooPlotDetail.value;
@@ -1156,16 +1182,6 @@ class GiooPlotController extends GetxController {
     fetchGiooPlots();
   }
 
-  List<String> getAvailableCities() {
-    return giooPlots.map((plot) => plot.city?.cityName ?? '').where((
-        city) => city.isNotEmpty).toSet().toList();
-  }
-
-  List<String> getAvailableStates() {
-    return giooPlots.map((plot) => plot.state?.stateName ?? '').where((
-        state) => state.isNotEmpty).toSet().toList();
-  }
-
   List<GiooPlot> _parseGiooPlots(List<dynamic> data) {
     return data.map((item) => GiooPlot.fromJson(item)).toList();
   }
@@ -1258,6 +1274,7 @@ class GiooPlotController extends GetxController {
     showAllUnits.toggle();
     update();
   }
+
   String getSelectedUnitsString() {
     if (selectedUnits.isEmpty) return "";
     final sortedUnits = List.from(selectedUnits)
@@ -1546,7 +1563,6 @@ class GiooPlotController extends GetxController {
     }
   }
 
-
   Future<void> loadMoreBuyingList() async {
     if (!isLoadingBuyingList.value && hasMoreBuyingData.value) {
       await fetchGiooBuyingList(loadMore: true);
@@ -1598,7 +1614,6 @@ class GiooPlotController extends GetxController {
         return Colors.grey;
     }
   }
-
 
   @override
   void onClose() {

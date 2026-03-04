@@ -7,43 +7,37 @@ import '../../../common/widget/loader.dart';
 import '../controller/rental_yield_controller.dart';
 import '../widget/rental_yield_list.dart';
 
-
-class RentalYieldScreen extends StatefulWidget { // Changed class name
-  const RentalYieldScreen({super.key}); // Changed constructor
+class RentalYieldScreen extends StatefulWidget {
+  const RentalYieldScreen({super.key});
 
   @override
-  State<RentalYieldScreen> createState() => _RentalYieldScreenState(); // Changed state class
+  State<RentalYieldScreen> createState() => _RentalYieldScreenState();
 }
-final RentalYieldController controller = Get.find<RentalYieldController>();
+class _RentalYieldScreenState extends State<RentalYieldScreen> {
+  final RentalYieldController controller = Get.put(RentalYieldController());
 
-class _RentalYieldScreenState extends State<RentalYieldScreen> { // Changed state class
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<RentalYieldController>( // Changed controller
-      init: RentalYieldController(), // Changed controller
-      builder: (controller) {
-        return Scaffold(
-          backgroundColor: const Color(0xFFF4F7F2),
-          appBar: const DynamicAppBar(
-            title: "Rental Yield Properties", // Changed title
-            showBackButton: true,
-          ),
-          body: Obx(() => controller.isLoading.value
-              ? const Center(child: GifLoader(message: "Finding best rental yields...", size: 100)) // Changed message
-              : Column(
-            children: [
-              _CompactFilterSection(controller: controller),
-              Expanded(child: RentalYieldList()), // Changed widget
-              _BottomActionBar(controller: controller),
-            ],
-          )),
-        );
-      },
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F7F2),
+      appBar: const DynamicAppBar(
+        title: "Rental Yield Properties",
+        showBackButton: true,
+      ),
+      body: Obx(() => controller.isLoading.value
+          ? const Center(child: GifLoader(message: "Finding best rental yields...", size: 100))
+          : Column(
+        children: [
+          _CompactFilterSection(controller: controller),
+          Expanded(child: RentalYieldList()),
+          _BottomActionBar(controller: controller),
+        ],
+      )),
     );
   }
 }
 
-void _showFilterSheet(BuildContext context, RentalYieldController controller) { // Changed controller type
+void _showFilterSheet(BuildContext context, RentalYieldController controller) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -53,7 +47,7 @@ void _showFilterSheet(BuildContext context, RentalYieldController controller) { 
 }
 
 class _ModernFilterSheet extends StatefulWidget {
-  final RentalYieldController controller; // Changed controller type
+  final RentalYieldController controller;
   const _ModernFilterSheet({required this.controller});
 
   @override
@@ -61,22 +55,18 @@ class _ModernFilterSheet extends StatefulWidget {
 }
 
 class _ModernFilterSheetState extends State<_ModernFilterSheet> {
-  late RangeValues _priceRange;
-  late RangeValues _areaRange;
-  late RangeValues _rentRange; // Added rent range
-  late RangeValues _yieldRange; // Added yield range
-  late List<int> _selectedPropertyTypes; // Changed from categories
+  late RangeValues _rentRange;
+  late RangeValues _yieldRange;
+  late List<int> _selectedPropertyTypes;
   late int _selectedStateId;
   late int _selectedCityId;
   List<CityModel> _filteredCities = [];
-  late String _selectedFurnishingStatus; // Added furnishing status
-  late String _selectedPropertyAge; // Added property age
-  late int _selectedBedrooms; // Added bedrooms
-  late bool _includeCommercial; // Added commercial properties option
-  bool _priceChanged = false;
-  bool _areaChanged = false;
-  bool _rentChanged = false; // Added rent changed
-  bool _yieldChanged = false; // Added yield changed
+  late String _selectedFurnishingStatus;
+  late String _selectedPropertyAge;
+  late int _selectedBedrooms;
+  late bool _includeCommercial;
+  bool _rentChanged = false;
+  bool _yieldChanged = false;
   bool _showAllStates = false;
   bool _showAllCities = false;
   bool _showAllPropertyTypes = false;
@@ -94,58 +84,34 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   void _initFilters() {
     final c = widget.controller;
 
-    // Price Range (Property Price)
-    _priceChanged = c.selectedMinPrice.value.isNotEmpty;
-    double startP = _priceChanged ? double.parse(c.selectedMinPrice.value) : c.priceMin.value;
-    double endP = c.selectedMaxPrice.value.isNotEmpty ? double.parse(c.selectedMaxPrice.value) : c.priceMax.value;
-    _priceRange = RangeValues(
-      startP.clamp(c.priceMin.value, c.priceMax.value),
-      endP.clamp(c.priceMin.value, c.priceMax.value),
-    );
-
-    // Area Range
-    _areaChanged = c.selectedMinArea.value.isNotEmpty;
-    double startA = _areaChanged ? double.parse(c.selectedMinArea.value) : c.sqftMin.value.toDouble();
-    double endA = c.selectedMaxArea.value.isNotEmpty ? double.parse(c.selectedMaxArea.value) : c.sqftMax.value.toDouble();
-    _areaRange = RangeValues(
-      startA.clamp(c.sqftMin.value.toDouble(), c.sqftMax.value.toDouble()),
-      endA.clamp(c.sqftMin.value.toDouble(), c.sqftMax.value.toDouble()),
-    );
-
     // Rent Range (Monthly Rent)
-    _rentChanged = c.selectedMinRent.value.isNotEmpty; // Assuming rent fields exist
-    double startR = _rentChanged ? double.parse(c.selectedMinRent.value) : c.rentMin.value.toDouble();
-    double endR = c.selectedMaxRent.value.isNotEmpty ? double.parse(c.selectedMaxRent.value) : c.rentMax.value.toDouble();
+    _rentChanged = c.selectedMinRent.value.isNotEmpty;
+    double startR = _rentChanged ? double.parse(c.selectedMinRent.value) : c.rentMin.value;
+    double endR = c.selectedMaxRent.value.isNotEmpty ? double.parse(c.selectedMaxRent.value) : c.rentMax.value;
     _rentRange = RangeValues(
-      startR.clamp(c.rentMin.value.toDouble(), c.rentMax.value.toDouble()),
-      endR.clamp(c.rentMin.value.toDouble(), c.rentMax.value.toDouble()),
+      startR.clamp(c.rentMin.value, c.rentMax.value),
+      endR.clamp(c.rentMin.value, c.rentMax.value),
     );
 
     // Yield Range (Annual Yield Percentage)
-    _yieldChanged = c.selectedMinYield.value.isNotEmpty; // Assuming yield fields exist
-    double startY = _yieldChanged ? double.parse(c.selectedMinYield.value) : c.yieldMin.value.toDouble();
-    double endY = c.selectedMaxYield.value.isNotEmpty ? double.parse(c.selectedMaxYield.value) : c.yieldMax.value.toDouble();
+    // Since yieldMin and yieldMax might not exist in your controller, use defaults
+    _yieldChanged = c.selectedMinYield.value.isNotEmpty;
+    double startY = _yieldChanged ? double.parse(c.selectedMinYield.value) : 0.0;
+    double endY = c.selectedMaxYield.value.isNotEmpty ? double.parse(c.selectedMaxYield.value) : 20.0;
     _yieldRange = RangeValues(
-      startY.clamp(c.yieldMin.value.toDouble(), c.yieldMax.value.toDouble()),
-      endY.clamp(c.yieldMin.value.toDouble(), c.yieldMax.value.toDouble()),
+      startY.clamp(0.0, 20.0),
+      endY.clamp(0.0, 20.0),
     );
 
-    // Property Types
-    _selectedPropertyTypes = c.selectedPropertyTypeId.value > 0 ? [c.selectedPropertyTypeId.value] : [];
+    // Property Types - Initialize empty since your API doesn't seem to have property types
+    _selectedPropertyTypes = [];
 
     _selectedStateId = c.selectedStateId.value;
     _selectedCityId = c.selectedCityId.value;
-    _selectedFurnishingStatus = c.selectedFurnishingStatus.value; // Assuming this exists
-    _selectedPropertyAge = c.selectedPropertyAge.value; // Assuming this exists
-    _selectedBedrooms = c.selectedBedrooms.value; // Assuming this exists
-    _includeCommercial = c.includeCommercial.value; // Assuming this exists
-
-    // Initialize filtered cities based on current state
-    if (_selectedStateId > 0) {
-      _filteredCities = widget.controller.citiesList
-          .where((city) => city.stateId == _selectedStateId)
-          .toList();
-    }
+    _selectedFurnishingStatus = ''; // Your API doesn't have this
+    _selectedPropertyAge = ''; // Your API doesn't have this
+    _selectedBedrooms = 0; // Your API doesn't have this
+    _includeCommercial = false; // Your API doesn't have this
   }
 
   Future<void> _updateFilteredCities() async {
@@ -158,9 +124,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       await widget.controller.fetchCitiesByState(_selectedStateId);
 
       setState(() {
-        _filteredCities = widget.controller.citiesList
-            .where((city) => city.stateId == _selectedStateId)
-            .toList();
+        _filteredCities = widget.controller.citiesList;
         _loadingCities = false;
         _selectedCityId = 0;
       });
@@ -175,9 +139,9 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      maxChildSize: 0.95,
-      minChildSize: 0.6,
+      initialChildSize: 0.7,
+      maxChildSize: 0.9,
+      minChildSize: 0.4,
       builder: (_, scrollController) => Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -186,7 +150,11 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
         child: Column(
           children: [
             const SizedBox(height: 12),
-            Container(width: 45, height: 4, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10))),
+            Container(
+                width: 45,
+                height: 4,
+                decoration:
+                BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10))),
             _buildHeader(),
             Expanded(
               child: ListView(
@@ -194,7 +162,9 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 children: [
-                  _buildAnimatedSection(0, "LOCATION",
+                  _buildAnimatedSection(
+                      0,
+                      "LOCATION",
                       icon: Icons.location_on_rounded,
                       color: Colors.orange,
                       child: Column(
@@ -210,62 +180,34 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                             _buildCitySelector(),
                           ],
                         ],
-                      )
-                  ),
+                      )),
                   const SizedBox(height: 32),
-                  _buildAnimatedSection(1, "PROPERTY TYPE",
-                      icon: Icons.apartment_rounded,
-                      color: Colors.blueAccent,
-                      child: _buildPropertyTypeSelector()
-                  ),
-                  const SizedBox(height: 32),
-                  _buildAnimatedSection(2, "FURNISHING",
-                      icon: Icons.weekend_rounded,
-                      color: Colors.purple,
-                      child: _buildFurnishingSelector()
-                  ),
-                  const SizedBox(height: 32),
-                  _buildAnimatedSection(3, "BEDROOMS",
-                      icon: Icons.bed_rounded,
-                      color: Colors.teal,
-                      child: _buildBedroomSelector()
-                  ),
-                  const SizedBox(height: 32),
-                  _buildAnimatedSection(4, "PRICE RANGE",
-                      icon: Icons.attach_money_rounded,
-                      color: Colors.green,
-                      trailing: _priceChanged ? "₹${_priceRange.start.toInt()}L - ₹${_priceRange.end.toInt()}L" : "Any Price",
-                      child: _buildPriceSlider()
-                  ),
-                  const SizedBox(height: 32),
-                  _buildAnimatedSection(5, "MONTHLY RENT",
+                  _buildAnimatedSection(
+                      1,
+                      "MONTHLY RENT",
                       icon: Icons.money_rounded,
                       color: Colors.blue,
-                      trailing: _rentChanged ? "₹${_rentRange.start.toInt()}K - ₹${_rentRange.end.toInt()}K" : "Any Rent",
-                      child: _buildRentSlider()
-                  ),
+                      trailing: _rentChanged
+                          ? "₹${_rentRange.start.toInt()} - ₹${_rentRange.end.toInt()}"
+                          : "Any Rent",
+                      child: _buildRentSlider()),
                   const SizedBox(height: 32),
-                  _buildAnimatedSection(6, "YIELD % (Annual)",
+                  _buildAnimatedSection(
+                      2,
+                      "YIELD % (Annual)",
                       icon: Icons.trending_up_rounded,
                       color: Colors.amber,
-                      trailing: _yieldChanged ? "${_yieldRange.start.toStringAsFixed(1)}% - ${_yieldRange.end.toStringAsFixed(1)}%" : "Any Yield",
-                      child: _buildYieldSlider()
-                  ),
+                      trailing: _yieldChanged
+                          ? "${_yieldRange.start.toStringAsFixed(1)}% - ${_yieldRange.end.toStringAsFixed(1)}%"
+                          : "Any Yield",
+                      child: _buildYieldSlider()),
                   const SizedBox(height: 32),
-                  _buildAnimatedSection(7, "AREA RANGE",
-                      icon: Icons.square_foot_rounded,
-                      color: Colors.redAccent,
-                      trailing: _areaChanged ? "${_areaRange.start.toInt()} - ${_areaRange.end.toInt()} sqft" : "Any Size",
-                      child: _buildAreaSlider()
-                  ),
-                  const SizedBox(height: 32),
-                  _buildAnimatedSection(8, "PROPERTY AGE",
-                      icon: Icons.calendar_today_rounded,
-                      color: Colors.brown,
-                      child: _buildPropertyAgeSelector()
-                  ),
-                  const SizedBox(height: 32),
-                  _buildCommercialToggle(),
+                  _buildAnimatedSection(
+                      3,
+                      "BEDROOMS",
+                      icon: Icons.bed_rounded,
+                      color: Colors.teal,
+                      child: _buildBedroomSelector()),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -286,12 +228,20 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF819E4F), letterSpacing: 0.5),
+        style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF819E4F),
+            letterSpacing: 0.5),
       ),
     );
   }
 
-  Widget _buildAnimatedSection(int index, String title, {required IconData icon, required Color color, required Widget child, String? trailing}) {
+  Widget _buildAnimatedSection(int index, String title,
+      {required IconData icon,
+        required Color color,
+        required Widget child,
+        String? trailing}) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: Duration(milliseconds: 300 + (index * 100)),
@@ -306,10 +256,17 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                 children: [
                   Icon(icon, size: 16, color: color),
                   const SizedBox(width: 8),
-                  Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: Colors.grey[600])),
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
+                          color: Colors.grey[600])),
                   const Spacer(),
                   if (trailing != null)
-                    Text(trailing, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
+                    Text(trailing,
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.bold, color: color)),
                 ],
               ),
               const SizedBox(height: 16),
@@ -321,7 +278,8 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
     );
   }
 
-  Widget _buildSelectorItem({required String label, required bool isSelected, required VoidCallback onTap}) {
+  Widget _buildSelectorItem(
+      {required String label, required bool isSelected, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -334,31 +292,47 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
           color: isSelected ? const Color(0xFF819E4F) : Colors.grey[50],
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isSelected ? const Color(0xFF819E4F) : Colors.grey[200]!),
-          boxShadow: isSelected ? [BoxShadow(color: const Color(0xFF819E4F).withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))] : [],
+          boxShadow: isSelected
+              ? [
+            BoxShadow(
+                color: const Color(0xFF819E4F).withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4))
+          ]
+              : [],
         ),
         child: Text(
           label,
-          style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, fontSize: 13),
+          style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black87,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 13),
         ),
       ),
     );
   }
 
   Widget _buildStateSelector() {
-    final statesToShow = _showAllStates ? widget.controller.statesList : widget.controller.statesList.take(_initialItemCount).toList();
+    final statesToShow = _showAllStates
+        ? widget.controller.statesList
+        : widget.controller.statesList.take(_initialItemCount).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: 8, runSpacing: 8,
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            _buildSelectorItem(label: "All States", isSelected: _selectedStateId == 0, onTap: () async {
-              setState(() {
-                _selectedStateId = 0;
-                _selectedCityId = 0;
-              });
-              await _updateFilteredCities();
-            }),
+            _buildSelectorItem(
+                label: "All States",
+                isSelected: _selectedStateId == 0,
+                onTap: () async {
+                  setState(() {
+                    _selectedStateId = 0;
+                    _selectedCityId = 0;
+                  });
+                  await _updateFilteredCities();
+                }),
             ...statesToShow.map((state) => _buildSelectorItem(
                 label: state.stateName,
                 isSelected: _selectedStateId == state.id,
@@ -367,8 +341,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                     _selectedStateId = state.id;
                   });
                   await _updateFilteredCities();
-                }
-            )),
+                })),
           ],
         ),
         if (widget.controller.statesList.length > _initialItemCount)
@@ -384,25 +357,33 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
         child: const Center(
           child: SizedBox(
             height: 20,
-            child: Text('Loading Cities...',style: TextStyle(fontSize: 12,fontWeight: FontWeight.bold),),
+            child: Text(
+              'Loading Cities...',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       );
     }
 
-    final citiesToShow = _showAllCities ? _filteredCities : _filteredCities.take(_initialItemCount).toList();
+    final citiesToShow = _showAllCities
+        ? _filteredCities
+        : _filteredCities.take(_initialItemCount).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: 8, runSpacing: 8,
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            _buildSelectorItem(label: "All Cities", isSelected: _selectedCityId == 0, onTap: () => setState(() => _selectedCityId = 0)),
+            _buildSelectorItem(
+                label: "All Cities",
+                isSelected: _selectedCityId == 0,
+                onTap: () => setState(() => _selectedCityId = 0)),
             ...citiesToShow.map((city) => _buildSelectorItem(
                 label: city.cityName,
                 isSelected: _selectedCityId == city.id,
-                onTap: () => setState(() => _selectedCityId = city.id)
-            )),
+                onTap: () => setState(() => _selectedCityId = city.id))),
           ],
         ),
         if (_filteredCities.length > _initialItemCount)
@@ -411,76 +392,20 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
     );
   }
 
-  Widget _buildPropertyTypeSelector() {
-    final typesToShow = _showAllPropertyTypes ? widget.controller.propertyTypes : widget.controller.propertyTypes.take(_initialItemCount).toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: 8, runSpacing: 8,
-          children: [
-            _buildSelectorItem(label: "All Types", isSelected: _selectedPropertyTypes.isEmpty, onTap: () => setState(() => _selectedPropertyTypes.clear())),
-            ...typesToShow.map((type) => _buildSelectorItem(
-                label: type.typeName,
-                isSelected: _selectedPropertyTypes.contains(type.id),
-                onTap: () => setState(() {
-                  if (_selectedPropertyTypes.contains(type.id)) {
-                    _selectedPropertyTypes.remove(type.id);
-                  } else {
-                    _selectedPropertyTypes.add(type.id);
-                  }
-                })
-            )),
-          ],
-        ),
-        if (widget.controller.propertyTypes.length > _initialItemCount)
-          _buildSeeMore(() => setState(() => _showAllPropertyTypes = !_showAllPropertyTypes), _showAllPropertyTypes),
-      ],
-    );
-  }
-
-
-  Widget _buildFurnishingSelector() {
-    final options = ['Fully Furnished', 'Semi Furnished', 'Unfurnished'];
-    return Wrap(
-      spacing: 8, runSpacing: 8,
-      children: [
-        _buildSelectorItem(label: "Any", isSelected: _selectedFurnishingStatus.isEmpty, onTap: () => setState(() => _selectedFurnishingStatus = '')),
-        ...options.map((type) => _buildSelectorItem(
-            label: type,
-            isSelected: _selectedFurnishingStatus == type.toLowerCase(),
-            onTap: () => setState(() => _selectedFurnishingStatus = type.toLowerCase())
-        )),
-      ],
-    );
-  }
-
   Widget _buildBedroomSelector() {
     final options = [1, 2, 3, 4, 5];
     return Wrap(
-      spacing: 8, runSpacing: 8,
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        _buildSelectorItem(label: "Any", isSelected: _selectedBedrooms == 0, onTap: () => setState(() => _selectedBedrooms = 0)),
+        _buildSelectorItem(
+            label: "Any",
+            isSelected: _selectedBedrooms == 0,
+            onTap: () => setState(() => _selectedBedrooms = 0)),
         ...options.map((count) => _buildSelectorItem(
             label: "$count BHK",
             isSelected: _selectedBedrooms == count,
-            onTap: () => setState(() => _selectedBedrooms = count)
-        )),
-      ],
-    );
-  }
-
-  Widget _buildPropertyAgeSelector() {
-    final options = ['0-5 years', '5-10 years', '10-20 years', '20+ years'];
-    return Wrap(
-      spacing: 8, runSpacing: 8,
-      children: [
-        _buildSelectorItem(label: "Any Age", isSelected: _selectedPropertyAge.isEmpty, onTap: () => setState(() => _selectedPropertyAge = '')),
-        ...options.map((age) => _buildSelectorItem(
-            label: age,
-            isSelected: _selectedPropertyAge == age,
-            onTap: () => setState(() => _selectedPropertyAge = age)
-        )),
+            onTap: () => setState(() => _selectedBedrooms = count))),
       ],
     );
   }
@@ -490,26 +415,8 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(isOpen ? "- See Less" : "+ See More", style: const TextStyle(color: Color(0xFF819E4F), fontSize: 12, fontWeight: FontWeight.w900)),
-      ),
-    );
-  }
-
-  Widget _buildPriceSlider() {
-    return _buildSliderCard(
-      accentColor: Colors.green,
-      child: RangeSlider(
-        values: _priceRange,
-        min: widget.controller.priceMin.value,
-        max: widget.controller.priceMax.value,
-        divisions: 100,
-        labels: RangeLabels(
-          '₹${_priceRange.start.toInt()}L',
-          '₹${_priceRange.end.toInt()}L',
-        ),
-        onChanged: (val) {
-          setState(() { _priceRange = val; _priceChanged = true; });
-        },
+        child: Text(isOpen ? "- See Less" : "+ See More",
+            style: const TextStyle(color: Color(0xFF819E4F), fontSize: 12, fontWeight: FontWeight.w900)),
       ),
     );
   }
@@ -519,15 +426,18 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       accentColor: Colors.blue,
       child: RangeSlider(
         values: _rentRange,
-        min: widget.controller.rentMin.value.toDouble(),
-        max: widget.controller.rentMax.value.toDouble(),
+        min: widget.controller.rentMin.value,
+        max: widget.controller.rentMax.value,
         divisions: 100,
         labels: RangeLabels(
-          '₹${_rentRange.start.toInt()}K',
-          '₹${_rentRange.end.toInt()}K',
+          '₹${_rentRange.start.toInt()}',
+          '₹${_rentRange.end.toInt()}',
         ),
         onChanged: (val) {
-          setState(() { _rentRange = val; _rentChanged = true; });
+          setState(() {
+            _rentRange = val;
+            _rentChanged = true;
+          });
         },
       ),
     );
@@ -538,67 +448,30 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       accentColor: Colors.amber,
       child: RangeSlider(
         values: _yieldRange,
-        min: widget.controller.yieldMin.value.toDouble(),
-        max: widget.controller.yieldMax.value.toDouble(),
+        min: 0.0,
+        max: 20.0,
         divisions: 100,
         labels: RangeLabels(
           '${_yieldRange.start.toStringAsFixed(1)}%',
           '${_yieldRange.end.toStringAsFixed(1)}%',
         ),
         onChanged: (val) {
-          setState(() { _yieldRange = val; _yieldChanged = true; });
+          setState(() {
+            _yieldRange = val;
+            _yieldChanged = true;
+          });
         },
       ),
-    );
-  }
-
-  Widget _buildAreaSlider() {
-    return _buildSliderCard(
-      accentColor: Colors.purple,
-      child: RangeSlider(
-        values: _areaRange,
-        min: widget.controller.sqftMin.value.toDouble(),
-        max: widget.controller.sqftMax.value.toDouble(),
-        divisions: 100,
-        labels: RangeLabels(
-          '${_areaRange.start.toInt()} sqft',
-          '${_areaRange.end.toInt()} sqft',
-        ),
-        onChanged: (val) {
-          setState(() { _areaRange = val; _areaChanged = true; });
-        },
-      ),
-    );
-  }
-
-  Widget _buildCommercialToggle() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.business_rounded, size: 16, color: Colors.deepOrange),
-            const SizedBox(width: 8),
-            Text("Include Commercial", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: Colors.grey[600])),
-          ],
-        ),
-        Switch(
-          value: _includeCommercial,
-          activeColor: const Color(0xFF819E4F),
-          onChanged: (value) {
-            setState(() {
-              _includeCommercial = value;
-            });
-          },
-        ),
-      ],
     );
   }
 
   Widget _buildSliderCard({required Widget child, required Color accentColor}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey[100]!)),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey[100]!)),
       child: SliderTheme(
         data: SliderTheme.of(context).copyWith(
           trackHeight: 6,
@@ -621,8 +494,10 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Rental Yield Filters", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
-              Text("Find high yield properties", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+              Text("Rental Yield Filters",
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
+              Text("Find high yield properties",
+                  style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
             ],
           ),
           GestureDetector(
@@ -647,11 +522,10 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5)
-        )],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))
+        ],
       ),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
@@ -676,7 +550,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
           ),
         )
             : const Text(
-          "Apply Yield Filters",
+          "Apply Filters",
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -698,29 +572,18 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       // Apply filters to controller
       widget.controller.selectedStateId.value = _selectedStateId;
       widget.controller.selectedCityId.value = _selectedCityId;
-      widget.controller.selectedPropertyTypeId.value = _selectedPropertyTypes.isNotEmpty ? _selectedPropertyTypes.first : 0;
-
-      // Price
-      widget.controller.selectedMinPrice.value = _priceChanged ? _priceRange.start.toInt().toString() : "";
-      widget.controller.selectedMaxPrice.value = _priceChanged ? _priceRange.end.toInt().toString() : "";
 
       // Rent
-      widget.controller.selectedMinRent.value = _rentChanged ? _rentRange.start.toInt().toString() : "";
-      widget.controller.selectedMaxRent.value = _rentChanged ? _rentRange.end.toInt().toString() : "";
+      widget.controller.selectedMinRent.value =
+      _rentChanged ? _rentRange.start.toInt().toString() : "";
+      widget.controller.selectedMaxRent.value =
+      _rentChanged ? _rentRange.end.toInt().toString() : "";
 
       // Yield
-      widget.controller.selectedMinYield.value = _yieldChanged ? _yieldRange.start.toStringAsFixed(1) : "";
-      widget.controller.selectedMaxYield.value = _yieldChanged ? _yieldRange.end.toStringAsFixed(1) : "";
-
-      // Area
-      widget.controller.selectedMinArea.value = _areaChanged ? _areaRange.start.toInt().toString() : "";
-      widget.controller.selectedMaxArea.value = _areaChanged ? _areaRange.end.toInt().toString() : "";
-
-      // Other filters
-      widget.controller.selectedFurnishingStatus.value = _selectedFurnishingStatus;
-      widget.controller.selectedPropertyAge.value = _selectedPropertyAge;
-      widget.controller.selectedBedrooms.value = _selectedBedrooms;
-      widget.controller.includeCommercial.value = _includeCommercial;
+      widget.controller.selectedMinYield.value =
+      _yieldChanged ? _yieldRange.start.toStringAsFixed(1) : "";
+      widget.controller.selectedMaxYield.value =
+      _yieldChanged ? _yieldRange.end.toStringAsFixed(1) : "";
 
       // Apply filters
       widget.controller.currentPage.value = 1;
@@ -754,7 +617,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
 }
 
 class _CompactFilterSection extends StatelessWidget {
-  final RentalYieldController controller; // Changed controller type
+  final RentalYieldController controller;
   const _CompactFilterSection({required this.controller});
 
   @override
@@ -778,13 +641,20 @@ class _CompactFilterSection extends StatelessWidget {
                   Container(
                     constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.22),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.25), borderRadius: BorderRadius.circular(25)),
+                    decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.25), borderRadius: BorderRadius.circular(25)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(child: Text(controller.searchQuery.value, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11), overflow: TextOverflow.ellipsis)),
+                        Expanded(
+                            child: Text(controller.searchQuery.value,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
+                                overflow: TextOverflow.ellipsis)),
                         const SizedBox(width: 4),
-                        GestureDetector(onTap: controller.clearSearch, child: const Icon(Icons.close, size: 14, color: Colors.white)),
+                        GestureDetector(
+                            onTap: controller.clearSearch,
+                            child: const Icon(Icons.close, size: 14, color: Colors.white)),
                       ],
                     ),
                   ),
@@ -802,14 +672,16 @@ class _CompactFilterSection extends StatelessWidget {
                   Expanded(
                     child: TextField(
                       controller: controller.searchController,
-                      onChanged: controller.onSearchChanged,
+                      onChanged: (value) {
+                        controller.searchQuery.value = value;
+                        controller.onSearchChanged(value);
+                      },
                       style: const TextStyle(fontSize: 14),
                       decoration: const InputDecoration(
-                          hintText: "Search rental yields...", // Changed hint text
+                          hintText: "Search rental yields...",
                           border: InputBorder.none,
                           isDense: true,
-                          contentPadding: EdgeInsets.zero
-                      ),
+                          contentPadding: EdgeInsets.zero),
                     ),
                   ),
                   Obx(() {
@@ -819,8 +691,7 @@ class _CompactFilterSection extends StatelessWidget {
                           controller.searchController.clear();
                           controller.searchQuery.value = '';
                         },
-                        child: const Icon(Icons.close, size: 16, color: Colors.grey)
-                    );
+                        child: const Icon(Icons.close, size: 16, color: Colors.grey));
                   }),
                 ],
               ),
@@ -838,23 +709,17 @@ class _CompactFilterSection extends StatelessWidget {
                           ? const LinearGradient(
                           colors: [Color(0xFF819E4F), Color(0xFF9CB45A)],
                           begin: Alignment.topLeft,
-                          end: Alignment.bottomRight
-                      )
+                          end: Alignment.bottomRight)
                           : LinearGradient(
                           colors: [Colors.grey.shade300, Colors.grey.shade400],
                           begin: Alignment.topLeft,
-                          end: Alignment.bottomRight
-                      ),
-                      borderRadius: BorderRadius.circular(20)
-                  ),
-                  child: Text(
-                      "Search",
+                          end: Alignment.bottomRight),
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Text("Search",
                       style: TextStyle(
                           color: hasQuery ? Colors.black : Colors.grey.shade600,
                           fontWeight: FontWeight.bold,
-                          fontSize: 12
-                      )
-                  ),
+                          fontSize: 12)),
                 ),
               );
             }),
@@ -863,10 +728,9 @@ class _CompactFilterSection extends StatelessWidget {
                 onTap: () => _showFilterSheet(context, controller),
                 child: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFF819E4F), borderRadius: BorderRadius.circular(20)),
-                    child: const Icon(Icons.tune, color: Colors.white, size: 18)
-                )
-            ),
+                    decoration:
+                    BoxDecoration(color: const Color(0xFF819E4F), borderRadius: BorderRadius.circular(20)),
+                    child: const Icon(Icons.tune, color: Colors.white, size: 18))),
           ],
         ),
       ),
@@ -875,30 +739,29 @@ class _CompactFilterSection extends StatelessWidget {
 }
 
 class _BottomActionBar extends StatelessWidget {
-  final RentalYieldController controller; // Changed controller type
+  final RentalYieldController controller;
   const _BottomActionBar({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     return Obx(() => Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Colors.black12, width: 0.5))),
+      decoration: const BoxDecoration(
+          color: Colors.white, border: Border(top: BorderSide(color: Colors.black12, width: 0.5))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("${controller.properties.length} Properties found", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          Text("${controller.filteredProperties.length} Properties found",
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
           if (controller.hasFiltersApplied)
             GestureDetector(
               onTap: () => controller.clearAllFilters(),
-              child: Text(
-                  "RESET FILTERS",
+              child: Text("RESET FILTERS",
                   style: TextStyle(
                       color: Colors.red[400],
                       fontWeight: FontWeight.w900,
                       fontSize: 12,
-                      letterSpacing: 1
-                  )
-              ),
+                      letterSpacing: 1)),
             ),
         ],
       ),

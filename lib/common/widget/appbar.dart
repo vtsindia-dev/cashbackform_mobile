@@ -80,7 +80,11 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
           if (showBackButton)
             _buildIconButton(
               icon: Icons.arrow_back,
-              onTap: onBackPressed ?? () => Get.back(),
+              // Safe back navigation without snackbar check
+              onTap: onBackPressed ?? () {
+                // Simplified: Just navigate back without checking snackbar
+                Get.back();
+              },
             ),
 
           if (showDrawerButton && scaffoldKey != null)
@@ -91,9 +95,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
     );
-  }
-
-  Widget _buildMiddleSection() {
+  }  Widget _buildMiddleSection() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,

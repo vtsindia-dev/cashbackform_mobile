@@ -24,6 +24,7 @@ class _ResidentialPlotDetailsScreenState extends State<ResidentialPlotDetailsScr
   @override
   void initState() {
     super.initState();
+    controller.enquirySent.value =false;
     if (widget.propertyId != null) {
       controller.fetchPropertyDetail(widget.propertyId!);
     }

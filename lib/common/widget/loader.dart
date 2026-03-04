@@ -18,7 +18,7 @@ class GifLoader extends StatefulWidget {
   State<GifLoader> createState() => _GifLoaderState();
 }
 
-class _GifLoaderState extends State<GifLoader>
+class    _GifLoaderState extends State<GifLoader>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _pulse;
@@ -74,6 +74,7 @@ class _GifLoaderState extends State<GifLoader>
       ),
     );
   }
+
 
   @override
   void dispose() {

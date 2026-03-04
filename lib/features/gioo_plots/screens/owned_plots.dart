@@ -1080,11 +1080,10 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
     final bool isActive = cancelStatus == 0;
     final bool isRequestSent = cancelStatus == 1;
     final bool isCancelled = cancelStatus == 2;
-
     /// STATUS TEXT & COLOR - Updated to match React logic
+    ///
     String bookingStatusText;
     Color bookingStatusColor;
-
     if (cancelStatus == 0) {
       bookingStatusText = 'Active';
       bookingStatusColor = const Color(0xFF10B981); // Emerald Green
@@ -1106,7 +1105,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
       bookingStatusText = 'Unknown';
       bookingStatusColor = Colors.grey;
     }
-
     return Container(
       margin: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
       decoration: BoxDecoration(
@@ -1143,19 +1141,20 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14.r),
                   ),
                   child: Center(
-                    child: Text(
-                      detail.unit.toString(),
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w900,
-                        color: bookingStatusColor,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        detail.unit.toString(),
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w900,
+                          color: bookingStatusColor,
+                        ),
+                        maxLines: 1,
                       ),
                     ),
                   ),
-                ),
-                16.w.horizontalSpace,
-
-                // Unit Details
+                ),           16.w.horizontalSpace,
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1178,8 +1177,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                         ),
                       ),
 
-                      // Show status messages based on React logic
-                      if (cancelStatus == 2 && refundStatus == 0) ...[
+                       if (cancelStatus == 2 && refundStatus == 0) ...[
                         4.h.verticalSpace,
                         Text(
                           'Refund will be sent in 2 Days',
@@ -1193,8 +1191,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // Cancel Action Button (only show for active status - cancelStatus == 0)
                 if (cancelStatus == 0)
                   Material(
                     color: Colors.red.shade50,
@@ -1208,8 +1204,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                // Show Request Sent indicator (cancelStatus == 1)
                 if (cancelStatus == 1)
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
@@ -1233,8 +1227,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                // Show Cancelled indicator (cancelStatus == 2)
                 if (cancelStatus == 2 && refundStatus == 0)
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),

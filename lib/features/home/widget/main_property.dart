@@ -15,6 +15,7 @@ class PropertyMain extends StatelessWidget {
     {"title": "Gioo Plots", "icon": Images.featuredGioo},
     {"title": "Syndicate Plots", "icon": Images.featuredSyndicate},
     {"title": "Residential Plots", "icon": Images.featuredResidential},
+    {"title": "Rental Yield", "icon": Images.featuredGioo},
   ];
 
   final List<Color> iconColors = const [
@@ -22,6 +23,7 @@ class PropertyMain extends StatelessWidget {
     Color(0xFF2CC8B3),
     Color(0xFFF49B33),
     Color(0xFFE54788),
+    Color(0xFF0440FF),
   ];
 
   @override
@@ -93,6 +95,9 @@ class PropertyMain extends StatelessWidget {
       Get.toNamed(AppRoutes.gioo);
     } else if (title == "Syndicate Plots") {
       Get.toNamed(AppRoutes.syndicate);
+    }
+    else if (title == "Rental Yield") {
+      Get.toNamed(AppRoutes.rentalYieldList);
     } else {
       Get.toNamed(AppRoutes.residentialList);
     }

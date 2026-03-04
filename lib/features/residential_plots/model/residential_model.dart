@@ -845,23 +845,21 @@ class Document {
   final int id;
   final String name;
   final String? file;
-  final String? type;
+  final String type;
   final int status;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String createdAt;
+  final String updatedAt;
   final String? description;
   final String? helpText;
   final List<String>? allowedFormats;
   final int? maxSize;
   final int isRequired;
-  final String? title; // For amenity-style documents
-  final String? image; // For amenity-style documents
 
   Document({
     required this.id,
     required this.name,
     this.file,
-    this.type,
+    required this.type,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -870,55 +868,30 @@ class Document {
     this.allowedFormats,
     this.maxSize,
     required this.isRequired,
-    this.title,
-    this.image,
   });
 
   factory Document.fromJson(Map<String, dynamic> json) {
-    // Handle both document and amenity structures
-    final name = json['name'] as String? ?? json['title'] as String? ?? '';
-
     return Document(
-      id: safeIntCast(json['id']),
-      name: name,
-      file: json['file'] as String?,
-      type: json['type'] as String? ?? 'file',
-      status: safeIntCast(json['status'] ?? 1),
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
-      description: json['description'] as String?,
-      helpText: json['help_text'] as String?,
-      allowedFormats: _parseAllowedFormats(json['allowed_formats']),
-      maxSize: safeNullableIntCast(json['max_size']),
-      isRequired: safeIntCast(json['is_required'] ?? 0),
-      title: json['title'] as String?,
-      image: json['image'] as String?,
+      id: json['id'] ?? 0,
+      name: json['name'] ?? 'Unnamed Document',
+      file: json['file'],
+      type: json['type'] ?? 'file',
+      status: json['status'] ?? 1,
+      createdAt: json['created_at'] ?? DateTime.now().toIso8601String(),
+      updatedAt: json['updated_at'] ?? DateTime.now().toIso8601String(),
+      description: json['description'],
+      helpText: json['help_text'],
+      allowedFormats: json['allowed_formats'] != null
+          ? (json['allowed_formats'] as String).split(',').map((e) => e.trim()).toList()
+          : ['pdf', 'jpg', 'png', 'jpeg', 'doc', 'docx'],
+      maxSize: json['max_size'] ?? 2048,
+      isRequired: json['is_required'] ?? 1,
     );
   }
+}
 
-  static List<String>? _parseAllowedFormats(dynamic value) {
-    if (value == null) return null;
-    if (value is String) {
-      return value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-    }
-    if (value is List) {
-      return value.map((e) => e.toString()).toList();
-    }
-    return null;
-  }
 
-  String get allowedFormatsText {
-    if (allowedFormats == null || allowedFormats!.isEmpty) {
-      return 'PDF, JPG, PNG';
-    }
-    return allowedFormats!.map((f) => f.toUpperCase()).join(', ');
-  }
-
-  bool get isActive => status == 1;
-
-  // Get display name - prefer title if available (for amenity-style docs)
-  String get displayName => title ?? name;
-}class Place {
+class Place {
   final Coordinates coordinates;
   final String name;
   final String address;

@@ -28,13 +28,14 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
         if (detail == null) return SizedBox.shrink();
 
         final selectedCount = controller.selectedPlots.length;
-        final pricePerPlot = controller.getPricePerPlot();
+        // Use adminBlockAmount for price per plot instead of calculated price
+        final pricePerPlot = controller.getPricePerPlotFromAdminBlock();
 
         double totalAmount = 0;
         if (selectedCount > 0) {
           totalAmount = controller.calculateSelectedPlotsAmount();
         }
-        final amountWithGst = totalAmount * 1.18;
+        final amountWithGst = totalAmount;
         final plotAreas = controller.getPlotAreas();
         final totalArea = plotAreas.fold(0.0, (sum, area) => sum + area);
 
@@ -126,8 +127,6 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                     ],
                   ),
 
-                  // Price summary when plots are selected
-
                   SizedBox(height: 20.h),
 
                   // Dynamic grid based on API data
@@ -150,6 +149,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                       final area = item["area"] ?? 0.0;
                       final formattedArea = controller.formatArea(area);
                       final isSelected = controller.selectedPlots.contains(id);
+                      final adminBlockAmount = controller.getPricePerPlotFromAdminBlock();
 
                       return GestureDetector(
                         onTap: () => controller.toggleSelect(id, type),
@@ -192,7 +192,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                               ),
                               if (isSelected)
                                 Text(
-                                  "₹${pricePerPlot.toStringAsFixed(2)}",
+                                  "₹${adminBlockAmount.toStringAsFixed(2)}",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 9.sp,
@@ -264,23 +264,23 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 4.h),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "GST (18%) :",
-                                style: TextStyle(fontSize: 12.sp),
-                              ),
-                              Text(
-                                "₹${(totalAmount * 0.18).toStringAsFixed(2)}",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                            ],
-                          ),
+                          // SizedBox(height: 4.h),
+                          // Row(
+                          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          //   children: [
+                          //     Text(
+                          //       "GST (18%) :",
+                          //       style: TextStyle(fontSize: 12.sp),
+                          //     ),
+                          //     Text(
+                          //       "₹${(totalAmount * 0.18).toStringAsFixed(2)}",
+                          //       style: TextStyle(
+                          //         fontSize: 12.sp,
+                          //         color: Colors.orange,
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
                           Divider(height: 12.h),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -376,7 +376,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                     SizedBox(height: 10.h),
                     Center(
                       child: Text(
-                        "(${selectedCount} plots × ₹${pricePerPlot.toStringAsFixed(2)} + 18% GST)",
+                        "(${selectedCount} plots × ₹${pricePerPlot.toStringAsFixed(2)})",
                         style: TextStyle(
                           fontSize: 10.sp,
                           color: Colors.grey[600],
@@ -392,6 +392,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
       },
     );
   }
+
   Widget legendBox(Color color, String text) {
     return Row(
       mainAxisSize: MainAxisSize.min,

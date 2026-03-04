@@ -304,8 +304,6 @@ class ApiService {
       rethrow;
     }
   }
-
-// Or if you prefer FormData (for file uploads)
   static Future<Response> postFormDataWithToken(
       String url,
       {
@@ -322,7 +320,6 @@ class ApiService {
           'Content-Type': 'multipart/form-data',
         },
       );
-
       return await dio.post(
         url,
         data: formData,
@@ -335,7 +332,6 @@ class ApiService {
       rethrow;
     }
   }
-  // In your ApiService class
   static Future<Response> EnquirypostRequest(String url, {
     Map<String, dynamic>? data,
     Map<String, dynamic>? headers,
@@ -364,10 +360,7 @@ class ApiService {
     Map<String, dynamic>? headers,
   }) async {
     try {
-      // Convert regular map to FormData for Dio
       FormData formData = FormData.fromMap({});
-
-      // Add all fields to formData
       data.forEach((key, value) {
         if (value is File) {
           // Add files with proper field names
@@ -392,17 +385,13 @@ class ApiService {
           }
         }
       });
-
-      // Prepare headers
       final options = Options(
         headers: headers,
         contentType: 'multipart/form-data',
       );
-
       print('📤 Multipart Request to: $url');
       print('📦 Files count: ${formData.files.length}');
       print('📝 Fields count: ${formData.fields.length}');
-
       return await dio.post(
         url,
         data: formData,
@@ -416,5 +405,4 @@ class ApiService {
       rethrow;
     }
   }
-
 }

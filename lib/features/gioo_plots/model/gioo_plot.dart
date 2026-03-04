@@ -338,14 +338,8 @@ class Property {
       soldStatus: json['sold_status'] ?? 0,
     );
   }
-
-  // Get city name as string for backward compatibility
   String get cityName => city?.cityName ?? '';
-
-  // Get state name as string for backward compatibility
   String get stateName => state?.stateName ?? '';
-
-  // Get first image for backward compatibility
   String get firstImage => images.isNotEmpty ? images.first : '';
 }
 
@@ -368,7 +362,7 @@ class NearbyPlace {
 
 class User {
   final int id;
-  final int role;
+  final int role; // This might be null in JSON but we need int
   final int isVendor;
   final int isAgent;
   final int isServices;
@@ -414,16 +408,27 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Safely parse role which might be null, string, or int
+    final dynamic roleData = json['role'];
+    int parsedRole = 0;
+    if (roleData != null) {
+      if (roleData is int) {
+        parsedRole = roleData;
+      } else if (roleData is String) {
+        parsedRole = int.tryParse(roleData) ?? 0;
+      }
+    }
+
     return User(
       id: json['id'] ?? 0,
-      role: json['role'] ?? 0,
+      role: parsedRole, // Use the parsed value
       isVendor: json['is_vendor'] ?? 0,
       isAgent: json['is_agent'] ?? 0,
       isServices: json['is_services'] ?? 0,
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       emailVerifiedAt: json['email_verified_at'] != null
-          ? DateTime.parse(json['email_verified_at'])
+          ? DateTime.tryParse(json['email_verified_at'].toString())
           : null,
       dob: json['dob'] ?? '',
       avatar: json['avatar'] ?? '',
@@ -435,13 +440,12 @@ class User {
       agentRequest: json['agent_request'] ?? 0,
       vendorRequest: json['vendor_request'] ?? 0,
       serviceRequest: json['service_request'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
       fcmToken: json['fcm_token'],
     );
   }
-}
-class WeeklyGraph {
+}class WeeklyGraph {
   final String day;
   final int total;
 
@@ -542,7 +546,7 @@ class NearbyLocation {
 class Pivot {
   final int geoPropertyId;
   final int nearbyLocationId;
-  final int distance;
+  final double distance; // Changed from int to double
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -555,16 +559,26 @@ class Pivot {
   });
 
   factory Pivot.fromJson(Map<String, dynamic> json) {
+    // Safely parse distance which might be string or number
+    final dynamic distanceData = json['distance'];
+    double parsedDistance = 0.0;
+    if (distanceData != null) {
+      if (distanceData is num) {
+        parsedDistance = distanceData.toDouble();
+      } else if (distanceData is String) {
+        parsedDistance = double.tryParse(distanceData) ?? 0.0;
+      }
+    }
+
     return Pivot(
       geoPropertyId: json['geo_property_id'] ?? 0,
       nearbyLocationId: json['nearby_location_id'] ?? 0,
-      distance: json['distance'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
+      distance: parsedDistance, // Use the parsed value
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
     );
   }
-}
-class GiooPlotDetail {
+}class GiooPlotDetail {
   final int id;
   final String name;
   final PropertyType? propertyType;
@@ -744,28 +758,41 @@ class Booking {
   final int propertyId;
   final int userId;
   final String units;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final String amount; // Changed from double to String based on JSON
+  final int transactionId;
+  final String? returnAmount;
+  final String? returnDate;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
   Booking({
     required this.id,
     required this.propertyId,
     required this.userId,
     required this.units,
-    this.createdAt,
-    this.updatedAt,
+    required this.amount,
+    required this.transactionId,
+    this.returnAmount,
+    this.returnDate,
+    required this.createdAt,
+    required this.updatedAt,
   });
+
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
       id: json['id'] as int? ?? 0,
       propertyId: json['property_id'] as int? ?? 0,
       userId: json['user_id'] as int? ?? 0,
       units: json['units'] as String? ?? '',
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at']) : null,
+      amount: json['amount'] as String? ?? '0',
+      transactionId: json['transaction_id'] as int? ?? 0,
+      returnAmount: json['return_amount'] as String?,
+      returnDate: json['return_date'] as String?,
+      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) ?? DateTime.now() : DateTime.now(),
+      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at']) ?? DateTime.now() : DateTime.now(),
     );
   }
-}
-class Amenity {
+}class Amenity {
   final int id;
   final String title;
   final String image;
@@ -903,26 +930,47 @@ class Transaction {
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
+    // Safely parse property_id which might be string or int
+    final dynamic propertyIdData = json['property_id'];
+    int parsedPropertyId = 0;
+    if (propertyIdData != null) {
+      if (propertyIdData is int) {
+        parsedPropertyId = propertyIdData;
+      } else if (propertyIdData is String) {
+        parsedPropertyId = int.tryParse(propertyIdData) ?? 0;
+      }
+    }
+
+    // Safely parse user_id which might be string or int
+    final dynamic userIdData = json['user_id'];
+    int parsedUserId = 0;
+    if (userIdData != null) {
+      if (userIdData is int) {
+        parsedUserId = userIdData;
+      } else if (userIdData is String) {
+        parsedUserId = int.tryParse(userIdData) ?? 0;
+      }
+    }
+
     return Transaction(
       id: json['id'] ?? 0,
-      transactionId: json['transaction_id'] ?? '',
-      paymentMode: json['payment_mode'] ?? '',
+      transactionId: json['transaction_id']?.toString() ?? '',
+      paymentMode: json['payment_mode']?.toString() ?? '',
       transactionDetails: (json['transaction_details'] ?? '')
           .toString()
           .replaceAll('"', ''),
       amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
       isCompleted: json['is_completed'],
-      status: json['status'] ?? '',
-      propertyId: json['property_id'] ?? 0,
-      userId: json['user_id'] ?? 0,
-      type: json['type'] ?? '',
-      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+      status: json['status']?.toString() ?? '',
+      propertyId: parsedPropertyId,
+      userId: parsedUserId,
+      type: json['type']?.toString() ?? '',
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
       user: User.fromJson(json['user'] ?? {}),
     );
   }
 }
-
 
 
 // Response models

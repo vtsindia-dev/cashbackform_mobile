@@ -1,3 +1,5 @@
+import 'package:cashback_farms/features/syndicate_plot/widget/blueprint.dart' show SyndicateBlueprint;
+import 'package:cashback_farms/features/syndicate_plot/widget/nearby_place.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -58,6 +60,8 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
                     SchemeOverview(),
                     ReservePlotsScreen(reserveButtonKey: _reserveButtonKey), // Pass the key
                     LegalDocumentsScreen(),
+                    SyndicateBlueprint(),
+                    SyndicateNearby(),
                     Description(),
                     Referrals(reservePlotsKey: _reserveButtonKey), // Pass the same key
                     SizedBox(height: 45,)

@@ -16,23 +16,20 @@ class SessionManager {
   static const String _addressKey = 'address';
   static const String _profileImageKey = 'profile_image';
   static const String _loginTimeKey = 'login_time';
-  static const String _tokenKey = 'auth_token'; // Changed from 'token' to 'auth_token' for clarity
-  static const String _userDataKey = 'user_data'; // Add this to store full user data
+  static const String _tokenKey = 'auth_token';
+  static const String _userDataKey = 'user_data';
 
-  // Save user session with detailed logging
   static Future<void> saveUserSession(Map<String, dynamic> userData, {String? token}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      print('🔄 === SAVING SESSION ===');
+      print('🔄 ==== Saving Session ====');
       print('📱 User Data received: ${userData.toString()}');
       print('🔑 Token received: $token');
       print('📋 User Data keys: ${userData.keys.toList()}');
 
       // Save individual fields
       await prefs.setBool(_isLoggedInKey, true);
-
-      // Save user ID - check multiple possible fields
       String? userId = userData['id']?.toString() ??
           userData['user_id']?.toString() ??
           userData['userId']?.toString();
@@ -66,7 +63,6 @@ class SessionManager {
       await prefs.setInt(_genderKey, gender);
       print('⚧ Gender saved: $gender');
 
-      // Save role
       int role = 1; // default
       if (userData['role'] != null) {
         if (userData['role'] is int) {

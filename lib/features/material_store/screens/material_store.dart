@@ -11,7 +11,7 @@ class MaterialStore extends StatefulWidget {
   State<MaterialStore> createState() => _MaterialStoreState();
 }
 class _MaterialStoreState extends State<MaterialStore> {
-  final MaterialController controller = Get.put(MaterialController());
+    final MaterialController controller = Get.put(MaterialController());
 
   @override
   void initState() {

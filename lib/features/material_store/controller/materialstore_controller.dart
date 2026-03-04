@@ -1,436 +1,481 @@
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../common/api_constant.dart';
+import 'package:flutter/material.dart';
 import '../../../common/widget/api_service.dart';
+import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../model/material_store.dart';
 
 class MaterialController extends GetxController {
-  // Reactive variables
+
   var isLoading = false.obs;
-  var isLoadMore = false.obs;
-  var materials = <Material>[].obs;
+  var materials = <MaterialModel>[].obs;
   var currentPage = 1.obs;
-  var totalPages = 1.obs;
-  var totalItems = 0.obs;
-  var hasMoreData = true.obs;
-
-  // Filter variables
+  var hasMore = true.obs;
+  var isLoadingVendors = false.obs;
+  var vendors = <Vendor>[].obs;
+  var isLoadingVendorDetail = false.obs;
+  var vendorDetail = Rxn<Vendor>();
+  var isSubmittingEnquiry = false.obs;
+  var enquirySuccess = false.obs;
+  var enquiryError = ''.obs;
+  var isSubmittingReview = false.obs;
+  var reviewSuccess = false.obs;
+  var reviewError = ''.obs;
+  var pageErrorMessage = ''.obs;
+  var showSearchBar = false.obs;
   var searchQuery = ''.obs;
-  var selectedCategory = ''.obs;
-  var selectedStatus = ''.obs;
-
-  // Detail variables
-  var isLoadingDetail = false.obs;
-  var materialDetail = Rxn<Material>();
-  var errorMessage = ''.obs;
-
-  // UI state variables
-  var isExpanded = false.obs;
-  var isDescriptionExpanded = false.obs;
-
-  // Add protection against multiple calls
-  var _isLoadingInProgress = false;
-  var _lastRequestedPage = 0;
-
+  var selectedImage = ''.obs;
+  final SessionManager _sessionHandler = SessionManager();
   @override
   void onInit() {
     super.onInit();
     fetchMaterials();
   }
 
-  void toggleExpansion() => isExpanded.value = !isExpanded.value;
-  void toggleDescription() => isDescriptionExpanded.value = !isDescriptionExpanded.value;
+  String _buildUrlWithParams(String baseUrl, Map<String, dynamic> params) {
+    if (params.isEmpty) return baseUrl;
 
-  // Fetch materials with pagination
+    final queryString = params.entries
+        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value.toString())}')
+        .join('&');
+
+    return '$baseUrl?$queryString';
+  }
+
   Future<void> fetchMaterials({bool loadMore = false}) async {
     try {
-      // Prevent multiple simultaneous requests
-      if (_isLoadingInProgress) {
-        print('⏸️ Request already in progress, skipping...');
-        return;
-      }
-
-      // Prevent loading same page multiple times
-      final requestedPage = loadMore ? currentPage.value + 1 : 1;
-      if (loadMore && _lastRequestedPage == requestedPage) {
-        print('⏸️ Already requested page $requestedPage, skipping...');
-        return;
-      }
-
-      _isLoadingInProgress = true;
-      _lastRequestedPage = requestedPage;
-
-      if (loadMore) {
-        // Check if we're already at the last page
-        if (!hasMoreData.value) {
-          print('🛑 No more data to load');
-          _isLoadingInProgress = false;
-          return;
-        }
-        isLoadMore(true);
-      } else {
+      if (!loadMore) {
         isLoading(true);
         currentPage.value = 1;
-        hasMoreData.value = true;
+        hasMore.value = true;
+        materials.clear();
+        pageErrorMessage.value = '';
+      } else {
+        if (!hasMore.value) return;
+        currentPage.value++;
       }
 
-      final url = '${ApiUrl.marketList}?page=${loadMore ? currentPage.value + 1 : 1}${_buildQueryParams()}';
-      print('🌐 Fetching Materials URL: $url');
+      // Build URL with query parameters manually
+      final url = _buildUrlWithParams(
+          'https://admincashback.vrikshatech.in/public/api/v2/material_list',
+          {'page': currentPage.value}
+      );
+
+      print('🌐 Fetching materials: $url');
 
       final response = await ApiService.getRequest(url);
+
+      print('📥 Response status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
-        final responseData = response.data;
-        if (responseData != null &&
-            responseData['data'] != null &&
-            responseData['data']['material'] != null) {
+        final data = response.data;
+        print('📦 Response data type: ${data.runtimeType}');
 
-          final materialsData = responseData['data']['material'];
-          final paginationData = responseData['data']['pagination'];
+        if (data != null && data is Map) {
+          // FIXED: Proper status check
+          if (data['status'] == 200 || data['status'] == true) {
+            if (data['data'] != null && data['data']['material'] != null) {
+              final materialsData = data['data']['material'] as List;
+              final pagination = data['data']['pagination'] ?? {};
 
-          // Parse materials
-          final List<Material> fetchedMaterials = _parseMaterials(materialsData);
+              print('📊 Found ${materialsData.length} materials');
 
-          // API FIX: If API returns wrong pagination data, use manual calculation
-          final apiCurrentPage = paginationData['current_page'] ?? 1;
-          final apiTotalPages = paginationData['last_page'] ?? 1;
-          final apiTotalItems = paginationData['total'] ?? 0;
+              final newMaterials = materialsData
+                  .map((json) => MaterialModel.fromJson(json))
+                  .toList();
 
-          if (loadMore) {
-            // Check if we're getting duplicate data
-            final newMaterials = _filterDuplicates(fetchedMaterials);
-            if (newMaterials.isEmpty) {
-              print('⚠️ No new materials found, stopping pagination');
-              hasMoreData.value = false;
+              if (loadMore) {
+                materials.addAll(newMaterials);
+              } else {
+                materials.value = newMaterials;
+              }
+
+              // Update pagination
+              final totalPages = pagination['last_page'] ?? 1;
+              final currentPageNum = pagination['current_page'] ?? 1;
+              hasMore.value = currentPageNum < totalPages;
+
+              print('✅ Total materials: ${materials.length}, Has more: ${hasMore.value}');
+              print('📄 Current page: $currentPageNum, Total pages: $totalPages');
+
+              pageErrorMessage.value = '';
+
             } else {
-              materials.addAll(newMaterials);
-              print('✅ Added ${newMaterials.length} new materials');
+              if (!loadMore) {
+                pageErrorMessage.value = 'No materials available';
+                print('⚠️ No materials data found in response');
+                materials.clear();
+              }
             }
           } else {
-            materials.assignAll(fetchedMaterials);
+            final errorMsg = data['message'] ?? 'Failed to fetch materials';
+            if (!loadMore) {
+              pageErrorMessage.value = errorMsg;
+              print('❌ API returned error status: ${errorMsg}');
+              materials.clear();
+            }
           }
-
-          // Manual pagination calculation since API returns wrong data
-          if (loadMore) {
-            currentPage.value = apiCurrentPage;
-          } else {
-            currentPage.value = 1;
-          }
-
-          // If API returns inconsistent data, use item count based logic
-          final perPage = paginationData['per_page'] ?? 10;
-          if (apiTotalItems > 0 && materials.length >= apiTotalItems) {
-            hasMoreData.value = false;
-            print('🛑 Reached total items limit: ${apiTotalItems}');
-          } else if (fetchedMaterials.length < perPage) {
-            hasMoreData.value = false;
-            print('🛑 Last page detected: received ${fetchedMaterials.length} items (less than per_page: $perPage)');
-          } else {
-            hasMoreData.value = true;
-          }
-
-          totalPages.value = apiTotalPages;
-          totalItems.value = materials.length; // Use actual count since API total is wrong
-
-          print('✅ Total materials: ${materials.length}');
-          print('📄 Current page: $currentPage, Total pages: $totalPages, Has more: $hasMoreData');
-
         } else {
-          SnackBarHelper.showError("Invalid response format from server");
-          print('❌ Invalid response format: $responseData');
+          if (!loadMore) {
+            pageErrorMessage.value = 'Invalid response format';
+            print('❌ Invalid response format');
+            materials.clear();
+          }
         }
-      } else if (response.statusCode == 404) {
-        SnackBarHelper.showError("Materials not found");
-        print('❌ 404 Error: ${response.data}');
       } else {
-        final errorMessage = response.data?['message'] ?? 'Failed to fetch materials';
-        SnackBarHelper.showError("Error $errorMessage");
-        print('❌ API Error ${response.statusCode}: ${response.data}');
+        if (!loadMore) {
+          pageErrorMessage.value = 'Failed to fetch materials';
+          print('❌ Failed to fetch materials. Status: ${response.statusCode}');
+          materials.clear();
+        }
       }
-    } catch (e) {
-      SnackBarHelper.showError("Network error: $e");
-      print('❌ Network error: $e');
+    } catch (e, stackTrace) {
+      if (!loadMore) {
+        final errorMsg = 'Network error: ${e.toString().split('\n').first}';
+        pageErrorMessage.value = errorMsg;
+        print('❌ Error fetching materials: $e');
+        print('❌ Stack trace: $stackTrace');
+        materials.clear();
+      }
     } finally {
       isLoading(false);
-      isLoadMore(false);
-      _isLoadingInProgress = false;
-      refresh();
     }
   }
 
-  // Filter out duplicate materials
-  List<Material> _filterDuplicates(List<Material> newMaterials) {
-    final existingIds = materials.map((m) => m.id).toSet();
-    return newMaterials.where((material) => !existingIds.contains(material.id)).toList();
-  }
-
-  // Load more materials with better protection
-  Future<void> loadMoreMaterials() async {
-    if (!hasMoreData.value || isLoadMore.value || isLoading.value || _isLoadingInProgress) {
-      print('⏸️ Cannot load more: hasMoreData=$hasMoreData, isLoadMore=$isLoadMore, isLoading=$isLoading, inProgress=$_isLoadingInProgress');
-      return;
-    }
-
-    print('🔄 Loading more materials...');
-    await fetchMaterials(loadMore: true);
-  }
-
-  // ... REST OF YOUR EXISTING METHODS REMAIN THE SAME ...
-  // Fetch Material Detail
-// In MaterialController, update the fetchMaterialDetail method:
-  Future<void> fetchMaterialDetail(int id) async {
+  Future<void> fetchVendorsForMaterial(int materialId) async {
     try {
-      _clearDetailData();
-      isLoadingDetail(true);
-      errorMessage('');
+      isLoadingVendors(true);
+      vendors.clear();
+      pageErrorMessage.value = '';
+      final url ='https://admincashback.vrikshatech.in/public/api/v2/vendor?product_id=$materialId';
+      print('🌐 Fetching vendors: $url');
+      final response = await ApiService.getRequest(url);
+      print('📥 Vendor response status: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data != null && data is Map) {
+          if (data['status'] == true) {
+            if (data['data'] != null && data['data'] is List) {
+              final vendorsData = data['data'] as List;
+              vendors.value = vendorsData
+                  .map((json) => Vendor.fromJson(json))
+                  .toList();
+              print('✅ Fetched ${vendors.length} vendors');
+            } else {
+              print('⚠️ No vendor data found in response');
+              vendors.clear();
+            }
+          } else {
+            final errorMsg = data['message'] ?? 'Failed to fetch sellers';
+            print('❌ API returned error: $errorMsg');
+            vendors.clear();
+          }
+        } else {
+          print('❌ Invalid response format');
+          vendors.clear();
+        }
+      } else {
+        print('❌ Failed to fetch     . Status: ${response.statusCode}');
+        vendors.clear();
+      }
+    } catch (e, stackTrace) {
+      print('❌ Error fetching vendors: $e');
+      print('❌ Stack trace: $stackTrace');
+      vendors.clear();
+    } finally {
+      isLoadingVendors(false);
+    }
+  }
 
-      final url = '${ApiUrl.materialDetail}/$id';
-      print('🌐 Fetching Material Detail URL: $url');
+  Future<void> fetchVendorDetail(int vendorId) async {
+    try {
+      isLoadingVendorDetail(true);
+      pageErrorMessage.value = '';
+
+      final url = 'https://admincashback.vrikshatech.in/public/api/v2/vendor/$vendorId';
+      print('🌐 Fetching vendor detail: $url');
 
       final response = await ApiService.getRequest(url);
+
+      print('📥 Vendor detail response status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
-        final responseData = response.data;
-        print('📦 API Response: ${responseData.toString()}');
+        final data = response.data;
 
-        if (responseData != null && responseData['data'] != null) {
-          // Check the structure of the response
-          if (responseData['data'] is Map && responseData['data'].containsKey('material')) {
-            // If it's a single material object
-            materialDetail.value = Material.fromJson(responseData['data']['material']);
-          } else if (responseData['data'] is Map) {
-            // If it's directly the material data
-            materialDetail.value = Material.fromJson(responseData['data']);
+        if (data != null && data is Map) {
+          if (data['status'] == true) {
+            if (data['data'] != null) {
+              vendorDetail.value = Vendor.fromJson(data['data']);
+              print('✅ Fetched vendor details: ${vendorDetail.value?.name}');
+            } else {
+              print('⚠️ No vendor detail data found');
+              vendorDetail.value = null;
+            }
           } else {
-            errorMessage('Unexpected response format');
-            SnackBarHelper.showError("Unexpected response format");
+            final errorMsg = data['message'] ?? 'Failed to fetch seller details';
+            print('❌ API returned error: $errorMsg');
+            vendorDetail.value = null;
           }
-
-          print('✅ Fetched Material detail: ${materialDetail.value?.materialName}');
-          _logMaterialDetailInfo();
         } else {
-          errorMessage('Invalid response format from server');
-          SnackBarHelper.showError("Invalid response format");
-          print('❌ Invalid response format: $responseData');
+          print('❌ Invalid response format');
+          vendorDetail.value = null;
         }
-      } else if (response.statusCode == 404) {
-        errorMessage('Material details not found');
-        SnackBarHelper.showError("Material details not found");
-        print('❌ 404 Error: ${response.data}');
       } else {
-        final errorMsg = response.data?['message'] ?? 'Failed to fetch material details';
-        errorMessage(errorMsg);
-        SnackBarHelper.showError("Error: $errorMsg");
-        print('❌ API Error ${response.statusCode}: ${response.data}');
+        print('❌ Failed to fetch vendor details. Status: ${response.statusCode}');
+        vendorDetail.value = null;
       }
-    } catch (e) {
-      errorMessage('Network error: $e');
-      SnackBarHelper.showError("Network error: $e");
-      print('❌ Network error: $e');
+    } catch (e, stackTrace) {
+      print('❌ Error fetching vendor detail: $e');
+      print('❌ Stack trace: $stackTrace');
+      vendorDetail.value = null;
     } finally {
-      isLoadingDetail(false);
-    }
-  }
-  // View Material Document/Image
-  Future<void> viewMaterialImage(String imageUrl) async {
-    try {
-      if (imageUrl.isNotEmpty) {
-        print("Viewing Material image: $imageUrl");
-        await _launchUrl(imageUrl);
-        return;
-      }
-    } catch (e) {
-      print("Image not found: $imageUrl");
-      SnackBarHelper.showError("Image not found");
+      isLoadingVendorDetail(false);
     }
   }
 
-  Future<void> _launchUrl(String url) async {
+  // 4. Submit material enquiry
+  Future<bool> submitMaterialEnquiry({
+    required int materialId,
+    required String requirement,
+    required int unitId,
+    required double quantity,
+    required int userId,
+  }) async {
     try {
-      String formattedUrl = url;
+      isSubmittingEnquiry(true);
+      enquiryError.value = '';
+      enquirySuccess.value = false;
 
-      if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-        formattedUrl = 'http://$formattedUrl';
-      }
-      final Uri uri = Uri.parse(formattedUrl);
+      print('📤 Submitting material enquiry:');
+      print('   Material ID: $materialId');
+      print('   Requirement: $requirement');
+      print('   Unit ID: $unitId');
+      print('   Quantity: $quantity');
+      print('   User ID: $userId');
 
-      print('Launching URL: $uri');
+      // Create proper payload for material enquiry
+      final payload = {
+        'material_id': materialId,
+        'requirement': requirement,
+        'unit_id': unitId,
+        'quantity': quantity,
+        'user_id': userId,
+      };
 
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+      final response = await ApiService.postRequest(
+        'https://admincashback.vrikshatech.in/public/api/v2/material/enquiry',
+        payload,
+      );
+
+      print('📥 Enquiry Response Status: ${response.statusCode}');
+      print('📥 Enquiry Response: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data != null) {
+          if ((data['status'] == true || data['status'] == 200 || data['status'] == 201)) {
+            enquirySuccess.value = true;
+            enquiryError.value = '';
+            print('✅ Enquiry submitted successfully');
+            return true;
+          } else {
+            enquiryError.value = data['message'] ?? 'Failed to submit enquiry';
+            print('❌ Enquiry submission failed: ${enquiryError.value}');
+          }
+        } else {
+          enquiryError.value = 'Invalid response from server';
+        }
       } else {
-        print('Cannot launch URL: $uri');
-        SnackBarHelper.showError("Cannot open the image. Please check your connection.");
+        enquiryError.value = 'Server error: ${response.statusCode}';
+        print('❌ Server error: ${enquiryError.value}');
       }
-    } catch (e) {
-      print('Error launching URL: $e');
-      SnackBarHelper.showError("Failed to open image");
+      return false;
+    } catch (e, stackTrace) {
+      enquiryError.value = 'Network error: ${e.toString()}';
+      print('❌ Network error: $e');
+      print('❌ Stack trace: $stackTrace');
+      return false;
+    } finally {
+      isSubmittingEnquiry(false);
     }
   }
 
-  void _clearDetailData() {
-    materialDetail.value = null;
-    errorMessage('');
-  }
+  // 5. Submit shop review
+  Future<bool> submitShopReview({
+    required int vendorId,
+    required int userId,
+    required double rating,
+    required String review,
+  }) async {
+    try {
+      isSubmittingReview(true);
+      reviewError.value = '';
+      reviewSuccess.value = false;
 
-  void _logMaterialDetailInfo() {
-    final detail = materialDetail.value;
-    if (detail != null) {
-      print('📦 Material Name: ${detail.materialName}');
-      print('📝 Description: ${detail.description}');
-      print('🏷️ Category: ${detail.category?.categoryName}');
-      print('🖼️ Image: ${detail.image}');
-      print('📊 Status: ${detail.status == 1 ? 'Active' : 'Inactive'}');
-      print('📅 Created: ${detail.createdAt}');
-      print('🔄 Updated: ${detail.updatedAt}');
+      final payload = {
+        'vendor_id': vendorId,
+        'user_id': userId,
+        'rating': rating,
+        'review': review,
+      };
+
+      print('📤 Submitting shop review: $payload');
+
+      final response = await ApiService.postRequest(
+        'https://admincashback.vrikshatech.in/public/api/v2/shop/review',
+        payload,
+      );
+
+      print('📥 Review Response Status: ${response.statusCode}');
+      print('📥 Review Response: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data != null) {
+          if (data['status'] == true || data['status'] == 200 || data['status'] == 201) {
+            reviewSuccess.value = true;
+            reviewError.value = '';
+
+            // Refresh vendor details to get updated reviews
+            if (vendorDetail.value != null) {
+              await fetchVendorDetail(vendorDetail.value!.userId);
+            }
+
+            print('✅ Review submitted successfully');
+            return true;
+          } else {
+            reviewError.value = data['message'] ?? 'Failed to submit review';
+            print('❌ Review submission failed: ${reviewError.value}');
+          }
+        } else {
+          reviewError.value = 'Invalid response from server';
+        }
+      } else {
+        reviewError.value = 'Server error: ${response.statusCode}';
+        print('❌ Server error: ${reviewError.value}');
+      }
+      return false;
+    } catch (e, stackTrace) {
+      reviewError.value = 'Network error: ${e.toString()}';
+      print('❌ Network error: $e');
+      print('❌ Stack trace: $stackTrace');
+      return false;
+    } finally {
+      isSubmittingReview(false);
     }
-  }
-
-  // Get formatted category name
-  String getFormattedCategory() {
-    final material = materialDetail.value;
-    return material?.category?.categoryName ?? 'No Category';
-  }
-
-  // Get formatted status
-  String getFormattedStatus() {
-    final material = materialDetail.value;
-    return material?.status == 1 ? 'Active' : 'Inactive';
-  }
-
-  // Get material image or placeholder
-  String getMaterialImage() {
-    final material = materialDetail.value;
-    if (material?.image != null && material!.image.isNotEmpty) {
-      return material.image.first;
-    }
-    return 'assets/images/placeholder_material.png';
-  }
-
-  // Refresh materials
-  Future<void> refreshMaterials() async {
-    await fetchMaterials(loadMore: false);
   }
 
   // Search materials
   Future<void> searchMaterials(String query) async {
-    searchQuery.value = query;
-    await fetchMaterials();
-  }
-
-  // Filter by category
-  Future<void> filterByCategory(String category) async {
-    selectedCategory.value = category;
-    await fetchMaterials();
-  }
-
-  // Filter by status
-  Future<void> filterByStatus(String status) async {
-    selectedStatus.value = status;
-    await fetchMaterials();
-  }
-
-  // Clear all filters
-  Future<void> clearFilters() async {
-    searchQuery.value = '';
-    selectedCategory.value = '';
-    selectedStatus.value = '';
-    await fetchMaterials();
-  }
-
-  // Get available categories
-  List<String> getAvailableCategories() {
-    return materials
-        .map((material) => material.category?.categoryName ?? '')
-        .where((category) => category.isNotEmpty)
-        .toSet()
-        .toList();
-  }
-
-  // Get available statuses
-  List<String> getAvailableStatuses() {
-    return ['Active', 'Inactive'];
-  }
-
-  // Build query parameters
-  String _buildQueryParams() {
-    final params = <String>[];
-
-    if (searchQuery.value.isNotEmpty) {
-      params.add('search=${Uri.encodeComponent(searchQuery.value)}');
-    }
-    if (selectedCategory.value.isNotEmpty) {
-      params.add('category=${Uri.encodeComponent(selectedCategory.value)}');
-    }
-    if (selectedStatus.value.isNotEmpty) {
-      final statusValue = selectedStatus.value == 'Active' ? '1' : '0';
-      params.add('status=${Uri.encodeComponent(statusValue)}');
-    }
-
-    return params.isEmpty ? '' : '&${params.join('&')}';
-  }
-
-  // Parse materials from JSON
-  List<Material> _parseMaterials(List<dynamic> materialsData) {
-    return materialsData.map((materialJson) {
-      return Material.fromJson(materialJson);
-    }).toList();
-  }
-
-  // Get material by ID
-  Material? getMaterialById(int id) {
     try {
-      return materials.firstWhere((material) => material.id == id);
+      searchQuery.value = query;
+
+      if (query.isEmpty) {
+        await fetchMaterials();
+        return;
+      }
+
+      isLoading(true);
+      materials.clear();
+      pageErrorMessage.value = '';
+
+      final url = _buildUrlWithParams(
+          'https://admincashback.vrikshatech.in/public/api/v2/material_list',
+          {
+            'page': 1,
+            'search': query,
+          }
+      );
+
+      print('🔍 Searching materials: $url');
+
+      final response = await ApiService.getRequest(url);
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+
+        if (data != null && data is Map &&
+            (data['status'] == 200 || data['status'] == true)) {
+          if (data['data'] != null && data['data']['material'] != null) {
+            final materialsData = data['data']['material'] as List;
+            materials.value = materialsData
+                .map((json) => MaterialModel.fromJson(json))
+                .toList();
+
+            if (materials.isEmpty) {
+              pageErrorMessage.value = 'No materials found for "$query"';
+            }
+          } else {
+            pageErrorMessage.value = 'No materials found for "$query"';
+            materials.clear();
+          }
+        } else {
+          pageErrorMessage.value = 'Search failed';
+          materials.clear();
+        }
+      } else {
+        pageErrorMessage.value = 'Search failed';
+        materials.clear();
+      }
     } catch (e) {
-      return null;
+      print('❌ Error searching materials: $e');
+      pageErrorMessage.value = 'Search error';
+      materials.clear();
+    } finally {
+      isLoading(false);
     }
   }
 
-  // Check if material is favorite
-  bool isMaterialFavorite(int materialId) {
-    return false;
+  // Clear search
+  Future<void> clearSearch() async {
+    searchQuery.value = '';
+    showSearchBar.value = false;
+    await fetchMaterials();
   }
 
-  // Toggle favorite
-  void toggleFavorite(int materialId) {
-    print('Toggled favorite for material $materialId');
+  // Toggle search bar
+  void toggleSearchBar() {
+    showSearchBar.value = !showSearchBar.value;
+    if (!showSearchBar.value) {
+      searchQuery.value = '';
+    }
   }
 
-  // Get materials by category
-  List<Material> getMaterialsByCategory(String categoryName) {
-    return materials.where((material) =>
-    material.category?.categoryName == categoryName
-    ).toList();
+
+  // Refresh all data
+  Future<void> refreshData() async {
+    await fetchMaterials();
+    vendors.clear();
+    vendorDetail.value = null;
   }
 
-  // Get active materials only
-  List<Material> getActiveMaterials() {
-    return materials.where((material) => material.status == 1).toList();
+  // Load more materials
+  Future<void> loadMoreMaterials() async {
+    if (hasMore.value && !isLoading.value) {
+      await fetchMaterials(loadMore: true);
+    }
   }
 
-  // Get materials with images
-  List<Material> getMaterialsWithImages() {
-    return materials.where((material) =>
-    material.image != null && material.image.isNotEmpty
-    ).toList();
-  }
 
-  // Search materials by name or description
-  List<Material> searchMaterialsLocal(String query) {
-    if (query.isEmpty) return materials.toList();
-
-    final lowercaseQuery = query.toLowerCase();
-    return materials.where((material) =>
-    material.materialName.toLowerCase().contains(lowercaseQuery) ||
-        material.description.toLowerCase().contains(lowercaseQuery)
-    ).toList();
+  // Clear all data
+  void clearAllData() {
+    materials.clear();
+    vendors.clear();
+    vendorDetail.value = null;
+    currentPage.value = 1;
+    hasMore.value = true;
+    enquirySuccess.value = false;
+    enquiryError.value = '';
+    reviewSuccess.value = false;
+    reviewError.value = '';
+    pageErrorMessage.value = '';
+    searchQuery.value = '';
+    selectedImage.value = '';
   }
 
   @override
   void onClose() {
-    _clearDetailData();
+    clearAllData();
     super.onClose();
   }
 }

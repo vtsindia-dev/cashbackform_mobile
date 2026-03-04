@@ -72,15 +72,10 @@ class _MyMaterialListState extends State<MyMaterialList> {
             controller: _scrollController,
             padding: EdgeInsets.all(16.w),
             children: [
-              // Header with count
               _buildHeader(),
-
               SizedBox(height: 16.h),
-
-              // Services list
               _buildServicesList(),
 
-              // Load more indicator
               if (controller.isLoadMore.value)
                 _buildLoadMoreIndicator(),
 
@@ -255,11 +250,9 @@ class _MyMaterialListState extends State<MyMaterialList> {
       ),
     );
   }
-
   void _showEnquiryForm(service) {
     print("Enquiry for: ${service.serviceName}");
   }
-
   void _shareService(service) {
     print("Share service: ${service.serviceName}");
   }

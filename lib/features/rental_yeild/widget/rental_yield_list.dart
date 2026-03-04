@@ -53,9 +53,9 @@ class RentalYieldList extends StatelessWidget {
               return controller.isLoading.value && controller.hasMore.value
                   ? Padding(
                 padding: EdgeInsets.symmetric(vertical: 20.h),
-                child: Center(child: CircularProgressIndicator()),
+                child: const Center(child: CircularProgressIndicator()),
               )
-                  : SizedBox.shrink();
+                  : const SizedBox.shrink();
             }
 
             final leftIndex = index * 2;
@@ -64,16 +64,19 @@ class RentalYieldList extends StatelessWidget {
             final leftProperty = properties[leftIndex];
             final rightProperty = rightIndex < properties.length ? properties[rightIndex] : null;
 
-            return Row(
-              children: [
-                Expanded(child: _buildPropertyCard(leftProperty)),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: rightProperty != null
-                      ? _buildPropertyCard(rightProperty)
-                      : const SizedBox.shrink(),
-                ),
-              ],
+            return Padding(
+              padding: EdgeInsets.only(bottom: 16.h),
+              child: Row(
+                children: [
+                  Expanded(child: _buildPropertyCard(leftProperty)),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: rightProperty != null
+                        ? _buildPropertyCard(rightProperty)
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
             );
           },
         ),
@@ -81,19 +84,27 @@ class RentalYieldList extends StatelessWidget {
     });
   }
 
-  Widget _buildPropertyCard(RentalYieldModel property) {
+  Widget _buildPropertyCard(RentalListProperty property) {
+
+    final monthlyRentDouble = property.rentAmountDouble;
+    final monthlyRentInK = monthlyRentDouble / 1000;
+    // Annual yield = (yield amount / rent amount) * 100
+    final annualYield = property.yieldAmountDouble > 0 && monthlyRentDouble > 0
+        ? (property.yieldAmountDouble / (monthlyRentDouble * 12)) * 100
+        : 0.0;
+
     // Create a yield badge widget
     final yieldBadge = Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: _getYieldColor(property.annualYield),
+        color: _getYieldColor(annualYield),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '${property.annualYield.toStringAsFixed(1)}%',
+            '${annualYield.toStringAsFixed(1)}%',
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w900,
@@ -102,7 +113,7 @@ class RentalYieldList extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
           Icon(
-            Icons.trending_up,
+            annualYield >= 5 ? Icons.trending_up : Icons.trending_flat,
             size: 12.r,
             color: Colors.white,
           ),
@@ -110,43 +121,37 @@ class RentalYieldList extends StatelessWidget {
       ),
     );
 
-    // Create rent information
-    final rentInfo = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Monthly Rent',
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: Colors.grey[600],
-          ),
-        ),
-        Text(
-          '₹${property.monthlyRent.toStringAsFixed(1)}K',
-          style: TextStyle(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w900,
-            color: Colors.green[700],
-          ),
-        ),
-      ],
-    );
+    // Get property image - handle null or empty images
+    final imageUrl = property.images.isNotEmpty
+        ? property.images[0]
+        : 'https://via.placeholder.com/300x200.png?text=Property';
 
-    // Modify the description to include rental info
-    final description = '${property.bedrooms} BHK • ${property.furnishingStatus}\nYield: ${property.annualYield.toStringAsFixed(1)}%';
+    // Create description using available data
+    final area = property.areaDouble;
+    final description = '${area != null ? '${area.toInt()} sq.ft • ' : ''}Yield: ${annualYield.toStringAsFixed(1)}%';
+
+    // Format location
+    final location = property.address;
+    final cityState = [
+      if (property.cityName.isNotEmpty) property.cityName,
+      if (property.stateName.isNotEmpty) property.stateName,
+    ].where((element) => element.isNotEmpty).join(', ');
+
+    final fullLocation = cityState.isNotEmpty ? '$location, $cityState' : location;
 
     return PropertyCard(
-      imageUrl: property.images.isNotEmpty ? property.images[0] : '',
+      imageUrl: imageUrl,
       title: property.name,
-      price: '₹${property.price.toStringAsFixed(1)}L', // Property price
-      area: '${property.area} ${property.area}',
-      location: property.address,
+      price: '₹${monthlyRentInK.toStringAsFixed(1)}K/mo', // Monthly rent
+      area: '${property.areaDouble?.toInt() ?? 0} sq.ft',
+      location: fullLocation,
       description: description,
       onTap: () {
         Get.toNamed(
-          '/rentalYieldDetails',
+          '/rentalDetails',
           arguments: {
-            'property': property,
+            'id': property.id, // Pass ID only, let details screen fetch fresh data
+            'title': property.name,
           },
         );
       },
@@ -154,9 +159,9 @@ class RentalYieldList extends StatelessWidget {
   }
 
   Color _getYieldColor(double yieldPercentage) {
-    if (yieldPercentage >= 7.0) return Colors.green;
-    if (yieldPercentage >= 5.0) return Colors.blue;
-    if (yieldPercentage >= 3.0) return Colors.amber;
-    return Colors.red;
+    if (yieldPercentage >= 7.0) return Colors.green[700]!;
+    if (yieldPercentage >= 5.0) return Colors.blue[700]!;
+    if (yieldPercentage >= 3.0) return Colors.amber[700]!;
+    return Colors.red[700]!;
   }
 }

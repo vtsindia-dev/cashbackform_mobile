@@ -117,7 +117,7 @@ class NearbyProject extends StatelessWidget {
       final String uldNo = detail.uldNo ?? "-";
       final String address = detail.address ?? "-";
       final List<Amenity> amenities = detail.amenity ?? [];
-      final List<NearbyLocation> nearbyLocations = detail.nearby_locations;
+      final List<NearbyLocation> nearbyLocations = detail.nearby_locations ?? [];
 
       return Container(
         color: AppColor.backgroundLight.withOpacity(0.5),
@@ -353,22 +353,30 @@ class NearbyProject extends StatelessWidget {
       );
     }
 
+    final hasMoreThanTwoItems = items.length > 2;
+
     return SizedBox(
       height: showKm ? 80.h : 70.h, // Taller height if showing km
       child: Row(
         children: [
-          // Left arrow button
-          _buildArrowButton(
-            isRight: false,
-            scrollController: scrollController,
-          ),
+          // Left arrow button - only show if more than 2 items
+          if (hasMoreThanTwoItems)
+            _buildArrowButton(
+              isRight: false,
+              scrollController: scrollController,
+            ),
 
           // Items list
           Expanded(
             child: ListView.builder(
               controller: scrollController,
               scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              padding: EdgeInsets.symmetric(
+                horizontal: hasMoreThanTwoItems ? 4.w : 20.w,
+              ),
+              physics: hasMoreThanTwoItems
+                  ? const BouncingScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];
@@ -376,22 +384,34 @@ class NearbyProject extends StatelessWidget {
                 final title = getTitle(item);
                 final subtitle = getSubtitle(item);
 
-                return _buildSmallCard(
-                  image: image,
-                  title: title,
-                  subtitle: subtitle,
-                  icon: fallbackIcon,
-                  showKm: showKm,
+                // Adjust width based on item count
+                final itemWidth = items.length <= 2
+                    ? 140.w
+                    : 140.w;
+
+                return Container(
+                  width: itemWidth,
+                  margin: EdgeInsets.only(
+                    right: index < items.length - 1 ? 8.w : 0,
+                  ),
+                  child: _buildSmallCard(
+                    image: image,
+                    title: title,
+                    subtitle: subtitle,
+                    icon: fallbackIcon,
+                    showKm: showKm,
+                  ),
                 );
               },
             ),
           ),
 
-          // Right arrow button
-          _buildArrowButton(
-            isRight: true,
-            scrollController: scrollController,
-          ),
+          // Right arrow button - only show if more than 2 items
+          if (hasMoreThanTwoItems)
+            _buildArrowButton(
+              isRight: true,
+              scrollController: scrollController,
+            ),
         ],
       ),
     );
@@ -410,8 +430,6 @@ class NearbyProject extends StatelessWidget {
     final hasDistance = subtitle.isNotEmpty && showKm;
 
     return Container(
-      width: 140.w,
-      margin: EdgeInsets.symmetric(horizontal: 4.w),
       padding: EdgeInsets.all(8.w),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -507,14 +525,11 @@ class NearbyProject extends StatelessWidget {
                         ),
                       ),
                     ],
-
                   ],
                 ),
               ),
             ],
           ),
-
-          // Distance (subtitle) below the row - ONLY for nearby locations (showKm = true)
         ],
       ),
     );

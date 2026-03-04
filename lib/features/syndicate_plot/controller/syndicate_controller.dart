@@ -25,8 +25,8 @@ class SyndicatePlotController extends GetxController {
   var totalPages = 1.obs;
   var hasMoreData = true.obs;
   var totalItems = 0.obs;
-  var selectedCityId = 0.obs; // Changed from selectedCity
-  var selectedStateId = 0.obs; // Changed from selectedState
+  var selectedCityId = 0.obs;
+  var selectedStateId = 0.obs;
   var selectedCityName = ''.obs;
   var selectedStateName = ''.obs;
   var isLoadingBuyingList = false.obs;
@@ -43,6 +43,8 @@ class SyndicatePlotController extends GetxController {
   var selectedTransactionId = Rxn<int>();
   final TextEditingController searchController = TextEditingController();
   final RxString recentSearch = ''.obs;
+  RxBool isTermsAccepted = false.obs;
+
   var searchQuery = ''.obs;
   var selectedCity = ''.obs;
   var selectedState = ''.obs;
@@ -51,10 +53,10 @@ class SyndicatePlotController extends GetxController {
   var minAreaSqft = ''.obs;
   var maxAreaSqft = ''.obs;
 
-  // NEW: Property type filter
-  var selectedPropertyTypeId = 0.obs; // For property type ID
-  var selectedPropertyTypeName = ''.obs; // For display
-  var propertyTypes = <PropertyType>[].obs; // List of available property types
+  // Property type filter
+  var selectedPropertyTypeId = 0.obs;
+  var selectedPropertyTypeName = ''.obs;
+  var propertyTypes = <PropertyType>[].obs;
 
   // For dynamic filtering UI
   var priceMin = 0.0.obs;
@@ -73,9 +75,7 @@ class SyndicatePlotController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize filter data from API
     fetchSyndicatePlots();
-    // Load property types if available
     loadPropertyTypes();
   }
 
@@ -199,7 +199,6 @@ class SyndicatePlotController extends GetxController {
     }
   }
 
-  // NEW: Load property types from plots data
   Future<void> loadPropertyTypes() async {
     try {
       final url = '${ApiUrl.syndicatePlotList}?page_no=1&limit=100';
@@ -213,8 +212,6 @@ class SyndicatePlotController extends GetxController {
             responseData['data']['syndicate'] is List) {
 
           final List syndicateData = responseData['data']['syndicate'];
-
-          /// ✅ Use Map to remove duplicates by ID
           final Map<int, PropertyType> uniquePropertyTypes = {};
 
           for (var plotData in syndicateData) {
@@ -222,8 +219,6 @@ class SyndicatePlotController extends GetxController {
 
             if (pt != null && pt is Map && pt['id'] != null) {
               final int id = pt['id'];
-
-              /// Only first occurrence will be kept
               uniquePropertyTypes[id] = PropertyType(
                 id: id,
                 categoryName: pt['category_name'] ?? '',
@@ -232,9 +227,7 @@ class SyndicatePlotController extends GetxController {
             }
           }
 
-          /// Convert map values to list
           propertyTypes.value = uniquePropertyTypes.values.toList();
-
           print('✅ Loaded ${propertyTypes.length} unique property types');
         }
       }
@@ -242,7 +235,7 @@ class SyndicatePlotController extends GetxController {
       print('❌ Error loading property types: $e');
     }
   }
-  // Enhanced fetch method with filter data extraction
+
   Future<void> fetchSyndicatePlots({bool loadMore = false}) async {
     try {
       if (loadMore) {
@@ -252,34 +245,35 @@ class SyndicatePlotController extends GetxController {
         currentPage.value = 1;
         hasMoreData.value = true;
       }
+
       final url = '${ApiUrl.syndicatePlotList}?page_no=${currentPage.value}${_buildQueryParams()}';
       print('Fetching URL: $url');
       final response = await ApiService.getRequest(url);
+
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData != null &&
             responseData['data'] != null &&
             responseData['data']['syndicate'] != null) {
+
           final syndicateData = responseData['data']['syndicate'];
           final paginationData = responseData['data']['pagination'];
 
-          // Extract price and area ranges from plots for dynamic filter UI
-          _extractPriceRanges(syndicateData);
-          _extractAreaRanges(syndicateData);
+          _extractPriceRanges(responseData);
+          _extractAreaRanges(responseData);
 
           if (loadMore) {
             syndicatePlots.addAll(_parseSyndicatePlots(syndicateData));
           } else {
             syndicatePlots.assignAll(_parseSyndicatePlots(syndicateData));
           }
+
           currentPage.value = paginationData['current_page'] ?? 1;
           totalPages.value = paginationData['last_page'] ?? 1;
           totalItems.value = paginationData['total'] ?? 0;
           hasMoreData.value = currentPage.value < totalPages.value;
+
           print('✅ Fetched ${syndicatePlots.length} syndicate plots');
-          print('📄 Current page: $currentPage, Total pages: $totalPages, Total items: $totalItems');
-          print('💰 Price range: ₹${priceMin.value} - ₹${priceMax.value}');
-          print('📐 Area range: ${sqftMin.value} - ${sqftMax.value} sq.ft');
         } else {
           SnackBarHelper.showError("Invalid response format from server");
           print('❌ Invalid response format: $responseData');
@@ -301,19 +295,49 @@ class SyndicatePlotController extends GetxController {
     }
   }
 
-  void _extractPriceRanges(List<dynamic> syndicateData) {
+  void _extractPriceRanges(dynamic responseData) {
+    try {
+      if (responseData != null && responseData['data'] != null) {
+        final priceMin = responseData['data']['price_min'];
+        final priceMax = responseData['data']['price_max'];
+
+        if (priceMin != null && priceMax != null) {
+          double min = priceMin is int ? priceMin.toDouble() : double.tryParse(priceMin.toString()) ?? 0.0;
+          double max = priceMax is int ? priceMax.toDouble() : double.tryParse(priceMax.toString()) ?? 10000000.0;
+
+          if (min > max) {
+            final temp = min;
+            min = max;
+            max = temp;
+          }
+
+          if (min == max) {
+            max = min + 1000;
+          }
+
+          this.priceMin.value = min;
+          this.priceMax.value = max;
+
+          return;
+        }
+      }
+      _extractPriceRangesFromPlots();
+    } catch (e) {
+      print('❌ Error extracting price ranges from API: $e');
+      _extractPriceRangesFromPlots();
+    }
+  }
+
+  void _extractPriceRangesFromPlots() {
     try {
       double minPriceValue = double.infinity;
       double maxPriceValue = 0;
 
-      for (var plotData in syndicateData) {
+      for (var plot in syndicatePlots) {
         try {
-          String priceStr = plotData['price']?.toString() ?? '';
+          String priceStr = plot.price?.replaceAll(',', '') ?? '';
           if (priceStr.isNotEmpty) {
-            // Remove commas and convert to number
-            priceStr = priceStr.replaceAll(',', '');
             double price = double.tryParse(priceStr) ?? 0;
-
             if (price > 0) {
               if (price < minPriceValue) minPriceValue = price;
               if (price > maxPriceValue) maxPriceValue = price;
@@ -324,32 +348,59 @@ class SyndicatePlotController extends GetxController {
         }
       }
 
-      // Set sensible defaults if no prices found
       if (minPriceValue == double.infinity) minPriceValue = 0;
       if (maxPriceValue <= minPriceValue) maxPriceValue = minPriceValue + 1000000;
 
       priceMin.value = minPriceValue;
       priceMax.value = maxPriceValue;
-
     } catch (e) {
-      print('❌ Error extracting price ranges: $e');
-      // Set safe defaults
+      print('❌ Error in fallback price extraction: $e');
       priceMin.value = 0.0;
       priceMax.value = 10000000.0;
     }
   }
 
-  // NEW: Extract area ranges from plots
-  void _extractAreaRanges(List<dynamic> syndicateData) {
+  void _extractAreaRanges(dynamic responseData) {
+    try {
+      if (responseData != null && responseData['data'] != null) {
+        final sqftMin = responseData['data']['sqft_min'];
+        final sqftMax = responseData['data']['sqft_max'];
+
+        if (sqftMin != null && sqftMax != null) {
+          double min = sqftMin is int ? sqftMin.toDouble() : double.tryParse(sqftMin.toString()) ?? 0.0;
+          double max = sqftMax is int ? sqftMax.toDouble() : double.tryParse(sqftMax.toString()) ?? 10000.0;
+
+          if (min > max) {
+            final temp = min;
+            min = max;
+            max = temp;
+          }
+
+          if (min == max) {
+            max = min + 1000;
+          }
+
+          this.sqftMin.value = min;
+          this.sqftMax.value = max;
+          return;
+        }
+      }
+      _extractAreaRangesFromPlots();
+    } catch (e) {
+      print('❌ Error extracting area ranges from API: $e');
+      _extractAreaRangesFromPlots();
+    }
+  }
+
+  void _extractAreaRangesFromPlots() {
     try {
       double minAreaValue = double.infinity;
       double maxAreaValue = 0;
 
-      for (var plotData in syndicateData) {
+      for (var plot in syndicatePlots) {
         try {
-          String areaStr = plotData['area']?.toString() ?? '';
+          String areaStr = plot.area?.toString() ?? '';
           if (areaStr.isNotEmpty) {
-            // Remove non-numeric characters and convert
             areaStr = areaStr.replaceAll(RegExp(r'[^0-9.]'), '');
             double area = double.tryParse(areaStr) ?? 0;
 
@@ -368,9 +419,8 @@ class SyndicatePlotController extends GetxController {
 
       sqftMin.value = minAreaValue;
       sqftMax.value = maxAreaValue;
-
     } catch (e) {
-      print('❌ Error extracting area ranges: $e');
+      print('❌ Error in fallback area extraction: $e');
       sqftMin.value = 0.0;
       sqftMax.value = 10000.0;
     }
@@ -407,7 +457,6 @@ class SyndicatePlotController extends GetxController {
           print('❌ Invalid response format: $responseData');
         }
       } else if (response.statusCode == 401) {
-        // Token expired or invalid
         errorMessage('Session expired. Please login again.');
         SnackBarHelper.showError("Session expired. Please login again.");
         print('❌ 401 Unauthorized: Token invalid or expired');
@@ -440,11 +489,15 @@ class SyndicatePlotController extends GetxController {
       isLoadingDetail(false);
     }
   }
+
   void _logBookingInfo() {
     final detail = syndicateDetail.value;
     if (detail != null) {
       print('📊 Total Plots: ${detail.unitSpilt}');
       print('📋 Bookings Count: ${detail.bookings.length}');
+      print('💰 Admin Block Amount: ${detail.adminBlockAmount}');
+      print('💵 Price per Plot (calculated): ${getPricePerPlot()}');
+      print('🏷️ Price per Plot (admin block): ${getPricePerPlotFromAdminBlock()}');
 
       for (final booking in detail.bookings) {
         print('   Booking ID: ${booking.id}, Units: ${booking.units}');
@@ -502,31 +555,26 @@ class SyndicatePlotController extends GetxController {
     await fetchSyndicatePlots();
   }
 
-  // Enhanced search with debouncing like Gioo
   void onSearchChanged(String value) {
     searchQuery.value = value;
-    // Cancel previous timer
     if (_debounce?.isActive ?? false) _debounce?.cancel();
 
-    // Set new timer for debouncing
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      // Only search if query has at least 5 characters
-      if (value.trim().length >= 5) {
+      if (value.trim().length >= 100) {
         recentSearch.value = value.trim();
         fetchSyndicatePlots();
       }
-      // Clear search if query is empty (optional - depends on your needs)
       else if (value.isEmpty && searchQuery.value.isNotEmpty) {
         searchQuery.value = '';
         recentSearch.value = '';
-        fetchSyndicatePlots(); // Fetch all plots when cleared
+        fetchSyndicatePlots();
       }
-      // If query is 1-4 characters, do nothing
       else if (value.trim().isNotEmpty && value.trim().length < 5) {
-        // Optionally: Show hint or do nothing
+        // Do nothing
       }
     });
   }
+
   void applySearch() {
     if (searchQuery.value.trim().isEmpty) return;
     recentSearch.value = searchQuery.value.trim();
@@ -554,13 +602,10 @@ class SyndicatePlotController extends GetxController {
   Future<void> filterByState(int stateId, String stateName) async {
     selectedStateId.value = stateId;
     selectedStateName.value = stateName;
-    selectedCityId.value = 0; // Reset city when state changes
+    selectedCityId.value = 0;
     selectedCityName.value = '';
     await fetchSyndicatePlots();
   }
-
-
-
 
   Future<void> filterByPrice(String min, String max) async {
     minPrice.value = min;
@@ -568,28 +613,24 @@ class SyndicatePlotController extends GetxController {
     await fetchSyndicatePlots();
   }
 
-  // NEW: Method for area filtering
   Future<void> filterByArea(String min, String max) async {
     minAreaSqft.value = min;
     maxAreaSqft.value = max;
     await fetchSyndicatePlots();
   }
 
-  // NEW: Method for property type filtering
   Future<void> filterByPropertyType(int typeId, String typeName) async {
     selectedPropertyTypeId.value = typeId;
     selectedPropertyTypeName.value = typeName;
     await fetchSyndicatePlots();
   }
 
-  // NEW: Clear property type filter
   Future<void> clearPropertyTypeFilter() async {
     selectedPropertyTypeId.value = 0;
     selectedPropertyTypeName.value = '';
     await fetchSyndicatePlots();
   }
 
-  // Check if any filters are applied
   bool hasFiltersApplied() {
     return searchQuery.value.isNotEmpty ||
         selectedCityId.value > 0 ||
@@ -633,7 +674,6 @@ class SyndicatePlotController extends GetxController {
     return cityMap.values.toList();
   }
 
-  // Update getAvailableStates to return proper objects
   List<Map<String, dynamic>> getAvailableStates() {
     final stateMap = <int, Map<String, dynamic>>{};
 
@@ -649,7 +689,6 @@ class SyndicatePlotController extends GetxController {
     return stateMap.values.toList();
   }
 
-  // Update getCitiesByStateId to filter properly
   List<Map<String, dynamic>> getCitiesByStateId(int stateId) {
     final cityMap = <int, Map<String, dynamic>>{};
 
@@ -665,12 +704,11 @@ class SyndicatePlotController extends GetxController {
 
     return cityMap.values.toList();
   }
-  // NEW: Get available property types from loaded plots
+
   List<PropertyType> getAvailablePropertyTypes() {
     return propertyTypes;
   }
 
-  // Enhanced query builder with all filters including property type and area
   String _buildQueryParams() {
     final params = <String>[];
 
@@ -678,7 +716,6 @@ class SyndicatePlotController extends GetxController {
       params.add('search=${Uri.encodeComponent(searchQuery.value)}');
     }
 
-    // Use IDs instead of names
     if (selectedCityId.value > 0) {
       params.add('city=${Uri.encodeComponent(selectedCityId.value.toString())}');
     }
@@ -696,11 +733,11 @@ class SyndicatePlotController extends GetxController {
     }
 
     if (minAreaSqft.value.isNotEmpty) {
-      params.add('sqft_min=${Uri.encodeComponent(minAreaSqft.value)}');
+      params.add('min_sqft=${Uri.encodeComponent(minAreaSqft.value)}');
     }
 
     if (maxAreaSqft.value.isNotEmpty) {
-      params.add('sqft_max=${Uri.encodeComponent(maxAreaSqft.value)}');
+      params.add('max_sqft=${Uri.encodeComponent(maxAreaSqft.value)}');
     }
 
     if (selectedPropertyTypeId.value > 0) {
@@ -709,6 +746,7 @@ class SyndicatePlotController extends GetxController {
 
     return params.isEmpty ? '' : '&${params.join('&')}';
   }
+
   List<SyndicatePlot> _parseSyndicatePlots(List<dynamic> data) {
     return data.map((item) => SyndicatePlot.fromJson(item)).toList();
   }
@@ -729,7 +767,7 @@ class SyndicatePlotController extends GetxController {
     print('Toggled favorite for plot $plotId');
   }
 
-  /////////////////////////////////----------Payment-----////////////////////////////////
+  /////////////////////////////////----------Payment Methods-----////////////////////////////////
 
   // Get plot areas from API unit field
   List<double> getPlotAreas() {
@@ -752,19 +790,26 @@ class SyndicatePlotController extends GetxController {
     return "${area.toStringAsFixed(0)} sq.ft";
   }
 
-  // Calculate total amount for selected plots (price per plot × number of selected plots)
-  double calculateSelectedPlotsAmount() {
+  // Get price per plot from admin_block_amount - NEW METHOD
+  double getPricePerPlotFromAdminBlock() {
     final detail = syndicateDetail.value;
-    if (detail == null || selectedPlots.isEmpty) return 0.0;
+    if (detail == null) return 0.0;
 
-    // Get price per plot from API
-    final pricePerPlot = double.tryParse(detail.price.replaceAll(',', '')) ?? 0.0;
+    // Use admin_block_amount if available and valid
+    final adminBlockAmount = detail.adminBlockAmount;
+    if (adminBlockAmount != null && adminBlockAmount.isNotEmpty && adminBlockAmount != '0') {
+      final price = double.tryParse(adminBlockAmount.replaceAll(',', '')) ?? 0.0;
+      print('💰 Using admin_block_amount: $price');
+      return price;
+    }
 
-    // Calculate total amount for selected plots
-    return pricePerPlot * selectedPlots.length;
+    // Fallback to old calculation if admin_block_amount is not available
+    final fallbackPrice = getPricePerPlot();
+    print('⚠️ Using fallback price: $fallbackPrice (admin_block_amount not available)');
+    return fallbackPrice;
   }
 
-  // Get price per plot
+  // Get price per plot (old method - kept for backward compatibility)
   double getPricePerPlot() {
     final detail = syndicateDetail.value;
     if (detail == null) return 0.0;
@@ -772,12 +817,26 @@ class SyndicatePlotController extends GetxController {
     return double.tryParse(detail.price.replaceAll(',', '')) ?? 0.0;
   }
 
+  // Calculate total amount for selected plots using admin_block_amount
+  double calculateSelectedPlotsAmount() {
+    final detail = syndicateDetail.value;
+    if (detail == null || selectedPlots.isEmpty) return 0.0;
+
+    // Get price per plot from admin_block_amount
+    final pricePerPlot = getPricePerPlotFromAdminBlock();
+
+    // Calculate total amount for selected plots
+    final totalAmount = pricePerPlot * selectedPlots.length;
+    print('💵 Calculated amount: $pricePerPlot × ${selectedPlots.length} = $totalAmount');
+    return totalAmount;
+  }
+
   // Get unit details for selected plots with area
   List<Map<String, dynamic>> getSelectedUnitDetails() {
     final detail = syndicateDetail.value;
     if (detail == null || selectedPlots.isEmpty) return [];
 
-    final pricePerPlot = getPricePerPlot();
+    final pricePerPlot = getPricePerPlotFromAdminBlock();
     final List<Map<String, dynamic>> details = [];
 
     for (final plotId in selectedPlots) {
@@ -788,6 +847,11 @@ class SyndicatePlotController extends GetxController {
         "formattedArea": formatArea(area),
         "pricePerPlot": pricePerPlot,
         "formattedPrice": "₹${pricePerPlot.toStringAsFixed(2)}",
+        "priceSource": detail.adminBlockAmount != null &&
+            detail.adminBlockAmount!.isNotEmpty &&
+            detail.adminBlockAmount != '0'
+            ? "admin_block_amount"
+            : "calculated_price",
       });
     }
 
@@ -802,7 +866,7 @@ class SyndicatePlotController extends GetxController {
     final totalPlots = detail.unitSpilt;
     final bookings = detail.bookings;
     final plotAreas = getPlotAreas();
-    final pricePerPlot = getPricePerPlot();
+    final pricePerPlot = getPricePerPlotFromAdminBlock();
 
     // Get all booked plot IDs from bookings
     final Set<int> bookedPlotIds = <int>{};
@@ -851,7 +915,7 @@ class SyndicatePlotController extends GetxController {
       return;
     }
 
-    // Calculate amount
+    // Calculate amount using admin_block_amount
     final amount = calculateSelectedPlotsAmount();
     if (amount <= 0) {
       SnackBarHelper.showError("Invalid amount calculation");
@@ -867,7 +931,8 @@ class SyndicatePlotController extends GetxController {
       propertyId: detail.id,
       units: selectedPlots.toList(),
       unitDetails: unitDetails,
-      amount: amount, type: 'syndicate',
+      amount: amount,
+      type: 'syndicate',
     );
 
     // Show payment summary dialog
@@ -899,13 +964,18 @@ class SyndicatePlotController extends GetxController {
     showDocumentPaymentSummaryDialog(amount, documentType);
   }
 
-
-
-
   void showPlotPaymentSummaryBottomSheet(double amount, List<Map<String, dynamic>> unitDetails) {
-    final gstAmount = amount * 0.18;
-    final totalAmount = amount + gstAmount;
+    final gstAmount = amount;
+    final totalAmount = amount;
     final razorpayController = Get.find<RazorpayController>();
+    final detail = syndicateDetail.value;
+
+    // Determine price source
+    final priceSource = detail?.adminBlockAmount != null &&
+        detail!.adminBlockAmount!.isNotEmpty &&
+        detail.adminBlockAmount != '0'
+        ? "Admin Block Amount"
+        : "Calculated Price";
 
     Get.bottomSheet(
       isScrollControlled: true,
@@ -941,6 +1011,15 @@ class SyndicatePlotController extends GetxController {
                       Text("Payment Summary",
                           style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A))),
                       Text("Review your plot investment", style: TextStyle(fontSize: 13.sp, color: Colors.grey[500])),
+                      SizedBox(height: 4.h),
+                      Text(
+                        "Price Source: $priceSource",
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: Colors.grey[600],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
                     ],
                   ),
                   _buildModernSecureBadge(),
@@ -959,9 +1038,11 @@ class SyndicatePlotController extends GetxController {
                 ),
                 child: Column(
                   children: [
-                    _buildModernRow("Property", syndicateDetail.value?.name ?? "N/A", Icons.location_city_rounded),
+                    _buildModernRow("Property", detail?.name ?? "N/A", Icons.location_city_rounded),
                     SizedBox(height: 12.h),
                     _buildModernRow("Total Plots", "${unitDetails.length} Units", Icons.grid_view_rounded),
+                    SizedBox(height: 12.h),
+                    _buildModernRow("Price per Plot", "₹${getPricePerPlotFromAdminBlock().toStringAsFixed(2)}", Icons.monetization_on),
 
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -971,7 +1052,7 @@ class SyndicatePlotController extends GetxController {
                     // Pricing Breakdown
                     _buildPriceDetail("Base Amount", "₹${amount.toStringAsFixed(2)}"),
                     SizedBox(height: 8.h),
-                    _buildPriceDetail("GST (18%)", "₹${gstAmount.toStringAsFixed(2)}"),
+                    // _buildPriceDetail("GST (18%)", "₹${gstAmount.toStringAsFixed(2)}"),
 
                     SizedBox(height: 16.h),
 
@@ -1010,13 +1091,12 @@ class SyndicatePlotController extends GetxController {
 
               SizedBox(height: 20.h),
 
-              // Action Slider - Fixed with proper error handling
+              // Action Slider
               Obx(() {
                 final isTermsAccepted = razorpayController.isTermsAccepted.value;
 
                 return LayoutBuilder(
                   builder: (context, constraints) {
-                    // Prevent zero-width crash
                     if (constraints.maxWidth <= 0) {
                       return const SizedBox(height: 60);
                     }
@@ -1035,8 +1115,6 @@ class SyndicatePlotController extends GetxController {
                           color: Colors.white,
                           size: 18,
                         ),
-
-                        // ✅ USE child INSTEAD OF textStyle
                         child: Text(
                           "Slide to Confirm Payment",
                           style: TextStyle(
@@ -1045,7 +1123,6 @@ class SyndicatePlotController extends GetxController {
                             color: const Color(0xFF1E293B),
                           ),
                         ),
-
                         action: (controller) async {
                           if (!isTermsAccepted) {
                             SnackBarHelper.showError("Please accept terms to proceed");
@@ -1084,7 +1161,6 @@ class SyndicatePlotController extends GetxController {
     );
   }
 
-// Helper Widgets remain the same
   Widget _buildModernRow(String label, String value, IconData icon) {
     return Row(
       children: [
@@ -1124,8 +1200,6 @@ class SyndicatePlotController extends GetxController {
     );
   }
 
-
-
   void showDocumentPaymentSummaryDialog(double amount, String documentType) {
     Get.bottomSheet(
       Container(
@@ -1137,7 +1211,6 @@ class SyndicatePlotController extends GetxController {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag Handle
             Container(
               width: 40.w,
               height: 4.h,
@@ -1148,7 +1221,6 @@ class SyndicatePlotController extends GetxController {
             ),
             SizedBox(height: 24.h),
 
-            // Header with Icon
             Row(
               children: [
                 Container(
@@ -1174,7 +1246,6 @@ class SyndicatePlotController extends GetxController {
 
             SizedBox(height: 24.h),
 
-            // Details Card
             Container(
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
@@ -1189,7 +1260,7 @@ class SyndicatePlotController extends GetxController {
                   _buildSummaryRow("Property", syndicateDetail.value?.name ?? "N/A"),
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 16.h),
-                    child: DottedLine(dashColor: Colors.grey[300]!), // Using a dotted line for "receipt" feel
+                    child: DottedLine(dashColor: Colors.grey[300]!),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1205,10 +1276,9 @@ class SyndicatePlotController extends GetxController {
             ),
 
             SizedBox(height: 20.h),
-            _buildTermsCheckboxWidget(), // Ensure this widget is styled minimally
+            _buildTermsCheckboxWidget(),
             SizedBox(height: 24.h),
 
-            // Action Buttons
             Row(
               children: [
                 Expanded(
@@ -1230,7 +1300,7 @@ class SyndicatePlotController extends GetxController {
                       _proceedToDocumentPayment(amount, documentType);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E293B), // Dark Navy for premium look
+                      backgroundColor: const Color(0xFF1E293B),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -1249,7 +1319,6 @@ class SyndicatePlotController extends GetxController {
     );
   }
 
-// Helper for the clean rows
   Widget _buildSummaryRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1261,57 +1330,6 @@ class SyndicatePlotController extends GetxController {
               style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
         ),
       ],
-    );
-  }
-  Widget _buildSummaryRowWidget(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.grey[700],
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPriceRowWidget(String label, String value, {bool isBold = false, bool isTotal = false}) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 6.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTotal ? 14.sp : 12.sp,
-              color: isTotal ? Colors.green : Colors.grey[700],
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isTotal ? 16.sp : 12.sp,
-              color: isTotal ? Colors.green : Colors.black,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1394,16 +1412,13 @@ class SyndicatePlotController extends GetxController {
     try {
       final paymentController = Get.find<RazorpayController>();
 
-      // Check terms
       if (!paymentController.isTermsAccepted.value) {
         SnackBarHelper.showError("Please accept terms and conditions");
         return;
       }
 
-      // Get user details
       final userDetails = await _getUserDetails();
 
-      // Validate user details
       if (userDetails['name']!.isEmpty || userDetails['email']!.isEmpty || userDetails['phone']!.isEmpty) {
         SnackBarHelper.showError("Please complete your profile before making payments");
         return;
@@ -1413,7 +1428,7 @@ class SyndicatePlotController extends GetxController {
         customerName: userDetails['name']!,
         customerEmail: userDetails['email']!,
         customerPhone: userDetails['phone']!,
-        amount: (totalAmount * 100).toInt(), // Convert to paise
+        amount: (totalAmount * 100).toInt(),
         description: "Plot Booking for ${selectedPlots.length} plots",
       );
     } catch (e) {
@@ -1426,16 +1441,13 @@ class SyndicatePlotController extends GetxController {
     try {
       final paymentController = Get.find<RazorpayController>();
 
-      // Check terms
       if (!paymentController.isTermsAccepted.value) {
         SnackBarHelper.showError("Please accept terms and conditions");
         return;
       }
 
-      // Get user details
       final userDetails = await _getUserDetails();
 
-      // Validate user details
       if (userDetails['name']!.isEmpty || userDetails['email']!.isEmpty || userDetails['phone']!.isEmpty) {
         SnackBarHelper.showError("Please complete your profile before making payments");
         return;
@@ -1445,7 +1457,7 @@ class SyndicatePlotController extends GetxController {
         customerName: userDetails['name']!,
         customerEmail: userDetails['email']!,
         customerPhone: userDetails['phone']!,
-        amount: (totalAmount * 100).toInt(), // Convert to paise
+        amount: (totalAmount * 100).toInt(),
         description: "Document Payment: $documentType",
       );
     } catch (e) {
@@ -1456,7 +1468,6 @@ class SyndicatePlotController extends GetxController {
 
   Future<Map<String, String>> _getUserDetails() async {
     try {
-      // Check if user is logged in
       final isLoggedIn = await SessionManager.isLoggedIn();
       if (!isLoggedIn) {
         SnackBarHelper.showError("Please login to make payments");
@@ -1464,7 +1475,6 @@ class SyndicatePlotController extends GetxController {
         throw Exception('User not logged in');
       }
 
-      // Get user data from SessionManager
       final userData = await SessionManager.getUserData();
       if (userData == null) {
         SnackBarHelper.showError("Session expired. Please login again.");
@@ -1473,7 +1483,6 @@ class SyndicatePlotController extends GetxController {
         throw Exception('User data not found');
       }
 
-      // Get token for verification
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
         SnackBarHelper.showError("Session invalid. Please login again.");
@@ -1482,7 +1491,6 @@ class SyndicatePlotController extends GetxController {
         throw Exception('Token not found');
       }
 
-      // Construct name from first and last name
       final firstName = userData['first_name']?.toString() ?? '';
       final lastName = userData['last_name']?.toString() ?? '';
       final fullName = firstName.isNotEmpty && lastName.isNotEmpty
@@ -1504,7 +1512,6 @@ class SyndicatePlotController extends GetxController {
     } catch (e) {
       print('❌ Error getting user details: $e');
 
-      // If there's an error, try to get minimal user info from prefs
       try {
         final prefs = await SharedPreferences.getInstance();
         final firstName = prefs.getString('first_name') ?? '';
@@ -1527,7 +1534,6 @@ class SyndicatePlotController extends GetxController {
         };
       } catch (e2) {
         print('❌ Fallback error: $e2');
-        // Return default values as last resort
         return {
           'name': 'User',
           'email': 'user@example.com',
@@ -1539,13 +1545,11 @@ class SyndicatePlotController extends GetxController {
       }
     }
   }
-// Syndicate Buying List Methods
+
+  // Syndicate Buying List Methods
   Future<void> fetchSyndicateBuyingList({bool loadMore = false}) async {
     try {
-      // DEBUG: Check session status
       await SessionManager.debugSession();
-
-      // Get token
       final String? token = await SessionManager.getToken();
 
       if (token == null || token.isEmpty) {
@@ -1568,7 +1572,6 @@ class SyndicatePlotController extends GetxController {
       final url = '${ApiUrl.syndicateBuyingList}?page=${buyingListPage.value}';
       print('🌐 Fetching Syndicate Buying List URL: $url');
 
-      // Add headers with token
       final Map<String, String> headers = {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
@@ -1592,7 +1595,6 @@ class SyndicatePlotController extends GetxController {
             hasMoreBuyingData.value = buyingListPage.value < totalBuyingPages.value;
 
             print('✅ Fetched ${buyingList.length} syndicate buying records');
-            print('📄 Current page: $buyingListPage, Total pages: $totalBuyingPages');
           } catch (e) {
             print('❌ Error parsing syndicate buying list: $e');
             SnackBarHelper.showError("Failed to parse buying list data");
@@ -1634,7 +1636,6 @@ class SyndicatePlotController extends GetxController {
         return;
       }
 
-      // Check token first
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
         print('❌ No token found for syndicate details fetch');
@@ -1656,7 +1657,6 @@ class SyndicatePlotController extends GetxController {
       final url = '${ApiUrl.syndicateBuyingDetails}?tran_id=$txnId&page=${buyingDetailPage.value}';
       print('🌐 Fetching Syndicate Buying Details URL: $url');
 
-      // Add headers with token
       final Map<String, String> headers = {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
@@ -1732,13 +1732,11 @@ class SyndicatePlotController extends GetxController {
           SnackBarHelper.showSuccess(responseData['message'] ??
               'Syndicate cancellation request submitted successfully');
 
-          // Update the item in buying detail list
           final index = buyingDetailList.indexWhere((item) => item.id == buyingId);
           if (index != -1) {
             final updatedDetail = buyingDetailList[index];
             final data = responseData['data'] ?? {};
 
-            // Create updated transaction
             final updatedTransaction = Transaction(
               id: updatedDetail.transaction.id,
               transactionId: updatedDetail.transaction.transactionId,
@@ -1755,7 +1753,6 @@ class SyndicatePlotController extends GetxController {
               user: updatedDetail.transaction.user,
             );
 
-            // Update the buying detail
             buyingDetailList[index] = SyndicateBuyingDetail(
               id: updatedDetail.id,
               transactionId: updatedDetail.transactionId,
@@ -1774,7 +1771,6 @@ class SyndicatePlotController extends GetxController {
               property: updatedDetail.property,
             );
 
-            // Refresh the list
             buyingDetailList.refresh();
             print('✅ Updated syndicate detail $buyingId with cancellation status');
           }
@@ -1803,33 +1799,30 @@ class SyndicatePlotController extends GetxController {
     } finally {
       isLoadingCancelRequest(false);
     }
-  }// Helper method to load more buying list data
+  }
+
   Future<void> loadMoreBuyingList() async {
     if (!isLoadingBuyingList.value && hasMoreBuyingData.value) {
       await fetchSyndicateBuyingList(loadMore: true);
     }
   }
 
-// Helper method to load more buying detail data
   Future<void> loadMoreBuyingDetail() async {
     if (!isLoadingBuyingDetail.value && hasMoreBuyingDetailData.value) {
       await fetchSyndicateBuyingListDetails(loadMore: true);
     }
   }
 
-// Refresh buying list
   Future<void> refreshBuyingList() async {
     await fetchSyndicateBuyingList();
   }
 
-// Navigate to buying details screen
   void navigateToSyndicateBuyingDetails(int transactionId) {
     selectedTransactionId.value = transactionId;
     Get.toNamed('/syndicate-buying-details', arguments: transactionId);
     fetchSyndicateBuyingListDetails(transactionId: transactionId);
   }
 
-// Show cancellation confirmation dialog
   void showCancelConfirmationDialog(int buyingId, String propertyName) {
     Get.defaultDialog(
       title: "Cancel Syndicate Booking",
@@ -1883,23 +1876,20 @@ class SyndicatePlotController extends GetxController {
     );
   }
 
-// Format transaction date
   String formatTransactionDate(DateTime date) {
     return "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}";
   }
 
-// Check if cancellation is allowed (based on your business rules)
   bool canCancelBooking(SyndicateBuyingList booking) {
-    // Example: Allow cancellation only if not already cancelled
     return booking.transaction.status.toLowerCase() != 'cancelled';
   }
 
-// Calculate refund amount (you might want to adjust this based on your business logic)
   double calculateRefundAmount(SyndicateBuyingList booking, double cancellationChargePercent) {
     final totalAmount = double.tryParse(booking.amount) ?? 0.0;
     final refundAmount = totalAmount * ((100 - cancellationChargePercent) / 100);
     return refundAmount;
   }
+
   @override
   void onClose() {
     _clearDetailData();
@@ -1907,9 +1897,9 @@ class SyndicatePlotController extends GetxController {
     searchController.dispose();
     super.onClose();
   }
+
   Future<Map<String, dynamic>> fetchStoreReferral(String email, int propertyId) async {
     try {
-      // Get authentication token
       final token = await SessionManager.getToken();
 
       if (token == null || token.isEmpty) {
@@ -1918,7 +1908,6 @@ class SyndicatePlotController extends GetxController {
         return {'success': false, 'message': 'Authentication required'};
       }
 
-      // Create Dio instance with headers
       final dio = Dio();
       dio.options.headers = {
         'Authorization': 'Bearer $token',
@@ -1926,7 +1915,6 @@ class SyndicatePlotController extends GetxController {
         'Content-Type': 'application/json',
       };
 
-      // Prepare request data
       final Map<String, dynamic> requestData = {
         'email': email,
         'property_id': propertyId.toString(),
@@ -1938,13 +1926,11 @@ class SyndicatePlotController extends GetxController {
       print('   Property ID: $propertyId');
       print('   Token: ${token.substring(0, 20)}...');
 
-      // Make POST request directly with Dio
       final response = await dio.post(
         '${ApiUrl.baseUrl}/api/v2/store-referral',
         data: requestData,
       );
 
-      // Check response
       if (response.statusCode == 200) {
         final responseData = response.data;
         print('✅ Store Referral API Response: $responseData');
@@ -1966,8 +1952,6 @@ class SyndicatePlotController extends GetxController {
       } else if (response.statusCode == 401) {
         print('🔐 Unauthorized - Token may be expired');
         SnackBarHelper.showError('Session expired. Please login again.');
-
-        // Clear session and redirect to login
         await SessionManager.clearSession();
         Get.offAllNamed('/login');
 
@@ -1976,7 +1960,6 @@ class SyndicatePlotController extends GetxController {
           'message': 'Session expired',
         };
       } else if (response.statusCode == 422) {
-        // Validation error
         final responseData = response.data;
         final errors = responseData['errors'] ?? {};
         final errorMessage = errors.isNotEmpty
@@ -2001,7 +1984,6 @@ class SyndicatePlotController extends GetxController {
         };
       }
     } on DioException catch (e) {
-      // Handle Dio-specific errors
       print('❌ Dio Error: ${e.type} - ${e.message}');
 
       if (e.response != null) {

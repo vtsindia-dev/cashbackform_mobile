@@ -4,19 +4,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import '../../../common/colours.dart'; // keep if you have common colours
-// If you prefer AppColor from your snippet, you can import it instead:
-// import 'package:your_app/common/app_color.dart';
+import '../../../common/colours.dart';
 import '../controller/materialstore_controller.dart';
 import '../model/material_store.dart';
 
-
 // --- Main Widget ---
 class MarketDescriptionContent extends StatefulWidget {
-  final Material material;
-  final List<Material> relatedProducts;
+  final MaterialModel material;
+  final List<MaterialModel> relatedProducts;
   final VoidCallback? onCartPressed;
   final VoidCallback? onSharePressed;
+  final VoidCallback onEnquirePressed;
 
   const MarketDescriptionContent({
     super.key,
@@ -24,6 +22,7 @@ class MarketDescriptionContent extends StatefulWidget {
     this.relatedProducts = const [],
     this.onCartPressed,
     this.onSharePressed,
+    required this.onEnquirePressed,
   });
 
   @override
@@ -31,19 +30,31 @@ class MarketDescriptionContent extends StatefulWidget {
 }
 
 class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
+  final MaterialController _controller = Get.find<MaterialController>();
+
+  final RxDouble _quantity = 1.0.obs;
+  final RxString _selectedUnit = 'Unit'.obs;
+  final RxList<String> _availableUnits = <String>[].obs;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeUnits();
+  }
+
+  void _initializeUnits() {
+    _selectedUnit.value = _getDefaultUnit(widget.material.categoryId);
+    _availableUnits.value = _getUnitsForCategory(widget.material.categoryId);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Colors
     final Color gradientStart = AppColor.primary;
     final Color gradientEnd = AppColor.primarylite;
     final Color accent = AppColor.orange;
     final Color green = AppColor.secondary;
-
-    // Derived values
     final priceText = _getFormattedPrice(widget.material);
-    final defaultUnit = _getDefaultUnit(widget.material.categoryId);
-    final createdAt = widget.material.createdAt ?? DateTime.now();
-
+    final createdAt =  DateTime.now();
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 16.h),
@@ -62,7 +73,7 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
                   SizedBox(height: 14.h),
                   _description(widget.material),
                   SizedBox(height: 14.h),
-                  _inputsBox(defaultUnit),
+                  _inputsBox(),
                   SizedBox(height: 14.h),
                   _actionRow(gradientStart, gradientEnd, accent, green),
                   SizedBox(height: 18.h),
@@ -90,7 +101,6 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
     );
   }
 
-  // --- Shell with shadow & rounded corners ---
   Widget _cardShell({required Widget child}) {
     return Container(
       padding: EdgeInsets.all(12.w),
@@ -109,17 +119,19 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
     );
   }
 
-  // --- Image Section with thumbnails ---
   Widget _imageSection() {
-    final String imageUrl = widget.material.image.first.isNotEmpty
+    final String imageUrl = widget.material.image.isNotEmpty
         ? widget.material.image.first
-        : 'https://via.placeholder.com/600x400.png?text=No+Image';
+        : 'https://via.placeholder.com/600x400/CCCCCC/FFFFFF?text=No+Image';
 
     final thumbnails = [
       imageUrl,
-      'https://via.placeholder.com/150x150.png?text=Side+View',
-      'https://via.placeholder.com/150x150.png?text=Packaging',
+      ...widget.material.image.skip(1).take(2),
     ];
+
+    while (thumbnails.length < 3) {
+      thumbnails.add('https://via.placeholder.com/150x150/CCCCCC/FFFFFF?text=Image');
+    }
 
     return Column(
       children: [
@@ -133,10 +145,24 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
               fit: BoxFit.cover,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
-                return Center(child: CircularProgressIndicator(color: AppColor.primary));
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: AppColor.primary,
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                );
               },
               errorBuilder: (c, o, s) => Center(
-                child: Icon(Icons.image_not_supported, size: 48.sp, color: Colors.grey[400]),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.image_not_supported, size: 48.sp, color: Colors.grey[400]),
+                    SizedBox(height: 8.h),
+                    Text('Image not available', style: TextStyle(color: Colors.grey[600], fontSize: 12.sp)),
+                  ],
+                ),
               ),
             ),
           ),
@@ -152,27 +178,83 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
               final thumb = thumbnails[index];
               return GestureDetector(
                 onTap: () {
-                  // TODO: implement full-screen viewer or switch main image
+                  _showImageFullScreen(thumb);
                 },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.r),
-                  child: Container(
-                    width: 72.w,
-                    height: 56.h,
-                    color: Colors.grey[100],
-                    child: Image.network(
-                      thumb,
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, o, s) => Icon(Icons.image, size: 20.sp, color: Colors.grey),
+                child: Obx(() {
+                  final isSelected = _controller.selectedImage.value == thumb;
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: isSelected
+                          ? Border.all(color: AppColor.primary, width: 2.w)
+                          : null,
                     ),
-                  ),
-                ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Container(
+                        width: 72.w,
+                        height: 56.h,
+                        color: Colors.grey[100],
+                        child: Image.network(
+                          thumb,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, o, s) => Center(
+                            child: Icon(Icons.image, size: 20.sp, color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
               );
             },
           ),
         ),
       ],
     ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.02);
+  }
+
+  void _showImageFullScreen(String imageUrl) {
+    _controller.selectedImage.value = imageUrl;
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.all(20.w),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColor.white,
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(12.w),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Product Image', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () => Get.back(),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                height: 300.h,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (c, o, s) => Center(child: Icon(Icons.broken_image, size: 50.sp)),
+                ),
+              ),
+              SizedBox(height: 20.h),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // --- Title and price + cart/share icons ---
@@ -185,13 +267,23 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.material.materialName.isNotEmpty ? widget.material.materialName : 'Unnamed Material',
-                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700, color: AppColor.textMain),
+                widget.material.materialName.isNotEmpty
+                    ? widget.material.materialName
+                    : 'Unnamed Material',
+                style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.textMain
+                ),
               ),
               SizedBox(height: 6.h),
               Text(
                 priceText,
-                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColor.primary),
+                style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.primary
+                ),
               ),
             ],
           ),
@@ -201,16 +293,20 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
             _iconCircleButton(
               icon: Icons.share_outlined,
               label: 'Share',
-              onTap: () => widget.onSharePressed ?? _defaultShare(),
+              onTap: () => widget.onSharePressed ?? _showShareOptions(),
             ),
-
           ],
         ),
       ],
     );
   }
 
-  Widget _iconCircleButton({required IconData icon, required String label, required VoidCallback onTap, bool filled = false}) {
+  Widget _iconCircleButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool filled = false
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -221,18 +317,27 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
           borderRadius: BorderRadius.circular(12.r),
           border: filled ? null : Border.all(color: Colors.grey.shade200),
           boxShadow: [
-            if (filled) BoxShadow(color: AppColor.primary.withOpacity(0.18), blurRadius: 8.r, offset: const Offset(0, 4)),
+            if (filled)
+              BoxShadow(
+                  color: AppColor.primary.withOpacity(0.18),
+                  blurRadius: 8.r,
+                  offset: const Offset(0, 4)
+              ),
           ],
         ),
         child: Center(
-          child: Icon(icon, color: filled ? Colors.white : AppColor.primary, size: 20.sp),
+          child: Icon(
+              icon,
+              color: filled ? Colors.white : AppColor.primary,
+              size: 20.sp
+          ),
         ),
       ).animate().scale(begin: const Offset(0.98, 0.98), end: const Offset(1, 1)).then(delay: 50.ms),
     );
   }
 
   // --- Meta row: category, status ---
-  Widget _metaRow(Material material, Color green) {
+  Widget _metaRow(MaterialModel material, Color green) {  // Changed parameter type
     return Row(
       children: [
         Icon(Icons.category_outlined, color: green, size: 16.sp),
@@ -240,18 +345,28 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
         Expanded(
           child: Text(
             material.category?.categoryName ?? 'No category',
-            style: TextStyle(fontSize: 13.sp, color: AppColor.textMain, fontWeight: FontWeight.w600),
+            style: TextStyle(
+                fontSize: 13.sp,
+                color: AppColor.textMain,
+                fontWeight: FontWeight.w600
+            ),
           ),
         ),
         Container(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
           decoration: BoxDecoration(
-            color: material.status == 1 ? Colors.green.withOpacity(0.12) : Colors.red.withOpacity(0.12),
+            color: material.status == 1
+                ? Colors.green.withOpacity(0.12)
+                : Colors.red.withOpacity(0.12),
             borderRadius: BorderRadius.circular(12.r),
           ),
           child: Text(
             material.status == 1 ? 'Active' : 'Inactive',
-            style: TextStyle(color: material.status == 1 ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 12.sp),
+            style: TextStyle(
+                color: material.status == 1 ? Colors.green : Colors.red,
+                fontWeight: FontWeight.bold,
+                fontSize: 12.sp
+            ),
           ),
         ),
       ],
@@ -259,15 +374,21 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
   }
 
   // --- Description ---
-  Widget _description(Material material) {
+  Widget _description(MaterialModel material) {  // Changed parameter type
     return Text(
-      material.description.isNotEmpty ? material.description : 'No description provided for this product.',
-      style: TextStyle(fontSize: 13.sp, color: Colors.grey[700], height: 1.4),
+      material.description?.isNotEmpty == true
+          ? material.description!
+          : 'No description provided for this product.',
+      style: TextStyle(
+          fontSize: 13.sp,
+          color: Colors.grey[700],
+          height: 1.4
+      ),
     ).animate().fadeIn();
   }
 
   // --- Inputs box: quantity & unit selection + social share icons ---
-  Widget _inputsBox(String defaultUnit) {
+  Widget _inputsBox() {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
@@ -279,9 +400,13 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
         children: [
           Row(
             children: [
-              Expanded(child: _labelledInput("Quantity", "1", isNumber: true)),
+              Expanded(
+                child: _labelledQuantityInput("Quantity"),
+              ),
               SizedBox(width: 10.w),
-              Expanded(child: _labelledInput("Unit", defaultUnit, isDropdown: true)),
+              Expanded(
+                child: _labelledUnitInput("Unit"),
+              ),
             ],
           ),
           SizedBox(height: 12.h),
@@ -289,9 +414,21 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
             children: [
               Text("Share:", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
               SizedBox(width: 10.w),
-              _socialIconButton(Icons.chat_bubble, "WhatsApp", () => _shareOnWhatsApp(widget.material)),
-              _socialIconButton(Icons.send, "Telegram", () => _shareOnTelegram(widget.material)),
-              _socialIconButton(Icons.camera_alt, "Instagram", () => _shareOnInstagram(widget.material)),
+              _socialIconButton(
+                  Icons.chat_bubble,
+                  "WhatsApp",
+                      () => _shareOnWhatsApp(widget.material)
+              ),
+              _socialIconButton(
+                  Icons.send,
+                  "Telegram",
+                      () => _shareOnTelegram(widget.material)
+              ),
+              _socialIconButton(
+                  Icons.camera_alt,
+                  "Instagram",
+                      () => _shareOnInstagram(widget.material)
+              ),
             ],
           ),
         ],
@@ -299,7 +436,8 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
     ).animate().fadeIn(duration: 300.ms);
   }
 
-  Widget _labelledInput(String label, String placeholder, {bool isNumber = false, bool isDropdown = false}) {
+  // FIXED: Proper quantity input with stepper
+  Widget _labelledQuantityInput(String label) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -315,18 +453,67 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
           ),
           child: Row(
             children: [
-              Expanded(child: Text(placeholder, style: TextStyle(fontSize: 13.sp, color: Colors.grey[700]))),
-              if (isDropdown)
-                Icon(Icons.keyboard_arrow_down, size: 18.sp, color: AppColor.primary)
-              else if (isNumber)
-                Row(
-                  children: [
-                    Icon(Icons.keyboard_arrow_up, size: 14.sp, color: AppColor.primary),
-                    Icon(Icons.keyboard_arrow_down, size: 14.sp, color: AppColor.primary),
-                  ],
-                ),
+              GestureDetector(
+                onTap: () {
+                  if (_quantity.value > 0.5) {
+                    _quantity.value -= 0.5;
+                  }
+                },
+                child: Icon(Icons.remove, size: 18.sp, color: AppColor.primary),
+              ),
+              Expanded(
+                child: Obx(() => Text(
+                  _quantity.value.toStringAsFixed(1),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13.sp, color: Colors.grey[700]),
+                )),
+              ),
+              GestureDetector(
+                onTap: () {
+                  _quantity.value += 0.5;
+                },
+                child: Icon(Icons.add, size: 18.sp, color: AppColor.primary),
+              ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  // FIXED: Proper unit selection dropdown
+  Widget _labelledUnitInput(String label) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
+        SizedBox(height: 6.h),
+        Container(
+          height: 42.h,
+          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          decoration: BoxDecoration(
+            color: AppColor.white,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Obx(() => DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedUnit.value,
+              isExpanded: true,
+              icon: Icon(Icons.keyboard_arrow_down, size: 18.sp, color: AppColor.primary),
+              items: _availableUnits.map((String unit) {
+                return DropdownMenuItem<String>(
+                  value: unit,
+                  child: Text(unit, style: TextStyle(fontSize: 13.sp)),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  _selectedUnit.value = newValue;
+                }
+              },
+            ),
+          )),
         ),
       ],
     );
@@ -341,64 +528,63 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
         decoration: BoxDecoration(
           color: AppColor.white,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 6.r)],
+          boxShadow: [
+            BoxShadow(
+                color: Colors.grey.withOpacity(0.08),
+                blurRadius: 6.r
+            )
+          ],
         ),
         child: Icon(icon, size: 18.sp, color: AppColor.primary),
       ),
     );
   }
 
-  // --- Action Row: Add to Cart and Get Quote ---
+  // --- Action Row: Get Quote only ---
   Widget _actionRow(Color gStart, Color gEnd, Color orange, Color green) {
     return Row(
       children: [
-        // Expanded(
-        //   flex: 2,
-        //   child: GestureDetector(
-        //     onTap: () => _addToCart(widget.material),
-        //     child: Container(
-        //       height: 48.h,
-        //       decoration: BoxDecoration(
-        //         gradient: const LinearGradient(colors: [AppColor.orange, AppColor.orangeAccent]),
-        //         borderRadius: BorderRadius.circular(12.r),
-        //         boxShadow: [BoxShadow(color: AppColor.orange.withOpacity(0.18), blurRadius: 10.r, offset: const Offset(0, 6))],
-        //       ),
-        //       child: Center(
-        //         child: Row(
-        //           mainAxisSize: MainAxisSize.min,
-        //           children: [
-        //             Icon(Icons.shopping_cart, color: AppColor.black, size: 20.sp),
-        //             SizedBox(width: 8.w),
-        //             Text("Add to Cart", style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: AppColor.black)),
-        //           ],
-        //         ),
-        //       ),
-        //     ).animate().shake(),
-        //   ),
-        // ),
-        SizedBox(width: 12.w),
         Expanded(
-          flex: 1,
-          child: GestureDetector(
-            onTap: () => _getQuote(widget.material),
-            child: Container(
-              height: 48.h,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [gStart, gEnd]),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Center(
-                child: Text("Get Quote", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: AppColor.black)),
-              ),
-            ).animate().scale(),
-          ),
+          child: Obx(() {
+            final isLoading = _controller.isSubmittingEnquiry.value;
+
+            return GestureDetector(
+              onTap: isLoading ? null : () => _getQuote(widget.material),
+              child: Container(
+                height: 48.h,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [gStart, gEnd]),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Center(
+                  child: isLoading
+                      ? SizedBox(
+                    width: 24.w,
+                    height: 24.w,
+                    child: CircularProgressIndicator(
+                      color: AppColor.black,
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : Text(
+                    "Get Quote",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.black,
+                    ),
+                  ),
+                ),
+              ).animate().scale(),
+            );
+          }),
         ),
       ],
     );
   }
 
   // --- Details panel ---
-  Widget _detailsPanel(Material material, String priceText, DateTime createdAt) {
+  Widget _detailsPanel(MaterialModel material, String priceText, DateTime createdAt) {  // Changed parameter type
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -408,7 +594,14 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
             color: AppColor.primary.withOpacity(0.95),
             borderRadius: BorderRadius.circular(8.r),
           ),
-          child: Text("Product Details", style: TextStyle(color: AppColor.black, fontWeight: FontWeight.bold, fontSize: 14.sp)),
+          child: Text(
+            "Product Details",
+            style: TextStyle(
+                color: AppColor.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 14.sp
+            ),
+          ),
         ),
         Container(
           width: double.infinity,
@@ -426,7 +619,7 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
               SizedBox(height: 10.h),
               _detailRow("Category", material.category?.categoryName ?? 'N/A'),
               SizedBox(height: 10.h),
-              _detailRow("Description", material.description),
+              _detailRow("Description", material.description ?? ''),
               SizedBox(height: 10.h),
               _detailRow("Price", priceText),
               SizedBox(height: 10.h),
@@ -444,18 +637,42 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("$label:", style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, color: Colors.grey[800])),
+        Text(
+          "$label:",
+          style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[800]
+          ),
+        ),
         SizedBox(height: 6.h),
         if (isStatus)
           Row(
             children: [
-              Container(width: 10.h, height: 10.h, decoration: BoxDecoration(color: value == 'Active' ? Colors.green : Colors.red, shape: BoxShape.circle)),
+              Container(
+                width: 10.h,
+                height: 10.h,
+                decoration: BoxDecoration(
+                    color: value == 'Active' ? Colors.green : Colors.red,
+                    shape: BoxShape.circle
+                ),
+              ),
               SizedBox(width: 8.w),
-              Text(value, style: TextStyle(fontSize: 13.sp, color: Colors.grey[700])),
+              Text(
+                  value,
+                  style: TextStyle(fontSize: 13.sp, color: Colors.grey[700])
+              ),
             ],
           )
         else
-          Text(value.isNotEmpty ? value : 'Not specified', style: TextStyle(fontSize: 13.sp, color: Colors.grey[700], height: 1.4)),
+          Text(
+            value.isNotEmpty ? value : 'Not specified',
+            style: TextStyle(
+                fontSize: 13.sp,
+                color: Colors.grey[700],
+                height: 1.4
+            ),
+          ),
       ],
     );
   }
@@ -474,29 +691,50 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
 
           return GestureDetector(
             onTap: () {
-              try {
-                Get.find<MaterialController>().fetchMaterialDetail(related.id);
-              } catch (e) {
-              }
+              Get.toNamed(
+                '/material-detail',
+                arguments: {'materialId': related.id},
+              );
             },
             child: Container(
               width: 160.w,
               decoration: BoxDecoration(
                 color: AppColor.white,
                 borderRadius: BorderRadius.circular(12.r),
-                boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.06), blurRadius: 8.r)],
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.grey.withOpacity(0.06),
+                      blurRadius: 8.r
+                  )
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.only(topLeft: Radius.circular(12.r), topRight: Radius.circular(12.r)),
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12.r),
+                        topRight: Radius.circular(12.r)
+                    ),
                     child: Container(
                       height: 110.h,
                       color: Colors.grey[100],
                       child: related.image.isNotEmpty
-                          ? Image.network(related.image.first, fit: BoxFit.cover, width: double.infinity, errorBuilder: (c, o, s) => Icon(Icons.image))
-                          : Icon(Icons.image, size: 36.sp, color: Colors.grey),
+                          ? Image.network(
+                        related.image.first,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (c, o, s) => Icon(
+                            Icons.image,
+                            size: 36.sp,
+                            color: Colors.grey
+                        ),
+                      )
+                          : Icon(
+                          Icons.image,
+                          size: 36.sp,
+                          color: Colors.grey
+                      ),
                     ),
                   ),
                   Padding(
@@ -504,15 +742,37 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(related.materialName.isNotEmpty ? related.materialName : 'Unnamed', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+                        Text(
+                          related.materialName.isNotEmpty
+                              ? related.materialName
+                              : 'Unnamed',
+                          style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w700
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         SizedBox(height: 6.h),
-                        Text(relatedPrice, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColor.primary)),
+                        Text(
+                          relatedPrice,
+                          style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.primary
+                          ),
+                        ),
                         SizedBox(height: 6.h),
-                        Text(related.category?.categoryName ?? '', style: TextStyle(fontSize: 11.sp, color: Colors.grey[600])),
+                        Text(
+                          related.category?.categoryName ?? '',
+                          style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey[600]
+                          ),
+                        ),
                       ],
                     ),
                   ),
-
                 ],
               ),
             ).animate().slideX(begin: 0.06, end: 0).fadeIn(),
@@ -523,7 +783,7 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
   }
 
   // --- Utilities & Actions ---
-  String _getFormattedPrice(Material m) {
+  String _getFormattedPrice(MaterialModel m) {  // Changed parameter type
     return m.getFormattedPrice();
   }
 
@@ -542,50 +802,199 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
     }
   }
 
+  List<String>  _getUnitsForCategory(int? categoryId) {
+    switch (categoryId) {
+      case 12:
+        return ["Bag (50 kg)", "Bag (25 kg)", "Kg", "Ton",];
+      case 13:
+        return ["Ton", "Kg", "Quintal"];
+      case 14:
+        return ["Sq. Ft", "Sq. M", "Piece"];
+      case 15:
+        return ["Piece", "Dozen", "Box"];
+      default:
+        return ["Unit", "Piece", "Kg", "Ton"];
+    }
+  }
+
   String _formatDate(DateTime d) {
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
 
-  void _addToCart(Material material) {
-    Get.snackbar(
-      'Added to Cart',
-      '${material.materialName} added',
-      backgroundColor: Colors.green[50],
-      colorText: AppColor.textMain,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: EdgeInsets.all(12.w),
+  void _getQuote(MaterialModel material) async {  // Changed parameter type
+    final userId =  0;
+
+    if (userId == 0) {
+      Get.snackbar(
+        'Login Required',
+        'Please login to request a quote',
+        backgroundColor: Colors.orange[50],
+        colorText: AppColor.textMain,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: EdgeInsets.all(12.w),
+      );
+      Get.toNamed('/login');
+      return;
+    }
+
+    final unitId = _getUnitId(_selectedUnit.value);
+
+    final success = await _controller.submitMaterialEnquiry(
+      materialId: material.id,
+      requirement: 'Quote request for ${material.materialName} - Quantity: ${_quantity.value} ${_selectedUnit.value}',
+      unitId: unitId,
+      quantity: _quantity.value,
+      userId: userId,
     );
-    // TODO: Add actual add-to-cart logic (call controller or service)
+
+    if (success) {
+      Get.snackbar(
+        'Quote Requested',
+        'We will contact you soon for ${material.materialName}',
+        backgroundColor: Colors.green[50],
+        colorText: AppColor.textMain,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: EdgeInsets.all(12.w),
+        duration: const Duration(seconds: 3),
+      );
+    } else {
+      Get.snackbar(
+        'Failed',
+        _controller.enquiryError.value.isEmpty
+            ? 'Failed to submit quote request'
+            : _controller.enquiryError.value,
+        backgroundColor: Colors.red[50],
+        colorText: Colors.red[900],
+        snackPosition: SnackPosition.BOTTOM,
+        margin: EdgeInsets.all(12.w),
+      );
+    }
   }
 
-  void _getQuote(Material material) {
-    Get.snackbar(
-      'Quote Requested',
-      'We will contact you soon for ${material.materialName}',
-      backgroundColor: Colors.blue[50],
-      colorText: AppColor.textMain,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: EdgeInsets.all(12.w),
+  int _getUnitId(String unit) {
+    switch (unit) {
+      case 'Bag (50 kg)':
+        return 1;
+      case 'Bag (25 kg)':
+        return 2;
+      case 'Kg':
+        return 3;
+      case 'Ton':
+        return 4;
+      case 'Sq. Ft':
+        return 5;
+      case 'Sq. M':
+        return 6;
+      case 'Piece':
+        return 7;
+      case 'Dozen':
+        return 8;
+      case 'Box':
+        return 9;
+      case 'Quintal':
+        return 10;
+      default:
+        return 0;
+    }
+  }
+
+  void _showShareOptions() {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Share via',
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _shareOption(Icons.chat_bubble, 'WhatsApp', () {
+                  Get.back();
+                  _shareOnWhatsApp(widget.material);
+                }),
+                _shareOption(Icons.send, 'Telegram', () {
+                  Get.back();
+                  _shareOnTelegram(widget.material);
+                }),
+                _shareOption(Icons.camera_alt, 'Instagram', () {
+                  Get.back();
+                  _shareOnInstagram(widget.material);
+                }),
+                _shareOption(Icons.share, 'More', () {
+                  Get.back();
+                  _defaultShare();
+                }),
+              ],
+            ),
+            SizedBox(height: 20.h),
+          ],
+        ),
+      ),
     );
-    // TODO: implement quote request API call
+  }
+
+  Widget _shareOption(IconData icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.r),
+            decoration: BoxDecoration(
+              color: AppColor.backgroundLight,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColor.primary, size: 24.sp),
+          ),
+          SizedBox(height: 8.h),
+          Text(label, style: TextStyle(fontSize: 12.sp)),
+        ],
+      ),
+    );
   }
 
   void _defaultShare() {
-    Get.snackbar('Share', 'Sharing product...', backgroundColor: Colors.blue[50], colorText: AppColor.textMain);
+    Get.snackbar(
+        'Share',
+        'Sharing product...',
+        backgroundColor: Colors.blue[50],
+        colorText: AppColor.textMain
+    );
   }
 
-  void _shareOnWhatsApp(Material material) {
-    // TODO: implement WhatsApp share intent
-    Get.snackbar('WhatsApp', 'Opening WhatsApp...', backgroundColor: Colors.green[50], colorText: AppColor.textMain);
+  void _shareOnWhatsApp(MaterialModel material) {  // Changed parameter type
+    Get.snackbar(
+        'WhatsApp',
+        'Opening WhatsApp...',
+        backgroundColor: Colors.green[50],
+        colorText: AppColor.textMain
+    );
   }
 
-  void _shareOnInstagram(Material material) {
-    // TODO: Instagram
-    Get.snackbar('Instagram', 'Opening Instagram...', backgroundColor: Colors.pink[50], colorText: AppColor.textMain);
+  void _shareOnInstagram(MaterialModel material) {  // Changed parameter type
+    Get.snackbar(
+        'Instagram',
+        'Opening Instagram...',
+        backgroundColor: Colors.pink[50],
+        colorText: AppColor.textMain
+    );
   }
 
-  void _shareOnTelegram(Material material) {
-    // TODO: Telegram
-    Get.snackbar('Telegram', 'Opening Telegram...', backgroundColor: Colors.blue[50], colorText: AppColor.textMain);
+  void _shareOnTelegram(MaterialModel material) {  // Changed parameter type
+    Get.snackbar(
+        'Telegram',
+        'Opening Telegram...',
+        backgroundColor: Colors.blue[50],
+        colorText: AppColor.textMain
+    );
   }
 }

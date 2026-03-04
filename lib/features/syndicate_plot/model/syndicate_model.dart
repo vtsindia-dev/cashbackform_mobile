@@ -12,7 +12,7 @@ class SyndicatePlot {
   final String price;
   final String description;
   final int unitSplit;
-  final List<String> images; // Changed from String to List<String>
+  final List<String> images;
   final String plotImage;
   final String work;
   final String? agentId;
@@ -35,7 +35,7 @@ class SyndicatePlot {
     required this.price,
     required this.description,
     required this.unitSplit,
-    required this.images, // Changed from image to images
+    required this.images,
     required this.plotImage,
     required this.work,
     required this.agentId,
@@ -200,6 +200,8 @@ class SyndicateDetail {
   final List<Booking> bookings;
   final List<User> users;
   final String? adminBlockAmount;
+  final List<NearbyLocation> nearbyLocations; // Add this
+
   SyndicateDetail({
     required this.id,
     required this.name,
@@ -231,6 +233,8 @@ class SyndicateDetail {
     required this.bookings,
     required this.users,
     this.adminBlockAmount,
+    required this.nearbyLocations, // Add this
+
   });
 
   factory SyndicateDetail.fromJson(Map<String, dynamic> json) {
@@ -277,7 +281,10 @@ class SyndicateDetail {
       if (users == null || users is! List) return [];
       return users.map((e) => User.fromJson(e)).toList();
     }
-
+    List<NearbyLocation> parseNearbyLocations(dynamic nearbyData) {
+      if (nearbyData == null || nearbyData is! List) return [];
+      return nearbyData.map((e) => NearbyLocation.fromJson(e)).toList();
+    }
     // Extract admin document price and verification status
     final adminDocumentPrice = safeString(json['admin_document'] ?? '0');
     final isDocumentVerified = safeBool(json['document_verified'] ?? false);
@@ -313,6 +320,9 @@ class SyndicateDetail {
       users: parseUsers(json['user']),
       documentPayment: safeString(json['documentPayment'] ?? ''),
       adminBlockAmount: safeString(json['admin_block_amount'] ?? '0'),
+      nearbyLocations: parseNearbyLocations(json['nearbyLocations'] ?? json['nearby_locations']),
+
+
     );
   }
 
@@ -614,8 +624,6 @@ class SyndicateBuyingList {
       property: SyndicateProperty.fromJson(json['property'] ?? {}),
     );
   }
-
-  // Helper getters
   double get amountValue {
     if (amount is String) {
       return double.tryParse(amount as String) ?? 0.0;
@@ -631,7 +639,7 @@ class SyndicateBuyingList {
     return transactionId?.toString() ?? '';
   }
 }
-// Update SyndicateProperty model based on API response
+
 class SyndicateProperty {
   final int id;
   final String name;
@@ -741,7 +749,6 @@ class SyndicateProperty {
   }
 }
 
-// Update Transaction model based on API
 class Transaction {
   final int id;
   final String transactionId;
@@ -923,9 +930,49 @@ class SyndicateBuyingDetailResponse {
       pagination: Pagination.fromJson(json['pagination'] ?? {}),
     );
   }
-}
-// Reuse Transaction class from your existing code
+}class NearbyLocation {
+  final int id;
+  final String title;
+  final String image;
+  final Pivot? pivot;
 
+  NearbyLocation({
+    required this.id,
+    required this.title,
+    required this.image,
+    this.pivot,
+  });
+
+  factory NearbyLocation.fromJson(Map<String, dynamic> json) {
+    return NearbyLocation(
+      id: json['id'] as int? ?? 0,
+      title: json['title'] as String? ?? '',
+      image: json['image'] as String? ?? '',
+      pivot: json['pivot'] != null ? Pivot.fromJson(json['pivot']) : null,
+    );
+  }
+
+  double get distance {
+    if (pivot != null && pivot!.distance.isNotEmpty) {
+      return double.tryParse(pivot!.distance) ?? 0.0;
+    }
+    return 0.0;
+  }
+}
+
+class Pivot {
+  final String distance;
+
+  Pivot({
+    required this.distance,
+  });
+
+  factory Pivot.fromJson(Map<String, dynamic> json) {
+    return Pivot(
+      distance: json['distance']?.toString() ?? '0.0',
+    );
+  }
+}
 class Pagination {
   final int currentPage;
   final int lastPage;

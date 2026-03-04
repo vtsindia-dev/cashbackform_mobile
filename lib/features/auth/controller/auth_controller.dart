@@ -103,7 +103,8 @@ class AuthController extends GetxController with CodeAutoFill {
       debugPrint("Failed to get phone hint: $e");
       SnackBarHelper.showError("Auto-fill not available");
     }
-  }  String _processPhoneNumber(String phoneHint) {
+  }
+  String _processPhoneNumber(String phoneHint) {
     try {
       print('Raw phone hint: $phoneHint');
       String digitsOnly = phoneHint.replaceAll(RegExp(r'[^\d+]'), '');
@@ -180,7 +181,6 @@ class AuthController extends GetxController with CodeAutoFill {
       isLoading(false);
     }
   }
-// In your AuthController verifyOtp method
   Future<void> verifyOtp(String otp) async {
     try {
       isLoading(true);
@@ -263,7 +263,8 @@ class AuthController extends GetxController with CodeAutoFill {
     } finally {
       isLoading(false);
     }
-  }  Future<void> register() async {
+  }
+  Future<void> register() async {
     try {
       if (!_validateForm()) return;
 
@@ -330,7 +331,6 @@ class AuthController extends GetxController with CodeAutoFill {
       isLoading(false);
     }
   }
-
   bool _validateForm() {
     if (firstNameController.text.isEmpty) {
       SnackBarHelper.showError("Please enter first name");
@@ -348,6 +348,7 @@ class AuthController extends GetxController with CodeAutoFill {
       SnackBarHelper.showError("Please enter valid email");
       return false;
     }
+
     if (dobController.text.isEmpty) {
       SnackBarHelper.showError("Please select date of birth");
       return false;
@@ -372,11 +373,9 @@ class AuthController extends GetxController with CodeAutoFill {
       await sendOtp(phoneNumber.value);
     }
   }
-
   void startResendTimer() {
     countdown.value = 60;
     canResend(false);
-
     Timer.periodic(const Duration(seconds: 1), (timer) {
       if (countdown.value > 0) {
         countdown.value--;
@@ -386,7 +385,6 @@ class AuthController extends GetxController with CodeAutoFill {
       }
     });
   }
-
   @override
   Future<void> cancel() async {
     try {
@@ -396,7 +394,6 @@ class AuthController extends GetxController with CodeAutoFill {
       print("Error during cleanup: $e");
     }
   }
-
   void reset() {
     phoneNumber.value = "";
     isOtpSent.value = false;

@@ -21,7 +21,7 @@ class AboutPlot extends StatelessWidget {
       final projectName = detail?.name ?? 'No Name';
       final location = detail?.address ?? 'No Address';
       final totalLayout = detail?.area ?? 'No Area';
-      final plotCount = '${detail?.unitSpilt ?? 0} Residential Plots';
+      final plotCount = '${detail?.unitSpilt ?? 0} Plots';
       final pricePerSqFt = '₹ ${detail?.price ?? '0'} per sq.ft';
       final startingPrice = '₹ ${detail?.startingPrice ?? '0'} onwards';
       final status = detail?.work ?? 'No Status';
@@ -49,7 +49,7 @@ class AboutPlot extends StatelessWidget {
               projectName: projectName,
               location: location,
               totalLayout: totalLayout,
-              // plotCount: plotCount,
+              plotCount: plotCount,
               pricePerSqFt: pricePerSqFt,
               startingPrice: startingPrice,
               // status: status,
@@ -151,7 +151,7 @@ class AboutPlot extends StatelessWidget {
                     if (controller.syndicateDetail.value?.id == null) return;
 
                     final cleanBaseUrl =
-                    ApiUrl.baseUrl.replaceAll('/public', '');
+                    ApiUrl.WebsidebaseUrl.replaceAll('/public', '');
 
                     final shareUrl =
                         '$cleanBaseUrl/syndicate-plots/details/${controller.syndicateDetail.value!.id}';
@@ -192,7 +192,7 @@ class AboutPlot extends StatelessWidget {
         required String projectName,
         required String location,
         required String totalLayout,
-        // required String plotCount,
+        required String plotCount,
         required String pricePerSqFt,
         required String startingPrice,
         // required String status,
@@ -207,7 +207,7 @@ class AboutPlot extends StatelessWidget {
         projectName: projectName,
         location: location,
         totalLayout: totalLayout,
-        // plotCount: plotCount,
+        plotCount: plotCount,
         pricePerSqFt: pricePerSqFt,
         startingPrice: startingPrice,
         // status: status,
@@ -221,7 +221,7 @@ class AboutPlot extends StatelessWidget {
     required String projectName,
     required String location,
     required String totalLayout,
-    // required String plotCount,
+    required String plotCount,
     required String pricePerSqFt,
     required String startingPrice,
     // required String status,
@@ -236,8 +236,8 @@ class AboutPlot extends StatelessWidget {
         _buildDetailRow(label: 'Location', value: location, delay: 100.ms, index: 1,),
         SizedBox(height: 8.h),
         _buildDetailRow(label: 'Total Layout', value: totalLayout, delay: 200.ms, index: 2,),
-        // SizedBox(height: 8.h),
-        // _buildDetailRow(label: 'Plot Count', value: plotCount, delay: 300.ms, index: 3,),
+        SizedBox(height: 8.h),
+        _buildDetailRow(label: 'Plot Count', value: plotCount, delay: 300.ms, index: 3,),
         SizedBox(height: 8.h),
         _buildDetailRow(label: 'Price per Sq.Ft', value: pricePerSqFt, delay: 400.ms, index: 4,),
         SizedBox(height: 8.h),

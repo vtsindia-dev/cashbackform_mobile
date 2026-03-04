@@ -1,17 +1,30 @@
+// rental_yield_controller.dart - UPDATED
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
-
+import 'package:url_launcher/url_launcher.dart';
+import '../../../common/widget/sessionhandler.dart';
+import '../../../common/widget/toster.dart';
+import '../../payment/controller/razorpay_controller.dart';
 import '../model/rental_yeild_model.dart';
 
 class RentalYieldController extends GetxController {
   // Loading state
   RxBool isLoading = false.obs;
+  RxList<RentalEnquiry> rentalEnquiries = <RentalEnquiry>[].obs;
+  RxInt enquiryCurrentPage = 1.obs;
+  RxInt enquiryTotalPages = 1.obs;
+  RxBool isLoadingEnquiries = false.obs;
 
   // API Configuration
-  final String baseUrl = 'https://admincashback.vrikshatech.in/public/api/v2';
-  final Dio _dio = Dio();
+  final String baseUrl = 'https://admincashback.vrikshatech.in/public/api/v2/';
+  final Dio _dio = Dio(BaseOptions(
+    baseUrl: 'https://admincashback.vrikshatech.in/public/api/v2/',
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+  ));
 
   // Search
   TextEditingController searchController = TextEditingController();
@@ -21,55 +34,62 @@ class RentalYieldController extends GetxController {
   // Filters
   RxInt selectedStateId = 0.obs;
   RxInt selectedCityId = 0.obs;
-  RxInt selectedPropertyTypeId = 0.obs; // ADDED
-  RxString selectedMinPrice = ''.obs;
-  RxString selectedMaxPrice = ''.obs;
   RxString selectedMinRent = ''.obs;
   RxString selectedMaxRent = ''.obs;
   RxString selectedMinYield = ''.obs;
   RxString selectedMaxYield = ''.obs;
   RxString selectedMinArea = ''.obs;
   RxString selectedMaxArea = ''.obs;
-  RxString selectedFurnishingStatus = ''.obs; // ADDED
-  RxString selectedPropertyAge = ''.obs; // ADDED
-  RxInt selectedBedrooms = 0.obs; // ADDED
-  RxBool includeCommercial = false.obs; // ADDED
+  RxString selectedFurnishingStatus = ''.obs;
+  RxString selectedPropertyAge = ''.obs;
+  RxInt selectedBedrooms = 0.obs;
+  RxInt selectedPropertyTypeId = 0.obs;
+  RxBool includeCommercial = false.obs;
 
   // Properties list
-  RxList<RentalYieldModel> properties = <RentalYieldModel>[].obs;
-  RxList<RentalYieldModel> filteredProperties = <RentalYieldModel>[].obs;
+  RxList<RentalListProperty> properties = <RentalListProperty>[].obs;
+  RxList<RentalListProperty> filteredProperties = <RentalListProperty>[].obs;
+
+  // For details page
+  Rx<RentalDetailProperty?> rentalDetail = Rx<RentalDetailProperty?>(null);
+  RxBool isLoadingDetail = false.obs;
 
   // Static data from API
   RxList<StateModel> statesList = <StateModel>[].obs;
   RxList<CityModel> citiesList = <CityModel>[].obs;
-  RxList<PropertyTypeModel> propertyTypes = <PropertyTypeModel>[].obs; // ADDED
+  RxList<PropertyTypeModel> propertyTypes = <PropertyTypeModel>[].obs;
 
   // Range values from API
-  RxDouble priceMin = 0.0.obs;
-  RxDouble priceMax = 100.0.obs;
   RxDouble rentMin = 0.0.obs;
-  RxDouble rentMax = 50.0.obs;
+  RxDouble rentMax = 0.0.obs;
   RxDouble yieldMin = 0.0.obs;
-  RxDouble yieldMax = 10.0.obs;
-  RxInt sqftMin = 0.obs; // CHANGED from Double to Int
-  RxInt sqftMax = 5000.obs; // CHANGED from Double to Int
+  RxDouble yieldMax = 20.0.obs;
+  RxInt sqftMin = 0.obs;
+  RxInt sqftMax = 5000.obs;
 
   // Pagination
   RxInt currentPage = 1.obs;
   RxInt totalPages = 1.obs;
   RxBool hasMore = true.obs;
   RxInt totalItems = 0.obs;
+  RxInt itemsPerPage = 10.obs;
+
+  // Enquiry loading state
+  RxBool isEnquiryLoading = false.obs;
+
+  // Expansion state for property details
+  RxBool isExpanded = false.obs;
+
+  // Property details cache
+  final Map<int, RentalDetailProperty> _propertyDetailsCache = {};
+
+  // Terms acceptance state
+  RxBool isTermsAccepted = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    _initializeStaticData();
     fetchProperties();
-
-    // Listen to search changes
-    searchController.addListener(() {
-      searchQuery.value = searchController.text;
-    });
   }
 
   @override
@@ -79,316 +99,10 @@ class RentalYieldController extends GetxController {
     super.onClose();
   }
 
-  Future<void> _initializeStaticData() async {
-    try {
-      await fetchStates();
-      await fetchPropertyTypes(); // ADDED
-    } catch (e) {
-      print('Error initializing static data: $e');
-    }
-  }
+  // Toggle terms acceptance
+  void toggleTerms() => isTermsAccepted.value = !isTermsAccepted.value;
 
-  Future<void> fetchStates() async {
-    try {
-      final response = await _dio.get('$baseUrl/states');
-      if (response.statusCode == 200) {
-        final data = response.data['data'] as List;
-        statesList.assignAll(data.map((state) => StateModel.fromJson(state)).toList());
-      }
-    } catch (e) {
-      print('Error fetching states: $e');
-      // Fallback to static states from rental API response
-      await fetchProperties();
-    }
-  }
-
-  Future<void> fetchPropertyTypes() async { // ADDED
-    try {
-      // This is a mock - you'll need to create this endpoint or use existing one
-      final response = await _dio.get('$baseUrl/property-types');
-      if (response.statusCode == 200) {
-        final data = response.data['data'] as List;
-        propertyTypes.assignAll(data.map((type) => PropertyTypeModel.fromJson(type)).toList());
-      } else {
-        // Default property types
-        propertyTypes.assignAll([
-          PropertyTypeModel(id: 1, typeName: 'Apartment'),
-          PropertyTypeModel(id: 2, typeName: 'Villa'),
-          PropertyTypeModel(id: 3, typeName: 'Independent House'),
-          PropertyTypeModel(id: 4, typeName: 'Plot'),
-        ]);
-      }
-    } catch (e) {
-      print('Error fetching property types: $e');
-      // Default property types as fallback
-      propertyTypes.assignAll([
-        PropertyTypeModel(id: 1, typeName: 'Apartment'),
-        PropertyTypeModel(id: 2, typeName: 'Villa'),
-        PropertyTypeModel(id: 3, typeName: 'Independent House'),
-        PropertyTypeModel(id: 4, typeName: 'Plot'),
-      ]);
-    }
-  }
-
-  Future<void> fetchProperties({bool loadMore = false}) async {
-    if (!loadMore) {
-      isLoading.value = true;
-      currentPage.value = 1;
-    }
-
-    try {
-      final Map<String, dynamic> params = {
-        'page': currentPage.value,
-        'per_page': 10,
-      };
-
-      // Add filters
-      if (selectedStateId.value > 0) {
-        params['state_id'] = selectedStateId.value;
-      }
-      if (selectedCityId.value > 0) {
-        params['city_id'] = selectedCityId.value;
-      }
-      if (selectedPropertyTypeId.value > 0) {
-        params['property_type_id'] = selectedPropertyTypeId.value;
-      }
-      if (searchQuery.value.isNotEmpty) {
-        params['search'] = searchQuery.value;
-      }
-      if (selectedMinPrice.value.isNotEmpty) {
-        params['min_price'] = selectedMinPrice.value;
-      }
-      if (selectedMaxPrice.value.isNotEmpty) {
-        params['max_price'] = selectedMaxPrice.value;
-      }
-      if (selectedMinRent.value.isNotEmpty) {
-        params['min_rent'] = selectedMinRent.value;
-      }
-      if (selectedMaxRent.value.isNotEmpty) {
-        params['max_rent'] = selectedMaxRent.value;
-      }
-      if (selectedMinYield.value.isNotEmpty) {
-        params['min_yield'] = selectedMinYield.value;
-      }
-      if (selectedMaxYield.value.isNotEmpty) {
-        params['max_yield'] = selectedMaxYield.value;
-      }
-      if (selectedMinArea.value.isNotEmpty) {
-        params['min_area'] = selectedMinArea.value;
-      }
-      if (selectedMaxArea.value.isNotEmpty) {
-        params['max_area'] = selectedMaxArea.value;
-      }
-      if (selectedFurnishingStatus.value.isNotEmpty) {
-        params['furnishing_status'] = selectedFurnishingStatus.value;
-      }
-      if (selectedPropertyAge.value.isNotEmpty) {
-        params['property_age'] = selectedPropertyAge.value;
-      }
-      if (selectedBedrooms.value > 0) {
-        params['bedrooms'] = selectedBedrooms.value;
-      }
-      if (includeCommercial.value) {
-        params['include_commercial'] = 1;
-      }
-
-      final response = await _dio.get(
-        '$baseUrl/rental',
-        queryParameters: params,
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = response.data['data'];
-
-        // Update range values from API
-        priceMin.value = double.parse(data['price_min']?.toString() ?? '0');
-        priceMax.value = double.parse(data['price_max']?.toString() ?? '100');
-
-        // Assuming API returns rent/yield/area min/max
-        rentMin.value = double.parse(data['rent_min']?.toString() ?? '0');
-        rentMax.value = double.parse(data['rent_max']?.toString() ?? '50000');
-        yieldMin.value = double.parse(data['yield_min']?.toString() ?? '0');
-        yieldMax.value = double.parse(data['yield_max']?.toString() ?? '20');
-        sqftMin.value = int.parse(data['sqft_min']?.toString() ?? '0');
-        sqftMax.value = int.parse(data['sqft_max']?.toString() ?? '5000');
-
-        // Extract rental properties
-        final List<dynamic> rentalData = data['rental'];
-        final List<RentalYieldModel> newProperties = rentalData
-            .map((item) => RentalYieldModel.fromJson(item))
-            .toList();
-
-        // Update pagination info
-        final pagination = data['pagination'];
-        totalPages.value = pagination['last_page'] ?? 1;
-        totalItems.value = pagination['total'] ?? 0;
-        hasMore.value = currentPage.value < totalPages.value;
-
-        // Update properties list
-        if (loadMore) {
-          properties.addAll(newProperties);
-        } else {
-          properties.assignAll(newProperties);
-        }
-
-        // Update states list from API if empty
-        if (statesList.isEmpty && data['state_list'] != null) {
-          statesList.assignAll(
-            (data['state_list'] as List)
-                .map((state) => StateModel.fromJson(state))
-                .toList(),
-          );
-        }
-
-        // Update cities list from API
-        if (data['city_list'] != null) {
-          citiesList.assignAll(
-            (data['city_list'] as List)
-                .map((city) => CityModel.fromJson(city))
-                .toList(),
-          );
-        }
-
-        // Apply filters after fetching
-        _applyFilters();
-      } else {
-        throw Exception('Failed to load properties');
-      }
-    } catch (e) {
-      print('Error fetching properties: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to load properties. Please try again.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> fetchCitiesByState(int stateId) async {
-    try {
-      final response = await _dio.get(
-        '$baseUrl/cities',
-        queryParameters: {'state_id': stateId},
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'];
-        citiesList.assignAll(data.map((city) => CityModel.fromJson(city)).toList());
-      }
-    } catch (e) {
-      print('Error fetching cities: $e');
-      citiesList.clear();
-    }
-  }
-
-  void _applyFilters() {
-    if (properties.isEmpty) {
-      filteredProperties.assignAll(properties);
-      return;
-    }
-
-    List<RentalYieldModel> result = List.from(properties);
-
-    // Apply state filter
-    if (selectedStateId.value > 0) {
-      result = result.where((property) => property.stateId == selectedStateId.value).toList();
-    }
-
-    // Apply city filter
-    if (selectedCityId.value > 0) {
-      result = result.where((property) => property.cityId == selectedCityId.value).toList();
-    }
-
-    // Apply property type filter
-    if (selectedPropertyTypeId.value > 0) {
-      // Since propertyType is a string in model, we need to map it
-      // This assumes your API returns consistent property type names
-      result = result.where((property) =>
-      property.propertyType?.toLowerCase() ==
-          propertyTypes.firstWhere(
-                  (type) => type.id == selectedPropertyTypeId.value,
-              orElse: () => PropertyTypeModel(id: 0, typeName: '')
-          ).typeName.toLowerCase()
-      ).toList();
-    }
-
-    // Apply price filter
-    if (selectedMinPrice.value.isNotEmpty) {
-      double minPrice = double.parse(selectedMinPrice.value) * 100000; // Convert lakhs to actual
-      result = result.where((property) => property.price >= minPrice).toList();
-    }
-    if (selectedMaxPrice.value.isNotEmpty) {
-      double maxPrice = double.parse(selectedMaxPrice.value) * 100000; // Convert lakhs to actual
-      result = result.where((property) => property.price <= maxPrice).toList();
-    }
-
-    // Apply rent filter
-    if (selectedMinRent.value.isNotEmpty) {
-      double minRent = double.parse(selectedMinRent.value);
-      result = result.where((property) => property.rentAmount >= minRent).toList();
-    }
-    if (selectedMaxRent.value.isNotEmpty) {
-      double maxRent = double.parse(selectedMaxRent.value);
-      result = result.where((property) => property.rentAmount <= maxRent).toList();
-    }
-
-    // Apply yield filter
-    if (selectedMinYield.value.isNotEmpty) {
-      double minYield = double.parse(selectedMinYield.value);
-      result = result.where((property) => property.annualYield >= minYield).toList();
-    }
-    if (selectedMaxYield.value.isNotEmpty) {
-      double maxYield = double.parse(selectedMaxYield.value);
-      result = result.where((property) => property.annualYield <= maxYield).toList();
-    }
-
-    // Apply area filter
-    if (selectedMinArea.value.isNotEmpty) {
-      double minArea = double.parse(selectedMinArea.value);
-      result = result.where((property) => property.area != null && property.area! >= minArea).toList();
-    }
-    if (selectedMaxArea.value.isNotEmpty) {
-      double maxArea = double.parse(selectedMaxArea.value);
-      result = result.where((property) => property.area != null && property.area! <= maxArea).toList();
-    }
-
-    // Apply furnishing filter
-    if (selectedFurnishingStatus.value.isNotEmpty) {
-      result = result.where((property) =>
-      property.furnishingStatus?.toLowerCase() == selectedFurnishingStatus.value.toLowerCase()
-      ).toList();
-    }
-
-    // Apply property age filter
-    if (selectedPropertyAge.value.isNotEmpty) {
-      // This would need custom logic based on how age is stored
-      result = result.where((property) =>
-      property.propertyAge?.toLowerCase() == selectedPropertyAge.value.toLowerCase()
-      ).toList();
-    }
-
-    // Apply bedrooms filter
-    if (selectedBedrooms.value > 0) {
-      result = result.where((property) => property.bedrooms == selectedBedrooms.value).toList();
-    }
-
-    // Apply search filter
-    if (searchQuery.value.isNotEmpty) {
-      String query = searchQuery.value.toLowerCase();
-      result = result.where((property) =>
-      property.name.toLowerCase().contains(query) ||
-          property.address.toLowerCase().contains(query) ||
-          property.description.toLowerCase().contains(query)
-      ).toList();
-    }
-
-    filteredProperties.assignAll(result);
-  }
-
-  // Search methods
+  // Search method for UI to call
   void onSearchChanged(String value) {
     _searchTimer?.cancel();
     _searchTimer = Timer(const Duration(milliseconds: 500), () {
@@ -398,6 +112,244 @@ class RentalYieldController extends GetxController {
     });
   }
 
+  // Fetch properties from API
+  Future<void> fetchProperties({bool loadMore = false}) async {
+    if (!loadMore) {
+      isLoading.value = true;
+      currentPage.value = 1;
+      properties.clear();
+      filteredProperties.clear();
+    }
+
+    try {
+      final Map<String, dynamic> queryParams = {
+        'page_no': currentPage.value,
+      };
+
+      if (searchQuery.value.isNotEmpty && searchQuery.value.trim().length >= 2) {
+        queryParams['search'] = searchQuery.value.trim();
+      }
+
+      if (selectedStateId.value > 0) {
+        queryParams['state_id'] = selectedStateId.value;
+      }
+
+      if (selectedCityId.value > 0) {
+        queryParams['city_id'] = selectedCityId.value;
+      }
+
+      if (selectedMinRent.value.isNotEmpty) {
+        queryParams['min_rent'] = selectedMinRent.value;
+      }
+      if (selectedMaxRent.value.isNotEmpty) {
+        queryParams['max_rent'] = selectedMaxRent.value;
+      }
+
+      final response = await _dio.get(
+        'rental',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        final rentalListResponse = RentalListResponse.fromJson(response.data);
+        final rentalListData = rentalListResponse.data;
+
+        if (loadMore) {
+          properties.addAll(rentalListData.rentals);
+        } else {
+          properties.assignAll(rentalListData.rentals);
+        }
+
+        final pagination = rentalListData.pagination;
+        currentPage.value = pagination.currentPage;
+        totalPages.value = pagination.lastPage;
+        totalItems.value = pagination.total;
+        itemsPerPage.value = pagination.perPage;
+        hasMore.value = currentPage.value < totalPages.value;
+
+        statesList.assignAll(rentalListData.stateList);
+        rentMin.value = rentalListData.priceMin;
+        rentMax.value = rentalListData.priceMax;
+
+        _applyFilters();
+
+        print('✅ Fetched ${properties.length} properties (Page $currentPage/$totalPages)');
+      } else {
+        throw Exception('Failed to load properties: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      print('❌ Dio Error fetching properties: $e');
+      print('   Response: ${e.response?.data}');
+      Get.snackbar(
+        'Network Error',
+        'Unable to connect to server. Please check your internet connection.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      print('❌ Error fetching properties: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to load properties. Please try again.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Fetch cities by state
+  Future<void> fetchCitiesByState(int stateId) async {
+    if (stateId <= 0) {
+      citiesList.clear();
+      return;
+    }
+
+    try {
+      final response = await _dio.get(
+        'cities',
+        queryParameters: {'state_id': stateId},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'] ?? [];
+        final List<CityModel> cities = [];
+
+        for (var cityData in data) {
+          try {
+            cities.add(CityModel.fromJson(cityData));
+          } catch (e) {
+            print('Error parsing city: $e');
+          }
+        }
+
+        citiesList.assignAll(cities);
+        print('✅ Fetched ${cities.length} cities for state $stateId');
+      } else {
+        citiesList.clear();
+        print('Failed to fetch cities: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      print('Dio Error fetching cities: $e');
+      citiesList.clear();
+    } catch (e) {
+      print('Error fetching cities: $e');
+      citiesList.clear();
+    }
+  }
+
+  // Apply filters to properties
+  void _applyFilters() {
+    if (properties.isEmpty) {
+      filteredProperties.assignAll(properties);
+      return;
+    }
+
+    List<RentalListProperty> result = List.from(properties);
+
+    if (selectedStateId.value > 0) {
+      result = result.where((property) {
+        return property.state?.id == selectedStateId.value;
+      }).toList();
+    }
+
+    if (selectedCityId.value > 0) {
+      result = result.where((property) {
+        return property.city?.id == selectedCityId.value;
+      }).toList();
+    }
+
+    if (selectedMinRent.value.isNotEmpty) {
+      try {
+        double minRent = double.parse(selectedMinRent.value);
+        result = result.where((property) => property.rentAmountDouble >= minRent).toList();
+      } catch (e) {
+        print('Error parsing min rent filter: $e');
+      }
+    }
+
+    if (selectedMaxRent.value.isNotEmpty) {
+      try {
+        double maxRent = double.parse(selectedMaxRent.value);
+        result = result.where((property) => property.rentAmountDouble <= maxRent).toList();
+      } catch (e) {
+        print('Error parsing max rent filter: $e');
+      }
+    }
+
+    if (selectedMinYield.value.isNotEmpty) {
+      try {
+        double minYield = double.parse(selectedMinYield.value);
+        result = result.where((property) => property.yieldAmountDouble >= minYield).toList();
+      } catch (e) {
+        print('Error parsing min yield filter: $e');
+      }
+    }
+
+    if (selectedMaxYield.value.isNotEmpty) {
+      try {
+        double maxYield = double.parse(selectedMaxYield.value);
+        result = result.where((property) => property.yieldAmountDouble <= maxYield).toList();
+      } catch (e) {
+        print('Error parsing max yield filter: $e');
+      }
+    }
+
+    if (selectedMinArea.value.isNotEmpty) {
+      try {
+        double minArea = double.parse(selectedMinArea.value);
+        result = result.where((property) => property.areaDouble != null && property.areaDouble! >= minArea).toList();
+      } catch (e) {
+        print('Error parsing min area filter: $e');
+      }
+    }
+
+    if (selectedMaxArea.value.isNotEmpty) {
+      try {
+        double maxArea = double.parse(selectedMaxArea.value);
+        result = result.where((property) => property.areaDouble != null && property.areaDouble! <= maxArea).toList();
+      } catch (e) {
+        print('Error parsing max area filter: $e');
+      }
+    }
+
+    if (searchQuery.value.isNotEmpty) {
+      String query = searchQuery.value.toLowerCase().trim();
+      result = result.where((property) {
+        bool matches = false;
+
+        if (property.name.toLowerCase().contains(query)) {
+          matches = true;
+        }
+
+        if (!matches && property.address.toLowerCase().contains(query)) {
+          matches = true;
+        }
+
+        if (!matches && property.cityName.toLowerCase().contains(query)) {
+          matches = true;
+        }
+
+        if (!matches && property.stateName.toLowerCase().contains(query)) {
+          matches = true;
+        }
+
+        if (!matches && property.description.toLowerCase().contains(query)) {
+          matches = true;
+        }
+
+        return matches;
+      }).toList();
+    }
+
+    filteredProperties.assignAll(result);
+    print('✅ Applied filters: ${result.length} properties match criteria');
+  }
+
+  // Clear search
   void clearSearch() {
     searchController.clear();
     searchQuery.value = '';
@@ -405,18 +357,16 @@ class RentalYieldController extends GetxController {
     fetchProperties();
   }
 
-  // Filter methods
+  // Apply filters
   Future<void> applyFilters() async {
     currentPage.value = 1;
     await fetchProperties();
   }
 
+  // Clear all filters
   void clearAllFilters() {
     selectedStateId.value = 0;
     selectedCityId.value = 0;
-    selectedPropertyTypeId.value = 0;
-    selectedMinPrice.value = '';
-    selectedMaxPrice.value = '';
     selectedMinRent.value = '';
     selectedMaxRent.value = '';
     selectedMinYield.value = '';
@@ -426,6 +376,7 @@ class RentalYieldController extends GetxController {
     selectedFurnishingStatus.value = '';
     selectedPropertyAge.value = '';
     selectedBedrooms.value = 0;
+    selectedPropertyTypeId.value = 0;
     includeCommercial.value = false;
     searchController.clear();
     searchQuery.value = '';
@@ -434,9 +385,30 @@ class RentalYieldController extends GetxController {
     fetchProperties();
   }
 
+  // State change handler
+  void onStateChanged(int stateId) {
+    selectedStateId.value = stateId;
+    selectedCityId.value = 0;
+    citiesList.clear();
+
+    if (stateId > 0) {
+      fetchCitiesByState(stateId);
+    }
+
+    currentPage.value = 1;
+    fetchProperties();
+  }
+
+  // City change handler
+  void onCityChanged(int cityId) {
+    selectedCityId.value = cityId;
+    currentPage.value = 1;
+    fetchProperties();
+  }
+
   // Load more for pagination
   Future<void> loadMore() async {
-    if (hasMore.value && !isLoading.value) {
+    if (hasMore.value && !isLoading.value && currentPage.value < totalPages.value) {
       currentPage.value++;
       await fetchProperties(loadMore: true);
     }
@@ -446,9 +418,6 @@ class RentalYieldController extends GetxController {
   bool get hasFiltersApplied {
     return selectedStateId.value > 0 ||
         selectedCityId.value > 0 ||
-        selectedPropertyTypeId.value > 0 ||
-        selectedMinPrice.value.isNotEmpty ||
-        selectedMaxPrice.value.isNotEmpty ||
         selectedMinRent.value.isNotEmpty ||
         selectedMaxRent.value.isNotEmpty ||
         selectedMinYield.value.isNotEmpty ||
@@ -458,25 +427,430 @@ class RentalYieldController extends GetxController {
         selectedFurnishingStatus.value.isNotEmpty ||
         selectedPropertyAge.value.isNotEmpty ||
         selectedBedrooms.value > 0 ||
+        selectedPropertyTypeId.value > 0 ||
         includeCommercial.value ||
         searchQuery.value.isNotEmpty;
   }
-}
 
-// ADD THIS MODEL to rental_yield_model.dart or here
-class PropertyTypeModel {
-  final int id;
-  final String typeName;
+  // Get property details with caching
+  Future<RentalDetailProperty?> getPropertyDetails(int propertyId) async {
+    if (_propertyDetailsCache.containsKey(propertyId)) {
+      print('✅ Returning cached property details for ID: $propertyId');
+      rentalDetail.value = _propertyDetailsCache[propertyId];
+      return rentalDetail.value;
+    }
 
-  PropertyTypeModel({
-    required this.id,
-    required this.typeName,
-  });
+    try {
+      isLoadingDetail.value = true;
+      print('📡 Fetching property details for ID: $propertyId');
 
-  factory PropertyTypeModel.fromJson(Map<String, dynamic> json) {
-    return PropertyTypeModel(
-      id: json['id'] ?? json['property_type_id'] ?? 0,
-      typeName: json['type_name'] ?? json['property_type'] ?? '',
+      // Get token but don't require it
+      final token = await SessionManager.getToken();
+
+      // Create headers conditionally
+      final Map<String, String> headers = {};
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+        print('🔑 Request with authentication token');
+      } else {
+        print('👤 Request without authentication (public access)');
+      }
+
+      final response = await _dio.get(
+        'rental_details/$propertyId',
+        options: Options(headers: headers), // Pass headers conditionally
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        if (responseData['status'] == true && responseData['data'] != null) {
+          final detailResponse = RentalDetailResponse.fromJson(responseData);
+          rentalDetail.value = detailResponse.data;
+
+          _propertyDetailsCache[propertyId] = detailResponse.data!;
+
+          print('✅ Successfully fetched property details for ID: $propertyId');
+          return rentalDetail.value;
+        } else {
+          print('❌ API returned false status or no data for property ID: $propertyId');
+          print('   Response: $responseData');
+          return null;
+        }
+      } else {
+        print('❌ Failed to fetch property details: ${response.statusCode}');
+        return null;
+      }
+    } on DioException catch (e) {
+      print('❌ Dio Error fetching property details: $e');
+      print('   Response: ${e.response?.data}');
+      return null;
+    } catch (e) {
+      print('❌ Error fetching property details: $e');
+      return null;
+    } finally {
+      isLoadingDetail.value = false;
+    }
+  }
+  // Clear property details cache
+  void clearPropertyDetailsCache() {
+    _propertyDetailsCache.clear();
+    rentalDetail.value = null;
+  }
+
+  // Send rental enquiry
+  Future<void> sendRentalEnquiry(Map<String, dynamic> enquiryData) async {
+    try {
+      isEnquiryLoading.value = true;
+      print('📤 Sending rental enquiry: $enquiryData');
+
+      final token = await SessionManager.getToken();
+
+      if (token == null || token.isEmpty) {
+        print('❌ No token found - user not logged in');
+        SnackBarHelper.showError('Please login to send an enquiry');
+        return;
+      }
+
+      final dio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ));
+
+      final response = await dio.post(
+        'rental_enquiry',
+        data: enquiryData,
+      );
+
+      print('📥 Enquiry API Response: ${response.statusCode}');
+      print('   Data: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        SnackBarHelper.showSuccess(response.data['message'] ?? 'Enquiry sent successfully!');
+      } else {
+        SnackBarHelper.showError(response.data['message'] ?? 'Failed to send enquiry');
+      }
+    } on DioException catch (e) {
+      print('❌ Dio Error sending enquiry: ${e.message}');
+      print('   Response: ${e.response?.data}');
+
+      String errorMessage = 'Unable to send enquiry. Please try again.';
+
+      if (e.response?.statusCode == 401) {
+        errorMessage = 'Session expired. Please login again.';
+      } else if (e.response?.statusCode == 422) {
+        errorMessage = 'Please fill all required fields.';
+      }
+
+      SnackBarHelper.showError(errorMessage);
+    } catch (e) {
+      print('❌ Error sending enquiry: $e');
+      SnackBarHelper.showError('Failed to send enquiry. Please try again.');
+    } finally {
+      isEnquiryLoading.value = false;
+    }
+  }
+
+  // Fetch rental enquiries
+  Future<void> fetchRentalEnquiries() async {
+    try {
+      isLoadingEnquiries.value = true;
+      print('📡 Fetching rental enquiries...');
+
+      final token = await SessionManager.getToken();
+
+      if (token == null || token.isEmpty) {
+        print('❌ No token found - user not logged in');
+        SnackBarHelper.showError('Please login to view your enquiries');
+        isLoadingEnquiries.value = false;
+        return;
+      }
+
+      final dio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      ));
+
+      final response = await dio.get('rental_enquiry_list');
+
+      print('📥 Enquiries API Response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = response.data;
+
+        if (responseData['status'] == 200 || responseData['status'] == true) {
+          final data = responseData['data'] ?? {};
+          final List<dynamic> enquiriesData = data['rental'] ?? [];
+
+          final List<RentalEnquiry> newEnquiries = [];
+          for (var enquiryData in enquiriesData) {
+            try {
+              newEnquiries.add(RentalEnquiry.fromJson(enquiryData));
+            } catch (e) {
+              print('Error parsing enquiry: $e');
+            }
+          }
+
+          rentalEnquiries.assignAll(newEnquiries);
+          print('✅ Fetched ${rentalEnquiries.length} rental enquiries');
+        } else {
+          print('❌ API returned error status: $responseData');
+          throw Exception('API returned error status');
+        }
+      } else {
+        print('❌ Failed to load enquiries: ${response.statusCode}');
+        throw Exception('Failed to load enquiries: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      print('❌ Dio Error fetching rental enquiries: ${e.message}');
+      print('   Response: ${e.response?.data}');
+
+      if (e.response?.statusCode == 401) {
+        SnackBarHelper.showError('Session expired. Please login again.');
+      } else {
+        SnackBarHelper.showError('Unable to fetch enquiries. Please try again.');
+      }
+    } catch (e) {
+      print('❌ Error fetching rental enquiries: $e');
+      SnackBarHelper.showError('Failed to load enquiries');
+    } finally {
+      isLoadingEnquiries.value = false;
+    }
+  }
+
+  // Refresh method for enquiries
+  Future<void> refreshRentalEnquiries() async {
+    await fetchRentalEnquiries();
+  }
+
+  // Load more enquiries
+  Future<void> loadMoreEnquiries() async {
+    if (enquiryCurrentPage.value < enquiryTotalPages.value &&
+        !isLoadingEnquiries.value) {
+      enquiryCurrentPage.value++;
+      await fetchRentalEnquiries();
+    }
+  }
+
+  // Toggle expansion for property details
+  void toggleExpansion() {
+    isExpanded.value = !isExpanded.value;
+    update();
+  }
+
+  // ==================== DOCUMENT PAYMENT METHODS ====================
+
+  // Method to initiate document payment - SIMILAR TO SYNDICATE CONTROLLER
+// In RentalYieldController's initiateDocumentPayment method:
+  void initiateDocumentPayment(int documentId, String documentType, {double? customAmount}) {
+    final detail = rentalDetail.value;
+    if (detail == null) {
+      SnackBarHelper.showError("Property details not available");
+      return;
+    }
+
+    // Get document price - use custom amount if provided, otherwise use property's amount
+    final amount = customAmount ?? detail.amountPay ?? 0.0;
+    if (amount <= 0) {
+      SnackBarHelper.showError("Document price not available");
+      return;
+    }
+
+    // FIXED: Also update RazorpayController terms
+    final paymentController = Get.put(RazorpayController());
+    paymentController.isTermsAccepted.value = isTermsAccepted.value;
+
+    // Setup payment using RazorpayController
+    paymentController.setupRentalDocumentPayment(
+      propertyId: detail.id,
+      documentId: documentId,
+      documentType: documentType,
+      amount: amount,
+      propertyName: detail.name,
     );
+
+    // Show payment summary dialog
+    _showDocumentPaymentSummaryDialog(amount, documentType);
+  }
+  // Show payment summary dialog before proceeding
+  void _showDocumentPaymentSummaryDialog(double amount, String documentType) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Payment Summary'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Document Type: $documentType'),
+            SizedBox(height: 8.h),
+            Text('Amount: ₹${amount.toStringAsFixed(2)}'),
+            SizedBox(height: 16.h),
+            Text(
+              'You will be redirected to secure payment gateway.',
+              style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              // Initiate the payment
+              final paymentController = Get.find<RazorpayController>();
+              paymentController.initiatePayment();
+            },
+            child: const Text('Proceed to Pay'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // View document method
+  Future<void> viewDocument(int documentId, String fileUrl) async {
+    try {
+      print('👀 Viewing document $documentId from URL: $fileUrl');
+
+      if (fileUrl.isEmpty) {
+        SnackBarHelper.showError("Document URL is empty");
+        return;
+      }
+
+      // TODO: Implement actual document viewing logic
+      SnackBarHelper.showInfo("Document viewing feature will be available soon");
+    } catch (e) {
+      print('❌ Error viewing document: $e');
+      SnackBarHelper.showError("Failed to view document");
+    }
+  }
+
+  // Download document method
+
+  Future<void> downloadDocument(int documentId, String fileUrl) async {
+    try {
+      print('⬇️ Downloading document $documentId from URL: $fileUrl');
+
+      if (fileUrl.isEmpty) {
+        SnackBarHelper.showError("Document URL is empty");
+        return;
+      }
+
+      // Check if URL is valid
+      if (!fileUrl.startsWith('http')) {
+        SnackBarHelper.showError("Invalid document URL");
+        return;
+      }
+
+      // Launch the URL in browser
+      final uri = Uri.parse(fileUrl);
+
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // Opens in external browser/app
+          // mode: LaunchMode.inAppWebView, // Alternative: Opens in in-app webview
+        );
+        print('✅ Launched document URL: $fileUrl');
+      } else {
+        print('❌ Could not launch URL: $fileUrl');
+        SnackBarHelper.showError("Cannot open document. Please check the URL.");
+      }
+    } on FormatException catch (e) {
+      print('❌ Invalid URL format: $e');
+      SnackBarHelper.showError("Invalid document URL format");
+    } catch (e) {
+      print('❌ Error downloading document: $e');
+      SnackBarHelper.showError("Failed to open document");
+    }
+  }
+  // Refresh properties after payment
+  Future<void> refreshProperties() async {
+    print('🔄 Refreshing properties list...');
+    await fetchProperties();
+  }
+
+  // Clear all data (for logout)
+  void clearAllData() {
+    properties.clear();
+    filteredProperties.clear();
+    rentalEnquiries.clear();
+    _propertyDetailsCache.clear();
+    rentalDetail.value = null;
+    statesList.clear();
+    citiesList.clear();
+    searchController.clear();
+    searchQuery.value = '';
+
+    // Reset all filters
+    selectedStateId.value = 0;
+    selectedCityId.value = 0;
+    selectedMinRent.value = '';
+    selectedMaxRent.value = '';
+    selectedMinYield.value = '';
+    selectedMaxYield.value = '';
+    selectedMinArea.value = '';
+    selectedMaxArea.value = '';
+    selectedFurnishingStatus.value = '';
+    selectedPropertyAge.value = '';
+    selectedBedrooms.value = 0;
+    selectedPropertyTypeId.value = 0;
+    includeCommercial.value = false;
+
+    currentPage.value = 1;
+    enquiryCurrentPage.value = 1;
+
+    print('🧹 Cleared all rental data');
+  }
+
+  // Helper method to convert RentalListProperty to RentalDetailProperty if needed
+  RentalDetailProperty? convertToListPropertyForDetail(RentalListProperty listProperty) {
+    try {
+      return RentalDetailProperty(
+        id: listProperty.id,
+        name: listProperty.name,
+        type: listProperty.type,
+        address: listProperty.address,
+        rentAmount: listProperty.rentAmount,
+        area: listProperty.area,
+        yieldAmount: listProperty.yieldAmount,
+        description: listProperty.description,
+        plotImage: listProperty.plotImage ?? '',
+        files: listProperty.files,
+        city: listProperty.city,
+        state: listProperty.state,
+        amenities: listProperty.amenities,
+        documents: listProperty.documents,
+        nearbyLocations: [],
+        nearbyPlaces: listProperty.nearbyPlaces,
+        lat: listProperty.lat,
+        lng: listProperty.lng,
+        agentId: null,
+        status: listProperty.status,
+        featured: listProperty.featured,
+        verifyStatus: listProperty.verifyStatus,
+        createdAt: listProperty.createdAt,
+        updatedAt: listProperty.updatedAt,
+        doucmentVerficaiton: false,
+        amountPay: 0.0,
+      );
+    } catch (e) {
+      print('❌ Error converting list property to detail: $e');
+      return null;
+    }
   }
 }

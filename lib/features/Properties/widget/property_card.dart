@@ -224,7 +224,7 @@ class PropertyCard extends StatelessWidget {
                               ),
                             ),
                             minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap ,
                             elevation: 0,
                           ),
                           child: Text(

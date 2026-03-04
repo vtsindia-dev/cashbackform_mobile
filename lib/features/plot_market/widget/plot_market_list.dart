@@ -79,7 +79,7 @@ class PlotMarketList extends StatelessWidget {
       description: plot.description,
       onTap: () {
         print("View Market Plot: ${plot.name}");
-        Get.toNamed(AppRoutes.plotMarketDetails, arguments: {"id": plot.id});
+        Get.toNamed(AppRoutes.plotMarketDetails, arguments: {"id": plot.id, "title": plot.name});
       },
 
     )

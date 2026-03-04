@@ -18,7 +18,7 @@ class AboutPlot extends StatelessWidget {
 
       final projectName = detail?.name ?? 'No Name';
       final location = detail?.fullAddress ?? 'No Address';
-      final plotCounts = '${detail?.unitSpilt ?? 0} Plots';
+      final plotCounts = '${detail?.unitSplit ?? 0} Plots';
       final plotAreaSqFt = '${detail?.area ?? 0} Sq.ft';
       final totalPrice = '₹ ${detail?.price ?? '0'}';
       final pricePerSqFt = '₹ ${detail?.price ?? '0'} per Sq.ft';

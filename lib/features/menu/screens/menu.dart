@@ -1,11 +1,11 @@
 import 'dart:math';
-import 'package:cashback_farms/features/about/screens/about_us.dart';
+import 'package:cashback_farms/features/menu/screens/about_us.dart';
 import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
+import 'package:cashback_farms/features/menu/screens/terms_&_conditions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
@@ -27,24 +27,28 @@ class _MenuState extends State<Menu> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     dashboardController = Get.put(DashboardController());
     dashboardController.refreshDashboard();
-    selectedRole = dashboardController.profile.value?.role.role ?? "User";
+
+    // Set selected role after profile is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        selectedRole = dashboardController.profile.value?.role?.role ?? "User";
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: DynamicAppBar(
-        title: "DashBoard",
+        title: "Dashboard",
       ),
       backgroundColor: AppColor.backgroundLight,
       body: Obx(() {
         if (dashboardController.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: AppColor.primary,));
+          return const Center(child: CircularProgressIndicator(color: AppColor.primary));
         }
 
         return SingleChildScrollView(
@@ -54,13 +58,12 @@ class _MenuState extends State<Menu> {
               _buildHeader().animate().fade().slideY(begin: -0.2),
               SizedBox(height: 20.h),
 
+              // Role-based buttons (uncommented)
               _buildRoleButtons(),
               SizedBox(height: 25.h),
 
-              _buildDashboardTitle(),
-              SizedBox(height: 12.h),
-
-              _buildDashboardGrid(),
+              // Role-specific content based on selected role
+              _buildRoleBasedContent(),
               SizedBox(height: 30.h),
 
               _buildMenuTitle(),
@@ -72,7 +75,6 @@ class _MenuState extends State<Menu> {
           ),
         );
       }),
-
     );
   }
 
@@ -99,33 +101,36 @@ class _MenuState extends State<Menu> {
                 : null,
           ),
           SizedBox(width: 16.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                profile?.name ?? "USER",
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  profile?.name ?? "USER",
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                "Role: ${profile?.role.role ?? "User"}",
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppColor.textSecondary,
+                SizedBox(height: 4.h),
+                Text(
+                  "Role: ${profile?.role?.role ?? "User"}",
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColor.textSecondary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           )
         ],
       ),
     );
   }
 
-
-  // ROLE BUTTONS
+  // ROLE BUTTONS - Now functional
   Widget _buildRoleButtons() {
     List<String> roles = ["User", "Agent", "Vendor"];
 
@@ -137,7 +142,13 @@ class _MenuState extends State<Menu> {
 
           return Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => selectedRole = role),
+              onTap: () {
+                setState(() {
+                  selectedRole = role;
+                });
+                // Fetch role-specific data
+                dashboardController.fetchDataForRole(role);
+              },
               child: Container(
                 margin: EdgeInsets.symmetric(horizontal: 4.w),
                 decoration: BoxDecoration(
@@ -161,6 +172,278 @@ class _MenuState extends State<Menu> {
     );
   }
 
+  // Role-based content
+  Widget _buildRoleBasedContent() {
+    // Show loading indicators for role-specific data
+    if (selectedRole == "Agent" && dashboardController.isLoadingAgentRequests.value) {
+      return _buildLoadingShimmer();
+    } else if (selectedRole == "Vendor" && dashboardController.isLoadingVendorRequests.value) {
+      return _buildLoadingShimmer();
+    } else if (selectedRole == "User" && dashboardController.isLoadingServiceRequests.value) {
+      return _buildLoadingShimmer();
+    }
+
+    // Show role-specific content
+    switch(selectedRole) {
+      case "Agent":
+        return _buildAgentContent();
+      case "Vendor":
+        return _buildVendorContent();
+      default:
+        return _buildUserContent();
+    }
+  }
+
+  // Loading shimmer
+  Widget _buildLoadingShimmer() {
+    return Container(
+      height: 200.h,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(color: AppColor.primary),
+            SizedBox(height: 16.h),
+            Text(
+              "Loading ${selectedRole} data...",
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: AppColor.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // User content (existing dashboard)
+  Widget _buildUserContent() {
+    return Column(
+      children: [
+        _buildDashboardTitle(),
+        SizedBox(height: 12.h),
+        _buildDashboardGrid(),
+      ],
+    );
+  }
+
+  // Agent content
+  Widget _buildAgentContent() {
+    final agentRequests = dashboardController.agentRequests;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Agent Requests",
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+            color: AppColor.textMain,
+          ),
+        ),
+        SizedBox(height: 12.h),
+
+        if (agentRequests.isEmpty)
+          Container(
+            height: 150.h,
+            decoration: BoxDecoration(
+              color: AppColor.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: Center(
+              child: Text(
+                "No agent requests found",
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: AppColor.textSecondary,
+                ),
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: agentRequests.length > 3 ? 3 : agentRequests.length,
+            itemBuilder: (context, index) {
+              final request = agentRequests[index];
+              return _buildRequestCard(request, "agent");
+            },
+          ),
+
+        if (agentRequests.length > 3)
+          TextButton(
+            onPressed: () {
+              // Navigate to full agent requests page
+              Get.toNamed("/agent-requests");
+            },
+            child: Text(
+              "View All (${agentRequests.length})",
+              style: TextStyle(
+                color: AppColor.primary,
+                fontSize: 14.sp,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // Vendor content
+  Widget _buildVendorContent() {
+    final vendorRequests = dashboardController.vendorRequests;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Vendor Requests",
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+            color: AppColor.textMain,
+          ),
+        ),
+        SizedBox(height: 12.h),
+
+        if (vendorRequests.isEmpty)
+          Container(
+            height: 150.h,
+            decoration: BoxDecoration(
+              color: AppColor.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: Center(
+              child: Text(
+                "No vendor requests found",
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: AppColor.textSecondary,
+                ),
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: vendorRequests.length > 3 ? 3 : vendorRequests.length,
+            itemBuilder: (context, index) {
+              final request = vendorRequests[index];
+              return _buildRequestCard(request, "vendor");
+            },
+          ),
+
+        if (vendorRequests.length > 3)
+          TextButton(
+            onPressed: () {
+              // Navigate to full vendor requests page
+              Get.toNamed("/vendor-requests");
+            },
+            child: Text(
+              "View All (${vendorRequests.length})",
+              style: TextStyle(
+                color: AppColor.primary,
+                fontSize: 14.sp,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // Request card for agent/vendor
+  Widget _buildRequestCard(dynamic request, String type) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 10.h),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: AppColor.white,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.grey.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40.w,
+            height: 40.w,
+            decoration: BoxDecoration(
+              color: type == "agent"
+                  ? AppColor.secondary.withOpacity(0.1)
+                  : AppColor.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Icon(
+              type == "agent" ? Icons.person_outline : Icons.store_outlined,
+              color: type == "agent" ? AppColor.secondary : AppColor.orange,
+              size: 20.sp,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  request['title'] ?? '${type.capitalizeFirst} Request',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  'ID: ${request['id'] ?? 'N/A'}',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColor.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: _getStatusColor(request['status'] ?? 'pending').withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              request['status'] ?? 'Pending',
+              style: TextStyle(
+                fontSize: 10.sp,
+                color: _getStatusColor(request['status'] ?? 'pending'),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch(status.toLowerCase()) {
+      case 'approved':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      case 'completed':
+        return AppColor.primary;
+      default:
+        return AppColor.orange;
+    }
+  }
+
+  // DASHBOARD TITLE
   Widget _buildDashboardTitle() {
     return Align(
       alignment: Alignment.centerLeft,
@@ -175,7 +458,7 @@ class _MenuState extends State<Menu> {
     );
   }
 
-  // 🔥 FIXED SIZE GRID
+  // DASHBOARD GRID
   Widget _buildDashboardGrid() {
     final controller = dashboardController;
 
@@ -228,7 +511,6 @@ class _MenuState extends State<Menu> {
     );
   }
 
-
   // DASHBOARD CARD
   Widget _dashboardCard({
     required String title,
@@ -252,7 +534,6 @@ class _MenuState extends State<Menu> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // ⭐ SMALL FIXED GAUGE
           SizedBox(
             width: 60.w,
             height: 60.w,
@@ -275,9 +556,7 @@ class _MenuState extends State<Menu> {
               ),
             ),
           ),
-
           SizedBox(height: 8.h),
-
           Text(
             "$count",
             style: TextStyle(
@@ -285,9 +564,7 @@ class _MenuState extends State<Menu> {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           SizedBox(height: 6.h),
-
           Text(
             title,
             textAlign: TextAlign.center,
@@ -320,15 +597,15 @@ class _MenuState extends State<Menu> {
   Widget _buildMenuList() {
     return Column(
       children: [
-        _menuTile(Icons.info, "About Us", () => Get.to(()=>AboutUs())),
+        _menuTile(Icons.info, "About Us", () => Get.to(() => const AboutUs())),
+        _menuTile(Icons.info, "Terms and Conditions", () => Get.to(() => const TermsAndConditionsScreen())),
         _menuTile(Icons.contact_emergency, "Contact Us", () => Get.toNamed("/contactus")),
-        // _menuTile(Icons.history, "Transaction Details", () => Get.toNamed("/transaction")),
+        _menuTile(Icons.history, "Transaction Details", () => Get.toNamed("/transactionDeatils")),
         _menuTile(
           Icons.support_agent,
           "Support",
               () async {
             final uri = Uri.parse("https://cashback.vrikshatech.in/");
-
             if (await canLaunchUrl(uri)) {
               await launchUrl(uri, mode: LaunchMode.externalApplication);
             } else {
@@ -336,14 +613,16 @@ class _MenuState extends State<Menu> {
             }
           },
         ),
-        _menuTile(Icons.logout, "Logout", isLogout: true, () => _showLogoutConfirmation),
+        _menuTile(Icons.logout, "Logout", () {
+          _showLogoutConfirmation(context);
+        }, isLogout: true),
       ],
     );
   }
 
-  Widget _menuTile(IconData icon, String title, GestureTapCallback ontap, {bool isLogout = false}) {
+  Widget _menuTile(IconData icon, String title, VoidCallback onTap, {bool isLogout = false}) {
     return GestureDetector(
-      onTap: ontap,
+      onTap: onTap,
       child: Container(
         margin: EdgeInsets.only(bottom: 10.h),
         padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
@@ -378,14 +657,14 @@ class _MenuState extends State<Menu> {
     );
   }
 }
+
+// Logout confirmation dialog
 void _showLogoutConfirmation(BuildContext context) {
-  Navigator.pop(context);
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
         backgroundColor: AppColor.white,
-
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -475,6 +754,7 @@ void _showLogoutConfirmation(BuildContext context) {
     },
   );
 }
+
 Future<void> _performLogout() async {
   try {
     Get.dialog(
@@ -486,7 +766,6 @@ Future<void> _performLogout() async {
     await SessionManager.clearSession();
     Get.offAllNamed(AppRoutes.login);
     SnackBarHelper.showSuccess("You have been successfully logged out");
-
   } catch (e) {
     Get.back();
     SnackBarHelper.showError("Failed to logout: $e");
@@ -500,7 +779,7 @@ class DashedRingPainter extends CustomPainter {
   final Color inactiveColor;
   final double width;
 
-  DashedRingPainter({
+  const DashedRingPainter({
     required this.percent,
     required this.activeColor,
     required this.inactiveColor,

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -6,6 +5,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../controller/residential_add_controller.dart';
@@ -311,31 +311,28 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
       child: Scaffold(
         backgroundColor: AppColor.backgroundLight,
         appBar: _buildAppBar(),
-        body: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Obx(() {
-            if (_controller.isLoading.value && widget.propertyId != null) {
-              return _buildLoadingScreen();
-            }
-            return Column(
-              children: [
-                _buildTabBar(),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildBasicInfoTab(),
-                      _buildFacilitiesTab(),
-                      _buildMediaTab(),
-                      _buildLocationTab(),
-                    ],
-                  ),
+        body: Obx(() {
+          if (_controller.isLoading.value && widget.propertyId != null) {
+            return _buildLoadingScreen();
+          }
+          return Column(
+            children: [
+              _buildTabBar(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildBasicInfoTab(),
+                    _buildFacilitiesTab(),
+                    _buildMediaTab(),
+                    _buildLocationTab(),
+                  ],
                 ),
-              ],
-            );
-          }),
-        ),
+              ),
+            ],
+          );
+        }),
         bottomNavigationBar: _buildBottomBar(),
       ),
     );
@@ -482,34 +479,53 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
 
   Widget _buildTabBar() {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.all(4.r), // Adds a gap between the border and the sliding indicator
       decoration: BoxDecoration(
         color: AppColor.white,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(14.r), // Slightly rounder for a modern look
+        border: Border.all(color: Colors.black.withOpacity(0.05)), // Subtle border for definition
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: TabBar(
         controller: _tabController,
+        // Essential for the "Pill" look
+        dividerColor: Colors.transparent,
+        indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColor.primary, AppColor.primary.withOpacity(0.8)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+            colors: [AppColor.primary, AppColor.primary.withOpacity(0.85)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(10.r),
+          boxShadow: [
+            BoxShadow(
+              color: AppColor.primary.withOpacity(0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         labelColor: AppColor.white,
         unselectedLabelColor: AppColor.textSecondary,
-        labelStyle: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: TextStyle(fontSize: 12.sp),
+        labelStyle: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w500,
+        ),
         tabs: const [
-          Tab(text: 'Basic Info'),
+          Tab(text: 'Basic'),
           Tab(text: 'Facilities'),
           Tab(text: 'Media'),
           Tab(text: 'Location'),
@@ -517,7 +533,6 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
       ),
     );
   }
-
   Widget _buildBasicInfoTab() {
     return SingleChildScrollView(
       controller: _scrollController,
@@ -770,7 +785,6 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
       ],
     );
   }
-
   Widget _buildLocationSelection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -995,12 +1009,6 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
           );
         }
 
-        if (_controller.isLoading.value) {
-          return Center(
-            child: CircularProgressIndicator(color: AppColor.primary),
-          );
-        }
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1030,15 +1038,15 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
               return _buildDynamicFacilityField(facility);
             }).toList(),
 
+            // DOCUMENTS SECTION - ONLY SHOW IF CATEGORY HAS DOCUMENTS
+            if (_controller.documents.isNotEmpty) ...[
+              SizedBox(height: 24.h),
+              _buildDocumentsSection(),
+            ],
+
             // Amenities Section
             SizedBox(height: 32.h),
             _buildAmenitiesSection(),
-
-            // Documents Section
-            SizedBox(height: 32.h),
-            if (_controller.documents.isNotEmpty) ...[
-              _buildDocumentsSection(),
-            ],
 
             // Nearby Places Section
             SizedBox(height: 32.h),
@@ -1050,7 +1058,6 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
       }),
     );
   }
-
   Widget _buildEmptyState({required IconData icon, required String message}) {
     return Center(
       child: Column(
@@ -1073,6 +1080,212 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
         ],
       ),
     );
+  }
+
+  Widget _buildDocumentsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Required Documents',
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColor.textMain,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Text(
+          'Upload the required documents for verification',
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: AppColor.textSecondary,
+          ),
+        ),
+        SizedBox(height: 16.h),
+
+        ..._controller.documents.map((document) => _buildDocumentUploadCard(document)).toList(),
+      ],
+    );
+  }
+
+  Widget _buildDocumentUploadCard(Document document) {
+    return Obx(() {
+      final hasFile = _controller.documentFiles.containsKey(document.id);
+      final hasUrl = _controller.documentUrls.containsKey(document.id);
+      final file = hasFile ? _controller.documentFiles[document.id] : null;
+      final url = hasUrl ? _controller.documentUrls[document.id] : null;
+
+      // Debug log
+      if (widget.propertyId != null && hasUrl) {
+        print('📄 Document ${document.id}: URL = $url');
+      }
+
+      return Container(
+        margin: EdgeInsets.only(bottom: 16.h),
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(color: AppColor.lightGrey),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  document.name,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.textMain,
+                  ),
+                ),
+                if (document.isRequired == 1) ...[
+                  SizedBox(width: 4.w),
+                  Text(
+                    '*',
+                    style: TextStyle(color: AppColor.red, fontSize: 14.sp),
+                  ),
+                ],
+              ],
+            ),
+            SizedBox(height: 8.h),
+
+            if (hasFile || hasUrl)
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: AppColor.backgroundLight,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Iconsax.document,
+                      color: AppColor.primary,
+                      size: 20.w,
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            hasFile
+                                ? file!.path.split('/').last
+                                : 'Document uploaded',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColor.textMain,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            hasFile ? 'New file selected' : 'Existing file',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: AppColor.textSecondary,
+                            ),
+                          ),
+                          if (hasUrl && url != null) ...[
+                            SizedBox(height: 4.h),
+                            Text(
+                              url.split('/').last,
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                color: AppColor.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (hasUrl && url != null) ...[
+                      IconButton(
+                        icon: Icon(
+                          Iconsax.eye,
+                          size: 18.w,
+                          color: AppColor.primary,
+                        ),
+                        onPressed: () async {
+                          final uri = Uri.parse(url);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri);
+                          } else {
+                            Get.snackbar('Error', 'Cannot open document');
+                          }
+                        },
+                      ),
+                    ],
+                    IconButton(
+                      icon: Icon(
+                        Iconsax.trash,
+                        size: 18.w,
+                        color: AppColor.red,
+                      ),
+                      onPressed: () => _controller.removeDocumentFile(document.id),
+                    ),
+                  ],
+                ),
+              )
+            else
+              InkWell(
+                onTap: () => _controller.pickDocumentFile(document.id),
+                child: Container(
+                  height: 100.h,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColor.white,
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(
+                      color: AppColor.lightGrey,
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Iconsax.document_upload,
+                        size: 32.w,
+                        color: AppColor.primary,
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'Upload ${document.name}',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColor.primary,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'Max size: ${document.maxSize}KB',
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: AppColor.textSecondary,
+                        ),
+                      ),
+                      if (document.allowedFormats != null && document.allowedFormats!.isNotEmpty)
+                        Text(
+                          'Formats: ${document.allowedFormats!.join(', ')}',
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: AppColor.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildNearbyPlacesSection() {
@@ -1174,7 +1387,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                                       borderSide: BorderSide.none,
                                     ),
                                     contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                                    suffixText: 'm',
+                                    suffixText: 'Km',
                                     suffixStyle: TextStyle(
                                       fontSize: 12.sp,
                                       color: AppColor.textSecondary,
@@ -1540,228 +1753,6 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     );
   }
 
-  Widget _buildDocumentsSection() {
-    return Obx(() {
-      if (_controller.documents.isEmpty && _controller.selectedCategoryId.value > 0) {
-        return Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppColor.backgroundLight,
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Documents',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColor.textMain,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                'No documents required for this category',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColor.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        );
-      }
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Documents',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColor.textMain,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'Upload required documents',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: AppColor.textSecondary,
-            ),
-          ),
-          SizedBox(height: 16.h),
-
-          ..._controller.documents.map((document) => _buildDocumentUploadCard(document)).toList(),
-        ],
-      );
-    });
-  }
-
-  Widget _buildDocumentUploadCard(Document document) {
-    return Obx(() {
-      final hasFile = _controller.documentFiles.containsKey(document.id);
-      final hasUrl = _controller.documentUrls.containsKey(document.id);
-      final file = hasFile ? _controller.documentFiles[document.id] : null;
-      final url = hasUrl ? _controller.documentUrls[document.id] : null;
-
-      return Container(
-        margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: AppColor.white,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: AppColor.lightGrey),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        document.name,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColor.textMain,
-                        ),
-                      ),
-                      if (document.isRequired == 1) ...[
-                        SizedBox(width: 4.w),
-                        Text(
-                          '*',
-                          style: TextStyle(color: AppColor.red, fontSize: 14.sp),
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (document.description != null) ...[
-                    SizedBox(height: 4.h),
-                    Text(
-                      document.description!,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColor.textSecondary,
-                      ),
-                    ),
-                  ],
-                  if (hasFile && file != null) ...[
-                    SizedBox(height: 4.h),
-                    Text(
-                      'File: ${file.path.split('/').last}',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: AppColor.primary,
-                      ),
-                    ),
-                  ],
-                  if (hasUrl && url != null) ...[
-                    SizedBox(height: 4.h),
-                    Text(
-                      'Uploaded: ✓',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: AppColor.success,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            SizedBox(width: 12.w),
-            if (hasFile || hasUrl)
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Iconsax.eye, size: 20.w, color: AppColor.primary),
-                    onPressed: () {
-                      if (hasFile && file != null) {
-                        _showDocumentPreview(file);
-                      } else if (hasUrl && url != null) {
-                        _showUrlPreview(url);
-                      }
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Iconsax.trash, size: 20.w, color: AppColor.red),
-                    onPressed: () => _controller.removeDocumentFile(document.id),
-                  ),
-                ],
-              )
-            else
-              ElevatedButton.icon(
-                onPressed: () => _controller.pickDocumentFile(document.id),
-                icon: Icon(Iconsax.document_upload, size: 16.w),
-                label: const Text('Upload'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.primary,
-                  foregroundColor: AppColor.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                ),
-              ),
-          ],
-        ),
-      );
-    });
-  }
-
-  void _showDocumentPreview(File file) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Document Preview'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Iconsax.document, size: 60.w, color: AppColor.primary),
-            SizedBox(height: 16.h),
-            Text(
-              'File: ${file.path.split('/').last}',
-              style: TextStyle(fontSize: 14.sp),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showUrlPreview(String url) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Document'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Iconsax.link, size: 60.w, color: AppColor.primary),
-            SizedBox(height: 16.h),
-            const Text('Document is already uploaded'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildMediaTab() {
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
@@ -1785,7 +1776,43 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
             ),
           ),
           SizedBox(height: 24.h),
+          // Upload New Images
+          Obx(() {
+            final totalImages = _controller.galleryImages.length + _controller.galleryImageUrls.length;
+            final remainingImages = 10 - totalImages;
 
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 8.w,
+                mainAxisSpacing: 8.h,
+                childAspectRatio: 1,
+              ),
+              itemCount: totalImages + (remainingImages > 0 ? 1 : 0),
+              itemBuilder: (context, index) {
+                // Add Image Button
+                if (index == totalImages && remainingImages > 0) {
+                  return _buildAddImageButton(remainingImages);
+                }
+
+                // Existing URL Images
+                if (index < _controller.galleryImageUrls.length) {
+                  final imageUrl = _controller.galleryImageUrls[index];
+                  final fullUrl = imageUrl.startsWith('http')
+                      ? imageUrl
+                      : '${ApiUrl.baseUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}';
+
+                  return _buildExistingImageGridItem(fullUrl, index);
+                }
+
+                // New File Images
+                final fileIndex = index - _controller.galleryImageUrls.length;
+                return _buildNewImageGridItem(fileIndex);
+              },
+            );
+          }),
           // Existing Images for Edit Mode
           Obx(() {
             if (_controller.galleryImageUrls.isNotEmpty) {
@@ -1827,43 +1854,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
           _build3DImageSection(),
           SizedBox(height: 24.h),
 
-          // Upload New Images
-          Obx(() {
-            final totalImages = _controller.galleryImages.length + _controller.galleryImageUrls.length;
-            final remainingImages = 10 - totalImages;
 
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8.w,
-                mainAxisSpacing: 8.h,
-                childAspectRatio: 1,
-              ),
-              itemCount: totalImages + (remainingImages > 0 ? 1 : 0),
-              itemBuilder: (context, index) {
-                // Add Image Button
-                if (index == totalImages && remainingImages > 0) {
-                  return _buildAddImageButton(remainingImages);
-                }
-
-                // Existing URL Images
-                if (index < _controller.galleryImageUrls.length) {
-                  final imageUrl = _controller.galleryImageUrls[index];
-                  final fullUrl = imageUrl.startsWith('http')
-                      ? imageUrl
-                      : '${ApiUrl.baseUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}';
-
-                  return _buildExistingImageGridItem(fullUrl, index);
-                }
-
-                // New File Images
-                final fileIndex = index - _controller.galleryImageUrls.length;
-                return _buildNewImageGridItem(fileIndex);
-              },
-            );
-          }),
 
           SizedBox(height: 100.h),
         ],
@@ -2520,113 +2511,96 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
           ),
         ],
       ),
-      child: Obx(() {
-        bool isLastTab = _tabController.index == 3;
-        bool isLoading = _controller.isSubmitting.value;
+      child: ListenableBuilder(
+        listenable: _tabController,
+        builder: (context, child) {
+          return Obx(() {
+            int currentIndex = _tabController.index;
+            bool isLastTab = currentIndex == _tabController.length - 1;
+            bool isLoading = _controller.isSubmitting.value;
 
-        return Row(
-          children: [
-            if (_tabController.index > 0)
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: isLoading
-                      ? null
-                      : () {
-                    _controller.previousStep();
-                    _tabController.animateTo(_tabController.index - 1);
-                  },
-                  icon: Icon(Iconsax.arrow_left, size: 18.w),
-                  label: const Text('Previous'),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
+            return Row(
+              children: [
+                if (currentIndex > 0)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                        _controller.currentStep.value = currentIndex;
+                        _controller.previousStep();
+                        _tabController.animateTo(currentIndex - 1);
+                      },
+                      icon: Icon(Iconsax.arrow_left, size: 18.w),
+                      label: const Text('Previous'),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 14.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (currentIndex > 0) SizedBox(width: 12.w),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                      _controller.currentStep.value = currentIndex;
+
+                      if (isLastTab) {
+                        // Final submission
+                        _controller.submitProperty();
+                      } else {
+                        // Move to next step
+                        if (_controller.isStepValid()) {
+                          _controller.nextStep();
+                          _tabController.animateTo(currentIndex + 1);
+                        } else {
+                          final errors = _controller.validateCurrentStep();
+                          if (errors.isNotEmpty) {
+                            Get.snackbar(
+                              'Validation Error',
+                              errors.values.first,
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                          }
+                        }
+                      }
+                    },
+                    icon: isLoading
+                        ? SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.w,
+                        color: AppColor.white,
+                      ),
+                    )
+                        : Icon(
+                      isLastTab ? Iconsax.tick_circle : Iconsax.arrow_right,
+                      size: 18.w,
+                    ),
+                    label: isLoading
+                        ? const Text('Processing...')
+                        : Text(isLastTab ? 'Submit Property' : 'Continue'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.primary,
+                      foregroundColor: AppColor.white,
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            if (_tabController.index > 0) SizedBox(width: 12.w),
-            Expanded(
-              flex: 2,
-              child: ElevatedButton.icon(
-                onPressed: isLoading
-                    ? null
-                    : () {
-                  final totalTabs = _tabController.length;
-
-                  if (isLastTab) {
-                    bool allValid = true;
-                    for (int i = 0; i < totalTabs; i++) {
-                      _controller.currentStep.value = i;
-                      if (!_controller.isStepValid()) {
-                        allValid = false;
-                        final errors = _controller.validateCurrentStep();
-                        if (errors.isNotEmpty) {
-                          Get.snackbar(
-                            'Validation Error',
-                            errors.values.first,
-                            snackPosition: SnackPosition.BOTTOM,
-                          );
-                        }
-                        if (i >= 0 && i < totalTabs) {
-                          _tabController.animateTo(i);
-                        }
-                        _controller.currentStep.value = i;
-                        break;
-                      }
-                    }
-                    if (allValid) {
-                      _controller.submitProperty();
-                    }
-                  } else {
-                    _controller.currentStep.value = _tabController.index;
-                    if (_controller.isStepValid()) {
-                      _controller.nextStep();
-                      final nextIndex = _tabController.index + 1;
-                      if (nextIndex >= 0 && nextIndex < totalTabs) {
-                        _tabController.animateTo(nextIndex);
-                      }
-                    } else {
-                      final errors = _controller.validateCurrentStep();
-                      if (errors.isNotEmpty) {
-                        Get.snackbar(
-                          'Validation Error',
-                          errors.values.first,
-                          snackPosition: SnackPosition.BOTTOM,
-                        );
-                      }
-                    }
-                  }
-                },
-                icon: isLoading
-                    ? SizedBox(
-                  width: 16.w,
-                  height: 16.w,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.w,
-                    color: AppColor.white,
-                  ),
-                )
-                    : Icon(
-                  isLastTab ? Iconsax.tick_circle : Iconsax.arrow_right,
-                  size: 18.w,
-                ),
-                label: isLoading
-                    ? const Text('Processing...')
-                    : Text(isLastTab ? 'Submit Property' : 'Continue'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.primary,
-                  foregroundColor: AppColor.white,
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      }),
+              ],
+            );
+          });
+        },
+      ),
     );
   }
 

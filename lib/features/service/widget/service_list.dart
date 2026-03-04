@@ -62,15 +62,12 @@ class ServiceList extends StatelessWidget {
     return ServiceCard(
       service: service,
       onTap: () {
-        // Show enquiry form when tapped
-        _showEnquiryForm(service);
+          _showEnquiryForm(service);
       },
       onEnquiry: () {
-        // Show enquiry form when enquiry button is tapped
         _showEnquiryForm(service);
       },
       onShare: () {
-        // Share functionality
         _shareService(service);
       },
     )
@@ -100,9 +97,12 @@ class ServiceList extends StatelessWidget {
     );
   }
 
+  void _sharematerial(service) {
+
+  }
   void _shareService(service) {
     // Implement share functionality
-    final shareMessage = "Check out this service: ${service.serviceName}\n";
+    final shareMessage = "Check out this Service: ${service.serviceName}\n";
     print("Sharing: $shareMessage");
 
     // You can use share_plus package for actual sharing

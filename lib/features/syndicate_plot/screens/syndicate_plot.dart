@@ -104,7 +104,7 @@ class _SearchAndFiltersSection extends StatelessWidget {
                           },
                           onSubmitted: (_) {
                             // Only submit if query has at least 5 characters
-                            if (controller.searchQuery.value.trim().length >= 5) {
+                            if (controller.searchQuery.value.trim().length >= 2) {
                               controller.applySearch();
                             }
                           },
@@ -134,7 +134,7 @@ class _SearchAndFiltersSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Obx(() {
-                  final hasEnoughChars = controller.searchQuery.value.trim().length >= 5;
+                  final hasEnoughChars = controller.searchQuery.value.trim().length >= 2;
                   return InkWell(
                     onTap: hasEnoughChars ? () => controller.applySearch() : null,
                     borderRadius: BorderRadius.circular(20),
@@ -409,48 +409,37 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   void _initFilters() {
     final c = widget.controller;
 
-    // Price Init
+    // Check if price filters are currently applied
     _priceChanged = c.minPrice.value.isNotEmpty && c.maxPrice.value.isNotEmpty;
-    double startP = _priceChanged && c.minPrice.value.isNotEmpty
-        ? double.parse(c.minPrice.value)
-        : 0;
-    double endP = _priceChanged && c.maxPrice.value.isNotEmpty
-        ? double.parse(c.maxPrice.value)
-        : 10000000;
 
-    // Area Init
-    _areaChanged = c.minAreaSqft.value.isNotEmpty && c.maxAreaSqft.value.isNotEmpty;
-    double startA = _areaChanged && c.minAreaSqft.value.isNotEmpty
-        ? double.parse(c.minAreaSqft.value)
-        : 0;
-    double endA = _areaChanged && c.maxAreaSqft.value.isNotEmpty
-        ? double.parse(c.maxAreaSqft.value)
-        : 10000;
-
-    // Get max price and area from plots
-    double maxPlotPrice = 0;
-    double maxPlotArea = 0;
-    for (var plot in widget.controller.syndicatePlots) {
-      try {
-        double price = double.tryParse(plot.price?.replaceAll(',', '') ?? '0') ?? 0;
-        if (price > maxPlotPrice) maxPlotPrice = price;
-
-        double area = double.tryParse(plot.area?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '0') ?? 0;
-        if (area > maxPlotArea) maxPlotArea = area;
-      } catch (e) {
-        print('Error parsing plot data: $e');
-      }
+    if (_priceChanged) {
+      // If filters are applied, use those values
+      double startP = double.tryParse(c.minPrice.value) ?? c.priceMin.value;
+      double endP = double.tryParse(c.maxPrice.value) ?? c.priceMax.value;
+      _priceRange = RangeValues(
+        startP.clamp(c.priceMin.value, c.priceMax.value),
+        endP.clamp(c.priceMin.value, c.priceMax.value),
+      );
+    } else {
+      // If NO filters are applied, set to full range
+      _priceRange = RangeValues(c.priceMin.value, c.priceMax.value);
     }
 
-    _priceRange = RangeValues(
-      startP.clamp(0, maxPlotPrice > 0 ? maxPlotPrice : 10000000),
-      endP.clamp(0, maxPlotPrice > 0 ? maxPlotPrice : 10000000),
-    );
+    // Check if area filters are currently applied
+    _areaChanged = c.minAreaSqft.value.isNotEmpty && c.maxAreaSqft.value.isNotEmpty;
 
-    _areaRange = RangeValues(
-      startA.clamp(0, maxPlotArea > 0 ? maxPlotArea : 10000),
-      endA.clamp(0, maxPlotArea > 0 ? maxPlotArea : 10000),
-    );
+    if (_areaChanged) {
+      // If filters are applied, use those values
+      double startA = double.tryParse(c.minAreaSqft.value) ?? c.sqftMin.value;
+      double endA = double.tryParse(c.maxAreaSqft.value) ?? c.sqftMax.value;
+      _areaRange = RangeValues(
+        startA.clamp(c.sqftMin.value, c.sqftMax.value),
+        endA.clamp(c.sqftMin.value, c.sqftMax.value),
+      );
+    } else {
+      // If NO filters are applied, set to full range
+      _areaRange = RangeValues(c.sqftMin.value, c.sqftMax.value);
+    }
 
     // Initialize with IDs
     _selectedStateId = c.selectedStateId.value;
@@ -462,7 +451,6 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
     _selectedPropertyTypeId = c.selectedPropertyTypeId.value;
     _selectedPropertyTypeName = c.selectedPropertyTypeName.value;
   }
-
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -739,19 +727,11 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
     );
   }
 
-  // Price Section
+// In _buildPriceSection method, update to use controller's priceMin/max
   Widget _buildPriceSection() {
-    double maxPlotPrice = 0.0;
-    for (var plot in widget.controller.syndicatePlots) {
-      try {
-        double price = double.tryParse(plot.price?.replaceAll(',', '') ?? '0') ?? 0.0;
-        if (price > maxPlotPrice) maxPlotPrice = price;
-      } catch (e) {
-        print('Error parsing price: $e');
-      }
-    }
-
-    final maxValue = maxPlotPrice > 0 ? maxPlotPrice : 10000000.0;
+    final maxValue = widget.controller.priceMax.value > 0
+        ? widget.controller.priceMax.value
+        : 10000000.0;
 
     return _buildSliderCard(
       accentColor: Colors.green,
@@ -759,7 +739,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
         children: [
           RangeSlider(
             values: _priceRange,
-            min: 0.0,
+            min: _priceRange.start.toDouble(),
             max: maxValue,
             divisions: 20,
             labels: RangeLabels(
@@ -792,19 +772,11 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
     );
   }
 
-  // Area Section
+// In _buildAreaSection method, update to use controller's sqftMin/max
   Widget _buildAreaSection() {
-    double maxPlotArea = 0.0;
-    for (var plot in widget.controller.syndicatePlots) {
-      try {
-        double area = double.tryParse(plot.area?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '0') ?? 0.0;
-        if (area > maxPlotArea) maxPlotArea = area;
-      } catch (e) {
-        print('Error parsing area: $e');
-      }
-    }
-
-    final maxValue = maxPlotArea > 0 ? maxPlotArea : 10000.0;
+    final maxValue = widget.controller.sqftMax.value > 0
+        ? widget.controller.sqftMax.value
+        : 10000.0;
 
     return _buildSliderCard(
       accentColor: Colors.blue,
@@ -844,7 +816,6 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       ),
     );
   }
-
   // Reusable Show More/Less Button
   Widget _buildShowMoreButton({
     required bool isExpanded,
@@ -1022,11 +993,14 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
 
               try {
                 // Apply filters
+// Inside _buildFooter() onPressed callback:
+// Apply filters
                 widget.controller.minPrice.value = _priceChanged ? _priceRange.start.toInt().toString() : "";
                 widget.controller.maxPrice.value = _priceChanged ? _priceRange.end.toInt().toString() : "";
 
-                widget.controller.minAreaSqft.value = _areaChanged ? _priceRange.start.toInt().toString() : "";
-                widget.controller.maxAreaSqft.value = _areaChanged ? _priceRange.end.toInt().toString() : "";
+// CORRECTED: Using _areaRange instead of _priceRange
+                widget.controller.minAreaSqft.value = _areaChanged ? _areaRange.start.toInt().toString() : "";
+                widget.controller.maxAreaSqft.value = _areaChanged ? _areaRange.end.toInt().toString() : "";
 
                 widget.controller.selectedStateId.value = _selectedStateId;
                 widget.controller.selectedStateName.value = _selectedStateName;
@@ -1036,7 +1010,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                 widget.controller.selectedPropertyTypeId.value = _selectedPropertyTypeId;
                 widget.controller.selectedPropertyTypeName.value = _selectedPropertyTypeName;
 
-                // Fetch data
+// Fetch data
                 await widget.controller.fetchSyndicatePlots();
 
                 // Close filter sheet

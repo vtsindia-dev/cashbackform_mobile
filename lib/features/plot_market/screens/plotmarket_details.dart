@@ -6,12 +6,14 @@ import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
 import '../../syndicate_plot/widget/scheme_overview.dart';
 import '../controller/plot_market_controller.dart';
+import '../widget/plot_market_blueprint.dart';
 import '../widget/plotmarket_document.dart' show LegalDocumentsScreen;
 import '../widget/plotmarket_nearby.dart';
 
 class PlotMarketDetails extends StatefulWidget {
   final int? id;
-  const PlotMarketDetails({super.key, this.id});
+  final String? title;
+  const PlotMarketDetails({super.key, this.id, this.title});
 
   @override
   State<PlotMarketDetails> createState() => _PlotMarketDetailsState();
@@ -32,7 +34,7 @@ class _PlotMarketDetailsState extends State<PlotMarketDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: DynamicAppBar(
-        title: "Plot Details",
+        title: widget.title ?? "Plot Market Details",
         showBackButton: true,
       ),
       body: Obx(() {
@@ -52,9 +54,10 @@ class _PlotMarketDetailsState extends State<PlotMarketDetails> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const AboutPlot(),
-              SchemeOverview(),
+              // SchemeOverview(),
               NearbyPlotMarket(),
               LegalDocumentsScreen(),
+              PlotMarketBlueprint()
 
 
             ],

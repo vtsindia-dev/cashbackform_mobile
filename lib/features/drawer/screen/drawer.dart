@@ -1,4 +1,4 @@
-import 'package:cashback_farms/features/about/screens/about_us.dart';
+import 'package:cashback_farms/features/menu/screens/about_us.dart';
 import 'package:cashback_farms/features/contact/screens/contact_us.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -22,7 +22,7 @@ class CustomDrawer extends StatefulWidget {
 class _CustomDrawerState extends State<CustomDrawer> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
-  final ProfileController profileController = Get.put(ProfileController()); // Add ProfileController
+  final ProfileController profileController = Get.put(ProfileController());
   DeleteAccountController deleteAccountController = Get.put(DeleteAccountController());
 
   @override
@@ -46,15 +46,12 @@ class _CustomDrawerState extends State<CustomDrawer> {
     }
   }
 
-  // Use ProfileController data if available, otherwise use session data
   String get _userFullName {
-    // First try to get from ProfileController
     if (profileController.profile.value != null) {
       final profile = profileController.profile.value!;
       return profile.fullName;
     }
 
-    // Fallback to session data
     if (userData == null) return 'User';
     final firstName = userData!['first_name'] ?? '';
     final lastName = userData!['last_name'] ?? '';
@@ -63,25 +60,19 @@ class _CustomDrawerState extends State<CustomDrawer> {
   }
 
   String get _userEmail {
-    // First try to get from ProfileController
     if (profileController.profile.value != null) {
       return profileController.profile.value!.email;
     }
-
-    // Fallback to session data
     return userData?['email'] ?? 'Loading...';
   }
 
   String get _userProfileImage {
-    // First try to get from ProfileController
     if (profileController.profile.value != null &&
         profileController.profile.value!.profileImage != null &&
         profileController.profile.value!.profileImage!.isNotEmpty) {
       return profileController.profile.value!.profileImage!;
     }
-
-    // Fallback to session data or default
-    return userData?['profile_image'] ?? "https://i.pravatar.cc/300?img=12";
+    return userData?['profile_image'] ?? "";
   }
 
   @override
@@ -98,7 +89,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 padding: EdgeInsets.zero,
                 children: [
                   _menuOption(context, asset: Images.profile, title: 'Profile', onTap: () => Get.toNamed('/profile')),
-                  _menuOption(context, asset: Images.plotMarketplace, title: 'Plot Properties', onTap: () => Get.toNamed('/plotMarket')),
+                  _menuOption(context, asset: Images.plotMarketplace, title: 'Plot Market', onTap: () => Get.toNamed('/plotMarket')),
                   _menuOption(context, asset: Images.GiooPlots, title: 'GIOO Plots', onTap: () => Get.toNamed('/gioo')),
                   _menuOption(context, asset: Images.syndicatePlots, title: 'Syndicate Plots', onTap: () => Get.toNamed('/syndicate')),
                   _menuOption(context, asset: Images.materialStore, title: 'Material Store', onTap: () => Get.toNamed('/materialStore')),
@@ -109,8 +100,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Residential Plots', onTap: () => Get.toNamed('/myResidential')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Residential Enquiry', onTap: () => Get.toNamed('/myResidentialEnquiry')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'Rental Yield', onTap: () => Get.toNamed('/rentalYieldList')),
-                  _menuOption(context, asset: Images.aboutUs, title: 'About Us', onTap: () => Get.to(()=>AboutUs())),
+                  _menuOption(context, asset: Images.plotRegistered, title: 'Rental Yield Enquiry', onTap: () => Get.toNamed('/rentalEnquiry')),
+                  _menuOption(context, asset: Images.plotRegistered, title: 'Plot Market Enquiry', onTap: () => Get.toNamed('/plotMarketEnquiry')),
+                  // _menuOption(context, asset: Images.aboutUs, title: 'About Us', onTap: () => Get.to(()=>AboutUs())),
                   _menuOption(context, asset: Images.contactUs, title: 'Contact Us', onTap: () => Get.toNamed('/contactus')),
+                  _menuOption(context, asset: Images.plotRegistered, title: 'My Plot market', onTap: () => Get.toNamed('/myProperty')),
                   _menuOption(context, asset: Images.logout, title: 'Logout', onTap: () => _showLogoutConfirmation(context)),
                   _menuOption(context, asset: Images.delete, title: 'Delete Account', delete: true, onTap: () => _showDeleteAccountConfirmation(context),
                   ),
@@ -130,7 +124,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -144,57 +138,117 @@ class _CustomDrawerState extends State<CustomDrawer> {
         child: SafeArea(
           child: Column(
             children: [
-              ImagePickerWidget(
-                isPicker: false,
-                imageUrl: _userProfileImage,
-              )
-                  .animate()
-                  .scale(begin: const Offset(0.3, 0.3), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
-                  .fadeIn(duration: 600.ms)
-                  .then()
-                  .shimmer(duration: 1200.ms, color: Colors.white.withOpacity(0.4)),
-              const SizedBox(height: 12),
+              // Fixed size container for the profile image
+              Container(
+                width: 80,
+                height: 80,
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ClipOval(
+                  child: _buildProfileImage(),
+                ),
+              ),
 
               // Show loader if profile is loading
               if (isProfileLoading && profile == null)
-                const Text("Loading...",   style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),)
-              else
-                Animate(
-                  effects: [
-                    FadeEffect(duration: 600.ms),
-                    MoveEffect(begin: Offset(-20, 0), duration: 600.ms),
-                  ],
-                  child: Text(
-                    _userFullName,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                Column(
+                  children: [
+                    SizedBox(
+                      width: 150,
+                      height: 20,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      width: 120,
+                      height: 16,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    Animate(
+                      effects: [
+                        FadeEffect(duration: 600.ms),
+                        MoveEffect(begin: Offset(-20, 0), duration: 600.ms),
+                      ],
+                      child: Text(
+                        _userFullName,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Animate(
+                      effects: [
+                        FadeEffect(duration: 600.ms, delay: 150.ms),
+                        MoveEffect(
+                          begin: Offset(-20, 0),
+                          duration: 600.ms,
+                          delay: 150.ms,
+                        ),
+                      ],
+                      child: Text(
+                        _userEmail,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-
-              const SizedBox(height: 4),
-
-              Animate(
-                effects: [
-                  FadeEffect(duration: 600.ms, delay: 150.ms),
-                  MoveEffect(begin: Offset(-20, 0), duration: 600.ms, delay: 150.ms),
-                ],
-                child: Text(
-                  _userEmail,
-                  style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9)),
-                ),
-              ),
             ],
           ),
         ),
       );
     });
+  }
+
+  Widget _buildProfileImage() {
+    final imageUrl = _userProfileImage;
+
+    if (imageUrl.isEmpty) {
+      // Return a placeholder when no image
+      return Container(
+        color: Colors.white.withOpacity(0.2),
+        child: Icon(
+          Icons.person,
+          size: 40,
+          color: Colors.white.withOpacity(0.7),
+        ),
+      );
+    }
+
+    // Use ImagePickerWidget if it's properly sized, otherwise use Image.network directly
+    return ImagePickerWidget(
+      isPicker: false,
+      imageUrl: imageUrl,
+    )
+        .animate()
+        .scale(
+      begin: const Offset(0.3, 0.3),
+      end: const Offset(1, 1),
+      duration: 600.ms,
+      curve: Curves.easeOutBack,
+    )
+        .fadeIn(duration: 600.ms);
   }
 
   Widget _menuOption(
@@ -212,10 +266,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
             MoveEffect(begin: Offset(-14, 0), duration: 450.ms),
           ],
           child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
             leading: Image.asset(
               asset,
-              width: 20,
-              height: 20,
+              width: 22,
+              height: 22,
               color: delete ? Colors.red : AppColor.primary,
             ),
             title: Text(
@@ -262,7 +317,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: AppColor.white,
-
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
           content: Column(
             mainAxisSize: MainAxisSize.min,

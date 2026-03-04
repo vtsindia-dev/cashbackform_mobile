@@ -9,16 +9,19 @@ import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../../gioo_plots/controller/gioo_controller.dart';
+import '../../rental_yeild/controller/rental_yield_controller.dart';
+import '../../residential_plots/controller/residential_add_controller.dart';
 import '../../syndicate_plot/controller/syndicate_controller.dart';
 import '../../plot_market/controller/plot_market_controller.dart';
 import '../success.dart';
 
-// ✅ Use Enum for strict type safety
 enum PaymentType {
   plotPayment,
   documentPayment,
   giooPayment,
   marketVerification,
+  residentialVerification,
+  rentalDocumentPayment,
 }
 
 class RazorpayController extends GetxController {
@@ -39,6 +42,8 @@ class RazorpayController extends GetxController {
   var documentId = 0.obs;
   var documentType = ''.obs;
   var marketPlotId = 0.obs;
+  var residentialPlotId = 0.obs;
+  // REMOVED: var rentalPropertyId = 0.obs; // Not needed - use propertyId instead
 
   @override
   void onInit() {
@@ -72,6 +77,8 @@ class RazorpayController extends GetxController {
       _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/gioo_pay';
     }
     isTermsAccepted.value = false;
+
+    print('🔧 setupPlotPayment: type=$type, propertyId=$propertyId, amount=$amount');
   }
 
   void setupDocumentPayment({
@@ -87,8 +94,11 @@ class RazorpayController extends GetxController {
     currentPaymentType.value = PaymentType.documentPayment;
     _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/syndicate_document_pay';
     isTermsAccepted.value = false;
+
+    print('🔧 setupDocumentPayment: propertyId=$propertyId, documentId=$documentId, amount=$amount');
   }
 
+  // FIXED: Setup rental document payment
   void setupMarketVerificationPayment({
     required int marketPlotId,
     required double amount,
@@ -98,7 +108,20 @@ class RazorpayController extends GetxController {
     this.totalAmount.value = amount;
     this.propertyName.value = propertyName;
     currentPaymentType.value = PaymentType.marketVerification;
-    _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/market_plot_verify';
+    _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/market_pay';
+    isTermsAccepted.value = false;
+  }
+
+  void setupResidentialVerificationPayment({
+    required int residentialPlotId,
+    required double amount,
+    required String propertyName,
+  }) {
+    this.residentialPlotId.value = residentialPlotId;
+    this.totalAmount.value = amount;
+    this.propertyName.value = propertyName;
+    currentPaymentType.value = PaymentType.residentialVerification;
+    _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/residential_pay';
     isTermsAccepted.value = false;
   }
 
@@ -111,13 +134,53 @@ class RazorpayController extends GetxController {
     required int amount,
     String description = "",
   }) {
-    if (!isTermsAccepted.value) {
+    print('🎯 openCheckout called');
+    print('👤 Customer: $customerName');
+    print('💰 Amount: $amount (${amount / 100} rupees)');
+    print('📝 Description: $description');
+    print('✅ Razorpay Controller Terms accepted: ${isTermsAccepted.value}');
+
+    // FIXED: Check terms based on payment type
+    bool shouldCheckTerms = false;
+
+    switch (currentPaymentType.value) {
+      case PaymentType.rentalDocumentPayment:
+      // For rental payments, check RentalYieldController terms
+        try {
+          final rentalController = Get.find<RentalYieldController>();
+          print('✅ Rental Controller Terms: ${rentalController.isTermsAccepted.value}');
+          shouldCheckTerms = !rentalController.isTermsAccepted.value;
+        } catch (e) {
+          print('⚠️ Could not find RentalYieldController: $e');
+          shouldCheckTerms = !isTermsAccepted.value;
+        }
+        break;
+      case PaymentType.documentPayment:
+      // For syndicate document payments, check SyndicatePlotController terms
+        try {
+          final syndicateController = Get.find<SyndicatePlotController>();
+          print('✅ Syndicate Controller Terms: ${syndicateController.isTermsAccepted.value}');
+          shouldCheckTerms = !syndicateController.isTermsAccepted.value;
+        } catch (e) {
+          print('⚠️ Could not find SyndicatePlotController: $e');
+          shouldCheckTerms = !isTermsAccepted.value;
+        }
+        break;
+      default:
+      // For other payments, use RazorpayController terms
+        shouldCheckTerms = !isTermsAccepted.value;
+    }
+
+    if (shouldCheckTerms) {
+      print('❌ Terms not accepted - showing error');
       SnackBarHelper.showError("Please accept terms and conditions");
       return;
     }
 
     try {
       isProcessing.value = true;
+      print('🔑 Using Razorpay key: rzp_test_t8LKc2rPhJVv2N');
+
       var options = {
         'key': 'rzp_test_t8LKc2rPhJVv2N',
         'amount': amount,
@@ -127,26 +190,42 @@ class RazorpayController extends GetxController {
         'theme': {"color": "#4338CA"},
         'notes': {
           'property_id': propertyId.value.toString(),
-          'payment_type': currentPaymentType.value.name, // Access enum name
+          'payment_type': currentPaymentType.value.name,
+          'document_type': documentType.value,
+          'document_id': documentId.value.toString(),
         }
       };
+
+      print('⚙️ Razorpay options prepared');
+      print('   amount: $amount');
+      print('   property_id: ${propertyId.value}');
+
       _razorpay.open(options);
+      print('✅ Razorpay checkout opened successfully');
     } catch (e) {
       isProcessing.value = false;
-      SnackBarHelper.showError("Initialization failed: $e");
+      print('❌ Razorpay initialization failed: $e');
+      SnackBarHelper.showError("Payment initialization failed: $e");
     }
   }
 
   Future<void> _handleSuccess(PaymentSuccessResponse response) async {
+    print('🎉 Payment Success!');
+    print('💰 Payment ID: ${response.paymentId}');
+    print('🔧 Payment Type: ${currentPaymentType.value}');
+
     try {
       paymentID = response.paymentId ?? "N/A";
       _showVerifyingOverlay();
 
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
+        print('❌ No token found - redirecting to login');
         Get.offAllNamed('/login');
         return;
       }
+
+      print('🔐 Token obtained, processing payment...');
 
       switch (currentPaymentType.value) {
         case PaymentType.plotPayment:
@@ -158,16 +237,22 @@ class RazorpayController extends GetxController {
         case PaymentType.documentPayment:
           await _handleDocumentPaymentSuccess(response, token);
           break;
+        case PaymentType.rentalDocumentPayment:
+          await _handleRentalDocumentPaymentSuccess(response, token);
+          break;
         case PaymentType.marketVerification:
           await _handleMarketVerificationSuccess(response, token);
+          break;
+        case PaymentType.residentialVerification:
+          await _handleResidentialVerificationSuccess(response, token);
           break;
       }
 
       if (Get.isDialogOpen ?? false) Get.back();
 
-      // ✅ Pass the enum value directly, NOT .toString()
       Get.off(() => PaymentSuccessScreen(
-        amount: currentPaymentType.value == PaymentType.documentPayment
+        amount: currentPaymentType.value == PaymentType.documentPayment ||
+            currentPaymentType.value == PaymentType.rentalDocumentPayment
             ? documentAmount.value
             : totalAmount.value,
         transactionId: paymentID,
@@ -175,78 +260,333 @@ class RazorpayController extends GetxController {
       ));
 
     } catch (e) {
+      print('❌ Error in payment success handler: $e');
       _showSyncErrorSheet(e.toString());
     } finally {
       isProcessing.value = false;
     }
   }
+// Add this method to your RazorpayController class, alongside the other setup methods
+  void setupRentalDocumentPayment({
+    required int propertyId,
+    required int documentId,
+    required String documentType,
+    required double amount,
+    required String propertyName,
+  }) {
+    this.propertyId.value = propertyId;
+    this.documentId.value = documentId;
+    this.documentType.value = documentType;
+    this.documentAmount.value = amount;
+    this.propertyName.value = propertyName;
+    currentPaymentType.value = PaymentType.rentalDocumentPayment;
+
+    // FIXED: Use the correct API endpoint for rental document payments
+    _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/rental_document_pay';
+    isTermsAccepted.value = false;
+
+    print('🔧 setupRentalDocumentPayment:');
+    print('   propertyId: $propertyId');
+    print('   documentId: $documentId');
+    print('   documentType: $documentType');
+    print('   amount: $amount');
+    print('   propertyName: $propertyName');
+    print('✅ Payment setup complete:');
+    print('   currentPaymentType: ${currentPaymentType.value}');
+    print('   API URL: ${_currentPaymentUrl.value}');
+  }
   Future<void> _handleSyndicatePaymentSuccess(PaymentSuccessResponse response, String token) async {
-    final apiResponse = await ApiService.postRequestWithToken(
-      _currentPaymentUrl.value,
-      token: token,
-      data: {
-        'status': 'success',
-        'payment_id': response.paymentId,
-        'amount': totalAmount.value.toStringAsFixed(2),
-        'property_id': propertyId.value.toString(),
-        'units': selectedUnits.join(','),
-      },
-    );
-    if (apiResponse.statusCode == 200) {
-      _markSyndicatePlotsAsBooked();
-    } else {
-      throw Exception(apiResponse.data?['message'] ?? 'Sync failed');
+    try {
+      final apiResponse = await ApiService.postRequestWithToken(
+        _currentPaymentUrl.value,
+        token: token,
+        data: {
+          'status': 'success',
+          'payment_id': response.paymentId,
+          'amount': totalAmount.value.toStringAsFixed(2),
+          'property_id': propertyId.value.toString(),
+          'units': selectedUnits.join(','),
+        },
+      );
+
+      print('📥 Syndicate Payment API Response:');
+      print('   Status: ${apiResponse.statusCode}');
+      print('   Data: ${apiResponse.data}');
+
+      if (apiResponse.statusCode == 200) {
+        final responseData = apiResponse.data;
+
+        if (responseData['status'] == 200 || responseData['status'] == true || responseData['success'] == true) {
+          print('✅ Syndicate payment synced successfully');
+          _markSyndicatePlotsAsBooked();
+        } else {
+          throw Exception(responseData['message'] ?? 'Sync failed');
+        }
+      } else {
+        throw Exception('API Error: ${apiResponse.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Syndicate payment error: $e');
+      throw Exception('Syndicate payment sync failed: $e');
     }
   }
 
   Future<void> _handleGiooPaymentSuccess(PaymentSuccessResponse response, String token) async {
-    final apiResponse = await ApiService.postRequestWithToken(
-      _currentPaymentUrl.value,
-      token: token,
-      data: {
-        'status': 'success',
-        'payment_id': response.paymentId,
-        'amount': totalAmount.value.toStringAsFixed(2),
-        'property_id': propertyId.value.toString(),
-        'units': selectedUnits.join(','),
-      },
-    );
-    if (apiResponse.statusCode == 200) {
-      _markGiooUnitsAsBooked();
-    } else {
-      throw Exception(apiResponse.data?['message'] ?? 'Sync failed');
+    try {
+      final apiResponse = await ApiService.postRequestWithToken(
+        _currentPaymentUrl.value,
+        token: token,
+        data: {
+          'status': 'success',
+          'payment_id': response.paymentId,
+          'amount': totalAmount.value.toStringAsFixed(2),
+          'property_id': propertyId.value.toString(),
+          'units': selectedUnits.join(','),
+        },
+      );
+
+      print('📥 Gioo Payment API Response:');
+      print('   Status: ${apiResponse.statusCode}');
+      print('   Data: ${apiResponse.data}');
+
+      if (apiResponse.statusCode == 200) {
+        final responseData = apiResponse.data;
+
+        if (responseData['status'] == 200 || responseData['status'] == true || responseData['success'] == true) {
+          print('✅ Gioo payment synced successfully');
+          _markGiooUnitsAsBooked();
+        } else {
+          throw Exception(responseData['message'] ?? 'Sync failed');
+        }
+      } else {
+        throw Exception('API Error: ${apiResponse.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Gioo payment error: $e');
+      throw Exception('Gioo payment sync failed: $e');
     }
   }
 
   Future<void> _handleDocumentPaymentSuccess(PaymentSuccessResponse response, String token) async {
-    final apiResponse = await ApiService.postRequestWithToken(
-      _currentPaymentUrl.value,
-      token: token,
-      data: {
+    try {
+      final apiResponse = await ApiService.postRequestWithToken(
+        _currentPaymentUrl.value,
+        token: token,
+        data: {
+          'status': 'success',
+          'payment_id': response.paymentId,
+          'amount': documentAmount.value.toStringAsFixed(2),
+          'property_id': propertyId.value.toString(),
+        },
+      );
+
+      print('📥 Syndicate Document Payment API Response:');
+      print('   Status: ${apiResponse.statusCode}');
+      print('   Data: ${apiResponse.data}');
+
+      if (apiResponse.statusCode == 200) {
+        final responseData = apiResponse.data;
+
+        if (responseData['status'] == 200 || responseData['status'] == true || responseData['success'] == true) {
+          print('✅ Syndicate document payment synced successfully');
+          // Refresh syndicate plots if needed
+          try {
+            final syndicateController = Get.find<SyndicatePlotController>();
+            await syndicateController.fetchSyndicatePlots();
+            print('✅ Refreshed syndicate plots list');
+          } catch (e) {
+            print('⚠️ Could not find syndicate controller: $e');
+          }
+        } else {
+          throw Exception(responseData['message'] ?? 'Document sync failed');
+        }
+      } else {
+        throw Exception('API Error: ${apiResponse.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Syndicate document payment error: $e');
+      throw Exception('Syndicate document payment sync failed: $e');
+    }
+  }
+
+  // FIXED: Handle rental document payment success
+  Future<void> _handleRentalDocumentPaymentSuccess(PaymentSuccessResponse response, String token) async {
+    print('🔄 Processing rental document payment success...');
+    print('📊 propertyId: ${propertyId.value}, documentId: ${documentId.value}');
+    print('📊 documentType: ${documentType.value}, amount: ${documentAmount.value}');
+    print('🌐 API URL: ${_currentPaymentUrl.value}');
+
+    try {
+      // Prepare the payload exactly as you specified
+      final payload = {
         'status': 'success',
-        'payment_id': response.paymentId,
-        'amount': documentAmount.value.toStringAsFixed(2),
+        'payment_id': response.paymentId, // Assuming response.paymentId contains transactionId
+        'transaction_details': 'test', // Hardcoded as "test" per your requirement
+        'amount': documentAmount.value.toStringAsFixed(2), // Formatted amount
         'property_id': propertyId.value.toString(),
-      },
-    );
-    if (apiResponse.statusCode != 200) throw Exception('Document sync failed');
+        // Additional fields for document context
+        'document_id': documentId.value > 0 ? documentId.value.toString() : '0',
+        'document_type': documentType.value,
+        'property_name': propertyName.value,
+      };
+
+      print('📤 Sending payload: $payload');
+
+      final apiResponse = await ApiService.postRequestWithToken(
+        _currentPaymentUrl.value,
+        token: token,
+        data: payload, // Use the new payload structure
+      );
+
+      print('📥 Rental Document Payment API Response:');
+      print('   Status: ${apiResponse.statusCode}');
+      print('   Data: ${apiResponse.data}');
+
+      if (apiResponse.statusCode == 200) {
+        final responseData = apiResponse.data;
+
+        if (responseData['status'] == 200 || responseData['status'] == true || responseData['success'] == true) {
+          print('✅ Rental document payment synced successfully');
+
+          // Show success message if available
+          if (responseData['message'] != null) {
+            print('📝 API Message: ${responseData['message']}');
+            Get.snackbar(
+              'Success',
+              responseData['message'].toString(),
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+            );
+          }
+
+          // Refresh rental properties if needed
+          try {
+            final rentalController = Get.find<RentalYieldController>();
+            await rentalController.fetchProperties();
+            print('✅ Refreshed rental properties list');
+          } catch (e) {
+            print('⚠️ Could not find rental controller: $e');
+          }
+        } else {
+          throw Exception(responseData['message'] ?? 'Rental document sync failed');
+        }
+      } else {
+        throw Exception('API Error: ${apiResponse.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Rental document payment error: $e');
+      throw Exception('Rental document payment sync failed: $e');
+    }
   }
 
   Future<void> _handleMarketVerificationSuccess(PaymentSuccessResponse response, String token) async {
-    final apiResponse = await ApiService.postRequestWithToken(
-      _currentPaymentUrl.value,
-      token: token,
-      data: {
-        'status': 'success',
-        'payment_id': response.paymentId,
-        'amount': totalAmount.value.toStringAsFixed(2),
-        'property_id': marketPlotId.value.toString(),
-      },
-    );
-    if (apiResponse.statusCode == 200) {
-      Get.find<PlotMarketController>().fetchMarketPlots();
-    } else {
-      throw Exception('Verification sync failed');
+    try {
+      final apiResponse = await ApiService.postRequestWithToken(
+        _currentPaymentUrl.value,
+        token: token,
+        data: {
+          'status': 'success',
+          'payment_id': response.paymentId,
+          'amount': totalAmount.value.toStringAsFixed(2),
+          'property_id': marketPlotId.value.toString(),
+        },
+      );
+
+      print('📥 Market Verification API Response:');
+      print('   Status: ${apiResponse.statusCode}');
+      print('   Data: ${apiResponse.data}');
+
+      if (apiResponse.statusCode == 200) {
+        final responseData = apiResponse.data;
+
+        if (responseData['status'] == 200 || responseData['status'] == true || responseData['success'] == true) {
+          print('✅ Market verification payment synced successfully');
+
+          // Show success message if available
+          if (responseData['message'] != null) {
+            print('📝 API Message: ${responseData['message']}');
+          }
+
+          // Refresh market plots list
+          try {
+            final marketController = Get.find<PlotMarketController>();
+            await marketController.fetchMarketPlots();
+            print('✅ Refreshed market plots list');
+          } catch (e) {
+            print('⚠️ Could not find market controller: $e');
+          }
+        } else {
+          throw Exception(responseData['message'] ?? 'Market verification failed');
+        }
+      } else {
+        throw Exception('API Error: ${apiResponse.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Market verification error: $e');
+      throw Exception('Market verification sync failed: $e');
+    }
+  }
+
+  Future<void> _handleResidentialVerificationSuccess(PaymentSuccessResponse response, String token) async {
+    try {
+      final apiResponse = await ApiService.postRequestWithToken(
+        _currentPaymentUrl.value,
+        token: token,
+        data: {
+          'status': 'success',
+          'payment_id': response.paymentId,
+          'transaction_details': response.paymentId,
+          'property_id': residentialPlotId.value.toString(),
+          'amount': totalAmount.value.toStringAsFixed(2),
+        },
+      );
+
+      print('📥 Residential Verification API Response:');
+      print('   Status: ${apiResponse.statusCode}');
+      print('   Data: ${apiResponse.data}');
+
+      if (apiResponse.statusCode == 200) {
+        final responseData = apiResponse.data;
+
+        // Check all possible success indicators
+        if (responseData['status'] == 200 ||
+            responseData['status'] == true ||
+            responseData['success'] == true ||
+            (responseData['message'] != null && responseData['message'].toString().contains('Successfully'))) {
+
+          print('✅ Residential verification payment synced successfully');
+
+          // Show success message from API
+          if (responseData['message'] != null) {
+            print('📝 API Message: ${responseData['message']}');
+          }
+
+          // Refresh properties
+          try {
+            final residentialController = Get.find<ResidentialPropertyFormController>();
+            await residentialController.fetchMyProperties();
+            print('✅ Refreshed residential properties list');
+          } catch (e) {
+            print('⚠️ Could not find residential controller: $e');
+          }
+
+          // Return success - don't throw exception
+          return;
+        } else {
+          throw Exception(responseData['message'] ?? 'Verification failed');
+        }
+      } else {
+        throw Exception('API Error: ${apiResponse.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Residential verification error: $e');
+      // Only rethrow if it's not a success message
+      if (e.toString().contains('Successfully')) {
+        print('⚠️ This is actually a success message, not an error');
+        // It's actually a success, so we should return without throwing
+        return;
+      }
+      throw Exception('Residential verification sync failed: $e');
     }
   }
 
@@ -272,7 +612,6 @@ class RazorpayController extends GetxController {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // High-end custom loader or branded color
                 const SizedBox(
                   height: 48,
                   width: 48,
@@ -290,7 +629,7 @@ class RazorpayController extends GetxController {
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF1E293B),
-                    decoration: TextDecoration.none, // Removes yellow underline in dialogs
+                    decoration: TextDecoration.none,
                   ),
                 ),
                 SizedBox(height: 8.h),
@@ -314,6 +653,7 @@ class RazorpayController extends GetxController {
       barrierColor: Colors.black.withOpacity(0.4),
     );
   }
+
   void _showSyncErrorSheet(String error) {
     if (Get.isDialogOpen ?? false) Get.back();
 
@@ -329,7 +669,6 @@ class RazorpayController extends GetxController {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag Handle
             Container(
               width: 40.w,
               height: 4.h,
@@ -337,7 +676,6 @@ class RazorpayController extends GetxController {
             ),
             SizedBox(height: 24.h),
 
-            // Alert Icon with Glow
             Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
@@ -367,7 +705,6 @@ class RazorpayController extends GetxController {
 
             SizedBox(height: 24.h),
 
-            // Error Details Box
             Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
@@ -380,13 +717,14 @@ class RazorpayController extends GetxController {
                   _buildErrorRow("Payment ID", paymentID ?? "N/A", isCopyable: true),
                   const Divider(height: 24),
                   _buildErrorRow("Status", "Pending Update", color: Colors.orange),
+                  const Divider(height: 24),
+                  _buildErrorRow("Error", error, color: Colors.red),
                 ],
               ),
             ),
 
             SizedBox(height: 32.h),
 
-            // Actions
             Row(
               children: [
                 Expanded(
@@ -405,7 +743,8 @@ class RazorpayController extends GetxController {
                   child: ElevatedButton(
                     onPressed: () {
                       Get.back();
-                      // Optional: Link to a help/WhatsApp support
+                      // Try to manually refresh based on payment type
+                      _refreshAfterPayment();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1E293B),
@@ -413,7 +752,7 @@ class RazorpayController extends GetxController {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
                     ),
-                    child: Text("Contact Support", style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.bold)),
+                    child: Text("Refresh & Retry", style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -423,6 +762,34 @@ class RazorpayController extends GetxController {
       ),
     );
   }
+
+  void _refreshAfterPayment() {
+    try {
+      switch (currentPaymentType.value) {
+        case PaymentType.marketVerification:
+          Get.find<PlotMarketController>().fetchMarketPlots();
+          break;
+        case PaymentType.residentialVerification:
+          Get.find<ResidentialPropertyFormController>().fetchMyProperties();
+          break;
+        case PaymentType.plotPayment:
+          Get.find<SyndicatePlotController>().fetchSyndicatePlots();
+          break;
+        case PaymentType.documentPayment:
+          Get.find<SyndicatePlotController>().fetchSyndicatePlots();
+          break;
+        case PaymentType.rentalDocumentPayment:
+          Get.find<RentalYieldController>().fetchProperties();
+          break;
+        case PaymentType.giooPayment:
+          Get.find<GiooPlotController>().fetchGiooBuyingListDetails();
+          break;
+      }
+    } catch (e) {
+      print('⚠️ Could not refresh data: $e');
+    }
+  }
+
   Widget _buildErrorRow(String label, String value, {bool isCopyable = false, Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -447,6 +814,7 @@ class RazorpayController extends GetxController {
       ],
     );
   }
+
   void _markSyndicatePlotsAsBooked() {
     final sc = Get.find<SyndicatePlotController>();
     for (var id in selectedUnits) {
@@ -467,28 +835,85 @@ class RazorpayController extends GetxController {
 
   void _handleError(PaymentFailureResponse response) {
     isProcessing.value = false;
+    print('❌ Payment Error: ${response.message}');
     SnackBarHelper.showError(response.message ?? "Payment Cancelled");
   }
 
-  void _handleExternalWallet(ExternalWalletResponse response) => isProcessing.value = false;
-
-  Future<void> initiatePayment() async {
-    final userData = await SessionManager.getUserData();
-    if (userData == null) return;
-
-    int rawAmount = (currentPaymentType.value == PaymentType.documentPayment
-        ? (documentAmount.value * 100).toInt()
-        : (totalAmount.value * 100).toInt());
-
-    openCheckout(
-      customerName: "${userData['first_name']} ${userData['last_name']}",
-      customerEmail: userData['email'] ?? "",
-      customerPhone: userData['phone'] ?? "",
-      amount: rawAmount,
-      description: "Payment for $propertyName",
-    );
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    isProcessing.value = false;
+    print('ℹ️ External Wallet: ${response.walletName}');
   }
 
+  Future<void> initiatePayment() async {
+    print('🚀 initiatePayment called for type: ${currentPaymentType.value}');
+
+    try {
+      final userData = await SessionManager.getUserData();
+      if (userData == null) {
+        print('❌ User data is null - user not logged in');
+        Get.snackbar('Error', 'Please login to make payment');
+        return;
+      }
+
+      print('✅ User data obtained: ${userData['email']}');
+
+      int rawAmount = 0;
+      // FIXED: Add rentalDocumentPayment case
+      if (currentPaymentType.value == PaymentType.documentPayment ||
+          currentPaymentType.value == PaymentType.rentalDocumentPayment) {
+        rawAmount = (documentAmount.value * 100).toInt();
+        print('💰 Document amount: ${documentAmount.value} -> $rawAmount paise');
+      } else {
+        rawAmount = (totalAmount.value * 100).toInt();
+        print('💰 Total amount: ${totalAmount.value} -> $rawAmount paise');
+      }
+
+      if (rawAmount <= 0) {
+        print('❌ Invalid amount: $rawAmount');
+        Get.snackbar('Error', 'Invalid payment amount');
+        return;
+      }
+
+      String description = "";
+      // FIXED: Add rentalDocumentPayment case
+      switch (currentPaymentType.value) {
+        case PaymentType.rentalDocumentPayment:
+          description = "Rental Document Payment for ${propertyName.value}";
+          break;
+        case PaymentType.documentPayment:
+          description = "Document Payment for ${propertyName.value}";
+          break;
+        case PaymentType.marketVerification:
+          description = "Market Verification for ${propertyName.value}";
+          break;
+        case PaymentType.residentialVerification:
+          description = "Residential Verification for ${propertyName.value}";
+          break;
+        case PaymentType.plotPayment:
+        case PaymentType.giooPayment:
+          description = "Plot Payment for ${propertyName.value}";
+          break;
+        default:
+          description = "Payment for ${propertyName.value}";
+      }
+
+      print('📝 Description: $description');
+      print('👤 Customer: ${userData['first_name']} ${userData['last_name']}');
+      print('📧 Email: ${userData['email']}');
+      print('📱 Phone: ${userData['phone']}');
+
+      openCheckout(
+        customerName: "${userData['first_name']} ${userData['last_name']}",
+        customerEmail: userData['email'] ?? "",
+        customerPhone: userData['phone'] ?? "",
+        amount: rawAmount,
+        description: description,
+      );
+    } catch (e) {
+      print('❌ Error in initiatePayment: $e');
+      Get.snackbar('Error', 'Failed to initiate payment: $e');
+    }
+  }
   @override
   void onClose() {
     _razorpay.clear();

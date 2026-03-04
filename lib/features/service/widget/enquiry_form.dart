@@ -11,13 +11,11 @@ class ServiceEnquiryForm extends StatelessWidget {
   final ServiceController controller = Get.put(ServiceController());
   final String serviceName;
   final int serviceId;
-
   ServiceEnquiryForm({
     super.key,
     required this.serviceName,
     required this.serviceId,
   }) {
-    // Set the material ID when form is created
     controller.setMaterialId(serviceId);
   }
 
@@ -194,6 +192,7 @@ class ServiceEnquiryForm extends StatelessWidget {
                   color: controller.phoneError.value.isNotEmpty
                       ? Colors.red
                       : AppColor.primary,
+
                   width: 2,
                 ),
               ),
@@ -344,7 +343,6 @@ class ServiceEnquiryForm extends StatelessWidget {
     final result = await controller.submitEnquiry();
 
     if (result['success'] == true) {
-      // Close form and show success message
       Future.delayed(Duration(milliseconds: 500), () {
         Get.back();
       });

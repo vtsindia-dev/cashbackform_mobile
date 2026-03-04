@@ -264,9 +264,6 @@ class HomeController extends GetxController {
     getUserLocation();
   }
 
-  // ========== API METHODS ==========
-
-  // FETCH SERVICES
   Future<void> fetchServices() async {
     try {
       if (_isFetchingServices) {

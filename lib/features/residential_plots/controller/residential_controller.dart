@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../menu/controller/dashboard_menu_controller.dart';
+import '../../payment/controller/razorpay_controller.dart';
 import '../model/residential_model.dart';
 
 class ResidentialPropertyController extends GetxController {
@@ -584,6 +587,8 @@ class ResidentialPropertyController extends GetxController {
     }
     return amenityMap.values.toList();
   }
+// Add these methods to your ResidentialPropertyFormController class
+
 
   @override
   void onClose() {

@@ -8,6 +8,9 @@ import 'package:confetti/confetti.dart';
 import 'package:shimmer/shimmer.dart';
 import '../gioo_plots/controller/gioo_controller.dart';
 import '../plot_market/controller/plot_market_controller.dart';
+import '../rental_yeild/controller/rental_yield_controller.dart';
+import '../residential_plots/controller/residential_add_controller.dart';
+import '../residential_plots/controller/residential_controller.dart';
 import '../syndicate_plot/controller/syndicate_controller.dart';
 import 'controller/razorpay_controller.dart';
 
@@ -68,37 +71,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Ticker
     }
   }
 
-  // Get the appropriate route based on PaymentType
-  String _getHomeRoute() {
-    switch (widget.type) {
-      case PaymentType.plotPayment:
-        return '/syndicate-plots'; // Syndicate plots screen
-      case PaymentType.giooPayment:
-        return '/gioo-plots'; // Gioo plots screen
-      case PaymentType.documentPayment:
-        return '/my-documents'; // Documents screen
-      case PaymentType.marketVerification:
-        return '/market-plots'; // Market plots screen
-      default:
-        return '/home'; // Fallback to main home
-    }
-  }
 
-  // Get screen title based on PaymentType
-  String _getPaymentTitle() {
-    switch (widget.type) {
-      case PaymentType.plotPayment:
-        return 'Plot Payment Success!';
-      case PaymentType.giooPayment:
-        return 'Gioo Payment Success!';
-      case PaymentType.documentPayment:
-        return 'Document Payment Success!';
-      case PaymentType.marketVerification:
-        return 'Verification Payment Success!';
-      default:
-        return 'Payment Success!';
-    }
-  }
 
   // Get payment type display name
   String _getPaymentTypeName() {
@@ -254,30 +227,29 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Ticker
                   Row(
                     children: [
                       // View Details Button
-                      Expanded(
-                        child: Container(
-                          height: 55.h,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.green[700]!),
-                            borderRadius: BorderRadius.circular(16.r),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Navigate to transaction details or history
-                              Get.offAllNamed('/payment-history');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                            ),
-                            child: Text("VIEW DETAILS",
-                                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.green[700])),
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(width: 15.w),
+                      // Expanded(
+                      //   child: Container(
+                      //     height: 55.h,
+                      //     decoration: BoxDecoration(
+                      //       border: Border.all(color: Colors.green[700]!),
+                      //       borderRadius: BorderRadius.circular(16.r),
+                      //     ),
+                      //     child: ElevatedButton(
+                      //       onPressed: () {
+                      //         Get.offAllNamed('/payment-history');
+                      //       },
+                      //       style: ElevatedButton.styleFrom(
+                      //         backgroundColor: Colors.white,
+                      //         shadowColor: Colors.transparent,
+                      //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                      //       ),
+                      //       child: Text("VIEW DETAILS",
+                      //           style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.green[700])),
+                      //     ),
+                      //   ),
+                      // ),
+                      //
+                      // SizedBox(width: 15.w),
 
                       // Back to Home Button (Dynamic)
                       Expanded(
@@ -293,7 +265,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Ticker
                               final route = _getHomeRoute();
 
                               // Clear all previous screens and navigate to the appropriate home
-                              Get.offAllNamed(route);
+                              Get.offNamed(route);
 
                               // Optional: Refresh the data on the destination screen
                               _refreshDestinationData();
@@ -322,16 +294,50 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Ticker
     );
   }
 
+  String _getHomeRoute() {
+    switch (widget.type) {
+      case PaymentType.plotPayment:
+        return '/ownedSyndicatePlotList';
+      case PaymentType.giooPayment:
+        return '/ownedplotlist';
+      case PaymentType.documentPayment:
+        return '/home';
+      case PaymentType.marketVerification:
+        return '/home';
+        case PaymentType.rentalDocumentPayment:
+        return '/rentalYieldList';
+      default:
+        return '/home';
+    }
+  }
+
+// Get screen title based on PaymentType
+  String _getPaymentTitle() {
+    switch (widget.type) {
+      case PaymentType.plotPayment:
+        return 'Syndicate Plot Payment Success!';
+      case PaymentType.giooPayment:
+        return 'Gioo Plot Payment Success!';
+      case PaymentType.documentPayment:
+        return 'Document Payment Success!';
+      case PaymentType.marketVerification:
+        return 'Verification Payment Success!';
+      default:
+        return 'Payment Success!';
+    }
+  }
+
+// Get button text
   String _getButtonText() {
     switch (widget.type) {
       case PaymentType.plotPayment:
-        return 'VIEW SYNDICATE';
+        return 'VIEW';
       case PaymentType.giooPayment:
-        return 'VIEW GIOO';
+        return 'VIEW';
       case PaymentType.documentPayment:
-        return 'VIEW DOCUMENTS';
+        return 'VIEW';
       case PaymentType.marketVerification:
-        return 'VIEW MARKET';
+        return 'VIEW';
       default:
         return 'BACK TO HOME';
     }
@@ -340,21 +346,17 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Ticker
   void _refreshDestinationData() {
     switch (widget.type) {
       case PaymentType.plotPayment:
-      // Refresh syndicate plots
         try {
-          final controller = Get.find<SyndicatePlotController>();
-          controller.fetchSyndicatePlots();
+          Get.find<SyndicatePlotController>().fetchSyndicateBuyingList();
         } catch (e) {
-          print('Could not refresh syndicate plots: $e');
+          print('Could not refresh owned syndicate plots: $e');
         }
         break;
       case PaymentType.giooPayment:
-      // Refresh gioo plots
         try {
-          final controller = Get.find<GiooPlotController>();
-          controller.fetchGiooPlots();
+          Get.find<GiooPlotController>().fetchGiooBuyingList();
         } catch (e) {
-          print('Could not refresh gioo plots: $e');
+          print('Could not refresh owned gioo plots: $e');
         }
         break;
       case PaymentType.documentPayment:
@@ -375,6 +377,20 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Ticker
           print('Could not refresh market plots: $e');
         }
         break;
+      case PaymentType.residentialVerification:
+        try {
+          final controller = Get.find<ResidentialPropertyFormController>();
+          controller.fetchMyProperties();
+        } catch (e) {
+
+
+        }        throw UnimplementedError();
+
+
+      case PaymentType.rentalDocumentPayment:
+        final controller = Get.find<RentalYieldController>();
+        controller.fetchProperties();
+        throw UnimplementedError();
     }
   }
 

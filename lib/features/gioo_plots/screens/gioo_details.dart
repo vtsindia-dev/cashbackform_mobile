@@ -71,12 +71,30 @@ class _GiooDetailsState extends State<GiooDetails> {
     final buyers = controller.giooPlotDetail.value?.users ?? [];
 
     if (buyers.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text(
-          "No buyers yet",
-          style: TextStyle(color: Colors.grey),
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Text(
+              "Our Buyers List",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              "No buyers yet",
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       );
     }
 
@@ -96,14 +114,14 @@ class _GiooDetailsState extends State<GiooDetails> {
 
         /// 🔥 SCROLLABLE LIST
         Container(
-          constraints: BoxConstraints(
-            maxHeight: 300, // Set a maximum height for scrolling
-            minHeight: buyers.length <= 4 ?
-            (buyers.length * 60 + (buyers.length - 1) * 8) :
-            300, // Adjust height based on number of items
-          ),
+          constraints: buyers.length <= 4
+              ? null // No constraints when few items
+              : const BoxConstraints(maxHeight: 300), // Constraint when scrollable
           child: ListView.separated(
-            physics: const BouncingScrollPhysics(), // Always enable scroll
+            shrinkWrap: buyers.length <= 4,
+            physics: buyers.length <= 4
+                ? const NeverScrollableScrollPhysics()
+                : const BouncingScrollPhysics(),
             padding: EdgeInsets.zero,
             itemCount: buyers.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -172,8 +190,7 @@ class _GiooDetailsState extends State<GiooDetails> {
         ),
       ],
     );
-  }
-  /// Avatar fallback
+  }  /// Avatar fallback
   Widget _avatarFallback() {
     return Container(
       width: 48,

@@ -131,7 +131,7 @@ class AboutGiooPlot extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () {
                       final cleanBaseUrl =
-                      ApiUrl.baseUrl.replaceAll('/public', '');
+                      ApiUrl.WebsidebaseUrl.replaceAll('/public', '');
 
                       Share.share(
                         '$cleanBaseUrl/gioo-plots/details/${detail?.id ?? ''}',

@@ -108,10 +108,10 @@ class _PlotEnquiryScreenState extends State<PlotEnquiryScreen> {
                     ),
                   ],
                 ),
-                // Text(
-                //   "Enquired on Jan 08", // You can parse property.createdAt if needed
-                //   style: TextStyle(fontSize: 11.sp, color: AppColor.grey),
-                // ),
+                Text(
+                  "Enquired on ${DateFormat('dd/MM/yyyy').format(DateTime.parse(property.createdAt.toString()))}",
+                  style: TextStyle(fontSize: 11.sp, color: AppColor.grey),
+                ),
               ],
             ),
           ),

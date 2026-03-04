@@ -36,9 +36,9 @@ class PlotMarket extends StatelessWidget {
         _buildSearchFilterSection(controller),
         SizedBox(height: 8.h),
 
-        // Show active filter count if any
-        if (controller.hasFiltersApplied())
-          _buildActiveFiltersBar(controller),
+        // // Show active filter count if any
+        // if (controller.hasFiltersApplied())
+        //   _buildActiveFiltersBar(controller),
 
         Expanded(
           child: PlotMarketList(),
@@ -76,7 +76,7 @@ class PlotMarket extends StatelessWidget {
               onChanged: controller.onSearchChanged,
               onSubmitted: (_) => controller.applySearch(),
               decoration: InputDecoration(
-                hintText: "Search plots, locations...",
+                hintText: "Search plots...",
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -118,7 +118,7 @@ class PlotMarket extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.filter_alt_outlined, color: AppColor.primary, size: 18.w),
+                  Icon(Icons.tune, color: AppColor.primary, size: 18.w),
                   SizedBox(width: 4.w),
 
                   // Show filter count badge
@@ -128,7 +128,7 @@ class PlotMarket extends StatelessWidget {
                       return Container(
                         padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                         decoration: BoxDecoration(
-                          color: Colors.blue,
+                          color: AppColor.primary,
                           borderRadius: BorderRadius.circular(10.r),
                         ),
                         child: Text(
@@ -167,7 +167,7 @@ class PlotMarket extends StatelessWidget {
           // Active filters info
           Row(
             children: [
-              Icon(Icons.filter_list, color: Colors.blue, size: 16.w),
+              Icon(Icons.filter_list, color: AppColor.primary, size: 16.w),
               SizedBox(width: 6.w),
               Obx(() {
                 final filterCount = controller.getActiveFilterCount();
@@ -175,7 +175,7 @@ class PlotMarket extends StatelessWidget {
                   "$filterCount filter${filterCount > 1 ? 's' : ''} active",
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: Colors.blue.shade800,
+                    color: AppColor.primary,
                     fontWeight: FontWeight.w500,
                   ),
                 );
@@ -379,7 +379,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
         style: TextStyle(
           fontSize: 10.sp,
           fontWeight: FontWeight.w900,
-          color: Colors.blue,
+          color: AppColor.primary,
           letterSpacing: 0.5,
         ),
       ),
@@ -423,9 +423,9 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
         duration: Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.grey[50],
+          color: isSelected ? AppColor.primary : Colors.grey[50],
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: isSelected ? Colors.blue : Colors.grey[200]!),
+          border: Border.all(color: isSelected ? AppColor.primary : Colors.grey[200]!),
           boxShadow: isSelected ? [BoxShadow(color: Colors.blue.withOpacity(0.2), blurRadius: 10, offset: Offset(0, 4))] : [],
         ),
         child: Text(
@@ -621,7 +621,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
         child: Text(
           isOpen ? "- See Less" : "+ See More",
           style: TextStyle(
-            color: Colors.blue,
+            color: AppColor.primary,
             fontSize: 12.sp,
             fontWeight: FontWeight.w900,
           ),
@@ -724,7 +724,8 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
           ),
           GestureDetector(
             onTap: () {
-              setState(() => _initFilters());
+              // Reset everything including controller values
+              _resetAllFilters();
             },
             child: Container(
               padding: EdgeInsets.all(12.w),
@@ -739,7 +740,33 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       ),
     );
   }
+  void _resetAllFilters() {
+    final c = widget.controller;
 
+    // Reset controller values
+    c.minPrice.value = "";
+    c.maxPrice.value = "";
+    c.minAreaSqft.value = "";
+    c.maxAreaSqft.value = "";
+    c.selectedPlotTypes.clear();
+    c.selectedState.value = null;
+    c.selectedCity.value = null;
+    c.cities.clear();
+
+    // Reset local state variables
+    setState(() {
+      _priceRange = RangeValues(c.priceMin.value, c.priceMax.value);
+      _areaRange = RangeValues(c.areaMin.value, c.areaMax.value);
+      _selectedTypes.clear();
+      _selectedState = null;
+      _selectedCity = null;
+      _priceChanged = false;
+      _areaChanged = false;
+      _showAllStates = false;
+      _showAllCities = false;
+      _showAllPlotTypes = false;
+    });
+  }
   Widget _buildFooter() {
     return Container(
       padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, MediaQuery.of(context).padding.bottom + 16.h),
@@ -755,7 +782,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       ),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+          backgroundColor: AppColor.primary,
           minimumSize: Size(double.infinity, 60.h),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
           elevation: 8,
