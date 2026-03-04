@@ -15,52 +15,53 @@ class ServiceList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final services = controller.services;
-
-      if (controller.isLoading.value && services.isEmpty) {
-        return const Center(child: GifLoader(message: "Loading Services...", size: 100));
-
-      }
-
-      return NotificationListener<ScrollNotification>(
-        onNotification: (scrollInfo) {
-          if (scrollInfo.metrics.pixels >=
-              scrollInfo.metrics.maxScrollExtent * 0.95 &&
-              !controller.isLoadMore.value &&
-              controller.hasMoreData.value) {
-            controller.loadMoreServices();
-          }
-          return false;
-        },
-        child: ListView.builder(
-          itemCount: services.length + (controller.hasMoreData.value ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == services.length) {
-              return controller.isLoadMore.value
-                  ? Padding(
-                padding: EdgeInsets.symmetric(vertical: 20.h),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.green,
-                    strokeWidth: 2,
-                  ),
-                ),
-              )
-                  : SizedBox.shrink();
-            }
-            final service = services[index];
-
-            return _buildAnimatedCard(service, index);
-          },
-        ),
-      );
-    });
+    return SizedBox();
+    // return Obx(() {
+    //   final services = controller.services;
+    //
+    //   if (controller.isLoading.value && services.isEmpty) {
+    //     return const Center(child: GifLoader(message: "Loading Services...", size: 100));
+    //
+    //   }
+    //
+    //   return NotificationListener<ScrollNotification>(
+    //     onNotification: (scrollInfo) {
+    //       if (scrollInfo.metrics.pixels >=
+    //           scrollInfo.metrics.maxScrollExtent * 0.95 &&
+    //           !controller.isLoadMore.value &&
+    //           controller.hasMoreData.value) {
+    //         // controller.loadMoreServices();
+    //       }
+    //       return false;
+    //     },
+    //     child: ListView.builder(
+    //       itemCount: services.length + (controller.hasMoreData.value ? 1 : 0),
+    //       itemBuilder: (context, index) {
+    //         if (index == services.length) {
+    //           return controller.isLoadMore.value
+    //               ? Padding(
+    //             padding: EdgeInsets.symmetric(vertical: 20.h),
+    //             child: Center(
+    //               child: CircularProgressIndicator(
+    //                 color: Colors.green,
+    //                 strokeWidth: 2,
+    //               ),
+    //             ),
+    //           )
+    //               : SizedBox.shrink();
+    //         }
+    //         final service = services[index];
+    //
+    //         return _buildAnimatedCard(service, index);
+    //       },
+    //     ),
+    //   );
+    // });
   }
 
   Widget _buildAnimatedCard(service, int index) {
     return ServiceCard(
-      service: service,
+      // service: service,
       onTap: () {
           _showEnquiryForm(service);
       },

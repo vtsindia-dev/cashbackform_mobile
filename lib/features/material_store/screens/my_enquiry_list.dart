@@ -24,7 +24,7 @@ class _MyMaterialListState extends State<MyMaterialList> {
   @override
   void initState() {
     super.initState();
-    controller.fetchMyServices();
+    // controller.fetchMyServices();
 
 
     _scrollController.addListener(_scrollListener);
@@ -41,7 +41,7 @@ class _MyMaterialListState extends State<MyMaterialList> {
         _scrollController.position.maxScrollExtent - 100 &&
         !controller.isLoadMore.value &&
         controller.hasMoreData.value) {
-      controller.loadMoreMyServices();
+      // controller.loadMoreMyServices();
     }
   }
 
@@ -53,39 +53,39 @@ class _MyMaterialListState extends State<MyMaterialList> {
         title: "My Material",
         showBackButton: true,
       ),
-      body: Obx(() {
-        if (controller.isLoading.value && controller.myServices.isEmpty) {
-          return Center(
-            child: GifLoader(message: "Loading your Material...", size: 120),
-          );
-        }
-
-        if (controller.myServices.isEmpty && !controller.isLoading.value) {
-          return Center(child: _buildEmptyState());
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            await controller.fetchMyServices();
-          },
-          child: ListView(
-            controller: _scrollController,
-            padding: EdgeInsets.all(16.w),
-            children: [
-              _buildHeader(),
-              SizedBox(height: 16.h),
-              _buildServicesList(),
-
-              if (controller.isLoadMore.value)
-                _buildLoadMoreIndicator(),
-
-              // End of list message
-              if (!controller.hasMoreData.value && controller.myServices.isNotEmpty)
-                _buildEndOfList(),
-            ],
-          ),
-        );
-      }),
+      // body: Obx(() {
+      //   if (controller.isLoading.value && controller.myServices.isEmpty) {
+      //     return Center(
+      //       child: GifLoader(message: "Loading your Material...", size: 120),
+      //     );
+      //   }
+      //
+      //   if (controller.myServices.isEmpty && !controller.isLoading.value) {
+      //     return Center(child: _buildEmptyState());
+      //   }
+      //
+      //   return RefreshIndicator(
+      //     onRefresh: () async {
+      //       await controller.fetchMyServices();
+      //     },
+      //     child: ListView(
+      //       controller: _scrollController,
+      //       padding: EdgeInsets.all(16.w),
+      //       children: [
+      //         _buildHeader(),
+      //         SizedBox(height: 16.h),
+      //         _buildServicesList(),
+      //
+      //         if (controller.isLoadMore.value)
+      //           _buildLoadMoreIndicator(),
+      //
+      //         // End of list message
+      //         if (!controller.hasMoreData.value && controller.myServices.isNotEmpty)
+      //           _buildEndOfList(),
+      //       ],
+      //     ),
+      //   );
+      // }),
     );
   }
 
@@ -120,13 +120,13 @@ class _MyMaterialListState extends State<MyMaterialList> {
                   ),
                 ),
                 SizedBox(height: 4.h),
-                Text(
-                  "${controller.myServices.length} Material • ${controller.activeServicesCount} active",
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
+                // Text(
+                //   "${controller.myServices.length} Material • ${controller.activeServicesCount} active",
+                //   style: TextStyle(
+                //     fontSize: 12.sp,
+                //     color: Colors.white.withOpacity(0.9),
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -135,28 +135,28 @@ class _MyMaterialListState extends State<MyMaterialList> {
     ).animate().fade(duration: 300.ms).slide(begin: Offset(-0.1, 0));
   }
 
-  Widget _buildServicesList() {
-    return Column(
-      children: controller.myServices.map((service) {
-        return ServiceCard(
-          service: service,
-          onTap: () {
-            print("Tapped Material: ${service.serviceName}");
-          },
-          onEnquiry: () {
-            _showEnquiryForm(service);
-          },
-          onShare: () {
-            _shareService(service);
-          },
-        )
-            .animate()
-            .fade(duration: 300.ms)
-            .slide(begin: Offset(0, 0.1))
-            .scale(begin: Offset(0.95, 0.95));
-      }).toList(),
-    );
-  }
+  // Widget _buildServicesList() {
+  //   return Column(
+  //     children: controller.myServices.map((service) {
+  //       return ServiceCard(
+  //         service: service,
+  //         onTap: () {
+  //           print("Tapped Material: ${service.serviceName}");
+  //         },
+  //         onEnquiry: () {
+  //           _showEnquiryForm(service);
+  //         },
+  //         onShare: () {
+  //           _shareService(service);
+  //         },
+  //       )
+  //           .animate()
+  //           .fade(duration: 300.ms)
+  //           .slide(begin: Offset(0, 0.1))
+  //           .scale(begin: Offset(0.95, 0.95));
+  //     }).toList(),
+  //   );
+  // }
 
   Widget _buildLoadMoreIndicator() {
     return Padding(

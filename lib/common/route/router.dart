@@ -257,7 +257,7 @@ class AppRoutes {
         final arguments = Get.arguments;
         final id = arguments != null ? arguments['id'] : null;
         final title = arguments != null ? arguments['title'] : null;
-        return PlotMarketDetails(id: id);
+        return PlotMarketDetails(id: id , title: title);
       },
       transition: Transition.cupertino,
     ),

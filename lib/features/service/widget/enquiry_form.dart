@@ -340,12 +340,12 @@ class ServiceEnquiryForm extends StatelessWidget {
   }
 
   Future<void> _submitEnquiry() async {
-    final result = await controller.submitEnquiry();
-
-    if (result['success'] == true) {
-      Future.delayed(Duration(milliseconds: 500), () {
-        Get.back();
-      });
-    }
+    // final result = await controller.submitEnquiry();
+    //
+    // if (result['success'] == true) {
+    //   Future.delayed(Duration(milliseconds: 500), () {
+    //     Get.back();
+    //   });
+    // }
   }
 }

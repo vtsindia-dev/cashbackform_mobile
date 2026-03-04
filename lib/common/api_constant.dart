@@ -52,7 +52,7 @@ class ApiUrl {
   static const String serviceRequest = '$baseUrl/api/v2/service_request';
   static const String vendorRequest = '$baseUrl/api/v2/vendor_request';
   static const String agentRequest = '$baseUrl/api/v2/agent_request';
- String vendorList = '$baseUrl/vendor/service';
+  static String vendorList = '$baseUrl/vendor/service';
   static const String vendorDetails = '$baseUrl/vendor/service';
 
   // Enquiry Endpoints

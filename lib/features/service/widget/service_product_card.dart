@@ -7,14 +7,14 @@ import '../../../common/colours.dart';
 import '../model/service_model.dart';
 
 class ServiceCard extends StatelessWidget {
-  final Service service;
+  // final Service service;
   final VoidCallback onTap;
   final VoidCallback onShare;
   final VoidCallback onEnquiry;
 
   ServiceCard({
     super.key,
-    required this.service,
+    // required this.service,
     required this.onTap,
     required this.onShare,
     required this.onEnquiry,
@@ -123,21 +123,21 @@ class ServiceCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14.r),
-                  child: Image.network(
-                    service.image.first,
-                    width: imageWidth,
-                    height: imageHeight,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: imageWidth,
-                      height: imageHeight,
-                      color: Colors.grey.shade200,
-                      child: Icon(Icons.image_not_supported, size: 24.w),
-                    ),
-                  ),
-                ).animate().fade(duration: 300.ms).scaleXY(begin: 0.95),
+                // ClipRRect(
+                //   borderRadius: BorderRadius.circular(14.r),
+                //   child: Image.network(
+                //     service.image.first,
+                //     width: imageWidth,
+                //     height: imageHeight,
+                //     fit: BoxFit.cover,
+                //     errorBuilder: (_, __, ___) => Container(
+                //       width: imageWidth,
+                //       height: imageHeight,
+                //       color: Colors.grey.shade200,
+                //       child: Icon(Icons.image_not_supported, size: 24.w),
+                //     ),
+                //   ),
+                // ).animate().fade(duration: 300.ms).scaleXY(begin: 0.95),
 
                 SizedBox(height: 8.h),
 
@@ -153,17 +153,17 @@ class ServiceCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          service.serviceName,
-                          style: GoogleFonts.montserrat(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
+                      // Expanded(
+                      //   child: Text(
+                      //     service.serviceName,
+                      //     style: GoogleFonts.montserrat(
+                      //       fontSize: 15.sp,
+                      //       fontWeight: FontWeight.w700,
+                      //     ),
+                      //     maxLines: 2,
+                      //     overflow: TextOverflow.ellipsis,
+                      //   ),
+                      // ),
 
                       InkWell(
                         onTap: onShare,
@@ -177,24 +177,24 @@ class ServiceCard extends StatelessWidget {
                   ).animate().fade(duration: 300.ms).slideY(begin: 0.1),
 
                   SizedBox(height: 5.h),
-                  if (service.description != null && service.description!.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 4.h),
-                      child: Text(
-                        service.description!,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.primary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  _infoRow(Icons.location_on,
-                      service.category.categoryName),
-                  _infoRow(Icons.email,
-                      service.description ?? "No email available"),
+                  // if (service.description != null && service.description!.isNotEmpty)
+                  //   Padding(
+                  //     padding: EdgeInsets.only(bottom: 4.h),
+                  //     child: Text(
+                  //       service.description!,
+                  //       style: GoogleFonts.montserrat(
+                  //         fontSize: 11.sp,
+                  //         fontWeight: FontWeight.bold,
+                  //         color: AppColor.primary,
+                  //       ),
+                  //       maxLines: 2,
+                  //       overflow: TextOverflow.ellipsis,
+                  //     ),
+                  //   ),
+                  // _infoRow(Icons.location_on,
+                  //     service.category.categoryName),
+                  // _infoRow(Icons.email,
+                  //     service.description ?? "No email available"),
                   _infoRow(Icons.language,
                       "greenheapfarms.com"),
                   _linkRow(Icons.directions, "Get Direction"),

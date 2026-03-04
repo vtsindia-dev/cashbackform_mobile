@@ -22,7 +22,7 @@ class _MyServicesListState extends State<MyServicesList> {
   @override
   void initState() {
     super.initState();
-    controller.fetchMyServices();
+    // controller.fetchMyServices();
     _scrollController.addListener(_scrollListener);
   }
 
@@ -37,7 +37,7 @@ class _MyServicesListState extends State<MyServicesList> {
         _scrollController.position.maxScrollExtent - 100 &&
         !controller.isLoadMore.value &&
         controller.hasMoreData.value) {
-      controller.fetchMyServices(loadMore: true);
+      // controller.fetchMyServices(loadMore: true);
     }
   }
 
@@ -51,23 +51,23 @@ class _MyServicesListState extends State<MyServicesList> {
       ),
       body: Obx(() {
         /// Initial loader
-        if (controller.isLoading.value && controller.enquiries.isEmpty) {
-          return const Center(
-            child: GifLoader(
-              message: "Loading your services...",
-              size: 120,
-            ),
-          );
-        }
+        // if (controller.isLoading.value && controller.enquiries.isEmpty) {
+        //   return const Center(
+        //     child: GifLoader(
+        //       message: "Loading your services...",
+        //       size: 120,
+        //     ),
+        //   );
+        // }
 
         /// Empty state
-        if (controller.enquiries.isEmpty && !controller.isLoading.value) {
-          return _buildEmptyState();
-        }
+        // if (controller.enquiries.isEmpty && !controller.isLoading.value) {
+        //   return _buildEmptyState();
+        // }
 
         return RefreshIndicator(
           onRefresh: () async {
-            await controller.fetchMyServices();
+         //   await controller.fetchMyServices();
           },
           child: ListView(
             controller: _scrollController,
@@ -75,11 +75,11 @@ class _MyServicesListState extends State<MyServicesList> {
             children: [
               _buildHeader(),
               SizedBox(height: 16.h),
-              _buildEnquiryList(),
+              // _buildEnquiryList(),
               if (controller.isLoadMore.value) _buildLoadMoreIndicator(),
-              if (!controller.hasMoreData.value &&
-                  controller.enquiries.isNotEmpty)
-                _buildEndOfList(),
+              // if (!controller.hasMoreData.value &&
+              //     controller.enquiries.isNotEmpty)
+              //   _buildEndOfList(),
             ],
           ),
         );
@@ -118,13 +118,13 @@ class _MyServicesListState extends State<MyServicesList> {
                 ),
               ),
               SizedBox(height: 4.h),
-              Text(
-                "${controller.enquiries.length} enquiries",
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
+              // Text(
+              //   "${controller.enquiries.length} enquiries",
+              //   style: TextStyle(
+              //     fontSize: 12.sp,
+              //     color: Colors.white.withOpacity(0.9),
+              //   ),
+              // ),
             ],
           ),
         ],
@@ -133,7 +133,7 @@ class _MyServicesListState extends State<MyServicesList> {
   }
 
   /// 🔥 USE ENQUIRIES LIST
-  Widget _buildEnquiryList() {
+  /*Widget _buildEnquiryList() {
     return Column(
       children: List.generate(
         controller.enquiries.length,
@@ -167,7 +167,7 @@ class _MyServicesListState extends State<MyServicesList> {
       ),
     );
   }
-
+*/
   Widget _buildLoadMoreIndicator() {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 20.h),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
 import '../controller/plot_market_controller.dart';
@@ -18,7 +19,7 @@ class AboutPlot extends StatelessWidget {
 
       final projectName = detail?.name ?? 'No Name';
       final location = detail?.fullAddress ?? 'No Address';
-      final plotCounts = '${detail?.unitSplit ?? 0} Plots';
+      final plotCounts = '${detail?.plotCount ?? 0} Plots';
       final plotAreaSqFt = '${detail?.area ?? 0} Sq.ft';
       final totalPrice = '₹ ${detail?.price ?? '0'}';
       final pricePerSqFt = '₹ ${detail?.price ?? '0'} per Sq.ft';
@@ -44,7 +45,7 @@ class AboutPlot extends StatelessWidget {
         ),
         child: Column(
           children: [
-            _buildCarousel(images),
+            _buildCarousel(images,detail?.shareLink??''),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [_buildViewDetailsButton(controller)],
@@ -68,7 +69,7 @@ class AboutPlot extends StatelessWidget {
     });
   }
 
-  Widget _buildCarousel(List<String> images) {
+  Widget _buildCarousel(List<String> images,String? shareLink) {
     return Padding(
       padding: const EdgeInsets.all(5.0),
       child: ClipRRect(
@@ -76,10 +77,40 @@ class AboutPlot extends StatelessWidget {
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),
         ),
-        child: CarouselWidget(
-          images: images,
-          height: 190.h,
-          borderRadius: 20.r,
+        child: Stack(
+          children: [
+            CarouselWidget(
+              images: images,
+              height: 190.h,
+              borderRadius: 20.r,
+            ),
+            if(shareLink!=null)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: GestureDetector(
+                onTap: () async {
+                  await SharePlus.instance.share(
+                    ShareParams(
+                      text: shareLink,
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.share,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

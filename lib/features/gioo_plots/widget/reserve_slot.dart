@@ -1360,8 +1360,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
         _priceRow("Price per Unit:", "₹${pricePerUnit.toStringAsFixed(2)}"),
         5.h.verticalSpace,
-
-        _priceRow("Number of Plots:", "$selectedCount"),
+        _priceRow("Number of Plots:", "$selectedCount x"),
         const Divider(height: 20, color: Colors.black12),
 
         _priceRow("Total Payable:", "₹${totalPrice.toStringAsFixed(2)}", isBold: true),

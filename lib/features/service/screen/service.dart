@@ -14,7 +14,7 @@ class _ServiceState extends State<Service> {
   @override
   void initState() {
     super.initState();
-    controller.fetchServices();
+    // controller.fetchServices();
   }
   @override
   Widget build(BuildContext context) {
@@ -32,15 +32,15 @@ class _ServiceState extends State<Service> {
             ),
           );
         }
-        if (controller.services.isEmpty) {
-          return const Center(
-            child: GifLoader(
-              message: "Loading...",
-              size: 100,
-            ),
-          );
-
-        }
+        // if (controller.services.isEmpty) {
+        //   return const Center(
+        //     child: GifLoader(
+        //       message: "Loading...",
+        //       size: 100,
+        //     ),
+        //   );
+        //
+        // }
         // Once data is loaded, show the list
         return ServiceList();
       }),

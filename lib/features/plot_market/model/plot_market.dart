@@ -227,6 +227,10 @@ class MarketPlotDetail {
   final DateTime updatedAt;
   final double? marketPlotAmount;
   final bool documentVerified;
+  List<CommonFacility>? commonFacility;
+  int? plotCount;
+  String? shareLink;
+  String? threeDImage;
 
   MarketPlotDetail({
     required this.id,
@@ -259,6 +263,10 @@ class MarketPlotDetail {
     required this.updatedAt,
     this.marketPlotAmount,
     required this.documentVerified,
+    this.commonFacility,
+    this.plotCount,
+    this.shareLink,
+    this.threeDImage
   });
 
   factory MarketPlotDetail.fromJson(Map<String, dynamic> json) {
@@ -361,6 +369,15 @@ class MarketPlotDetail {
       updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
       marketPlotAmount: parseMarketPlotAmount(json['market_plot_amount']),
       documentVerified: parseDocumentVerified(json['document_verified']),
+        plotCount : json['plot_count'],
+      threeDImage :  json['three_d_image'],
+      shareLink : json['share'],
+      commonFacility: json['commonfacility'] != null
+          ? List<CommonFacility>.from(
+        json['commonfacility'].map((v) => CommonFacility.fromJson(v)),
+      )
+          : [],
+
     );
 
   }
@@ -763,4 +780,23 @@ class MarketPlotEnquiryProperty {
   }
 
   bool get hasProperty => id > 0;
+}
+
+class CommonFacility {
+  int? id;
+  String? title;
+  String? image;
+  String? createdAt;
+  String? updatedAt;
+
+  CommonFacility(
+      {this.id, this.title, this.image, this.createdAt, this.updatedAt});
+
+  CommonFacility.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    title = json['title'];
+    image = json['image'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+  }
 }

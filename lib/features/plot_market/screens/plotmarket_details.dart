@@ -1,4 +1,6 @@
 import 'package:cashback_farms/features/plot_market/widget/about_plot.dart';
+import 'package:cashback_farms/features/plot_market/widget/plotmarket_details_widgets/common_facility_widget.dart';
+import 'package:cashback_farms/features/plot_market/widget/plotmarket_details_widgets/description_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -7,6 +9,7 @@ import '../../../common/widget/loader.dart';
 import '../../syndicate_plot/widget/scheme_overview.dart';
 import '../controller/plot_market_controller.dart';
 import '../widget/plot_market_blueprint.dart';
+import '../widget/plotmarket_details_widgets/three_d_image_view_widget.dart';
 import '../widget/plotmarket_document.dart' show LegalDocumentsScreen;
 import '../widget/plotmarket_nearby.dart';
 
@@ -47,19 +50,18 @@ class _PlotMarketDetailsState extends State<PlotMarketDetails> {
         if (controller.marketDetail.value == null) {
           return _buildNoDataAvailable();
         }
-
+        final detail = controller.marketDetail.value!;
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const AboutPlot(),
-              // SchemeOverview(),
               NearbyPlotMarket(),
-              LegalDocumentsScreen(),
-              PlotMarketBlueprint()
-
-
+              DescriptionWidget(marketPlotDetail: detail),
+              CommonFacilityWidget(marketPlotDetail: detail),
+              Plot360ViewWidget(marketPlotDetail: detail),
+              PlotMarketBlueprint(),
             ],
           ),
         );
