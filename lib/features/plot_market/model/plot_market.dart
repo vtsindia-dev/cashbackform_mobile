@@ -30,6 +30,8 @@ class MarketPlot {
   final String? priceperSqft;
   final List<int>? amenities;
   final List<Map<String, dynamic>>? nearbyPlaces;
+  int? plotCount;
+  String? threeDImage;
 
   MarketPlot({
     required this.id,
@@ -61,6 +63,8 @@ class MarketPlot {
     this.priceperSqft,
     this.amenities,
     this.nearbyPlaces,
+    this.plotCount,
+    this.threeDImage
   });
 
   factory MarketPlot.fromJson(Map<String, dynamic> json) {
@@ -106,12 +110,14 @@ class MarketPlot {
       verifyStatus: json['verify_status'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at']?.toString() ?? ''),
       updatedAt: DateTime.parse(json['updated_at']?.toString() ?? ''),
+        threeDImage : json['three_d_image'],
       propertyType: json['property_type'] != null
           ? PropertyType.fromJson(json['property_type'])
           : null,
       verification: _parseVerificationAmount(json['market_plot_amount']),
       amenities: parseAmenities(json['aminities']?.toString()),
       nearbyPlaces: parseNearbyPlaces(json['nearby_places']),
+        plotCount : json['plot_count']
     );
   }
 

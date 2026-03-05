@@ -44,16 +44,18 @@ class ApiUrl {
   static const String syndicateBuyingCancelRequest = '$baseUrl/api/v2/syndicate_buying_cancel_request';
   static const String contactEnquiry = '$baseUrl/api/v2/contact-enquiry';
   static const String settings = '$baseUrl/api/v2/settings';
-  static const String states = '${baseUrl}/api/v2/state';
-  static const String cities = '${baseUrl}/api/v2/city';
-  static const String propertyTypes = '${baseUrl}/api/v2/property-type';
-  static const String verificationAmount = '${baseUrl}/api/v2/verification-fee';
+  static const String states = '$baseUrl/api/v2/state';
+  static const String cities = '$baseUrl/api/v2/city';
+  static const String propertyTypes = '$baseUrl/api/v2/property-type';
+  static const String verificationAmount = '$baseUrl/api/v2/verification-fee';
   static const String myMarketPlots = "$baseUrl/api/v2/market_list"; // User's plots
   static const String serviceRequest = '$baseUrl/api/v2/service_request';
   static const String vendorRequest = '$baseUrl/api/v2/vendor_request';
   static const String agentRequest = '$baseUrl/api/v2/agent_request';
   static String vendorList = '$baseUrl/vendor/service';
   static const String vendorDetails = '$baseUrl/vendor/service';
+
+  static const String commonFacilities = '$baseUrl/api/v2/common-facilities';
 
   // Enquiry Endpoints
   static const String submitMaterialEnquiry = '$baseUrl/material_enquriy';

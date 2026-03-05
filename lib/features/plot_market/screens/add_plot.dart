@@ -53,6 +53,9 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
   final TextEditingController _uldNoController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _workController = TextEditingController();
+  final TextEditingController _plotCountController = TextEditingController();
+
+
 
   List<AppState> states = [];
   List<City> cities = [];
@@ -70,7 +73,9 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
   List<File> _selectedImages = [];
   List<String> _existingImageUrls = [];
   File? _plotImage;
+  File? _upload3dImage;
   String? _existingPlotImageUrl;
+  String? _existing3dImageUrl;
   bool _isSubmitting = false;
   bool _isLoadingData = true;
 
@@ -101,6 +106,8 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
   }
 
   Future<void> _loadInitialData() async {
+    controller.selectedFacilityIds = [];
+    controller.update();
     try {
       setState(() {
         _isLoadingData = true;
@@ -178,6 +185,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         _nameController.text = plot.name ?? '';
         _areaController.text = plot.area?.toString() ?? '';
         _priceController.text = plot.price?.toString() ?? '';
+        _plotCountController.text = plot.plotCount?.toString() ?? '';
         _priceSqftController.text =
             plot.priceperSqft?.toString() ?? plot.price?.toString() ?? '';
         _latController.text = plot.lat?.toString() ?? '';
@@ -365,6 +373,12 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           }
         } else {
           _existingImageUrls = [];
+        }
+
+        if (plot.threeDImage != null && plot.threeDImage!.isNotEmpty) {
+          setState(() {
+            _existing3dImageUrl = plot.threeDImage;
+          });
         }
 
         // Set plot image
@@ -1117,6 +1131,22 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     }
   }
 
+  Future<void> _pick3DImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _upload3dImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      print('Error picking plot image: $e');
+      SnackBarHelper.showError('Failed to pick image');
+    }
+  }
+
+
+
   void _removeImage(int index) {
     setState(() {
       if (index < _existingImageUrls.length) {
@@ -1242,12 +1272,21 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label${isRequired ? ' *' : ''}',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColor.textMain,
+          Text.rich(
+            TextSpan(
+              text: label,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColor.textMain,
+              ),
+              children: [
+                if (isRequired)
+                  const TextSpan(
+                    text: ' *',
+                    style: TextStyle(color: Colors.red),
+                  ),
+              ],
             ),
           ),
           SizedBox(height: 6.h),
@@ -1329,6 +1368,52 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       ),
     );
   }
+
+  Widget _selectedCommonFacilityWidget(){
+    return GetBuilder<PlotMarketController>(
+      builder: (controller) {
+        return Column(
+          children: [
+            _buildSectionTitle('Common Facility'),
+            SizedBox(height: 12.h),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: controller.getCommonFacilityModel.map((facility) {
+
+                final isSelected = controller.selectedFacilityIds.contains(facility.id);
+
+                return GestureDetector(
+                  onTap: () {
+                    controller.toggleFacility(facility.id!);
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.amber : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? Colors.amber : Colors.grey.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Text(
+                      facility.title ?? "",
+                      style: TextStyle(
+                        color: isSelected ? Colors.black : Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                );
+
+              }).toList(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   Widget _buildAmenitiesSection() {
     final showAmenities = _showAllAmenities ? amenities : amenities.take(6);
@@ -1701,7 +1786,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Additional Images'),
+          _buildSectionTitle('Land Images'),
           SizedBox(height: 12.h),
           GridView.builder(
             shrinkWrap: true,
@@ -1756,8 +1841,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                       borderRadius: BorderRadius.circular(10.r),
                       image: DecorationImage(
                         image: image['type'] == 'url'
-                            ? NetworkImage(image['value'] as String)
-                                  as ImageProvider
+                            ? NetworkImage(image['value'] as String) as ImageProvider
                             : FileImage(image['value'] as File),
                         fit: BoxFit.cover,
                       ),
@@ -1812,6 +1896,11 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       return;
     }
 
+    if (controller.selectedFacilityIds.isEmpty) {
+      SnackBarHelper.showError('Please select minimum one common facility');
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
     });
@@ -1847,7 +1936,9 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         'uld_no': _uldNoController.text.trim(),
         'amenities': _selectedAmenities.join(','),
         'status': '0',
+        'plot_count' : _plotCountController.text.trim(),
       };
+
 
       // Add nearby places if any
       if (_selectedNearbyPlaces.isNotEmpty) {
@@ -1875,6 +1966,8 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         images: _selectedImages,
         plotImage: _plotImage,
         bluePrint: null,
+        threeDImage : _upload3dImage,
+        selectedFacilityIds : controller.selectedFacilityIds,
         isUpdate: widget.plot != null,
       );
 
@@ -1885,6 +1978,8 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           result['message'] ??
               'Plot ${widget.plot != null ? 'updated' : 'added'} successfully',
         );
+        controller.selectedFacilityIds = [];
+        controller.update();
         await controller.fetchMyMarketPlots();
         Get.back(result: true);
       } else {
@@ -1909,7 +2004,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       return Scaffold(
         backgroundColor: Colors.white,
         appBar: DynamicAppBar(
-          title: widget.plot != null ? 'Edit Plot' : 'Add Plot',
+          title: widget.plot != null ? 'Edit Land' : 'Add Land',
           showBackButton: true,
         ),
         body: Center(
@@ -1924,11 +2019,10 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         ),
       );
     }
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: DynamicAppBar(
-        title: widget.plot != null ? 'Edit Plot' : 'Add Plot',
+        title: widget.plot != null ? 'Edit Land' : 'Add Land',
         showBackButton: true,
       ),
       body: Form(
@@ -1963,7 +2057,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                 },
                 isRequired: true,
               ),
-
               Row(
                 children: [
                   Expanded(
@@ -1972,7 +2065,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                       items: states,
                       value: _selectedState,
                       displayText: (state) =>
-                          state.stateName ?? 'Unknown State',
+                          state.stateName,
                       onChanged: (state) async {
                         setState(() {
                           _selectedState = state;
@@ -1995,7 +2088,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                       label: 'City',
                       items: cities,
                       value: _selectedCity,
-                      displayText: (city) => city.cityName ?? 'Unknown City',
+                      displayText: (city) => city.cityName,
                       onChanged: (city) {
                         setState(() {
                           _selectedCity = city;
@@ -2062,7 +2155,12 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                   ),
                 ],
               ),
-
+              _buildTextField(
+                'Plot Count',
+                _plotCountController,
+                keyboardType: TextInputType.number,
+                isRequired: true,
+              ),
               Text(
                 'Description',
                 style: TextStyle(
@@ -2078,12 +2176,12 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                 maxLines: 4,
                 isRequired: true,
               ),
-
+              _selectedCommonFacilityWidget(),
               _buildAmenitiesSection(),
               _buildNearbyPlacesSection(),
-
+              _buildImageSection(),
               Text(
-                'Plot Structure',
+                'Blue Print Image',
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
@@ -2106,59 +2204,129 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                   ),
                   child: _plotImage != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10.r),
-                          child: Image.file(_plotImage!, fit: BoxFit.cover),
-                        )
+                    borderRadius: BorderRadius.circular(10.r),
+                    child: Image.file(_plotImage!, fit: BoxFit.cover),
+                  )
                       : _existingPlotImageUrl != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10.r),
-                          child: Image.network(
-                            _existingPlotImageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.broken_image,
-                                      size: 40.sp,
-                                      color: Colors.grey,
-                                    ),
-                                    Text(
-                                      'Load failed',
-                                      style: TextStyle(fontSize: 12.sp),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : Center(
+                    borderRadius: BorderRadius.circular(10.r),
+                    child: Image.network(
+                      _existingPlotImageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.add_a_photo,
+                                Icons.broken_image,
                                 size: 40.sp,
-                                color: AppColor.primary,
+                                color: Colors.grey,
                               ),
-                              SizedBox(height: 8.h),
                               Text(
-                                'Tap to add Plot image',
-                                style: TextStyle(color: AppColor.primary),
+                                'Load failed',
+                                style: TextStyle(fontSize: 12.sp),
                               ),
                             ],
                           ),
+                        );
+                      },
+                    ),
+                  )
+                      : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_a_photo,
+                          size: 40.sp,
+                          color: AppColor.primary,
                         ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          'Tap to add Blue Print Image',
+                          style: TextStyle(color: AppColor.primary),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-
-              _buildImageSection(),
-
+              SizedBox(height: 10.h),
+              Text(
+                '3D Image',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.primary,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              GestureDetector(
+                onTap: _pick3DImage,
+                child: Container(
+                  width: double.infinity,
+                  height: 150.h,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10.r),
+                    color: Colors.grey[100],
+                    border: Border.all(
+                      color: AppColor.primary,
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: _upload3dImage != null
+                      ? ClipRRect(
+                    borderRadius: BorderRadius.circular(10.r),
+                    child: Image.file(_upload3dImage!, fit: BoxFit.cover),
+                  )
+                      : _existing3dImageUrl != null
+                      ? ClipRRect(
+                    borderRadius: BorderRadius.circular(10.r),
+                    child: Image.network(
+                      _existing3dImageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.broken_image,
+                                size: 40.sp,
+                                color: Colors.grey,
+                              ),
+                              Text(
+                                'Load failed',
+                                style: TextStyle(fontSize: 12.sp),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                      : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_a_photo,
+                          size: 40.sp,
+                          color: AppColor.primary,
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          'Tap to add 3D Image',
+                          style: TextStyle(color: AppColor.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               SizedBox(height: 24.h),
-              Container(
+              SizedBox(
                 width: double.infinity,
                 height: 50.h,
                 child: ElevatedButton(

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:cashback_farms/features/plot_market/model/common_facility_model.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -78,17 +79,59 @@ class PlotMarketController extends GetxController {
   RxInt marketEnquiryTotalPages = 1.obs;
   RxBool hasMoreMarketEnquiries = true.obs;
   RxInt totalMarketEnquiries = 0.obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchMarketPlots();
     fetchStates();
+    getCommonFacility();
+  }
+
+  void toggleExpansion() => isExpanded.value = !isExpanded.value;
+
+
+  var getCommonFacilityModel = <CommonFacilityModel>[].obs;
+
+  List<int> selectedFacilityIds = [];
+
+  void toggleFacility(int id) {
+    if (selectedFacilityIds.contains(id)) {
+      selectedFacilityIds.remove(id);
+    } else {
+      selectedFacilityIds.add(id);
+    }
+    update();
+  }
+
+  Future<void> getCommonFacility() async {
+    final token = await SessionManager.getToken();
+    try {
+      final response = await dio.Dio().get(
+        ApiUrl.commonFacilities,
+        options: dio.Options(
+          headers: {
+            "Accept": "application/json",
+            if (token != null && token.isNotEmpty)
+              "Authorization": "Bearer $token",
+          },
+        ),
+      );
+      final data = response.data;
+      if (response.statusCode == 200 && data['status'] == true) {
+        final facility = data['data'] as List;
+        getCommonFacilityModel.assignAll(
+          facility.map((e) => CommonFacilityModel.fromJson(e)).toList(),
+        );
+      } else {
+        debugPrint('Something went wrong');
+      }
+    } catch (e) {
+      debugPrint('Error :: $e');
+    }
   }
 
 
-
-
-  void toggleExpansion() => isExpanded.value = !isExpanded.value;
 
   Future<void> sendEnquiry() async {
     isEnquiryLoading.value = true;
@@ -536,6 +579,8 @@ class PlotMarketController extends GetxController {
     List<File> images = const [],
     File? plotImage,
     File? bluePrint,
+    File? threeDImage,
+    List<int>? selectedFacilityIds,
     bool isUpdate = false,
   }) async {
     try {
@@ -572,6 +617,14 @@ class PlotMarketController extends GetxController {
         }
       });
 
+      if(selectedFacilityIds !=null && selectedFacilityIds.isNotEmpty){
+        for (var facility in selectedFacilityIds) {
+          formDataToSend.fields.add(
+            MapEntry('commonfacility[]', facility.toString()),
+          );
+        }
+      }
+
       // Add user ID (make sure this is included)
       final userId = await SessionManager.getUserId();
       if (userId != null) {
@@ -591,6 +644,16 @@ class PlotMarketController extends GetxController {
         print('📸 Added image ${i + 1}: ${images[i].path}');
       }
 
+      if (threeDImage != null) {
+        formDataToSend.files.add(MapEntry(
+          'three_d_image',
+          await dio.MultipartFile.fromFile(
+            threeDImage.path,
+            filename: 'three_d_image.jpg',
+          ),
+        ));
+      }
+
       // Add plot image
       if (plotImage != null) {
         formDataToSend.files.add(MapEntry(
@@ -601,6 +664,16 @@ class PlotMarketController extends GetxController {
           ),
         ));
         print('📸 Added plot image: ${plotImage.path}');
+      }
+
+      print('📦 FORM DATA FIELDS');
+      for (var field in formDataToSend.fields) {
+        print('${field.key}: ${field.value}');
+      }
+
+      print('📦 FORM DATA FILES');
+      for (var file in formDataToSend.files) {
+        print('${file.key}: ${file.value.filename}');
       }
 
       final token = await SessionManager.getToken();
