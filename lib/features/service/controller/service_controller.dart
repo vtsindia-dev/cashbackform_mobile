@@ -1,7 +1,8 @@
-// lib/features/service/controllers/service_controller.dart
+import 'package:cashback_farms/features/service/model/categories_model.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
+import '../../../common/model/logger_model.dart' show Loggers;
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
@@ -15,175 +16,191 @@ class ServiceController extends GetxController {
   var isLoadingDetail = false.obs;
   var isSubmitting = false.obs;
   var _isLoadingMore = false;
-  var _isLoadingInProgress = false;
-
-  var vendors = <Vendor>[].obs; // For service providers/vendors
+  var vendors = <Vendor>[].obs;
   var materialEnquiries = <MaterialEnquiry>[].obs;
   var serviceEnquiries = <ServiceEnquiry>[].obs;
-
-  // Detail data
-  var vendorDetail = Rxn<Vendor>();
   var errorMessage = ''.obs;
-
-  // Pagination
   var currentPage = 1.obs;
   var totalPages = 1.obs;
   var totalItems = 0.obs;
   var hasMoreData = true.obs;
-
-  // Filters
   var searchQuery = ''.obs;
   var selectedCategory = ''.obs;
   var selectedStatus = ''.obs;
-
-  // UI states
   var isExpanded = false.obs;
   var isDescriptionExpanded = false.obs;
-
-  // Form controllers
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final quoteController = TextEditingController();
   final dateController = TextEditingController();
   final timeController = TextEditingController();
-
-  // Form errors
   var nameError = RxString('');
   var phoneError = RxString('');
   var quoteError = RxString('');
   var dateError = RxString('');
   var timeError = RxString('');
-
-  // Selected IDs
   var materialId = 0.obs;
   var serviceId = 0.obs;
   var vendorId = 0.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    // Uncomment as needed
-    // fetchVendors();
-    // fetchMaterialEnquiries();
-    // fetchServiceEnquiries();
-  }
-
-  // ==================== UI Helper Methods ====================
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
   void toggleDescription() => isDescriptionExpanded.value = !isDescriptionExpanded.value;
 
-  // ==================== Vendor/Service Provider Methods ====================
-  Future<void> fetchVendors({bool loadMore = false}) async {
+
+  bool isCategoriesServiceLoading = false;
+  int categoriesServiceCurrentPage = 1;
+  int categoriesServiceTotalPages = 1;
+  bool isFetchingMoreCategoriesService = false;
+  List<CategoriesServiceModel> categoriesServiceList = [];
+
+
+  Future<void> resetCategoriesService() async {
+    categoriesServiceList.clear();
+    categoriesServiceCurrentPage = 1;
+    categoriesServiceTotalPages = 1;
+    isFetchingMoreCategoriesService = false;
+    isCategoriesServiceLoading = true;
+    update();
+    await getCategoriesServiceList(isInitialLoad: true);
+  }
+
+  Future<void> getCategoriesServiceList({bool isInitialLoad = true}) async {
+    if (isInitialLoad) {
+      categoriesServiceList.clear();
+      categoriesServiceCurrentPage = 1;
+      categoriesServiceTotalPages = 1;
+      isCategoriesServiceLoading = true;
+    } else {
+      isFetchingMoreCategoriesService = true;
+    }
+    update();
+
     try {
-      if ((isLoading.value && !loadMore) || (isLoadMore.value && loadMore)) {
-        return;
-      }
-
-      if (loadMore) {
-        if (!hasMoreData.value) return;
-        isLoadMore(true);
-      } else {
-        isLoading(true);
-        currentPage.value = 1;
-        hasMoreData.value = true;
-      }
-
-      final url = '${ApiUrl.vendorList}?page=${currentPage.value}${_buildQueryParams()}';
-      print('🌐 Fetching Vendors URL: $url');
-
+      final url = "${ApiUrl.servicesList}?page_no=$categoriesServiceCurrentPage";
       final response = await ApiService.getRequest(url);
-
-      if (response.statusCode == 200) {
-        final responseData = response.data;
-
-        if (responseData != null &&
-            responseData['data'] != null) {
-
-          final vendorsData = responseData['data'];
-          final paginationData = responseData['pagination'] ?? {};
-
-          final List<Vendor> fetchedVendors = _parseVendors(vendorsData);
-
-          if (loadMore) {
-            final newVendors = fetchedVendors.where((newVendor) =>
-            !vendors.any((existingVendor) => existingVendor.id == newVendor.id)
-            ).toList();
-            vendors.addAll(newVendors);
-          } else {
-            vendors.assignAll(fetchedVendors);
-          }
-
-          currentPage.value = paginationData['current_page'] ?? 1;
-          totalPages.value = paginationData['last_page'] ?? 1;
-          totalItems.value = paginationData['total'] ?? 0;
-          hasMoreData.value = currentPage.value < totalPages.value;
-
-          print('✅ Fetched ${vendors.length} vendors');
-          print('📄 Current page: $currentPage, Total pages: $totalPages');
-        } else {
-          SnackBarHelper.showError("Invalid response format from server");
+      if (response.data != null) {
+        final data = response.data['data'];
+        if (data == null) {
+          return;
         }
-      } else {
-        final errorMsg = response.data?['message'] ?? 'Failed to fetch vendors';
-        SnackBarHelper.showError("Error: $errorMsg");
+        categoriesServiceTotalPages = data['pagination']?['last_page'] ?? 1;
+        List list = data['services'] ?? [];
+        List<CategoriesServiceModel> tempList = list.map((e) => CategoriesServiceModel.fromJson(e)).toList();
+        if (isInitialLoad) {
+          categoriesServiceList = tempList;
+        } else {
+          categoriesServiceList.addAll(tempList);
+        }
       }
     } catch (e) {
-      SnackBarHelper.showError("Network error: $e");
-      print('❌ Network error: $e');
-    } finally {
-      isLoading(false);
-      isLoadMore(false);
+      Loggers.error('Error :: $e');
+    }
+    isCategoriesServiceLoading = false;
+    isFetchingMoreCategoriesService = false;
+    update();
+  }
+
+  void loadMoreCategoriesService() {
+    if (categoriesServiceCurrentPage < categoriesServiceTotalPages &&
+        !isFetchingMoreCategoriesService) {
+      categoriesServiceCurrentPage++;
+      getCategoriesServiceList(isInitialLoad: false);
     }
   }
 
-  Future<void> loadMoreVendors() async {
-    if (_isLoadingMore || !hasMoreData.value || isLoadMore.value || isLoading.value) {
-      return;
-    }
-    _isLoadingMore = true;
-    currentPage.value++;
-    await fetchVendors(loadMore: true);
-    _isLoadingMore = false;
+
+  bool isVendorLoading = false;
+  int vendorCurrentPage = 1;
+  int vendorTotalPages = 1;
+  bool isFetchingMoreVendors = false;
+  List<Vendor> vendorList = [];
+
+  Future<void> resetVendors(int? categoryId , {required String selectedCategoryId}) async {
+    vendorList.clear();
+    vendorCurrentPage = 1;
+    vendorTotalPages = 1;
+    isFetchingMoreVendors = false;
+    isVendorLoading = true;
+    update();
+
+    await fetchVendors(isInitialLoad: true, selectedCategoryId: selectedCategoryId);
   }
 
-  Future<void> fetchVendorDetail(int id) async {
+  Future<void> fetchVendors({bool isInitialLoad = true, required String selectedCategoryId}) async {
+    if (isInitialLoad) {
+      vendorList.clear();
+      vendorCurrentPage = 1;
+      vendorTotalPages = 1;
+      isVendorLoading = true;
+    } else {
+      isFetchingMoreVendors = true;
+    }
+    update();
     try {
-      _clearDetailData();
-      isLoadingDetail(true);
-      errorMessage('');
-
-      final url = '${ApiUrl.vendorDetails}/$id';
-      print('🌐 Fetching Vendor Detail URL: $url');
-
+      final url = "${ApiUrl.vendorList}?page_no=$vendorCurrentPage""${"&service_id=$selectedCategoryId"}";
       final response = await ApiService.getRequest(url);
+      if (response.data != null) {
+        List list = response.data['data'] ?? [];
+        vendorTotalPages =
+            response.data['pagination']?['last_page'] ?? 1;
 
-      if (response.statusCode == 200) {
-        final responseData = response.data;
-        if (responseData != null && responseData['data'] != null) {
-          vendorDetail.value = Vendor.fromJson(responseData['data']);
-          print('✅ Fetched Vendor detail: ${vendorDetail.value?.name}');
+        List<Vendor> tempList =
+        list.map((e) => Vendor.fromJson(e)).toList();
+
+        if (isInitialLoad) {
+          vendorList = tempList;
         } else {
-          errorMessage('Invalid response format from server');
-          SnackBarHelper.showError("Invalid response format");
+          final newItems = tempList.where((newItem) =>
+          !vendorList.any((old) => old.id == newItem.id)).toList();
+          vendorList.addAll(newItems);
         }
-      } else if (response.statusCode == 404) {
-        errorMessage('Vendor details not found');
-        SnackBarHelper.showError("Vendor details not found");
-      } else {
-        final errorMsg = response.data?['message'] ?? 'Failed to fetch vendor details';
-        errorMessage(errorMsg);
-        SnackBarHelper.showError("Error: $errorMsg");
       }
     } catch (e) {
-      errorMessage('Network error: $e');
-      SnackBarHelper.showError("Network error: $e");
-      print('❌ Network error: $e');
-    } finally {
-      isLoadingDetail(false);
+      Loggers.error('Vendor Error :: $e');
+    }
+    isVendorLoading = false;
+    isFetchingMoreVendors = false;
+    update();
+  }
+
+  void loadMoreVendors({required String selectedCategoryId}) {
+    if (vendorCurrentPage < vendorTotalPages &&
+        !isFetchingMoreVendors) {
+      vendorCurrentPage++;
+      fetchVendors(isInitialLoad: false, selectedCategoryId: selectedCategoryId);
     }
   }
 
-  // ==================== Material Enquiry Methods ====================
+
+  Vendor? vendorDetail;
+  bool isVendorDetailLoading = false;
+
+  Future<void> fetchVendorDetail({required String id}) async {
+    try {
+      isVendorDetailLoading = true;
+      update();
+
+      final url = "${ApiUrl.vendorDetails}/$id";
+      final response = await ApiService.getRequest(url);
+
+      if (response.data != null && response.data['status'] == true) {
+        vendorDetail = Vendor.fromJson(response.data['data']);
+        print('vendorDetail ==> ${vendorDetail?.address}');
+      } else {
+        vendorDetail = null;
+      }
+
+    } catch (e) {
+      Loggers.error('Vendor Details Error :: $e');
+    } finally {
+      isVendorDetailLoading = false;
+      update();
+    }
+  }
+
+
+
+
   Future<void> fetchMaterialEnquiries({bool loadMore = false}) async {
     try {
       if ((isLoading.value && !loadMore) || (isLoadMore.value && loadMore)) {
@@ -451,12 +468,10 @@ class ServiceController extends GetxController {
     }
   }
 
-  // ==================== Review Methods ====================
   Future<Map<String, dynamic>> submitReview(ReviewPayload payload) async {
     try {
       isSubmitting(true);
       errorMessage('');
-
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
         SnackBarHelper.showError('Please login to submit review');
@@ -466,13 +481,11 @@ class ServiceController extends GetxController {
           'status': 401
         };
       }
-
       final response = await ApiService.postRequest(
         ApiUrl.submitReview,
         payload.toJson(),
         // token: token,
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = response.data;
         final success = responseData['success'] ?? true;
@@ -480,10 +493,6 @@ class ServiceController extends GetxController {
 
         if (success) {
           SnackBarHelper.showSuccess(message);
-          // Refresh vendor detail to show new review
-          if (vendorDetail.value != null) {
-            await fetchVendorDetail(vendorDetail.value!.id);
-          }
           return {
             'success': true,
             'message': message,
@@ -610,7 +619,7 @@ class ServiceController extends GetxController {
     if (phoneController.text.trim().isEmpty) {
       phoneError.value = 'Phone number is required';
       isValid = false;
-    } else if (!_isValidPhoneNumber(phoneController.text.trim())) {
+    } else if (phoneController.text.trim().length != 10) {
       phoneError.value = 'Enter a valid 10-digit phone number';
       isValid = false;
     }
@@ -646,7 +655,7 @@ class ServiceController extends GetxController {
     if (phoneController.text.trim().isEmpty) {
       phoneError.value = 'Phone number is required';
       isValid = false;
-    } else if (!_isValidPhoneNumber(phoneController.text.trim())) {
+    } else if (phoneController.text.trim().length != 10) {
       phoneError.value = 'Enter a valid 10-digit phone number';
       isValid = false;
     }
@@ -677,137 +686,10 @@ class ServiceController extends GetxController {
     return isValid;
   }
 
-  bool _isValidPhoneNumber(String phone) {
-    final phoneRegex = RegExp(r'^[0-9]{10}$');
-    return phoneRegex.hasMatch(phone);
-  }
 
-  // ==================== Filter Methods ====================
-  Future<void> searchVendors(String query) async {
-    searchQuery.value = query;
-    await fetchVendors();
-  }
 
-  Future<void> filterByCategory(String category) async {
-    selectedCategory.value = category;
-    await fetchVendors();
-  }
-
-  Future<void> filterByStatus(String status) async {
-    selectedStatus.value = status;
-    await fetchVendors();
-  }
-
-  Future<void> clearFilters() async {
-    searchQuery.value = '';
-    selectedCategory.value = '';
-    selectedStatus.value = '';
-    await fetchVendors();
-  }
-
-  List<String> getAvailableCategories() {
-    return vendors
-        .map((vendor) => vendor.city?.cityName ?? '')
-        .where((city) => city.isNotEmpty)
-        .toSet()
-        .toList();
-  }
-
-  List<String> getAvailableStatuses() {
-    return ['Active', 'Inactive'];
-  }
-
-  // ==================== Helper Methods ====================
-  String _buildQueryParams() {
-    final params = <String>[];
-
-    if (searchQuery.value.isNotEmpty) {
-      params.add('search=${Uri.encodeComponent(searchQuery.value)}');
-    }
-    if (selectedCategory.value.isNotEmpty) {
-      params.add('city=${Uri.encodeComponent(selectedCategory.value)}');
-    }
-    if (selectedStatus.value.isNotEmpty) {
-      final statusValue = selectedStatus.value == 'Active' ? '1' : '0';
-      params.add('status=$statusValue');
-    }
-
-    return params.isEmpty ? '' : '&${params.join('&')}';
-  }
-
-  List<Vendor> _parseVendors(dynamic vendorsData) {
-    if (vendorsData is List) {
-      return vendorsData.map((json) => Vendor.fromJson(json)).toList();
-    }
-    return [];
-  }
-
-  void _clearDetailData() {
-    vendorDetail.value = null;
-    errorMessage('');
-  }
-
-  // ==================== Refresh Methods ====================
-  Future<void> refreshVendors() async {
-    await fetchVendors(loadMore: false);
-  }
-
-  Future<void> refreshMaterialEnquiries() async {
-    await fetchMaterialEnquiries(loadMore: false);
-  }
-
-  Future<void> refreshServiceEnquiries() async {
-    await fetchServiceEnquiries(loadMore: false);
-  }
-
-  // ==================== Getter Methods ====================
-  String getFormattedVendorName() {
-    return vendorDetail.value?.name ?? 'No Name';
-  }
-
-  String getFormattedDescription() {
-    return vendorDetail.value?.description ?? 'No Description';
-  }
-
-  String getFormattedStatus() {
-    return vendorDetail.value?.status == 1 ? 'Active' : 'Inactive';
-  }
-
-  String getVendorImage() {
-    if (vendorDetail.value?.image.isNotEmpty ?? false) {
-      return vendorDetail.value!.image.first;
-    }
-    return 'assets/images/placeholder_vendor.png';
-  }
-
-  double getAverageRating() {
-    final rating = vendorDetail.value?.reviewsAvgRating;
-    if (rating != null && rating.isNotEmpty) {
-      return double.tryParse(rating) ?? 0.0;
-    }
-    return 0.0;
-  }
-
-  int getReviewCount() {
-    return vendorDetail.value?.reviewsCount ?? 0;
-  }
-
-  List<Review> getVendorReviews() {
-    return vendorDetail.value?.reviews ?? [];
-  }
-
-  List<VendorMaterial> getVendorMaterials() {
-    return vendorDetail.value?.vendorMaterials ?? [];
-  }
-
-  List<VendorService> getVendorServices() {
-    return vendorDetail.value?.vendorServices ?? [];
-  }
-
-  // ==================== Lifecycle Methods ====================
   @override
   void onClose() {
-    _clearDetailData();
     nameController.dispose();
     phoneController.dispose();
     quoteController.dispose();

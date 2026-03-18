@@ -1,7 +1,12 @@
 class ApiUrl {
   // static const String baseUrl = "http://192.168.1.114/admincashback/public";
+
+  /// main baser URL
   static const String baseUrl = "https://admincashback.vrikshatech.in/public";
   static const String WebsidebaseUrl = "https://cashback.vrikshatech.in/public";
+
+
+
   static const String login = "$baseUrl/api/v2/login";
   static const String otp = "$baseUrl/api/v2/otp";
   static const String register = "$baseUrl/api/v2/register";
@@ -48,7 +53,7 @@ class ApiUrl {
   static const String cities = '$baseUrl/api/v2/city';
   static const String propertyTypes = '$baseUrl/api/v2/property-type';
   static const String verificationAmount = '$baseUrl/api/v2/verification-fee';
-  static const String myMarketPlots = "$baseUrl/api/v2/market_list"; // User's plots
+  static const String myMarketPlots = "$baseUrl/api/v2/market_list";
   static const String serviceRequest = '$baseUrl/api/v2/service_request';
   static const String vendorRequest = '$baseUrl/api/v2/vendor_request';
   static const String agentRequest = '$baseUrl/api/v2/agent_request';
@@ -56,17 +61,15 @@ class ApiUrl {
   static const String stateUrl = '$baseUrl/api/v2/state';
   static const String cityUrl = '$baseUrl/api/v2/city/';
   static const String gioTerms = '$baseUrl/api/v2/terms';
-  static String vendorList = '$baseUrl/vendor/service';
-  static const String vendorDetails = '$baseUrl/vendor/service';
-
+  static const String vendorList = '$baseUrl/api/v2/vendor/service';
+  static const String servicesList = '$baseUrl/api/v2/services_list';
+  static const String vendorDetails = '$baseUrl/api/v2/vendor/service';
   static const String commonFacilities = '$baseUrl/api/v2/common-facilities';
 
-  // Enquiry Endpoints
   static const String submitMaterialEnquiry = '$baseUrl/material_enquriy';
   static const String submitServiceEnquiry = '$baseUrl/services_enquriy';
-  static const String materialEnquiryList = '$baseUrl/material_enquriy'; // Assuming this exists
-  static const String serviceEnquiryList = '$baseUrl/services_enquriy'; // Assuming this exists
+  static const String materialEnquiryList = '$baseUrl/material_enquriy';
+  static const String serviceEnquiryList = '$baseUrl/services_enquriy';
 
-  // Review Endpoints
   static const String submitReview = '$baseUrl/shop/review';
 }

@@ -55,20 +55,10 @@ class ServiceCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
-                  return Image.asset(
-                    'assets/placeholder.png', // optional placeholder while loading
-                    width: width,
-                    height: height,
-                    fit: BoxFit.cover,
-                  );
+                  return SizedBox();
                 },
                 errorBuilder: (context, error, stackTrace) {
-                  return Image.asset(
-                    'assets/placeholder.png', // fallback if network fails
-                    width: width,
-                    height: height,
-                    fit: BoxFit.cover,
-                  );
+                  return SizedBox();
                 },
               ),
 

@@ -1,6 +1,3 @@
-// lib/features/service/models/vendor_model.dart
-import 'package:flutter/material.dart';
-
 class Vendor {
   final int id;
   final int userId;

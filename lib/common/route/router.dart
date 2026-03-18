@@ -3,6 +3,8 @@ import 'package:cashback_farms/features/gioo_plots/screens/gioo_details.dart';
 import 'package:cashback_farms/features/gioo_plots/screens/gioo_plot.dart';
 import 'package:cashback_farms/features/material_store/screens/material_store.dart';
 import 'package:cashback_farms/features/material_store/screens/my_enquiry_list.dart';
+import 'package:cashback_farms/features/service/screen/vendor_detail_screen.dart';
+import 'package:cashback_farms/features/service/widget/service_list.dart';
 import 'package:cashback_farms/features/syndicate_plot/screens/syndicate_details.dart';
 import 'package:get/get.dart';
 
@@ -27,7 +29,7 @@ import '../../features/residential_plots/view/my_residential_plots.dart';
 import '../../features/residential_plots/view/residential_details.dart';
 import '../../features/residential_plots/view/residential_plots.dart';
 import '../../features/service/screen/my_service_enquiry.dart';
-import '../../features/service/screen/service.dart';
+import '../../features/service/screen/service_screen.dart';
 import '../../features/splash/screens/splash.dart';
 import '../../features/syndicate_plot/screens/owned_syndicate_plot.dart';
 import '../../features/syndicate_plot/screens/syndicate_plot.dart';
@@ -67,6 +69,9 @@ class AppRoutes {
   static const String plotMarketEnquiry = '/plotMarketEnquiry';
   static const String transactionDeatils = '/transactionDeatils';
   static const String vendorList = '/VendorListScreen';
+  static const String serviceList = '/serviceList';
+  static const String vendorDataDetail = '/vendorDataDetail';
+
   static List<GetPage> routes = [
     GetPage(
       name: splash,
@@ -118,7 +123,7 @@ class AppRoutes {
       transition: Transition.cupertino,
     ), GetPage(
       name: service,
-      page: () => Service(),
+      page: () => ServiceScreen(),
       transition: Transition.cupertino,
     ),
 
@@ -277,7 +282,26 @@ class AppRoutes {
       transition: Transition.cupertino,
     ),
 
-
+    GetPage(
+      name: serviceList,
+      page: () {
+        final arguments = Get.arguments;
+        final id = arguments != null ? arguments['id'] : null;
+        final title = arguments != null ? arguments['title'] : null;
+        return ServiceList(id: id, title: title);
+      },
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: vendorDataDetail,
+      page: () {
+        final arguments = Get.arguments;
+        final id = arguments != null ? arguments['id'] : null;
+        final title = arguments != null ? arguments['title'] : null;
+        return VendorDataDetailScreen(vendorId: id, vendorTitle : title);
+      },
+      transition: Transition.cupertino,
+    ),
   ];
   static void toDashboard() => Get.offAllNamed(dashboard);
   static void toOwnedGioPlotList() => Get.offAllNamed(ownedplotlist);

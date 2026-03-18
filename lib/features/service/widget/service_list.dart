@@ -1,112 +1,243 @@
-// Updated ServiceList widget
-import 'package:cashback_farms/features/service/widget/service_product_card.dart';
+import 'package:cashback_farms/common/colours.dart';
+import 'package:cashback_farms/common/route/router.dart';
+import 'package:cashback_farms/common/widget/appbar.dart';
+import 'package:cashback_farms/common/widget/loader.dart';
+import 'package:cashback_farms/features/service/controller/service_controller.dart' show ServiceController;
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../../common/widget/loader.dart';
-import '../controller/service_controller.dart';
-import 'enquiry_form.dart';
+import '../model/service_model.dart' as vendor;
+import '../screen/vendor_detail_screen.dart';
 
-class ServiceList extends StatelessWidget {
+class ServiceList extends StatefulWidget {
+  final int? id;
+  final String? title;
+
+  const ServiceList({super.key, this.id, this.title});
+
+  @override
+  State<ServiceList> createState() => _ServiceListState();
+}
+
+class _ServiceListState extends State<ServiceList> {
   final ServiceController controller = Get.put(ServiceController());
+  final ScrollController _scrollController = ScrollController();
 
-  ServiceList({super.key});
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchVendors(
+        selectedCategoryId: widget.id.toString(),
+      );
+    });
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200 &&
+          !controller.isFetchingMoreVendors &&
+          controller.vendorCurrentPage < controller.vendorTotalPages) {
+
+        controller.loadMoreVendors(
+           selectedCategoryId: widget.id.toString(),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox();
-    // return Obx(() {
-    //   final services = controller.services;
-    //
-    //   if (controller.isLoading.value && services.isEmpty) {
-    //     return const Center(child: GifLoader(message: "Loading Services...", size: 100));
-    //
-    //   }
-    //
-    //   return NotificationListener<ScrollNotification>(
-    //     onNotification: (scrollInfo) {
-    //       if (scrollInfo.metrics.pixels >=
-    //           scrollInfo.metrics.maxScrollExtent * 0.95 &&
-    //           !controller.isLoadMore.value &&
-    //           controller.hasMoreData.value) {
-    //         // controller.loadMoreServices();
-    //       }
-    //       return false;
-    //     },
-    //     child: ListView.builder(
-    //       itemCount: services.length + (controller.hasMoreData.value ? 1 : 0),
-    //       itemBuilder: (context, index) {
-    //         if (index == services.length) {
-    //           return controller.isLoadMore.value
-    //               ? Padding(
-    //             padding: EdgeInsets.symmetric(vertical: 20.h),
-    //             child: Center(
-    //               child: CircularProgressIndicator(
-    //                 color: Colors.green,
-    //                 strokeWidth: 2,
-    //               ),
-    //             ),
-    //           )
-    //               : SizedBox.shrink();
-    //         }
-    //         final service = services[index];
-    //
-    //         return _buildAnimatedCard(service, index);
-    //       },
-    //     ),
-    //   );
-    // });
-  }
-
-  Widget _buildAnimatedCard(service, int index) {
-    return ServiceCard(
-      // service: service,
-      onTap: () {
-          _showEnquiryForm(service);
-      },
-      onEnquiry: () {
-        _showEnquiryForm(service);
-      },
-      onShare: () {
-        _shareService(service);
-      },
-    )
-        .animate()
-        .fadeIn(duration: 400.ms)
-        .slide(begin: const Offset(0, 0.20), duration: 450.ms)
-        .scale(begin: const Offset(0.92, 0.92), duration: 450.ms)
-        .then(delay: (index * 50).ms);
-  }
-
-  void _showEnquiryForm(service) {
-    Get.bottomSheet(
-      ServiceEnquiryForm(
-        serviceName: service.serviceName,
-        serviceId: service.id,
+    return Scaffold(
+      appBar: DynamicAppBar(
+        title: widget.title ?? '',
+        showBackButton: true,
       ),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black54,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(25.r),
-          topRight: Radius.circular(25.r),
-        ),
+
+      body: GetBuilder<ServiceController>(
+        builder: (controller) {
+          if (controller.isVendorLoading) {
+            return const Center(child: GifLoader());
+          }
+          if (controller.vendorList.isEmpty) {
+            return const Center(child: Text("No Vendors Found"));
+          }
+          return RefreshIndicator(
+            onRefresh: () async {
+              await controller.fetchVendors(
+                selectedCategoryId: widget.id.toString(),
+              );
+            },
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(12),
+              itemCount: controller.vendorList.length +
+                  (controller.isFetchingMoreVendors ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == controller.vendorList.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+                final vendor = controller.vendorList[index];
+                return _buildVendorCard(vendor);
+              },
+            ),
+          );
+        },
       ),
-      enableDrag: true,
     );
   }
 
-  void _sharematerial(service) {
+  Widget _buildVendorCard(vendor.Vendor vendor) {
+    final String imageUrl =
+    (vendor.thumbnail != null && vendor.thumbnail!.isNotEmpty)
+        ? vendor.thumbnail!
+        : "";
+    final double rating = double.tryParse(vendor.reviewsAvgRating ?? "0") ?? 0;
 
+    return Container(
+      height: 220,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 130,
+              height: double.infinity,
+              color: Colors.grey.shade100,
+              child: imageUrl.isNotEmpty
+                  ? Image.network(imageUrl, fit: BoxFit.cover)
+                  : const Icon(Icons.store, color: Colors.grey, size: 40),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Text(
+                      vendor.name,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Row(
+                      children: [
+                        _buildRatingStars(rating),
+                        const SizedBox(width: 4),
+                        Text(
+                          rating.toStringAsFixed(1),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _buildInfoBadge(Icons.assignment_turned_in, "GST: ${vendor.gst ?? 'N/A'}", Colors.blue),
+                        _buildInfoBadge(Icons.timer, vendor.estimateDate ?? "No Est.", Colors.orange),
+                      ],
+                    ),
+                    _buildIconText(Icons.phone, vendor.phone, Colors.green),
+                    _buildIconText(Icons.location_on, vendor.address ?? "No Address", Colors.grey),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.toNamed(
+                            AppRoutes.vendorDataDetail,
+                            arguments: {
+                              "id": vendor.userId.toString(),
+                              "title": vendor.name,
+                            },
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColor.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text("View Details",style: TextStyle(fontWeight: FontWeight.w600),),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
-  void _shareService(service) {
-    // Implement share functionality
-    final shareMessage = "Check out this Service: ${service.serviceName}\n";
-    print("Sharing: $shareMessage");
 
-    // You can use share_plus package for actual sharing
-    // Share.share(shareMessage);
+  Widget _buildInfoBadge(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconText(IconData icon, String text, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(color: color, fontSize: 13),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRatingStars(double rating) {
+    return Row(
+      children: List.generate(5, (index) {
+        if (index < rating.floor()) {
+          return const Icon(Icons.star, color: Colors.orange, size: 16);
+        } else if (index < rating) {
+          return const Icon(Icons.star_half,
+              color: Colors.orange, size: 16);
+        } else {
+          return const Icon(Icons.star_border,
+              color: Colors.orange, size: 16);
+        }
+      }),
+    );
   }
 }
