@@ -7,6 +7,7 @@ import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
 import '../../../common/widget/toster.dart';
+import '../../auth/models/location_model.dart';
 import '../controller/profile_controller.dart';
 
 class ProfileForm extends StatelessWidget {
@@ -259,6 +260,200 @@ class ProfileForm extends StatelessWidget {
 
           // Address
           _buildAddressField(controller),
+          SizedBox(height: 16.h),
+
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text("Country"),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColor.primarylite,
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColor.primary.withOpacity(0.2),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+              ],
+              color: Colors.white,
+            ),
+            child: DropdownButtonFormField<CountryModel>(
+              value: controller.selectedCountry,
+              items: controller.countries.map((country) {
+                return DropdownMenuItem(
+                  value: country,
+                  child: Text(country.countryName),
+                );
+              }).toList(),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: "Select Country",
+              ),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+              onChanged: (value) {
+                controller.selectedCountry = value;
+                controller.selectedState = null;
+                controller.selectedCity = null;
+
+                if (value != null) {
+                  controller.fetchStates(value.id);
+                }
+
+                controller.update();
+              },
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text("State"),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColor.primarylite,
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColor.primary.withOpacity(0.2),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+              ],
+              color: Colors.white,
+            ),
+            child: GetBuilder<ProfileController>(
+              builder: (profilecontrollr) {
+
+                if (profilecontrollr.isstateLoading) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    child: LinearProgressIndicator(
+                      color: AppColor.primary,
+                    ),
+                  );
+                }
+
+                return DropdownButtonFormField<StateModel>(
+                  value: profilecontrollr.states.contains(controller.selectedState)
+                      ? controller.selectedState
+                      : null,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: "Select State",
+                  ),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  items: profilecontrollr.states.map((state) {
+                    return DropdownMenuItem<StateModel>(
+                      value: state, // ✅ FIXED
+                      child: Text(state.stateName),
+                    );
+                  }).toList(),
+                  onTap: () {
+                    if (profilecontrollr.states.isEmpty) {
+                      SnackBarHelper.showError("Please select country first");
+                    }
+                  },
+                  onChanged: (value) {
+
+                    controller.selectedState = value;
+                    controller.selectedCity = null;
+
+                    if (value != null) {
+                      controller.fetchCity(value.id);
+                    }
+
+                    controller.update(); // important for GetBuilder
+                  },
+                );
+              },
+            ),
+          ),
+
+
+          const SizedBox(height: 20),
+
+          Align(
+            alignment: Alignment.centerLeft,
+            child: const Text("City"),
+          ),
+          const SizedBox(height: 10),
+
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColor.primarylite,
+                width: 1.5,
+              ),
+              color: Colors.white,
+            ),
+            child: GetBuilder<ProfileController>(
+              builder: (profilecontrollr) {
+
+                if (profilecontrollr.isCityoading) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    child: LinearProgressIndicator(
+                      color: AppColor.primary,
+                    ),
+                  );
+                }
+
+                return DropdownButtonFormField<CityModel>(
+                  value: profilecontrollr.cities.contains(controller.selectedCity)
+                      ? controller.selectedCity
+                      : null,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: "Select City",
+                  ),
+                  items: profilecontrollr.cities.map((city) {
+                    return DropdownMenuItem<CityModel>(
+                      value: city, // ✅ FIXED
+                      child: Text(city.cityName),
+                    );
+                  }).toList(),
+                  onTap: () {
+                    if (profilecontrollr.cities.isEmpty) {
+                      SnackBarHelper.showError("Please select state first");
+                    }
+                  },
+                  onChanged: (value) {
+                    controller.selectedCity = value;
+                    controller.update();
+                  },
+                );
+              },
+            ),
+          ),
+          SizedBox(height: 20,),
         ],
       ),
     );

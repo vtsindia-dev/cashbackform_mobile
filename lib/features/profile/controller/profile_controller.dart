@@ -9,6 +9,7 @@ import '../../../common/api_constant.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../auth/models/location_model.dart';
 import '../model/profle_model.dart';
 
 class ProfileController extends GetxController {
@@ -27,6 +28,16 @@ class ProfileController extends GetxController {
   final ImagePicker _picker = ImagePicker();
   var profileImage = Rxn<File>();
   var profileImageUrl = ''.obs;
+
+  List<CountryModel> countries = [];
+  List<StateModel> states = [];
+  List<CityModel> cities = [];
+  bool isstateLoading = false;
+  bool isCityoading = false;
+
+  CountryModel? selectedCountry;
+  StateModel? selectedState;
+  CityModel? selectedCity;
 
   @override
   void onInit() {
@@ -91,6 +102,90 @@ class ProfileController extends GetxController {
     }
   }
 
+  Future<void> loadEditProfile(ProfileModel profile) async {
+
+    /// Countries
+    await fetchCountries();
+
+    selectedCountry =
+        countries.firstWhereOrNull((c) => c.id == profile.countryId);
+
+    update();
+
+    /// States
+    if (profile.countryId != null) {
+      await fetchStates(profile.countryId!);
+
+      selectedState =
+          states.firstWhereOrNull((s) => s.id == profile.stateId);
+
+      update();
+    }
+
+    /// Cities
+    if (profile.stateId != null) {
+      await fetchCity(profile.stateId!);
+
+      selectedCity =
+          cities.firstWhereOrNull((c) => c.id == profile.cityId);
+
+      update();
+    }
+  }
+
+  Future<void> fetchCountries() async {
+    final countryresponse = await ApiService.getRequest(ApiUrl.countryUrl);
+
+    if (countryresponse.statusCode == 200) {
+      CountryResponse response =
+      CountryResponse.fromJson(countryresponse.data);
+
+      countries = response.data;
+      update();
+    } else {
+      SnackBarHelper.showError("Failed to fetch countries");
+    }
+  }
+
+  Future<void> fetchStates(int countryId) async {
+    isstateLoading = true;
+    update();
+
+    final stateResponse =
+    await ApiService.getRequest("${ApiUrl.stateUrl}?country_id=$countryId");
+
+    print("state -- $stateResponse");
+
+    if (stateResponse.statusCode == 200) {
+      StateResponse response = StateResponse.fromJson(stateResponse.data);
+      states = response.data;
+    } else {
+      states = [];
+    }
+
+    isstateLoading = false;
+    update();
+  }
+
+  Future<void> fetchCity(int stateId) async {
+
+    isCityoading = true;
+    update();
+
+    final cityRespose =
+    await ApiService.getRequest("${ApiUrl.cityUrl}?state_id=$stateId");
+
+    if (cityRespose.statusCode == 200) {
+      CityResponse response = CityResponse.fromJson(cityRespose.data);
+      cities = response.data;
+    } else {
+      cities = [];
+    }
+
+    isCityoading = false;
+    update();
+  }
+
 
   Future<void> fetchProfile() async {
     try {
@@ -110,6 +205,7 @@ class ProfileController extends GetxController {
         print(responseData);
         if (responseData != null && responseData['data'] != null) {
           profile.value = ProfileModel.fromJson(responseData['data']);
+          loadEditProfile(profile.value!);
           _prefillFormData();
           print('✅ Profile data loaded successfully');
           print(responseData);
@@ -159,6 +255,9 @@ class ProfileController extends GetxController {
         'pin_code': pinCodeController.text.trim(),
         'address': addressController.text.trim(),
         'email': emailController.text.trim(),
+        'country_id': selectedCountry?.id,
+        'state_id': selectedState?.id,
+        'city_id': selectedCity?.id,
       };
       print('📤 Updating profile with data: $formData');
       final response = await ApiService.updateProfile(
@@ -275,6 +374,25 @@ class ProfileController extends GetxController {
       SnackBarHelper.showError('Please select gender');
       return false;
     }
+    if (dobController.text.trim().isEmpty) {
+      SnackBarHelper.showError('Please enter date of birth');
+      return false;
+    }
+    if(selectedCountry == null)
+      {
+        SnackBarHelper.showError('Please select country');
+        return false;
+      }
+    if(selectedState == null)
+      {
+        SnackBarHelper.showError('Please select state');
+        return false;
+      }
+    if(selectedCity == null)
+      {
+        SnackBarHelper.showError('Please select city');
+        return false;
+      }
     return true;
   }
 
@@ -307,7 +425,7 @@ class ProfileController extends GetxController {
       'Email': p.email,
       'Phone': p.phone,
       'Gender': p.formattedGender,
-      'Date of Birth': p.formattedDob ?? 'Not set',
+      'Date of Birth': p.dob ?? 'Not set',
       'PIN Code': p.pinCode ?? 'Not set',
       'Address': p.address ?? 'Not set',
       'Email Verified': p.isEmailVerifiedBool ? 'Yes' : 'No',

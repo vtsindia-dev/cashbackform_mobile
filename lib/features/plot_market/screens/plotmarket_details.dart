@@ -13,6 +13,7 @@ import '../widget/plotmarket_details_widgets/three_d_image_view_widget.dart';
 import '../widget/plotmarket_document.dart' show LegalDocumentsScreen;
 import '../widget/plotmarket_nearby.dart';
 
+
 class PlotMarketDetails extends StatefulWidget {
   final int? id;
   final String? title;

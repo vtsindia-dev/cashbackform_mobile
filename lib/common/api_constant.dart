@@ -52,6 +52,10 @@ class ApiUrl {
   static const String serviceRequest = '$baseUrl/api/v2/service_request';
   static const String vendorRequest = '$baseUrl/api/v2/vendor_request';
   static const String agentRequest = '$baseUrl/api/v2/agent_request';
+  static const String countryUrl = '$baseUrl/api/v2/country';
+  static const String stateUrl = '$baseUrl/api/v2/state';
+  static const String cityUrl = '$baseUrl/api/v2/city/';
+  static const String gioTerms = '$baseUrl/api/v2/terms';
   static String vendorList = '$baseUrl/vendor/service';
   static const String vendorDetails = '$baseUrl/vendor/service';
 

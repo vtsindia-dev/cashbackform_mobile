@@ -98,7 +98,7 @@ class GiooPlotController extends GetxController {
   var slotArea = 0.0.obs;
   var adminBlockUnits = ''.obs;
   var totalPlotSlots = 0.obs;
-
+  var gioTermsChecked =  false.obs;
   // Dynamic graph data
   var weeklyProfit = 0.0.obs;
   var weeklyProfitPercent = 0.0.obs;
@@ -106,12 +106,13 @@ class GiooPlotController extends GetxController {
   final RxList<double> availableValues = <double>[].obs;
   var overallProfit = 0.0.obs;
   var overallProfitPercent = 0.0.obs;
-
+  List <GioPlotTermData>terms = [];
   @override
   void onInit() {
     super.onInit();
     fetchGiooPlots();
     fetchGiooBuyingList();
+    fetchGioTerms();
   }
 
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
@@ -1562,6 +1563,17 @@ class GiooPlotController extends GetxController {
       isLoadingCancelRequest(false);
     }
   }
+
+  Future<void> fetchGioTerms()
+  async {
+    final gioresponse = await  ApiService.getRequest(ApiUrl.gioTerms);
+    if (gioresponse.statusCode == 200) {
+      var termlist = GioPlotTermsModel.fromJson(gioresponse.data);
+      terms = termlist.data ?? [];
+    }
+
+  }
+
 
   Future<void> loadMoreBuyingList() async {
     if (!isLoadingBuyingList.value && hasMoreBuyingData.value) {

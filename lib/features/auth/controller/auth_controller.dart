@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'package:cashback_farms/features/auth/models/location_model.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:permission_handler/permission_handler.dart';
@@ -23,6 +24,16 @@ class AuthController extends GetxController with CodeAutoFill {
   var selectedRole = 1.obs;
   var selectedImage = Rxn<File>();
   var hoveredGender = (-1).obs;
+  List<CountryModel> countries = [];
+  List<StateModel> states = [];
+  List<CityModel> cities = [];
+  bool isstateLoading = false;
+  bool isCityoading = false;
+
+  CountryModel? selectedCountry;
+  StateModel? selectedState;
+  CityModel? selectedCity;
+
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
   final TextEditingController firstNameController = TextEditingController();
@@ -41,6 +52,7 @@ class AuthController extends GetxController with CodeAutoFill {
     _getAppSignature();
     _checkPermissions();
     listenForCode();
+    fetchCountries();
   }
   @override
   void codeUpdated() {
@@ -264,6 +276,63 @@ class AuthController extends GetxController with CodeAutoFill {
       isLoading(false);
     }
   }
+  
+  
+  Future<void> fetchCountries() async{
+    final countryresponse =  await ApiService.getRequest(ApiUrl.countryUrl);
+    print("country -- ${countryresponse}");
+    if (countryresponse.statusCode == 200) {
+      countries?.clear();
+      CountryResponse response = CountryResponse.fromJson(countryresponse.data);
+      countries = response.data;
+
+    }
+    else{
+      SnackBarHelper.showError("Failed to fetch countries");
+    }
+
+  }
+
+  Future<void> fetchStates(int countryId) async {
+    isstateLoading = true;
+    update();
+
+    final stateResponse =
+    await ApiService.getRequest("${ApiUrl.stateUrl}?country_id=$countryId");
+
+    print("state -- $stateResponse");
+
+    if (stateResponse.statusCode == 200) {
+      StateResponse response = StateResponse.fromJson(stateResponse.data);
+      states = response.data;
+    } else {
+      states = [];
+    }
+
+    isstateLoading = false;
+    update();
+  }
+
+  Future<void> fetchCity(int cityId) async{
+
+    isCityoading = true;
+    update();
+
+    final cityRespose = await ApiService.getRequest("${ApiUrl.cityUrl}${cityId}");
+    print("city -- ${cityRespose}");
+
+    if (cityRespose.statusCode == 200) {
+      CityResponse response = CityResponse.fromJson(cityRespose.data);
+      cities = response.data;
+    } else {
+      cities = [];
+    }
+
+    isCityoading = false;
+    update();
+  }
+
+  
   Future<void> register() async {
     try {
       if (!_validateForm()) return;
@@ -280,6 +349,9 @@ class AuthController extends GetxController with CodeAutoFill {
         'dob': dobController.text.trim(),
         'pin_code': pinCodeController.text.trim(),
         'address': addressController.text.trim(),
+        "country_id": selectedCountry?.id,
+        "state_id": selectedState?.id,
+        "city_id": selectedCity?.id,
       });
 
       if (selectedImage.value != null) {
@@ -365,6 +437,23 @@ class AuthController extends GetxController with CodeAutoFill {
       SnackBarHelper.showError("Please select a profile image");
       return false;
     }
+
+    if(selectedCountry == null)
+      {
+        SnackBarHelper.showError("Please select country");
+        return false;
+      }
+    if(selectedCountry == null)
+      {
+        SnackBarHelper.showError("Please select state");
+        return false;
+      }
+    if(selectedCountry == null)
+      {
+        SnackBarHelper.showError("Please select city");
+        return false;
+      }
+
     return true;
   }
   Future<void> resendOtp() async {

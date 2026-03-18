@@ -1103,3 +1103,69 @@ class GiooBuyingDetailResponse {
 }
 
 
+class GioPlotTermsModel {
+  bool? status;
+  String? message;
+  List<GioPlotTermData>? data;
+
+  GioPlotTermsModel({this.status, this.message, this.data});
+
+  GioPlotTermsModel.fromJson(Map<String, dynamic> json) {
+    status = json['status'];
+    message = json['message'];
+    if (json['data'] != null) {
+      data = <GioPlotTermData>[];
+      json['data'].forEach((v) {
+        data!.add(GioPlotTermData.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> dataMap = {};
+    dataMap['status'] = status;
+    dataMap['message'] = message;
+    if (data != null) {
+      dataMap['data'] = data!.map((v) => v.toJson()).toList();
+    }
+    return dataMap;
+  }
+}
+
+class GioPlotTermData {
+  int? id;
+  String? title;
+  String? slug;
+  String? content;
+  String? createdAt;
+  String? updatedAt;
+
+  GioPlotTermData({
+    this.id,
+    this.title,
+    this.slug,
+    this.content,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  GioPlotTermData.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    title = json['title'];
+    slug = json['slug'];
+    content = json['content'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    data['id'] = id;
+    data['title'] = title;
+    data['slug'] = slug;
+    data['content'] = content;
+    data['created_at'] = createdAt;
+    data['updated_at'] = updatedAt;
+    return data;
+  }
+}

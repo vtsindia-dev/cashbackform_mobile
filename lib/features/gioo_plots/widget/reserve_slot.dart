@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:cashback_farms/common/widget/toster.dart';
+import 'package:cashback_farms/features/gioo_plots/screens/gioterms.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -1192,6 +1194,13 @@ class _ReserveSlotState extends State<ReserveSlot> {
             20.h.verticalSpace,
             _buildPriceSummary(controller),
             30.h.verticalSpace,
+            Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 30.w),
+                child: gioTermsCheckbox(),
+              ),
+            ),
+            15.h.verticalSpace,
             _buildPayNowButton(controller),
           ],
         );
@@ -1200,6 +1209,69 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
 
+  Widget gioTermsCheckbox() {
+    return Obx(
+          () => Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+              Transform.scale(
+                scale: 0.9,
+                child: Checkbox(
+                  value: controller.gioTermsChecked.value,
+                  activeColor: AppColor.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  onChanged: (value) {
+                    controller.gioTermsChecked.value = value ?? false;
+                  },
+                ),
+              ),
+
+              6.w.horizontalSpace,
+
+              RichText(
+                text: TextSpan(
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColor.textMain,
+                  ),
+                  children: [
+                    const TextSpan(text: "I agree to the "),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: GestureDetector(
+                        onTap: () {
+                          Get.to(() => GioPlotTermsScreen(
+                            terms: controller.terms,
+                            slug: "gioo-plots-terms-and-condition",
+                          ));
+                        },
+                        child: Text(
+                          "Terms & Conditions",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppColor.primary,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+                      ],
+                    ),
+            ],
+          ),
+    );
+  }
 
 
     Widget _buildLocationDetail(GiooPlotController controller, GiooPlotDetail detail) {
@@ -1387,6 +1459,11 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
   Widget _buildPayNowButton(GiooPlotController controller) {
     final enabled = controller.selectedUnits.isNotEmpty && !_isSelectionMode;
+
+    if (!controller.gioTermsChecked.value) {
+      SnackBarHelper.showError("Please accept terms and conditions");
+      return SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
