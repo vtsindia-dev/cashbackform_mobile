@@ -7,7 +7,7 @@
 
 
     <application
-        android:label="cashback_farms"
+        android:label="Cashback Farms"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

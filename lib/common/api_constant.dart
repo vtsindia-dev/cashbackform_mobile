@@ -66,10 +66,10 @@ class ApiUrl {
   static const String vendorDetails = '$baseUrl/api/v2/vendor/service';
   static const String commonFacilities = '$baseUrl/api/v2/common-facilities';
 
-  static const String submitMaterialEnquiry = '$baseUrl/material_enquriy';
-  static const String submitServiceEnquiry = '$baseUrl/services_enquriy';
+  static const String submitMaterialEnquiry = '$baseUrl/api/v2/material_enquriy';
+  static const String submitServiceEnquiry = '$baseUrl/api/v2/services_enquriy';
   static const String materialEnquiryList = '$baseUrl/material_enquriy';
   static const String serviceEnquiryList = '$baseUrl/services_enquriy';
 
-  static const String submitReview = '$baseUrl/shop/review';
+  static const String submitReview = '$baseUrl/api/v2/shop/review';
 }

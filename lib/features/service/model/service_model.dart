@@ -2,7 +2,7 @@ class Vendor {
   final int id;
   final int userId;
   final String name;
-  final String description;
+  final String? description;
   final String? gst;
   final String? pan;
   final String? instagram;
@@ -31,6 +31,7 @@ class Vendor {
   final List<Review>? reviews;
   final List<VendorMaterial>? vendorMaterials;
   final List<VendorService>? vendorServices;
+  final String? fax;
 
   Vendor({
     required this.id,
@@ -65,6 +66,7 @@ class Vendor {
     this.reviews,
     this.vendorMaterials,
     this.vendorServices,
+    this.fax
   });
 
   factory Vendor.fromJson(Map<String, dynamic> json) {
@@ -98,6 +100,7 @@ class Vendor {
       updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
       reviewsCount: json['reviews_count'] ?? 0,
       reviewsAvgRating: json['reviews_avg_rating']?.toString(),
+      fax: json['fax'],
       reviews: json['reviews'] != null
           ? (json['reviews'] as List).map((e) => Review.fromJson(e)).toList()
           : null,
@@ -108,6 +111,20 @@ class Vendor {
           ? (json['vendor_services'] as List).map((e) => VendorService.fromJson(e)).toList()
           : null,
     );
+  }
+}
+
+class Brand {
+  int? id;
+  String? name;
+  String? logo;
+
+  Brand({this.id, this.name, this.logo});
+
+  Brand.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    name = json['name'];
+    logo = json['logo'];
   }
 }
 
@@ -290,7 +307,7 @@ class Material {
   final int categoryId;
   final int? subcatId;
   final int? subsubcatId;
-  final int? brandId;
+  final String? brandId;
   final int? unitId;
   final String? description;
   final List<String> image;
@@ -324,7 +341,7 @@ class Material {
       categoryId: json['category_id'] ?? 0,
       subcatId: json['subcat_id'],
       subsubcatId: json['subsubcat_id'],
-      brandId: json['brand_id'],
+      brandId: json['brand_id']?.toString(),
       unitId: json['unit_id'],
       description: json['description'],
       image: json['image'] != null ? List<String>.from(json['image']) : [],

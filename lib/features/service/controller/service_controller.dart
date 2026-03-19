@@ -1,4 +1,5 @@
 import 'package:cashback_farms/features/service/model/categories_model.dart';
+import 'package:cashback_farms/features/service/model/material_unit_model.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
@@ -31,7 +32,6 @@ class ServiceController extends GetxController {
   var isDescriptionExpanded = false.obs;
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
-  final quoteController = TextEditingController();
   final dateController = TextEditingController();
   final timeController = TextEditingController();
   var nameError = RxString('');
@@ -173,6 +173,8 @@ class ServiceController extends GetxController {
 
 
   Vendor? vendorDetail;
+  List<Brand>? brandList;
+
   bool isVendorDetailLoading = false;
 
   Future<void> fetchVendorDetail({required String id}) async {
@@ -185,11 +187,18 @@ class ServiceController extends GetxController {
 
       if (response.data != null && response.data['status'] == true) {
         vendorDetail = Vendor.fromJson(response.data['data']);
-        print('vendorDetail ==> ${vendorDetail?.address}');
+
+        if (response.data['brands'] != null) {
+          brandList = (response.data['brands'] as List)
+              .map((e) => Brand.fromJson(e))
+              .toList();
+        } else {
+          brandList = [];
+        }
       } else {
         vendorDetail = null;
       }
-
+      update();
     } catch (e) {
       Loggers.error('Vendor Details Error :: $e');
     } finally {
@@ -198,8 +207,233 @@ class ServiceController extends GetxController {
     }
   }
 
+  double selectedRating = 0;
+  TextEditingController reviewController = TextEditingController();
+  bool isSubmittingReview = false;
+
+  Future<void> submitReview({
+    required String vendorId,
+  }) async {
+    if (selectedRating == 0) {
+      SnackBarHelper.showInfo('Please select rating');
+      return;
+    }
+    if (reviewController.text.trim().isEmpty) {
+      SnackBarHelper.showInfo('Please write review');
+      return;
+    }
+    try {
+      isSubmittingReview = true;
+      update();
+      final String? token = await SessionManager.getToken();
+
+      Map<String, dynamic> data = {
+        "vendor_id": vendorId,
+        "rating": selectedRating,
+        "review": reviewController.text,
+      };
+      final response = await ApiService.postRequestWithToken(ApiUrl.submitReview, data: data, token: token??'',);
+      if(response.statusCode == 200 || response.statusCode == 201){
+        final data = response.data;
+        if(data !=null){
+          if(data['status'] == true){
+            SnackBarHelper.showSuccess('Review submitted Successfully');
+            selectedRating = 0;
+            reviewController.clear();
+            await fetchVendorDetail(id: vendorId);
+          }
+        }
+      }else{
+        SnackBarHelper.showError('Something went wrong');
+      }
+    } catch (e) {
+      SnackBarHelper.showError('Something went wrong');
+    } finally {
+      isSubmittingReview = false;
+      update();
+    }
+  }
+
+  TextEditingController quoteController = TextEditingController();
+  String? selectedDate;
+  String? selectedTime;
+  bool isSubmittingEnquiry = false;
+
+  Future<void> submitEnquiry({
+    required String serviceId,
+  }) async {
+    if (quoteController.text.trim().isEmpty) {
+      SnackBarHelper.showInfo('Please enter your requirement');
+      return;
+    }
+
+    if (selectedDate == null) {
+      SnackBarHelper.showInfo('Please select date');
+      return;
+    }
+
+    if (selectedTime == null) {
+      SnackBarHelper.showInfo('Please select time');
+      return;
+    }
+
+    try {
+      isSubmittingEnquiry = true;
+      update();
+
+      final String? token = await SessionManager.getToken();
+      final userId = await SessionManager.getUserId();
+
+      Map<String, dynamic> data = {
+        "service_id": serviceId,
+        "quote": quoteController.text,
+        "date_preference": selectedDate,
+        "time_preference": selectedTime,
+        "user_id": userId,
+      };
+
+      final response = await ApiService.postRequestWithToken(
+        ApiUrl.submitServiceEnquiry,
+        data: data,
+        token: token ?? '',
+      );
+
+      final resData = response.data;
+
+      if (response.statusCode == 200) {
+        if (resData != null && resData['status'] == true) {
+          Get.back();
+          Future.delayed(const Duration(milliseconds: 200), () {
+            SnackBarHelper.showSuccess(
+              resData['message'] ?? 'Enquiry submitted successfully',
+            );
+          });
+          quoteController.clear();
+          selectedDate = null;
+          selectedTime = null;
+        } else {
+          SnackBarHelper.showError(
+            resData?['message'] ?? 'Failed',
+          );
+        }
+
+      } else if (response.statusCode == 409) {
+        SnackBarHelper.showError(
+          resData?['message'] ?? 'Already submitted',
+        );
+      } else {
+        SnackBarHelper.showError('Something went wrong');
+      }
+
+    } catch (e) {
+      SnackBarHelper.showError('Something went wrong');
+    } finally {
+      isSubmittingEnquiry = false;
+      update();
+    }
+  }
+
+  List<MaterialUnitModel> materialUnits = [];
+  bool isUnitLoading = false;
+
+  Future<void> fetchMaterialUnits() async {
+    // try {
+    //   isUnitLoading = true;
+    //   update();
+    //
+    //   final response = await ApiService.getRequest(
+    //     ApiUrl.getMaterialUnits,
+    //   );
+    //
+    //   if (response.statusCode == 200) {
+    //     final data = response.data;
+    //
+    //     if (data != null && data['status'] == true) {
+    //       materialUnits = (data['data'] as List)
+    //           .map((e) => MaterialUnitModel.fromJson(e))
+    //           .toList();
+    //     }
+    //   } else {
+    //     SnackBarHelper.showError('Failed to load units');
+    //   }
+    // } catch (e) {
+    //   SnackBarHelper.showError('Something went wrong');
+    // } finally {
+    //   isUnitLoading = false;
+    //   update();
+    // }
+  }
+
+  TextEditingController productQuoteController = TextEditingController();
+  TextEditingController quantityController = TextEditingController(text: "1");
+  int quantity = 1;
+  String? selectedUnit;
 
 
+  Future<void> submitProductEnquiry({
+    required String materialId,
+  }) async {
+
+    if (productQuoteController.text.trim().isEmpty) {
+      SnackBarHelper.showInfo('Please enter your requirement');
+      return;
+    }
+
+    if (selectedUnit == null) {
+      SnackBarHelper.showInfo('Please select unit');
+      return;
+    }
+
+    try {
+      isSubmittingEnquiry = true;
+      update();
+
+      final String? token = await SessionManager.getToken();
+      final userId = await SessionManager.getUserId();
+
+      Map<String, dynamic> data = {
+        "material_id": materialId,
+        "requirement": productQuoteController.text,
+        // "unit_id": unitId,
+        "quantity": quantity,
+        "user_id": userId,
+      };
+
+      final response = await ApiService.postRequestWithToken(
+        ApiUrl.submitMaterialEnquiry,
+        data: data,
+        token: token ?? '',
+      );
+
+      final resData = response.data;
+
+      if (response.statusCode == 200) {
+        if (resData != null && resData['status'] == true) {
+          Get.back();
+
+          Future.delayed(const Duration(milliseconds: 200), () {
+            SnackBarHelper.showSuccess(
+              resData['message'] ?? 'Enquiry sent successfully',
+            );
+          });
+
+          productQuoteController.clear();
+          quantity = 1;
+          quantityController.text = "1";
+          selectedUnit = null;
+        } else {
+          SnackBarHelper.showError(resData?['message'] ?? 'Failed');
+        }
+      } else {
+        SnackBarHelper.showError('Something went wrong');
+      }
+    } catch (e) {
+      SnackBarHelper.showError('Something went wrong');
+    } finally {
+      isSubmittingEnquiry = false;
+      update();
+    }
+  }
 
   Future<void> fetchMaterialEnquiries({bool loadMore = false}) async {
     try {
@@ -468,70 +702,8 @@ class ServiceController extends GetxController {
     }
   }
 
-  Future<Map<String, dynamic>> submitReview(ReviewPayload payload) async {
-    try {
-      isSubmitting(true);
-      errorMessage('');
-      final token = await SessionManager.getToken();
-      if (token == null || token.isEmpty) {
-        SnackBarHelper.showError('Please login to submit review');
-        return {
-          'success': false,
-          'message': 'Authentication required',
-          'status': 401
-        };
-      }
-      final response = await ApiService.postRequest(
-        ApiUrl.submitReview,
-        payload.toJson(),
-        // token: token,
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final responseData = response.data;
-        final success = responseData['success'] ?? true;
-        final message = responseData['message'] ?? 'Review submitted successfully';
 
-        if (success) {
-          SnackBarHelper.showSuccess(message);
-          return {
-            'success': true,
-            'message': message,
-            'status': response.statusCode,
-          };
-        } else {
-          errorMessage.value = message;
-          SnackBarHelper.showError(message);
-          return {
-            'success': false,
-            'message': message,
-            'status': response.statusCode ?? 400,
-          };
-        }
-      } else {
-        final errorMsg = response.data?['message'] ?? 'Failed to submit review';
-        errorMessage.value = errorMsg;
-        SnackBarHelper.showError(errorMsg);
-        return {
-          'success': false,
-          'message': errorMsg,
-          'status': response.statusCode ?? 500,
-        };
-      }
-    } catch (e) {
-      print('❌ Review Error: $e');
-      errorMessage.value = 'Network error: ${e.toString()}';
-      SnackBarHelper.showError('Failed to submit review');
-      return {
-        'success': false,
-        'message': e.toString(),
-        'status': 500,
-      };
-    } finally {
-      isSubmitting(false);
-    }
-  }
 
-  // ==================== Image/URL Launcher Methods ====================
   Future<void> viewImage(String imageUrl) async {
     try {
       if (imageUrl.isNotEmpty) {

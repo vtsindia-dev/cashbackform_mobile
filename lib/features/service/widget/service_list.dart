@@ -6,7 +6,7 @@ import 'package:cashback_farms/features/service/controller/service_controller.da
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../model/service_model.dart' as vendor;
-import '../screen/vendor_detail_screen.dart';
+
 
 class ServiceList extends StatefulWidget {
   final int? id;
@@ -52,7 +52,6 @@ class _ServiceListState extends State<ServiceList> {
         title: widget.title ?? '',
         showBackButton: true,
       ),
-
       body: GetBuilder<ServiceController>(
         builder: (controller) {
           if (controller.isVendorLoading) {
@@ -241,3 +240,24 @@ class _ServiceListState extends State<ServiceList> {
     );
   }
 }
+
+// void _showEnquiryForm(Vendor service) {
+//   Get.bottomSheet(
+//     ServiceEnquiryForm(serviceName: service.name, serviceId: service.id),
+//     isScrollControlled: true,
+//     backgroundColor: Colors.transparent,
+//     barrierColor: Colors.black54,
+//     shape: RoundedRectangleBorder(
+//       borderRadius: BorderRadius.only(
+//         topLeft: Radius.circular(25.r),
+//         topRight: Radius.circular(25.r),
+//       ),
+//     ),
+//     enableDrag: true,
+//   );
+// }
+//
+// void _shareService(Vendor service) {
+//   final shareMessage = "Check out this Service: ${service.name}\n";
+//   print("Sharing: $shareMessage");
+// }
