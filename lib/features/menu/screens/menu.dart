@@ -13,6 +13,7 @@ import '../../../common/route/router.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../company_profile/screen/add_company_profile.dart';
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -598,6 +599,7 @@ class _MenuState extends State<Menu> {
     return Column(
       children: [
         _menuTile(Icons.info, "About Us", () => Get.to(() => const AboutUs())),
+        _menuTile(Icons.format_align_center, "Company Profile", () => Get.to(() => const VendorStoreView())),
         _menuTile(Icons.info, "Terms and Conditions", () => Get.to(() => const TermsAndConditionsScreen())),
         _menuTile(Icons.contact_emergency, "Contact Us", () => Get.toNamed("/contactus")),
         _menuTile(Icons.history, "Transaction Details", () => Get.toNamed("/transactionDeatils")),

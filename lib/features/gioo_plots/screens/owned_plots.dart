@@ -1087,7 +1087,8 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
     if (cancelStatus == 0) {
       bookingStatusText = 'Active';
       bookingStatusColor = const Color(0xFF10B981); // Emerald Green
-    } else if (cancelStatus == 1) {
+    }
+    else if (cancelStatus == 1) {
       bookingStatusText = 'Request Sent';
       bookingStatusColor = Colors.orange;
     } else if (cancelStatus == 2) {

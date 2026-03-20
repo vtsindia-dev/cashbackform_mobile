@@ -405,7 +405,7 @@ class AuthController extends GetxController with CodeAutoFill {
   }
   bool _validateForm() {
     if (firstNameController.text.isEmpty) {
-      SnackBarHelper.showError("Please enter first name");
+      SnackBarHelper.showError("Please   first name");
       return false;
     }
     if (lastNameController.text.isEmpty) {

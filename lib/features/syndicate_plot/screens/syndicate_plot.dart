@@ -259,9 +259,7 @@ class _SearchAndFiltersSection extends StatelessWidget {
     );
   }
 
-  // Helper method to shorten labels
   String _getShortLabel(String fullLabel) {
-    // Extract just the value without the prefix for shorter display
     if (fullLabel.startsWith('Search: ')) {
       String query = fullLabel.substring(8);
       return query.length > 10 ? '${query.substring(0, 8)}...' : query;
@@ -296,7 +294,6 @@ class _SearchAndFiltersSection extends StatelessWidget {
         'onRemove': () => controller.clearPropertyTypeFilter(),
       });
     }
-
     if (controller.selectedStateId.value > 0) {
       filters.add({
         'label': "State: ${controller.selectedStateName.value}",
@@ -1010,13 +1007,11 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                 widget.controller.selectedPropertyTypeId.value = _selectedPropertyTypeId;
                 widget.controller.selectedPropertyTypeName.value = _selectedPropertyTypeName;
 
-// Fetch data
+
                 await widget.controller.fetchSyndicatePlots();
 
-                // Close filter sheet
                 Get.back();
               } catch (e) {
-                // Handle error
                 Get.snackbar(
                   'Error',
                   'Failed to apply filters',
