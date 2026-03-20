@@ -26,7 +26,6 @@ class ServiceController extends GetxController {
   var totalItems = 0.obs;
   var hasMoreData = true.obs;
   var searchQuery = ''.obs;
-  var selectedCategory = ''.obs;
   var selectedStatus = ''.obs;
   var isExpanded = false.obs;
   var isDescriptionExpanded = false.obs;
@@ -43,8 +42,111 @@ class ServiceController extends GetxController {
   var serviceId = 0.obs;
   var vendorId = 0.obs;
 
-  void toggleExpansion() => isExpanded.value = !isExpanded.value;
-  void toggleDescription() => isDescriptionExpanded.value = !isDescriptionExpanded.value;
+
+  @override
+  void onInit() {
+    fetchMaterialUnits();
+    super.onInit();
+  }
+  TextEditingController searchController = TextEditingController();
+  String? selectedCategory;
+  String? selectedSubCategory;
+  String? selectedSubSubCategory;
+  String searchText = "";
+
+  List<Category> categoryList = [];
+  List<SubCategoriesList> subCategoryList = [];
+  List<SubSubCategoriesList> subSubCategoryList = [];
+  bool isSubCategoryLoading = false;
+  bool isSubSubCategoryLoading = false;
+
+  Future<void> getSubCategories(String? categoryId) async {
+    if (categoryId == null) return;
+
+    try {
+      isSubCategoryLoading = true;
+      subCategoryList.clear();
+      selectedSubCategory = null;
+      selectedSubSubCategory = null;
+      subSubCategoryList.clear();
+      update();
+
+      final url = '${ApiUrl.servicesSubCategory}/$categoryId';
+
+      final response = await ApiService.getRequest(url);
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+
+        if (data['status'] == 200) {
+          List list = data['data']?['categories_list'] ?? [];
+          subCategoryList = list
+              .map((e) => SubCategoriesList.fromJson(e))
+              .toList();
+        }
+      }
+    } catch (e) {
+      Loggers.error("SubCategory Error: $e");
+    } finally {
+      isSubCategoryLoading = false;
+      update();
+    }
+  }
+
+  Future<void> getSubSubCategories(String? subCategoryId) async {
+    if (subCategoryId == null) return;
+
+    try {
+      isSubSubCategoryLoading = true;
+      subSubCategoryList.clear();
+      selectedSubSubCategory = null;
+      update();
+
+      final url = "${ApiUrl.servicesSubSubCategory}/$subCategoryId";
+
+      final response = await ApiService.getRequest(url);
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+
+        if (data['status'] == 200) {
+          List list = data['data']?['categories_list'] ?? [];
+
+          subSubCategoryList = list
+              .map((e) => SubSubCategoriesList.fromJson(e))
+              .toList();
+        }
+      }
+    } catch (e) {
+      Loggers.error("SubSubCategory Error: $e");
+    } finally {
+      isSubSubCategoryLoading = false;
+      update();
+    }
+  }
+
+  void applyFilter({
+    String? search,
+    String? category,
+    String? subCategory,
+    String? subSubCategory,
+  }) {
+    searchText = search ?? "";
+    selectedCategory = category;
+    selectedSubCategory = subCategory;
+    selectedSubSubCategory = subSubCategory;
+
+    getCategoriesServiceList(isInitialLoad: true);
+  }
+
+  void clearFilter() {
+    searchText = "";
+    selectedCategory = null;
+    selectedSubCategory = null;
+    selectedSubSubCategory = null;
+
+    getCategoriesServiceList(isInitialLoad: true);
+  }
 
 
   bool isCategoriesServiceLoading = false;
@@ -76,7 +178,21 @@ class ServiceController extends GetxController {
     update();
 
     try {
-      final url = "${ApiUrl.servicesList}?page_no=$categoriesServiceCurrentPage";
+      String url = "${ApiUrl.servicesList}?page_no=$categoriesServiceCurrentPage";
+
+      if (searchText.isNotEmpty) {
+        url += "&search=$searchText";
+      }
+      if (selectedCategory != null) {
+        url += "&category=$selectedCategory";
+      }
+      if (selectedSubCategory != null) {
+        url += "&sub_category=$selectedSubCategory";
+      }
+      if (selectedSubSubCategory != null) {
+        url += "&sub_sub_category=$selectedSubSubCategory";
+      }
+
       final response = await ApiService.getRequest(url);
       if (response.data != null) {
         final data = response.data['data'];
@@ -85,6 +201,8 @@ class ServiceController extends GetxController {
         }
         categoriesServiceTotalPages = data['pagination']?['last_page'] ?? 1;
         List list = data['services'] ?? [];
+        List categoriesList = data['categories_list'] ?? [];
+        categoryList = categoriesList.map((e) => Category.fromJson(e)).toList();
         List<CategoriesServiceModel> tempList = list.map((e) => CategoriesServiceModel.fromJson(e)).toList();
         if (isInitialLoad) {
           categoriesServiceList = tempList;
@@ -337,31 +455,31 @@ class ServiceController extends GetxController {
   bool isUnitLoading = false;
 
   Future<void> fetchMaterialUnits() async {
-    // try {
-    //   isUnitLoading = true;
-    //   update();
-    //
-    //   final response = await ApiService.getRequest(
-    //     ApiUrl.getMaterialUnits,
-    //   );
-    //
-    //   if (response.statusCode == 200) {
-    //     final data = response.data;
-    //
-    //     if (data != null && data['status'] == true) {
-    //       materialUnits = (data['data'] as List)
-    //           .map((e) => MaterialUnitModel.fromJson(e))
-    //           .toList();
-    //     }
-    //   } else {
-    //     SnackBarHelper.showError('Failed to load units');
-    //   }
-    // } catch (e) {
-    //   SnackBarHelper.showError('Something went wrong');
-    // } finally {
-    //   isUnitLoading = false;
-    //   update();
-    // }
+    try {
+      isUnitLoading = true;
+      update();
+
+      final response = await ApiService.getRequest(
+        ApiUrl.materialUnit,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+
+        if (data != null && data['status'] == true) {
+          materialUnits = (data['data'] as List)
+              .map((e) => MaterialUnitModel.fromJson(e))
+              .toList();
+        }
+      } else {
+        SnackBarHelper.showError('Failed to load units');
+      }
+    } catch (e) {
+      SnackBarHelper.showError('Something went wrong');
+    } finally {
+      isUnitLoading = false;
+      update();
+    }
   }
 
   TextEditingController productQuoteController = TextEditingController();
@@ -394,7 +512,7 @@ class ServiceController extends GetxController {
       Map<String, dynamic> data = {
         "material_id": materialId,
         "requirement": productQuoteController.text,
-        // "unit_id": unitId,
+        "unit_id": selectedUnit,
         "quantity": quantity,
         "user_id": userId,
       };
@@ -407,7 +525,7 @@ class ServiceController extends GetxController {
 
       final resData = response.data;
 
-      if (response.statusCode == 200) {
+      if(response.statusCode == 200 || response.statusCode == 201){
         if (resData != null && resData['status'] == true) {
           Get.back();
 
@@ -424,6 +542,10 @@ class ServiceController extends GetxController {
         } else {
           SnackBarHelper.showError(resData?['message'] ?? 'Failed');
         }
+      }else if (response.statusCode == 409) {
+        SnackBarHelper.showError(
+          resData?['message'] ?? 'Already submitted',
+        );
       } else {
         SnackBarHelper.showError('Something went wrong');
       }
@@ -434,6 +556,22 @@ class ServiceController extends GetxController {
       update();
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+
 
   Future<void> fetchMaterialEnquiries({bool loadMore = false}) async {
     try {

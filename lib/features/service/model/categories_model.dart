@@ -73,4 +73,58 @@ class Category {
 
 
 
+class SubCategoriesList {
+  int? id;
+  int? serviceCategoryId;
+  String? name;
+  int? status;
+  String? createdAt;
+  String? updatedAt;
 
+  SubCategoriesList(
+      {this.id,
+        this.serviceCategoryId,
+        this.name,
+        this.status,
+        this.createdAt,
+        this.updatedAt,
+       });
+
+  SubCategoriesList.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    serviceCategoryId = json['service_category_id'];
+    name = json['name'];
+    status = json['status'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+  }
+}
+
+
+
+class SubSubCategoriesList {
+  int? id;
+  int? serviceCategoryId;
+  int? serviceSubcategoryId;
+  String? name;
+  String? createdAt;
+  String? updatedAt;
+
+  SubSubCategoriesList(
+      {this.id,
+        this.serviceCategoryId,
+        this.serviceSubcategoryId,
+        this.name,
+        this.createdAt,
+        this.updatedAt,
+      });
+
+  SubSubCategoriesList.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    serviceCategoryId = json['service_category_id'];
+    serviceSubcategoryId = json['service_subcategory_id'];
+    name = json['name'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+  }
+}

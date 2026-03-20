@@ -714,12 +714,18 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen>
                               border: Border.all(color: Colors.grey.shade300),
                             ),
                             child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
+                              child: controller.isUnitLoading
+                                  ? const Center(child: CircularProgressIndicator())
+                                  : DropdownButton<String>(
                                 isExpanded: true,
+                                dropdownColor: Colors.white,
                                 hint: const Text("Unit"),
                                 value: controller.selectedUnit,
-                                items: ["Kg", "Ton", "Nos", "Litre"]
-                                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                                items: controller.materialUnits
+                                    .map((unit) => DropdownMenuItem<String>(
+                                  value: unit.id.toString(),
+                                  child: Text(unit.name ?? ""),
+                                ))
                                     .toList(),
                                 onChanged: (val) {
                                   controller.selectedUnit = val;

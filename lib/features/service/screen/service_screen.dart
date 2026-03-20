@@ -38,12 +38,214 @@ class _ServiceScreenState extends State<ServiceScreen> {
     });
   }
 
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return GetBuilder<ServiceController>(
+          builder: (controller) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.75,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              expand: false,
+              builder: (_, scrollController) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Filter Services",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Get.back(),
+                            icon: const Icon(Icons.close),
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          children: [
+                            _buildSearchBar(controller),
+                            const SizedBox(height: 20),
+                            _sectionTitle("Category"),
+                            _buildDropdown(
+                              hint: "Select Category",
+                              value: controller.selectedCategory,
+                              items: controller.categoryList
+                                  .map((e) => DropdownMenuItem(
+                                value: e.id.toString(),
+                                child: Text(e.categoryName ?? ""),
+                              ))
+                                  .toList(),
+                              onChanged: (val) {
+                                controller.selectedCategory = val;
+                                controller.getSubCategories(val);
+                                controller.update();
+                              },
+                            ),
+                            const SizedBox(height: 15),
+                            _sectionTitle("Sub Category"),
+                            _buildDropdown(
+                              hint: "Select Sub Category",
+                              value: controller.selectedSubCategory,
+                              items: controller.subCategoryList
+                                  .map((e) => DropdownMenuItem<String>(
+                                value: e.id.toString(),
+                                child: Text(e.name ?? ""),
+                              ))
+                                  .toList(),
+                              onChanged: (val) {
+                                controller.selectedSubCategory = val;
+                                controller.getSubSubCategories(val);
+                                controller.update();
+                              },
+                            ),
+                            const SizedBox(height: 15),
+                            _sectionTitle("Sub Sub Category"),
+                            _buildDropdown(
+                              hint: "Select Sub Sub Category",
+                              value: controller.selectedSubSubCategory,
+                              items: controller.subSubCategoryList
+                                  .map((e) => DropdownMenuItem(
+                                value: e.id.toString(),
+                                child: Text(e.name ?? ""),
+                              ))
+                                  .toList(),
+                              onChanged: (val) {
+                                controller.selectedSubSubCategory = val;
+                                controller.update();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                controller.clearFilter();
+                              },
+                              child: const Text("Clear"),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                controller.applyFilter(
+                                  search: controller.searchController.text,
+                                  category: controller.selectedCategory,
+                                  subCategory: controller.selectedSubCategory,
+                                  subSubCategory: controller.selectedSubSubCategory,
+                                );
+                                Get.back();
+                              },
+                              child: const Text("Apply"),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+  Widget _buildSearchBar(ServiceController controller) {
+    return TextField(
+      controller: controller.searchController,
+      decoration: InputDecoration(
+        hintText: "Search services...",
+        prefixIcon: const Icon(Icons.search),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+  Widget _sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+          color: Colors.grey,
+        ),
+      ),
+    );
+  }
+  Widget _buildDropdown({
+    required String hint,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required Function(String?) onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: value,
+          hint: Text(hint),
+          items: items,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: DynamicAppBar(
         title: "Professional Services",
         showBackButton: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              _showFilterBottomSheet(context);
+            },
+          )
+        ],
       ),
       body: GetBuilder<ServiceController>(
         builder: (controller) {

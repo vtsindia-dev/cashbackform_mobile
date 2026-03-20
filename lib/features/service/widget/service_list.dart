@@ -240,24 +240,3 @@ class _ServiceListState extends State<ServiceList> {
     );
   }
 }
-
-// void _showEnquiryForm(Vendor service) {
-//   Get.bottomSheet(
-//     ServiceEnquiryForm(serviceName: service.name, serviceId: service.id),
-//     isScrollControlled: true,
-//     backgroundColor: Colors.transparent,
-//     barrierColor: Colors.black54,
-//     shape: RoundedRectangleBorder(
-//       borderRadius: BorderRadius.only(
-//         topLeft: Radius.circular(25.r),
-//         topRight: Radius.circular(25.r),
-//       ),
-//     ),
-//     enableDrag: true,
-//   );
-// }
-//
-// void _shareService(Vendor service) {
-//   final shareMessage = "Check out this Service: ${service.name}\n";
-//   print("Sharing: $shareMessage");
-// }

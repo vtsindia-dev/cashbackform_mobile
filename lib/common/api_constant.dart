@@ -72,4 +72,8 @@ class ApiUrl {
   static const String serviceEnquiryList = '$baseUrl/services_enquriy';
 
   static const String submitReview = '$baseUrl/api/v2/shop/review';
+  static const String materialUnit = '$baseUrl/api/v2/units';
+
+  static const String servicesSubCategory = '$baseUrl/api/v2/services_sub_cat';
+  static const String servicesSubSubCategory = '$baseUrl/api/v2/services_sub_sub_cat';
 }
