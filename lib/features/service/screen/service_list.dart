@@ -27,9 +27,8 @@ class _ServiceListState extends State<ServiceList> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchVendors(
-        selectedCategoryId: widget.id.toString(),
-      );
+      controller.clearLocationFilter(selectedCategoryId: widget.id.toString());
+      controller.fetchStates();
     });
 
     _scrollController.addListener(() {
@@ -45,12 +44,208 @@ class _ServiceListState extends State<ServiceList> {
     });
   }
 
+  void _showLocationFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return GetBuilder<ServiceController>(
+          builder: (controller) {
+            return Container(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 12,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 45,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Filter Location",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Get.back(),
+                          icon: const Icon(Icons.close),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _sectionTitle("State"),
+                    _buildDropdown(
+                      hint: controller.isStateLoading
+                          ? "Loading..."
+                          : "Select State",
+                      value: controller.selectedStateId,
+                      icon: Icons.map_outlined,
+                      items: controller.stateList.map((e) {
+                        return DropdownMenuItem(
+                          value: e.id.toString(),
+                          child: Text(e.stateName),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        controller.selectedStateId = val;
+                        controller.fetchCity(int.parse(val!));
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _sectionTitle("City"),
+                    _buildDropdown(
+                      hint: controller.isCityLoading
+                          ? "Loading..."
+                          : "Select City",
+                      value: controller.selectedCityId,
+                      icon: Icons.location_city,
+                      items: controller.cityList.map((e) {
+                        return DropdownMenuItem(
+                          value: e.id.toString(),
+                          child: Text(e.cityName),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        controller.selectedCityId = val;
+                        controller.update();
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () {
+                              controller.clearLocationFilter(selectedCategoryId: widget.id.toString());
+                              Get.back();
+                            },
+                            child: const Text(
+                              "Reset",
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColor.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            onPressed: () {
+                              controller.applyLocationFilter(
+                                stateId: controller.selectedStateId,
+                                cityId: controller.selectedCityId, selectedCategoryId: widget.id.toString(),
+                              );
+                              Get.back();
+                            },
+                            child: const Text(
+                              "Apply Filter",
+                              style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blueGrey, letterSpacing: 0.5),
+      ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String hint,
+    required String? value,
+    required IconData icon,
+    required List<DropdownMenuItem<String>> items,
+    required Function(String?) onChanged,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7FA),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          dropdownColor: Colors.white,
+          isExpanded: true,
+          icon: const Icon(Icons.expand_more_rounded, color: Colors.blueGrey),
+          value: value,
+          hint: Row(
+            children: [
+              Icon(icon, size: 20, color: AppColor.primary,),
+              const SizedBox(width: 12),
+              Text(hint, style: const TextStyle(color: Colors.grey, fontSize: 15)),
+            ],
+          ),
+          items: items,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: DynamicAppBar(
         title: widget.title ?? '',
         showBackButton: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              _showLocationFilterBottomSheet(context);
+            },
+          )
+        ],
       ),
       body: GetBuilder<ServiceController>(
         builder: (controller) {
@@ -62,9 +257,7 @@ class _ServiceListState extends State<ServiceList> {
           }
           return RefreshIndicator(
             onRefresh: () async {
-              await controller.fetchVendors(
-                selectedCategoryId: widget.id.toString(),
-              );
+              controller.clearLocationFilter(selectedCategoryId: widget.id.toString());
             },
             child: ListView.builder(
               controller: _scrollController,

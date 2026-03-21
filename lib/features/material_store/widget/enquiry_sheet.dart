@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../controller/materialstore_controller.dart';
+import '../controller/material_store_controller.dart';
 
 class MaterialEnquirySheet extends StatefulWidget {
   final int materialId;
@@ -147,7 +147,7 @@ class _MaterialEnquirySheetState extends State<MaterialEnquirySheet> {
 
                     const SizedBox(height: 32),
 
-                    // Submit Button Logic
+             /*       // Submit Button Logic
                     Obx(() {
                       bool isLoading = controller.isSubmittingEnquiry.value;
                       bool isSuccess = controller.enquirySuccess.value;
@@ -188,7 +188,7 @@ class _MaterialEnquirySheetState extends State<MaterialEnquirySheet> {
                           ),
                         ],
                       );
-                    }),
+                    }),*/
                   ],
                 ),
               ),
@@ -276,27 +276,27 @@ class _MaterialEnquirySheetState extends State<MaterialEnquirySheet> {
     );
   }
 
-  Future<void> _submitEnquiry() async {
-    FocusScope.of(context).unfocus();
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      final success = await controller.submitMaterialEnquiry(
-        materialId: widget.materialId,
-        requirement: _requirement,
-        unitId: _unitId,
-        quantity: _quantity,
-        userId: 1, // Replace with actual user ID
-      );
-
-      if (success) {
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) widget.onSubmitted(true);
-        });
-      } else {
-        widget.onSubmitted(false);
-      }
-    }
-  }
+  // Future<void> _submitEnquiry() async {
+  //   FocusScope.of(context).unfocus();
+  //   if (_formKey.currentState!.validate()) {
+  //     _formKey.currentState!.save();
+  //     final success = await controller.submitMaterialEnquiry(
+  //       materialId: widget.materialId,
+  //       requirement: _requirement,
+  //       unitId: _unitId,
+  //       quantity: _quantity,
+  //       userId: 1, // Replace with actual user ID
+  //     );
+  //
+  //     if (success) {
+  //       Future.delayed(const Duration(seconds: 2), () {
+  //         if (mounted) widget.onSubmitted(true);
+  //       });
+  //     } else {
+  //       widget.onSubmitted(false);
+  //     }
+  //   }
+  // }
 
   @override
   void dispose() {

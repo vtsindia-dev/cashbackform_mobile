@@ -1,4 +1,3 @@
-import 'package:cashback_farms/common/api_constant.dart';
 import 'package:cashback_farms/common/colours.dart';
 import 'package:cashback_farms/common/route/router.dart';
 import 'package:cashback_farms/common/widget/appbar.dart';
@@ -24,7 +23,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
   @override
   void initState() {
     super.initState();
-    controller.getCategoriesServiceList();
+    controller.clearFilter();
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
@@ -46,186 +45,209 @@ class _ServiceScreenState extends State<ServiceScreen> {
       builder: (_) {
         return GetBuilder<ServiceController>(
           builder: (controller) {
-            return DraggableScrollableSheet(
-              initialChildSize: 0.75,
-              minChildSize: 0.5,
-              maxChildSize: 0.95,
-              expand: false,
-              builder: (_, scrollController) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 5,
-                        margin: const EdgeInsets.only(bottom: 10),
+            return Container(
+              padding: EdgeInsets.only(
+                  left: 20, right: 20, top: 12,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 45, height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
+                          color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            "Filter Services",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => Get.back(),
-                            icon: const Icon(Icons.close),
-                          )
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Expanded(
-                        child: ListView(
-                          controller: scrollController,
-                          children: [
-                            _buildSearchBar(controller),
-                            const SizedBox(height: 20),
-                            _sectionTitle("Category"),
-                            _buildDropdown(
-                              hint: "Select Category",
-                              value: controller.selectedCategory,
-                              items: controller.categoryList
-                                  .map((e) => DropdownMenuItem(
-                                value: e.id.toString(),
-                                child: Text(e.categoryName ?? ""),
-                              ))
-                                  .toList(),
-                              onChanged: (val) {
-                                controller.selectedCategory = val;
-                                controller.getSubCategories(val);
-                                controller.update();
-                              },
-                            ),
-                            const SizedBox(height: 15),
-                            _sectionTitle("Sub Category"),
-                            _buildDropdown(
-                              hint: "Select Sub Category",
-                              value: controller.selectedSubCategory,
-                              items: controller.subCategoryList
-                                  .map((e) => DropdownMenuItem<String>(
-                                value: e.id.toString(),
-                                child: Text(e.name ?? ""),
-                              ))
-                                  .toList(),
-                              onChanged: (val) {
-                                controller.selectedSubCategory = val;
-                                controller.getSubSubCategories(val);
-                                controller.update();
-                              },
-                            ),
-                            const SizedBox(height: 15),
-                            _sectionTitle("Sub Sub Category"),
-                            _buildDropdown(
-                              hint: "Select Sub Sub Category",
-                              value: controller.selectedSubSubCategory,
-                              items: controller.subSubCategoryList
-                                  .map((e) => DropdownMenuItem(
-                                value: e.id.toString(),
-                                child: Text(e.name ?? ""),
-                              ))
-                                  .toList(),
-                              onChanged: (val) {
-                                controller.selectedSubSubCategory = val;
-                                controller.update();
-                              },
-                            ),
-                          ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Filter Services",
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1A1A1A)),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                controller.clearFilter();
-                              },
-                              child: const Text("Clear"),
-                            ),
+                        IconButton(
+                          onPressed: () => Get.back(),
+                          icon: const Icon(Icons.close, color: Colors.grey),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+
+                    _buildSearchBar(controller),
+                    const SizedBox(height: 25),
+                    _sectionTitle("Main Category"),
+                    _buildDropdown(
+                      hint: "Select Category",
+                      value: controller.selectedCategory,
+                      icon: Icons.grid_view_rounded,
+                      items: controller.categoryList.map((e) => DropdownMenuItem(
+                        value: e.id.toString(),
+                        child: Text(e.categoryName ?? ""),
+                      )).toList(),
+                      onChanged: (val) {
+                        controller.selectedCategory = val;
+                        controller.selectedSubCategory = null;
+                        controller.selectedSubSubCategory = null;
+                        controller.subCategoryList.clear();
+                        controller.subSubCategoryList.clear();
+                        controller.update();
+                        if (val != null && val.isNotEmpty) {
+                          controller.getSubCategories(val);
+                        }
+                      },
+                    ),
+
+                    const SizedBox(height: 20),
+                    _sectionTitle("Sub Category"),
+                    _buildDropdown(
+                      hint: controller.isSubCategoryLoading
+                          ? "Loading..."
+                          : "Select Sub Category",
+                      value: controller.selectedSubCategory,
+                      icon: Icons.account_tree_outlined,
+                      items: controller.subCategoryList.map((e) => DropdownMenuItem(
+                        value: e.id.toString(),
+                        child: Text(e.name ?? ""),
+                      )).toList(),
+                      onChanged: (val) {
+                        controller.selectedSubCategory = val;
+
+                        controller.selectedSubSubCategory = null;
+                        controller.subSubCategoryList.clear();
+
+                        controller.update();
+                        controller.getSubSubCategories(val);
+                      },
+                    ),
+
+                    const SizedBox(height: 20),
+                    _sectionTitle("Specific Type"),
+                    _buildDropdown(
+                      hint: controller.isSubSubCategoryLoading
+                          ? "Loading..."
+                          : "Sub Sub Category",
+                      value: controller.selectedSubSubCategory,
+                      icon: Icons.category_outlined,
+                      items: controller.subSubCategoryList.map((e) => DropdownMenuItem(
+                        value: e.id.toString(),
+                        child: Text(e.name ?? ""),
+                      )).toList(),
+                      onChanged: (val) {
+                        controller.selectedSubSubCategory = val;
+                        controller.update();
+                      },
+                    ),
+                    const SizedBox(height: 35),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () {
+                              controller.clearFilter();
+                              Get.back();
+                            },
+                            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+                            child: const Text("Reset", style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                controller.applyFilter(
-                                  search: controller.searchController.text,
-                                  category: controller.selectedCategory,
-                                  subCategory: controller.selectedSubCategory,
-                                  subSubCategory: controller.selectedSubSubCategory,
-                                );
-                                Get.back();
-                              },
-                              child: const Text("Apply"),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColor.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              elevation: 0,
                             ),
+                            onPressed: () {
+                              controller.applyFilter(
+                                search: controller.searchController.text,
+                                category: controller.selectedCategory,
+                                subCategory: controller.selectedSubCategory,
+                                subSubCategory: controller.selectedSubSubCategory,
+                              );
+                              Get.back();
+                            },
+                            child: const Text("Apply Filter", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.white)),
                           ),
-                        ],
-                      )
-                    ],
-                  ),
-                );
-              },
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
             );
           },
         );
       },
     );
   }
+
   Widget _buildSearchBar(ServiceController controller) {
     return TextField(
       controller: controller.searchController,
+      style: const TextStyle(fontSize: 15),
       decoration: InputDecoration(
-        hintText: "Search services...",
-        prefixIcon: const Icon(Icons.search),
+        hintText: "What are you looking for?",
+        prefixIcon: const Icon(Icons.search, color: AppColor.primary, size: 22),
         filled: true,
-        fillColor: Colors.grey.shade100,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
+        fillColor: const Color(0xFFF5F7FA),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
       ),
     );
   }
+
   Widget _sectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(left: 4),
       child: Text(
         title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-          color: Colors.grey,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blueGrey, letterSpacing: 0.5),
       ),
     );
   }
+
   Widget _buildDropdown({
     required String hint,
     required String? value,
+    required IconData icon,
     required List<DropdownMenuItem<String>> items,
     required Function(String?) onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFFF5F7FA),
+        borderRadius: BorderRadius.circular(15),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
+          dropdownColor: Colors.white,
           isExpanded: true,
+          icon: const Icon(Icons.expand_more_rounded, color: Colors.blueGrey),
           value: value,
-          hint: Text(hint),
+          hint: Row(
+            children: [
+              Icon(icon, size: 20, color: AppColor.primary,),
+              const SizedBox(width: 12),
+              Text(hint, style: const TextStyle(color: Colors.grey, fontSize: 15)),
+            ],
+          ),
           items: items,
           onChanged: onChanged,
         ),
@@ -264,7 +286,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
           return RefreshIndicator(
             color: AppColor.primary,
             onRefresh: () async {
-              await controller.resetCategoriesService();
+              controller.clearFilter();
             },
             child: ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),

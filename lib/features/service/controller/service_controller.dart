@@ -1,3 +1,4 @@
+import 'package:cashback_farms/features/auth/models/location_model.dart';
 import 'package:cashback_farms/features/service/model/categories_model.dart';
 import 'package:cashback_farms/features/service/model/material_unit_model.dart';
 import 'package:get/get.dart';
@@ -48,6 +49,45 @@ class ServiceController extends GetxController {
     fetchMaterialUnits();
     super.onInit();
   }
+
+
+  bool isStateLoading = false;
+  bool isCityLoading = false;
+  List<StateModel> stateList = [];
+  List<CityModel> cityList = [];
+
+  Future<void> fetchStates() async {
+    isStateLoading = true;
+    update();
+    final stateResponse =
+    await ApiService.getRequest(ApiUrl.stateUrl);
+    if (stateResponse.statusCode == 200) {
+      StateResponse response = StateResponse.fromJson(stateResponse.data);
+      stateList = response.data;
+    } else {
+      stateList = [];
+    }
+    isStateLoading = false;
+    update();
+  }
+
+  Future<void> fetchCity(int cityId) async {
+    isCityLoading = true;
+    cityList = [];
+    selectedCityId = null;
+    update();
+    final cityResponse = await ApiService.getRequest("${ApiUrl.cityUrl}$cityId");
+    if (cityResponse.statusCode == 200) {
+      CityResponse response = CityResponse.fromJson(cityResponse.data);
+      cityList = response.data;
+    } else {
+      cityList = [];
+    }
+    isCityLoading = false;
+    update();
+  }
+
+
   TextEditingController searchController = TextEditingController();
   String? selectedCategory;
   String? selectedSubCategory;
@@ -141,6 +181,7 @@ class ServiceController extends GetxController {
 
   void clearFilter() {
     searchText = "";
+    searchController.text = "";
     selectedCategory = null;
     selectedSubCategory = null;
     selectedSubSubCategory = null;
@@ -226,6 +267,30 @@ class ServiceController extends GetxController {
     }
   }
 
+  String? selectedStateId;
+  String? selectedCityId;
+
+  void applyLocationFilter({
+    String? stateId,
+    String? cityId,
+    required String selectedCategoryId
+  }) {
+    selectedStateId = stateId;
+    selectedCityId = cityId;
+
+    resetVendors(
+      selectedCategoryId: selectedCategoryId,
+    );
+  }
+
+  void clearLocationFilter({required String selectedCategoryId}) {
+    selectedStateId = null;
+    selectedCityId = null;
+
+    resetVendors(
+      selectedCategoryId: selectedCategoryId,
+    );
+  }
 
   bool isVendorLoading = false;
   int vendorCurrentPage = 1;
@@ -233,7 +298,7 @@ class ServiceController extends GetxController {
   bool isFetchingMoreVendors = false;
   List<Vendor> vendorList = [];
 
-  Future<void> resetVendors(int? categoryId , {required String selectedCategoryId}) async {
+  Future<void> resetVendors({required String selectedCategoryId}) async {
     vendorList.clear();
     vendorCurrentPage = 1;
     vendorTotalPages = 1;
@@ -255,7 +320,18 @@ class ServiceController extends GetxController {
     }
     update();
     try {
-      final url = "${ApiUrl.vendorList}?page_no=$vendorCurrentPage""${"&service_id=$selectedCategoryId"}";
+      String url = "${ApiUrl.vendorList}?page_no=$vendorCurrentPage";
+
+      if (selectedCategoryId.isNotEmpty) {
+        url += "&service_id=$selectedCategoryId";
+      }
+      if (selectedStateId != null && selectedStateId!.isNotEmpty) {
+        url += "&state=$selectedStateId";
+      }
+      if (selectedCityId != null && selectedCityId!.isNotEmpty) {
+        url += "&city=$selectedCityId";
+      }
+
       final response = await ApiService.getRequest(url);
       if (response.data != null) {
         List list = response.data['data'] ?? [];
@@ -454,6 +530,7 @@ class ServiceController extends GetxController {
   List<MaterialUnitModel> materialUnits = [];
   bool isUnitLoading = false;
 
+
   Future<void> fetchMaterialUnits() async {
     try {
       isUnitLoading = true;
@@ -481,6 +558,7 @@ class ServiceController extends GetxController {
       update();
     }
   }
+
 
   TextEditingController productQuoteController = TextEditingController();
   TextEditingController quantityController = TextEditingController(text: "1");

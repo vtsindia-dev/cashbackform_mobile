@@ -6,7 +6,6 @@ class ApiUrl {
   static const String WebsidebaseUrl = "https://cashback.vrikshatech.in/public";
 
 
-
   static const String login = "$baseUrl/api/v2/login";
   static const String otp = "$baseUrl/api/v2/otp";
   static const String register = "$baseUrl/api/v2/register";
@@ -76,8 +75,19 @@ class ApiUrl {
 
   static const String servicesSubCategory = '$baseUrl/api/v2/services_sub_cat';
   static const String servicesSubSubCategory = '$baseUrl/api/v2/services_sub_sub_cat';
-  // Review Endpoints
+
   static const String vendorStoreUrl = '$baseUrl/vendor/store';
+
+
+
+
+
+
+  static const String materialCategory = '$baseUrl/api/v2/material_category';
+  static const String materialSubCategory = '$baseUrl/api/v2/material_sub_cat';
+  static const String materialSubSubCategory = '$baseUrl/api/v2/material_sub_sub_cat';
+
+  static const String vendorApi = '$baseUrl/api/v2/vendor';
 
 
 }

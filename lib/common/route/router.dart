@@ -4,7 +4,7 @@ import 'package:cashback_farms/features/gioo_plots/screens/gioo_plot.dart';
 import 'package:cashback_farms/features/material_store/screens/material_store.dart';
 import 'package:cashback_farms/features/material_store/screens/my_enquiry_list.dart';
 import 'package:cashback_farms/features/service/screen/vendor_detail_screen.dart';
-import 'package:cashback_farms/features/service/widget/service_list.dart';
+import 'package:cashback_farms/features/service/screen/service_list.dart';
 import 'package:cashback_farms/features/syndicate_plot/screens/syndicate_details.dart';
 import 'package:get/get.dart';
 
@@ -12,8 +12,8 @@ import '../../features/auth/screens/login.dart';
 import '../../features/dashboard/screens/dashboard.dart';
 import '../../features/gioo_plots/screens/owned_plots.dart';
 import '../../features/home/screens/home.dart';
-import '../../features/material_store/screens/materialstore_details.dart';
-import '../../features/material_store/screens/vendor_list.dart';
+import '../../features/material_store/screens/material_vendor_details_screen.dart';
+import '../../features/material_store/screens/material_vendor_list.dart';
 import '../../features/menu/content_screens/contactus.dart';
 import '../../features/plot_market/screens/myplot_list.dart' hide MyPlotsScreen;
 import '../../features/plot_market/screens/myplotmarket_enqiry.dart';
@@ -205,9 +205,9 @@ class AppRoutes {
       name: vendorList,
       page: () {
         final arguments = Get.arguments;
-        final id = arguments != null ? arguments['materialId'] : null;
-        final title = arguments != null ? arguments['materialName'] : null;
-        return VendorListScreen(materialId: id, materialName:title);
+        final id = arguments != null ? arguments['id'] : null;
+        final title = arguments != null ? arguments['title'] : null;
+        return MaterialVendorList(id: id, title:title);
       },
       transition: Transition.cupertino,
     ),
@@ -270,9 +270,9 @@ class AppRoutes {
       name: vendorDetailScreen,
       page: () {
         final arguments = Get.arguments;
-        final id = arguments != null ? arguments['vendorId'] : null;
-        final title = arguments != null ? arguments['vendorName'] : null;
-        return VendorDetailScreen(vendorId: id, vendorName: title,);
+        final id = arguments != null ? arguments['id'] : null;
+        final title = arguments != null ? arguments['title'] : null;
+        return MaterialVendorDetailScreen(vendorId: id, vendorTitle: title,);
       },
       transition: Transition.cupertino,
     ),
