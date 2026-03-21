@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../common/colours.dart';
-import '../controller/materialstore_controller.dart';
+import '../controller/material_store_controller.dart';
 import '../model/material_store.dart';
 
 // --- Main Widget ---
@@ -544,7 +544,7 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
   Widget _actionRow(Color gStart, Color gEnd, Color orange, Color green) {
     return Row(
       children: [
-        Expanded(
+     /*   Expanded(
           child: Obx(() {
             final isLoading = _controller.isSubmittingEnquiry.value;
 
@@ -578,7 +578,7 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
               ).animate().scale(),
             );
           }),
-        ),
+        ),*/
       ],
     );
   }
@@ -839,36 +839,36 @@ class _MarketDescriptionContentState extends State<MarketDescriptionContent> {
 
     final unitId = _getUnitId(_selectedUnit.value);
 
-    final success = await _controller.submitMaterialEnquiry(
-      materialId: material.id,
-      requirement: 'Quote request for ${material.materialName} - Quantity: ${_quantity.value} ${_selectedUnit.value}',
-      unitId: unitId,
-      quantity: _quantity.value,
-      userId: userId,
-    );
+    // final success = await _controller.submitMaterialEnquiry(
+    //   materialId: material.id,
+    //   requirement: 'Quote request for ${material.materialName} - Quantity: ${_quantity.value} ${_selectedUnit.value}',
+    //   unitId: unitId,
+    //   quantity: _quantity.value,
+    //   userId: userId,
+    // );
 
-    if (success) {
-      Get.snackbar(
-        'Quote Requested',
-        'We will contact you soon for ${material.materialName}',
-        backgroundColor: Colors.green[50],
-        colorText: AppColor.textMain,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: EdgeInsets.all(12.w),
-        duration: const Duration(seconds: 3),
-      );
-    } else {
-      Get.snackbar(
-        'Failed',
-        _controller.enquiryError.value.isEmpty
-            ? 'Failed to submit quote request'
-            : _controller.enquiryError.value,
-        backgroundColor: Colors.red[50],
-        colorText: Colors.red[900],
-        snackPosition: SnackPosition.BOTTOM,
-        margin: EdgeInsets.all(12.w),
-      );
-    }
+    // if (success) {
+    //   Get.snackbar(
+    //     'Quote Requested',
+    //     'We will contact you soon for ${material.materialName}',
+    //     backgroundColor: Colors.green[50],
+    //     colorText: AppColor.textMain,
+    //     snackPosition: SnackPosition.BOTTOM,
+    //     margin: EdgeInsets.all(12.w),
+    //     duration: const Duration(seconds: 3),
+    //   );
+    // } else {
+    //   Get.snackbar(
+    //     'Failed',
+    //     _controller.enquiryError.value.isEmpty
+    //         ? 'Failed to submit quote request'
+    //         : _controller.enquiryError.value,
+    //     backgroundColor: Colors.red[50],
+    //     colorText: Colors.red[900],
+    //     snackPosition: SnackPosition.BOTTOM,
+    //     margin: EdgeInsets.all(12.w),
+    //   );
+    // }
   }
 
   int _getUnitId(String unit) {

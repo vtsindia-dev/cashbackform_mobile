@@ -305,7 +305,7 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-  
+
   Widget _buildPlotMenuItem(String imagePath, String label, VoidCallback onTap, {Alignment alignment = Alignment.center}) {
     return Align(
       alignment: alignment,

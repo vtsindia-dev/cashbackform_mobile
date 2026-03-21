@@ -80,9 +80,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
           if (showBackButton)
             _buildIconButton(
               icon: Icons.arrow_back,
-              // Safe back navigation without snackbar check
               onTap: onBackPressed ?? () {
-                // Simplified: Just navigate back without checking snackbar
                 Get.back();
               },
             ),
