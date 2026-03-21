@@ -1092,8 +1092,8 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
     required String label,
     required String value,
     bool isHighlight = false,
-  }) {
-    return Expanded(
+  })
+  {return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

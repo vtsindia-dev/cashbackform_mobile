@@ -1062,7 +1062,7 @@ class PlotMarketController extends GetxController {
         }
       }
     } catch (e) {
-      print('❌ Error fetching property types: $e');
+      print('   $e');
     }
   }
 

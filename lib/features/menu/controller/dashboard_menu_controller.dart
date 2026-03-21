@@ -478,15 +478,12 @@ class DashboardController extends GetxController {
   }
 
   void _clearContactForm() {
-    // Clear Rx values
     firstName.value = '';
     lastName.value = '';
     email.value = '';
     phone.value = '';
     requirement.value = '';
     message.value = '';
-
-    // Clear text controllers
     firstNameController.clear();
     lastNameController.clear();
     emailController.clear();
@@ -496,10 +493,6 @@ class DashboardController extends GetxController {
 
     print('✅ Contact form cleared');
   }
-
-  // ===============================
-  // TERMS & CONDITIONS
-  // ===============================
   Future<void> fetchTermsAndConditions() async {
     if (isLoadingTerms.value) return;
 

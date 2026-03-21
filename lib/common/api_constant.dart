@@ -71,16 +71,13 @@ class ApiUrl {
   static const String materialEnquiryList = '$baseUrl/material_enquriy';
   static const String serviceEnquiryList = '$baseUrl/services_enquriy';
 
-<<<<<<< Updated upstream
   static const String submitReview = '$baseUrl/api/v2/shop/review';
   static const String materialUnit = '$baseUrl/api/v2/units';
 
   static const String servicesSubCategory = '$baseUrl/api/v2/services_sub_cat';
   static const String servicesSubSubCategory = '$baseUrl/api/v2/services_sub_sub_cat';
-=======
   // Review Endpoints
-  static const String submitReview = '$baseUrl/shop/review';
   static const String vendorStoreUrl = '$baseUrl/vendor/store';
 
->>>>>>> Stashed changes
+
 }
