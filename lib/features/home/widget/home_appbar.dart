@@ -59,7 +59,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
 
                 // 🔥 Wrap Location text area with Obx
-                Expanded(child: Center(child: Text("Cashback Farms",style: TextStyle(fontSize: 20.sp),))),
+                Expanded(child: Center(child: Text("Geo Rental Farms",style: TextStyle(fontSize: 20.sp),))),
                 // Expanded(
                 //   child: InkWell(
                 //     onTap: () => controller.refreshLocation(),

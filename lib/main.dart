@@ -1,3 +1,4 @@
+import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -23,14 +24,28 @@ class MyApp extends StatelessWidget {
       splitScreenMode: true,
         builder: (_, child) =>
             GetMaterialApp(
-              title: 'Cashback Farms',
+              title: 'Geo Rental Farms',
               theme: ThemeData(
+                progressIndicatorTheme: const ProgressIndicatorThemeData(
+                  color: AppColor.primary,
+                  linearTrackColor: Colors.grey,
+                ),
+                colorScheme: const ColorScheme.light(
+                  primary: AppColor.primary,
+                ),
                 scaffoldBackgroundColor: Colors.white,
                 textTheme: GoogleFonts.montserratTextTheme(),
               ),
               initialRoute: AppRoutes.splash,
               getPages: AppRoutes.routes,
               debugShowCheckedModeBanner: false,
+              builder: (context, child) {
+                return SafeArea(
+                  top: false,
+                  bottom: true,
+                  child: child!,
+                );
+              },
             )
     );
   }

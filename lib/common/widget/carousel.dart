@@ -24,7 +24,7 @@ class CarouselWidget extends StatefulWidget {
 class _CarouselWidgetState extends State<CarouselWidget> {
   int _currentIndex = 0;
 
-  // Shimmer effect widget
+
   Widget _buildShimmerPlaceholder() {
     return Shimmer.fromColors(
       baseColor: Colors.grey.shade300,
@@ -35,24 +35,6 @@ class _CarouselWidgetState extends State<CarouselWidget> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(widget.borderRadius),
-        ),
-      ),
-    );
-  }
-
-  // Loading skeleton with animation
-  Widget _buildLoadingSkeleton() {
-    return Container(
-      width: double.infinity,
-      height: widget.height,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-      ),
-      child: const Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
         ),
       ),
     );
@@ -69,8 +51,6 @@ class _CarouselWidgetState extends State<CarouselWidget> {
         fit: BoxFit.cover,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
-
-          // Show shimmer effect while loading
           return _buildShimmerPlaceholder();
         },
         errorBuilder: (context, error, stackTrace) {
@@ -198,7 +178,6 @@ class _CarouselWidgetState extends State<CarouselWidget> {
                 : null,
           ),
         ),
-        // Only show indicators if there's more than 1 image
         if (widget.images.length > 1) const SizedBox(height: 5),
         if (widget.images.length > 1)
           Row(

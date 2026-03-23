@@ -11,11 +11,11 @@ class PropertyMain extends StatelessWidget {
   PropertyMain({super.key});
 
   final List<Map<String, String>> properties = const [
-    {"title": "Plot Market", "icon": Images.featuredPlotMarket},
-    {"title": "Gioo Plots", "icon": Images.featuredGioo},
-    {"title": "Syndicate Plots", "icon": Images.featuredSyndicate},
-    {"title": "Residential Plots", "icon": Images.featuredResidential},
-    {"title": "Rental Yield", "icon": Images.featuredGioo},
+    {"title": "Land", "icon": Images.featuredPlotMarket},
+    {"title": "Gioo Nano Plots", "icon": Images.featuredGioo},
+    {"title": "Gio Rental Yield – Syndicate Plot", "icon": Images.featuredSyndicate},
+    {"title": "Flat/Villas", "icon": Images.featuredResidential},
+    {"title": "Gio Rental Yield", "icon": Images.featuredGioo},
   ];
 
   final List<Color> iconColors = const [
@@ -58,7 +58,7 @@ class PropertyMain extends StatelessWidget {
                   child: _buildCard(properties[left], left)
                       .animate()
                       .slideX(
-                    begin: (left % 2 == 0) ? 0.6 : -0.6, // ⭐ alternate direction
+                    begin: (left % 2 == 0) ? 0.6 : -0.6,
                     end: 0,
                     duration: 650.ms,
                     curve: Curves.easeOutCubic,
@@ -72,7 +72,7 @@ class PropertyMain extends StatelessWidget {
                       ? _buildCard(properties[right], right)
                       .animate()
                       .slideX(
-                    begin: (right % 2 == 0) ? 0.6 : -0.6, // ⭐ alternate
+                    begin: (right % 2 == 0) ? 0.6 : -0.6,
                     end: 0,
                     duration: 650.ms,
                     curve: Curves.easeOutCubic,
@@ -162,6 +162,8 @@ class PropertyMain extends StatelessWidget {
               left: 12.w,
               child: Text(
                 title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 13.5.sp,
                   fontWeight: FontWeight.w700,

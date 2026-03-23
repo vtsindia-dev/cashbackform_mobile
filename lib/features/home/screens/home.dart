@@ -1,11 +1,8 @@
 import 'package:cashback_farms/common/widget/carousel.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../common/widget/loader.dart';
-import '../../Properties/widget/property_card.dart';
 import '../../drawer/screen/drawer.dart';
-import '../../service/widget/service_card.dart';
 import '../controller/homecontroller.dart';
 import '../widget/featured_product.dart';
 import '../widget/featured_syndicate_plot.dart';
@@ -18,7 +15,7 @@ import '../widget/sub_title.dart';
 import '../widget/top_professional_service.dart';
 
 class Home extends StatefulWidget {
-  Home({super.key});
+  const Home({super.key});
 
   @override
   State<Home> createState() => _HomeState();
@@ -49,10 +46,9 @@ class _HomeState extends State<Home> {
               padding: const EdgeInsets.all(12),
               child: Column(
                 children: [
-                  Home_SearchBar(),
+                  HomeSearchBar(),
                   const SizedBox(height: 20),
 
-                  // Banners Carousel
                   Obx(() {
                     return CarouselWidget(
                       images: controller.featuredBanners.isNotEmpty
@@ -64,7 +60,7 @@ class _HomeState extends State<Home> {
                         'assets/images/banner1.png',
                         'assets/images/banner2.png',
                       ],
-                      height: 130,
+                      height: 160,
                       autoPlayDuration: Duration(seconds: 3),
                       borderRadius: 20,
                     );
@@ -74,7 +70,6 @@ class _HomeState extends State<Home> {
                   PropertyMain(),
                   const SizedBox(height: 20),
 
-                  // Market Properties Section
                   Column(
                     children: [
                       SubtitleWidget(

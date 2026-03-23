@@ -7,7 +7,7 @@
 
 
     <application
-        android:label="Cashback Farms"
+        android:label="Geo Rental Farms"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

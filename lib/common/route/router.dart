@@ -3,6 +3,7 @@ import 'package:cashback_farms/features/gioo_plots/screens/gioo_details.dart';
 import 'package:cashback_farms/features/gioo_plots/screens/gioo_plot.dart';
 import 'package:cashback_farms/features/material_store/screens/material_store.dart';
 import 'package:cashback_farms/features/material_store/screens/my_enquiry_list.dart';
+import 'package:cashback_farms/features/search/search_screen.dart';
 import 'package:cashback_farms/features/service/screen/vendor_detail_screen.dart';
 import 'package:cashback_farms/features/service/screen/service_list.dart';
 import 'package:cashback_farms/features/syndicate_plot/screens/syndicate_details.dart';
@@ -71,6 +72,7 @@ class AppRoutes {
   static const String vendorList = '/VendorListScreen';
   static const String serviceList = '/serviceList';
   static const String vendorDataDetail = '/vendorDataDetail';
+  static const String searchScreen = '/searchScreen';
 
   static List<GetPage> routes = [
     GetPage(
@@ -96,6 +98,11 @@ class AppRoutes {
     GetPage(
       name: home,
       page: () => Home(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: searchScreen,
+      page: () => SearchScreen(),
       transition: Transition.cupertino,
     ),
     GetPage(

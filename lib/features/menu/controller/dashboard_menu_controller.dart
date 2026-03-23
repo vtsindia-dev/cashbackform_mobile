@@ -276,7 +276,7 @@ class DashboardController extends GetxController {
 
   void _setDefaultBusinessSettings() {
     businessSettings.value = BusinessSettings(
-      businessName: 'Cashback Farms',
+      businessName: 'Geo Rental Farms',
       businessPhone: '+91 81900 59995',
       businessEmail: 'greenheapfarms@gmail.com',
       businessAddress: 'No. 1, 66th Street, Sector 11, Kalaignar Karunanidhi Nagar, Tamil Nadu, Chennai, India.',
@@ -702,7 +702,7 @@ class DashboardController extends GetxController {
     }
 
     // Construct WhatsApp URL
-    final businessName = businessSettings.value?.businessName ?? 'Cashback Farms';
+    final businessName = businessSettings.value?.businessName ?? 'Geo Rental Farms';
     final whatsappUrl = 'https://wa.me/$cleanedWhatsApp?text=Hello%20${Uri.encodeComponent(businessName)}';
 
     try {
@@ -765,7 +765,7 @@ class DashboardController extends GetxController {
       return;
     }
 
-    final businessName = businessSettings.value?.businessName ?? 'Cashback Farms';
+    final businessName = businessSettings.value?.businessName ?? 'Geo Rental Farms';
     final emailUrl = Uri(
       scheme: 'mailto',
       path: businessEmail,
@@ -791,7 +791,7 @@ class DashboardController extends GetxController {
   // ===============================
   // GETTER METHODS FOR CONVENIENCE
   // ===============================
-  String get businessName => businessSettings.value?.businessName ?? 'Cashback Farms';
+  String get businessName => businessSettings.value?.businessName ?? 'Geo Rental Farms';
   String get businessPhone => businessSettings.value?.businessPhone ?? '+91 81900 59995';
   String get businessEmail => businessSettings.value?.businessEmail ?? 'greenheapfarms@gmail.com';
   String get businessAddress => businessSettings.value?.businessAddress ?? 'Address not available';
