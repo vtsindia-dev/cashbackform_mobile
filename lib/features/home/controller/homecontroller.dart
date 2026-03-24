@@ -1,3 +1,6 @@
+import 'package:cashback_farms/common/model/logger_model.dart';
+import 'package:cashback_farms/features/home/model/feature_gio_rental_model.dart';
+import 'package:cashback_farms/features/home/model/home_category_model.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
@@ -85,6 +88,42 @@ class HomeController extends GetxController {
     _initializeData();
   }
 
+
+  bool isHomeCategoryLoading = false;
+   void isUpdateLoading(bool value) {
+      isHomeCategoryLoading = value;
+      update();
+    }
+
+  List<HomeCategoryModelList> homeCategoryList = [];
+
+  Future<void> getHomeCategories() async {
+    try {
+      isUpdateLoading(true);
+      final url = ApiUrl.homeCategoryApi;
+      final response = await ApiService.getRequest(url);
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        if (data['status'] == 200) {
+          List list = data['data']?['categories'] ?? [];
+          homeCategoryList = list
+              .map((e) => HomeCategoryModelList.fromJson(e))
+              .toList();
+          update();
+        }
+      }
+    } catch (e) {
+      Loggers.error("SubSubCategory Error: $e");
+    } finally {
+      isUpdateLoading(false);
+    }
+  }
+
+
+
+
+
   void _initializeData() async {
     await getUserLocation();
     await fetchAllHomeData();
@@ -135,8 +174,10 @@ class HomeController extends GetxController {
         fetchMaterials(),
         fetchBanners(),
         fetchFeaturedSyndicates(),
+        fetchFeaturedRental(),
         fetchFeaturedMarket(),
         fetchFeaturedGioo(),
+        getHomeCategories(),
       ]);
 
       print('✅ All home data loaded successfully');
@@ -463,6 +504,76 @@ class HomeController extends GetxController {
       _isFetchingBanners = false;
     }
   }
+
+  bool isLoadingRental = false;
+  bool isLoadingMoreRental = false;
+  bool rentalHasMore = true;
+
+  int rentalCurrentPage = 1;
+  int rentalTotalPages = 1;
+
+  List<FeaturedRentalProperty> rentalList = [];
+  FeaturedPagination? rentalPagination;
+
+  String rentalError = '';
+
+  Future<void> fetchFeaturedRental({bool loadMore = false}) async {
+    try {
+      if (loadMore && !rentalHasMore) return;
+
+      if (loadMore) {
+        isLoadingMoreRental = true;
+      } else {
+        isLoadingRental = true;
+        rentalCurrentPage = 1;
+        rentalList.clear();
+      }
+
+      update();
+
+      final page = loadMore ? rentalCurrentPage + 1 : 1;
+
+      final url = "${ApiUrl.featuredRental}?page=$page";
+
+      final response = await ApiService.getRequest(url);
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+
+        final parsed = FeaturedRentalResponse.fromJson(data['data']);
+
+        if (loadMore) {
+          rentalList.addAll(parsed.rentalProperties);
+        } else {
+          rentalList = parsed.rentalProperties;
+        }
+
+        rentalPagination = parsed.pagination;
+        rentalCurrentPage = parsed.pagination.currentPage;
+        rentalTotalPages = parsed.pagination.lastPage;
+        rentalHasMore = parsed.pagination.hasMorePages;
+      }
+    } catch (e) {
+      rentalError = "$e";
+    }
+
+    isLoadingRental = false;
+    isLoadingMoreRental = false;
+    update();
+  }
+  void loadMoreRentalPlots() {
+    if (rentalCurrentPage < rentalTotalPages &&
+        !isLoadingMoreRental) {
+
+      print('📥 Loading more rental plots...');
+
+      fetchFeaturedRental(loadMore: true);
+    } else {
+      print('🛑 No more rental plots OR already loading');
+    }
+  }
+
+
 
   // FETCH FEATURED SYNDICATES (WITH PAGINATION)
   Future<void> fetchFeaturedSyndicates({bool loadMore = false}) async {

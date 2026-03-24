@@ -3,9 +3,7 @@ class CommonSearchModel {
   String? name;
   String? type;
   String? address;
-  String? rentAmount;
   double? price;
-  String? yieldAmount;
   String? description;
   List<String>? image;
   String? plotImage;
@@ -13,11 +11,14 @@ class CommonSearchModel {
   String? unit;
   int? startingPrice;
   String? area;
-  PropertyType? propertyType;
   String? location;
   String? propertyName;
   String? areaSqft;
   double? areaSqftPrice;
+  City? city;
+  PropertyType? propertyType;
+  double? rentAmount;
+  double? yieldAmount;
 
 
   CommonSearchModel({
@@ -25,7 +26,6 @@ class CommonSearchModel {
     this.name,
     this.type,
     this.address,
-    this.rentAmount,
     this.price,
     this.yieldAmount,
     this.description,
@@ -39,7 +39,9 @@ class CommonSearchModel {
     this.location,
     this.propertyName,
     this.areaSqft,
-    this.areaSqftPrice
+    this.areaSqftPrice,
+    this.city,
+    this.rentAmount
   });
 
   CommonSearchModel.fromJson(Map<String, dynamic> json) {
@@ -48,9 +50,9 @@ class CommonSearchModel {
     area = json['area']?.toString();
     type = json['type']?.toString();
     address = json['address'];
-    rentAmount = json['rent_amount']?.toString();
     price = parseToDouble(json['price']);
-    yieldAmount = json['yield_amount']?.toString();
+    yieldAmount = parseToDouble(json['yield_amount']?.toString());
+    rentAmount = parseToDouble(json['rent_amount']?.toString());
     description = json['description'];
     image = json['image'] != null ? List<String>.from(json['image']) : [];
     plotImage = json['plot_image'];
@@ -64,6 +66,26 @@ class CommonSearchModel {
     propertyType = json['property_type'] != null
         ? PropertyType.fromJson(json['property_type'])
         : null;
+    city = json['city'] != null ? City.fromJson(json['city']) : null;
+  }
+}
+
+
+class City {
+  int? id;
+  int? stateId;
+  String? cityName;
+
+  City(
+      {this.id,
+        this.stateId,
+        this.cityName,
+      });
+
+  City.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    stateId = json['state_id'];
+    cityName = json['city_name'];
   }
 }
 

@@ -1,13 +1,12 @@
 import 'dart:ui';
-
 import 'package:cashback_farms/common/colours.dart';
+import 'package:cashback_farms/common/route/router.dart';
 import 'package:cashback_farms/common/widget/appbar.dart';
-import 'package:cashback_farms/common/widget/toster.dart';
+import 'package:cashback_farms/features/residential_plots/controller/residential_controller.dart';
 import 'package:cashback_farms/features/search/controller/search_controller.dart';
 import 'package:cashback_farms/features/search/model/common_search_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../common/widget/loader.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -18,10 +17,10 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-
   final CommonSearchController controller = Get.put(CommonSearchController());
   final ScrollController _scrollController = ScrollController();
-  final ScrollController _scrollCateoryController = ScrollController();
+  final ScrollController _scrollCategoryController = ScrollController();
+  final ResidentialPropertyController residentialPropertyController = Get.put(ResidentialPropertyController());
 
   @override
   void initState() {
@@ -31,17 +30,16 @@ class _SearchScreenState extends State<SearchScreen> {
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
-          _scrollController.position.maxScrollExtent - 200 &&
+              _scrollController.position.maxScrollExtent - 200 &&
           !controller.isLoadMore &&
           controller.currentPage < controller.totalPages) {
-
         controller.loadMoreSearch();
       }
     });
   }
 
-
   final List<GlobalKey> _itemKeys = [];
+
   void _scrollToIndex(int index) {
     final context = _itemKeys[index].currentContext;
     if (context != null) {
@@ -62,17 +60,17 @@ class _SearchScreenState extends State<SearchScreen> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        appBar: DynamicAppBar(
-          title: "Search",
-          showBackButton: true,
-        ),
+        appBar: DynamicAppBar(title: "Search", showBackButton: true),
         body: GetBuilder<CommonSearchController>(
           init: CommonSearchController(),
           builder: (controller) {
             if (_itemKeys.length != controller.filterCategoryItems.length) {
               _itemKeys.clear();
               _itemKeys.addAll(
-                List.generate(controller.filterCategoryItems.length, (index) => GlobalKey()),
+                List.generate(
+                  controller.filterCategoryItems.length,
+                  (index) => GlobalKey(),
+                ),
               );
             }
             return Column(
@@ -96,7 +94,7 @@ class _SearchScreenState extends State<SearchScreen> {
       height: 45,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 10),
-        controller: _scrollCateoryController,
+        controller: _scrollCategoryController,
         scrollDirection: Axis.horizontal,
         itemCount: controller.filterCategoryItems.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -118,24 +116,24 @@ class _SearchScreenState extends State<SearchScreen> {
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Color.fromRGBO(199, 221, 148, 1),
-                    Color.fromRGBO(146, 175, 93, 1),
-                  ],
-                )
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color.fromRGBO(199, 221, 148, 1),
+                          Color.fromRGBO(146, 175, 93, 1),
+                        ],
+                      )
                     : null,
                 color: isSelected ? null : Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(25),
                 boxShadow: isSelected
                     ? [
-                  const BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  )
-                ]
+                        const BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ]
                     : [],
               ),
               child: Center(
@@ -168,7 +166,7 @@ class _SearchScreenState extends State<SearchScreen> {
             blurRadius: 15,
             spreadRadius: 2,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -207,7 +205,10 @@ class _SearchScreenState extends State<SearchScreen> {
               },
               borderRadius: BorderRadius.circular(30),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
                 child: const Text(
                   "Search",
                   style: TextStyle(
@@ -228,56 +229,48 @@ class _SearchScreenState extends State<SearchScreen> {
     final list = controller.searchList;
     if (controller.isLoading) {
       return Expanded(
-        child: Center(
-          child: GifLoader(
-            message: "Loading...",
-            size: 100,
-          ),
-        ),
+        child: Center(child: GifLoader(message: "Loading...", size: 100)),
       );
     }
 
     if (list.isEmpty) {
-      return  Expanded(child: Center(child: Text("No Data Found")));
+      return Expanded(child: Center(child: Text("No Data Found")));
     }
     return Expanded(
       child: RefreshIndicator(
         color: AppColor.primary,
         onRefresh: () async => controller.resetSearch(),
         child: ListView.separated(
-          separatorBuilder: (context,i)=>SizedBox(height: 10,),
+          separatorBuilder: (context, i) => SizedBox(height: 10),
           controller: _scrollController,
           padding: const EdgeInsets.all(12),
           physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: (list.length / 2).ceil() +
-              (controller.isLoadMore ? 1 : 0),
+          itemCount: (list.length / 2).ceil() + (controller.isLoadMore ? 1 : 0),
           itemBuilder: (context, rowIndex) {
-
             if (rowIndex == (list.length / 2).ceil()) {
               return const Padding(
                 padding: EdgeInsets.all(16),
                 child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColor.primary,
-                  ),
+                  child: CircularProgressIndicator(color: AppColor.primary),
                 ),
               );
             }
-      
+
             final leftIndex = rowIndex * 2;
             final rightIndex = leftIndex + 1;
-      
+
             final leftItem = list[leftIndex];
-            final rightItem =
-            rightIndex < list.length ? list[rightIndex] : null;
-      
+            final rightItem = rightIndex < list.length
+                ? list[rightIndex]
+                : null;
+
             return Row(
               children: [
-                Expanded(child: _buildCard(leftItem,controller)),
+                Expanded(child: _buildCard(leftItem, controller)),
                 const SizedBox(width: 10),
                 Expanded(
                   child: rightItem != null
-                      ? _buildCard(rightItem,controller)
+                      ? _buildCard(rightItem, controller)
                       : const SizedBox(),
                 ),
               ],
@@ -288,157 +281,261 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildCard(CommonSearchModel item,CommonSearchController controller) {
+  void _navigateByTitle(CommonSearchModel item) {
+    String type = item.type ?? "";
+    if (type == "market") {
+      Get.toNamed(AppRoutes.plotMarketDetails, arguments: {"id": item.id, "title": item.name});
+    } else if (type == "geo") {
+      Get.toNamed(AppRoutes.giooDetails, arguments: {"id": item.id, "title": item.name});
+    } else if (type == "syndicate") {
+      Get.toNamed(AppRoutes.syndicateDetails, arguments: {"id": item.id, "title": item.name,});
+    }
+    else if (type == "rental") {
+      Get.toNamed(AppRoutes.rentalDetails, arguments: {'id': item.id, 'title': item.name,},);
+    } else {
+      Get.toNamed(AppRoutes.residentialDetails, arguments: {"id": item.id, "title": item.propertyName});
+    }
+  }
+
+  Widget _buildCard(CommonSearchModel item, CommonSearchController controller) {
     String imageUrl = (item.image != null && item.image!.isNotEmpty)
         ? item.image!.first
         : "";
 
-    return Container(
-      height: 260,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-            color: Colors.black.withOpacity(0.05),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: imageUrl.isNotEmpty
-                        ? Image.network(imageUrl, fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) => Image.asset('assets/images/no-image.jpg', fit: BoxFit.cover))
-                        : Image.asset('assets/images/no-image.jpg', fit: BoxFit.cover),
-                  ),
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.center,
-                          colors: [Colors.black.withOpacity(0.2), Colors.transparent],
+    return GestureDetector(
+      onTap: () => _navigateByTitle(item),
+      child: Container(
+        height: 260,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+              color: Colors.black.withOpacity(0.05),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: imageUrl.isNotEmpty
+                          ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (c, e, s) => Image.asset(
+                                'assets/images/no-image.jpg',
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Image.asset(
+                              'assets/images/no-image.jpg',
+                              fit: BoxFit.cover,
+                            ),
+                    ),
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.center,
+                            colors: [
+                              Colors.black.withOpacity(0.2),
+                              Colors.transparent,
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: _buildTag(
-                      title: getTypeLabel(controller.selectedIndex == 0 ? item.type : controller.filterCategoryItems[controller.selectedIndex].value),
-                      bgColor: Colors.white.withOpacity(0.85),
-                      textColor: AppColor.primary,
-                    ),
-                  ),
-                  if (item.propertyType?.categoryName != null)
                     Positioned(
-                      bottom: 10,
-                      right: 10,
+                      top: 10,
+                      left: 10,
                       child: _buildTag(
-                        title: item.propertyType?.categoryName ?? '',
-                        bgColor: Colors.black.withOpacity(0.6),
-                        textColor: Colors.white,
+                        title: getTypeLabel(item.type),
+                        bgColor: Colors.white.withOpacity(0.85),
+                        textColor: AppColor.primary,
                       ),
                     ),
-                ],
+                    if (item.propertyType?.categoryName != null)
+                      Positioned(
+                        bottom: 10,
+                        right: 10,
+                        child: _buildTag(
+                          title: item.propertyType?.categoryName ?? '',
+                          bgColor: Colors.black.withOpacity(0.6),
+                          textColor: Colors.white,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        controller.filterCategoryItems[controller.selectedIndex].value =="plot" ? item.propertyName ?? "": item.name ?? "",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: Color(0xFF1A1A1A),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.type == "plot"
+                              ? item.propertyName ?? ""
+                              : item.name ?? "",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
+                              color: Colors.grey,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                item.type == "plot"
+                                    ? item.location ?? ''
+                                    : item.address ?? "",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    if (item.type == "rental") ...[
+                      Flexible(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: "Rent: ",
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              TextSpan(
+                                text: "₹${item.rentAmount ?? '0'}",
+                                style: const TextStyle(
+                                  color: AppColor.primary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      Flexible(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: "Yield: ",
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              TextSpan(
+                                text: "₹${item.yieldAmount ?? '0'}",
+                                style: const TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (item.type != "rental")
+                          Text(
+                            "₹${item.price ?? item.startingPrice ?? 0}",
+                            style: const TextStyle(
+                              color: AppColor.primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                          ),
+                      ],
+                    ),
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, color: Colors.grey, size: 14),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                               controller.filterCategoryItems[controller.selectedIndex].value =="plot" ? item.location ?? '': item.address ?? "",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w400,
+                          if (item.city?.cityName != null) ...[
+                            Flexible(
+                              child: Text(
+                                item.city!.cityName!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 11,
+                                ),
                               ),
+                            ),
+
+                            const SizedBox(width: 4),
+
+                            Text(
+                              "•",
+                              style: TextStyle(
+                                color: Colors.grey.shade400,
+                                fontSize: 12,
+                              ),
+                            ),
+
+                            const SizedBox(width: 4),
+                          ],
+
+                          Text(
+                            item.type == "rental" || item.type == "synticate" || item.type == "geo" ||   item.type == "market"
+                                ? '${item.area} /sq.ft'
+                                : '${item.areaSqftPrice} /sq.ft',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 11,
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "₹${item.price ?? item.startingPrice ?? 0}",
-                        style: const TextStyle(
-                          color: AppColor.primary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '${controller.filterCategoryItems[controller.selectedIndex].value =="plot" ? item.areaSqft: item.area} sq.ft',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 10,
-                              color: Colors.blueGrey,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  if(controller.filterCategoryItems[controller.selectedIndex].value =="plot")
-                    Text(
-                      '${item.areaSqftPrice} /sq.ft',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -481,7 +578,7 @@ class _SearchScreenState extends State<SearchScreen> {
         return "Gioo Nano Plots";
       case "rental":
         return "GIO Rental Yield";
-      case "synticate":
+      case "syndicate":
         return "GIO Rental Syndicate";
       case "plot":
         return "Flats / Villas";

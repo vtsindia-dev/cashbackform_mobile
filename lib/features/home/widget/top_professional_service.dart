@@ -1,56 +1,101 @@
+import 'package:cashback_farms/common/route/router.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../service/widget/service_card.dart';
 import '../controller/homecontroller.dart';
 
 class TopProfessionalService extends StatelessWidget {
-  TopProfessionalService({super.key});
-
-  final HomeController controller = Get.put(HomeController());
+  const TopProfessionalService({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GetX<HomeController>(
+    return GetBuilder<HomeController>(
       builder: (controller) {
+        if (controller.isHomeCategoryLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
         return SizedBox(
-          height: 230,
-          child: ListView.separated(
+          height: 150,
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 0),
-            itemCount: controller.services.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemCount: controller.homeCategoryList.length,
             itemBuilder: (context, index) {
-              final item = controller.services[index];
-              return ServiceCard(
-                imageUrl: item["image"][0]!,
-                title: item["title"]!,
-                width: 170,
-                height: 230,
-                onTap: () {
-                  print("Tapped → ${item["title"]}");
-                  Get.toNamed('/service');
+              final item = controller.homeCategoryList[index];
+              return GestureDetector(
+                onTap: (){
+                  Get.toNamed(
+                    AppRoutes.serviceList,
+                    arguments: {
+                      "id": item.id,
+                      "title": item.categoryName,
+                    },
+                  );
                 },
-              )
-                  .animate()
-                  .slideX(
-                begin: -0.5,
-                end: 0,
-                duration: 600.ms,
-                curve: Curves.easeOutCubic,
-              )
-                  .fadeIn(duration: 500.ms)
-                  .scale(
-                begin: const Offset(0.9, 0.9),
-                end: const Offset(1, 1),
-                duration: 600.ms,
-                curve: Curves.easeOutBack,
-              )
-                  .then(delay: (index * 200).ms)
-                  .shimmer(
-                duration: 800.ms,
-                color: Colors.white.withOpacity(0.3),
-              );
+                child: Container(
+                  width: 100,
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF1F8E9),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                          ),
+                          child: CircleAvatar(
+                            radius: 35,
+                            backgroundColor: Colors.white,
+                            backgroundImage: (item.image != null &&
+                                item.image!.isNotEmpty)
+                                ? NetworkImage(item.image!)
+                                : null,
+                            child: (item.image == null || item.image!.isEmpty)
+                                ? const Icon(Icons.image, size: 25)
+                                : null,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        item.categoryName ?? "",
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: 0.2),
+              );;
             },
           ),
         );

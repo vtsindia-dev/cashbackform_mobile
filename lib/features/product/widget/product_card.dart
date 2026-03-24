@@ -14,6 +14,8 @@ class ProductCard extends StatelessWidget {
   final bool isFavourite;
   final VoidCallback onFavToggle;
   final VoidCallback onAddToCart;
+  final String? rentalAmount;
+  final String? yieldAmount;
 
   const ProductCard({
     super.key,
@@ -26,6 +28,8 @@ class ProductCard extends StatelessWidget {
     required this.isFavourite,
     required this.onFavToggle,
     required this.onAddToCart,
+    this.yieldAmount,
+    this.rentalAmount
   });
 
   @override
@@ -141,6 +145,7 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 4.h),
+                  if(rentalAmount==null && yieldAmount==null)
                   Row(
                     children: [
                       // Image.asset(
@@ -160,7 +165,67 @@ class ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (rentalAmount != null && yieldAmount != null)
+                    ...[
+                      Row(
+                        children: [
+                          Flexible(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "₹ $rentalAmount",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                const Text(
+                                  "Rental Amount",
+                                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
 
+                          /// Divider
+                          Container(
+                            height: 28,
+                            width: 1,
+                            color: Colors.orange,
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                          ),
+
+                          Flexible(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "₹ $yieldAmount",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                const Text(
+                                  "Yield Amount",
+                                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 2.h),
+                    ],
                   SizedBox(height: 3.h),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),

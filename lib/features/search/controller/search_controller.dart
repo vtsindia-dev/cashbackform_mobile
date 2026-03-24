@@ -20,7 +20,7 @@ class CommonSearchController extends GetxController {
     FilterModel(title: 'All', value: 'all'),
     FilterModel(title: 'Land', value: 'market'),
     FilterModel(title: 'Gioo Nano Plots', value: 'geo'),
-    FilterModel(title: 'GIO Rental Syndicate', value: 'synticate'),
+    FilterModel(title: 'GIO Rental Syndicate', value: 'syndicate'),
     FilterModel(title: 'GIO Rental Yield', value: 'rental'),
     FilterModel(title: 'Flats / Villas', value: 'plot'),
   ];

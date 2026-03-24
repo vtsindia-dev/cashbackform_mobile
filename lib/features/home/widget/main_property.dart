@@ -8,7 +8,7 @@ import '../../../common/images.dart';
 import '../../../common/route/router.dart';
 
 class PropertyMain extends StatelessWidget {
-  PropertyMain({super.key});
+  const PropertyMain({super.key});
 
   final List<Map<String, String>> properties = const [
     {"title": "Land", "icon": Images.featuredPlotMarket},
@@ -36,7 +36,7 @@ class PropertyMain extends StatelessWidget {
         Text(
           "Explore All",
           style: TextStyle(
-            fontSize: 20.sp,
+            fontSize: 19.sp,
             fontWeight: FontWeight.bold,
             color: AppColor.textMain,
           ),
@@ -87,16 +87,17 @@ class PropertyMain extends StatelessWidget {
       ],
     );
   }
+  
 
   void _navigateByTitle(String title) {
-    if (title == "Plot Market") {
+    if (title == "Land") {
       Get.toNamed(AppRoutes.plotMarket);
-    } else if (title == "Gioo Plots") {
+    } else if (title == "Gioo Nano Plots") {
       Get.toNamed(AppRoutes.gioo);
-    } else if (title == "Syndicate Plots") {
+    } else if (title == "Gio Rental Yield – Syndicate Plot") {
       Get.toNamed(AppRoutes.syndicate);
     }
-    else if (title == "Rental Yield") {
+    else if (title == "Gio Rental Yield") {
       Get.toNamed(AppRoutes.rentalYieldList);
     } else {
       Get.toNamed(AppRoutes.residentialList);

@@ -1,4 +1,6 @@
+import 'package:cashback_farms/common/route/router.dart';
 import 'package:cashback_farms/common/widget/carousel.dart';
+import 'package:cashback_farms/features/home/widget/featured_gio_rental_yield_plots.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/widget/loader.dart';
@@ -65,16 +67,14 @@ class _HomeState extends State<Home> {
                       borderRadius: 20,
                     );
                   }),
-
                   const SizedBox(height: 10),
                   PropertyMain(),
                   const SizedBox(height: 20),
-
                   Column(
                     children: [
                       SubtitleWidget(
-                        title: "Features Plot Market",
-                        highlightWord: "Plot",
+                        title: "Featured Land Properties",
+                        highlightWord: "Land",
                         onViewAllTap: () {
                           Get.toNamed('/plotMarket');
                         },
@@ -83,24 +83,22 @@ class _HomeState extends State<Home> {
                       FeaturesPlotProperties(),
                     ],
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Services Section
                   Column(
                     children: [
                       SubtitleWidget(
-                        title: "Top Professional Services",
-                        highlightWord: "Professional",
+                        title: "Featured Gio Rental Yield Plots",
+                        highlightWord: "Gio Rental Yield",
                         onViewAllTap: () {
-                          Get.toNamed('/service');
-                          print("View All clicked");
+                          Get.toNamed(AppRoutes.rentalYieldList);
                         },
                       ),
                       const SizedBox(height: 10),
-                      TopProfessionalService(),
+
+                      const FeaturedGioRentalYieldPlots(),
                     ],
                   ),
+
 
                   const SizedBox(height: 20),
 
@@ -108,7 +106,7 @@ class _HomeState extends State<Home> {
                   Column(
                     children: [
                       SubtitleWidget(
-                        title: "Features GIOO Plot",
+                        title: "Featured GIOO Nano Plots Properties",
                         highlightWord: "GIOO",
                         onViewAllTap: () {
                           Get.toNamed('/gioo');
@@ -127,8 +125,8 @@ class _HomeState extends State<Home> {
                   Column(
                     children: [
                       SubtitleWidget(
-                        title: "Features Syndicate Plot ",
-                        highlightWord: "Syndicate",
+                        title: "Featured Gio Rental Yield – Syndicate Plots Properties",
+                        highlightWord: "Gio Rental Yield – Syndicate",
                         onViewAllTap: () {
                           Get.toNamed('/syndicate');
 
@@ -140,14 +138,27 @@ class _HomeState extends State<Home> {
                     ],
                   ),
 
-                  const SizedBox(height: 10),
-
-                  // Materials Section
+                  const SizedBox(height: 20),
                   Column(
                     children: [
                       SubtitleWidget(
-                        title: "Material Store",
-                        highlightWord: "Material",
+                        title: "Top Professional Services",
+                        highlightWord: "Professional",
+                        onViewAllTap: () {
+                          Get.toNamed('/service');
+                          print("View All clicked");
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      TopProfessionalService(),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Column(
+                    children: [
+                      SubtitleWidget(
+                        title: "Our BestSelling Products & Materials",
+                        highlightWord: "BestSelling",
                         onViewAllTap: () {
                           Get.toNamed('/materialStore');
                           print("View All clicked");

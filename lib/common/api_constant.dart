@@ -40,6 +40,7 @@ class ApiUrl {
   static const String featuredSyndicates = '$baseUrl/api/v2/synticate/featured';
   static const String featuredMarket = '$baseUrl/api/v2/market/featured';
   static const String featuredGioo = "$baseUrl/api/v2/geo/featured";
+  static const String featuredRental= "$baseUrl/api/v2/rental/featured";
   static const String giooBuyingList = '$baseUrl/api/v2/gioo_buying_list';
   static const String giooBuyingListDetails = '$baseUrl/api/v2/gioo_buying_list_details';
   static const String giooBuyingCancelRequest = '$baseUrl/api/v2/gioo_buying_cancel_request';
@@ -78,6 +79,7 @@ class ApiUrl {
   static const String searchApi = '$baseUrl/api/v2/search';
   static const String vendorStoreUrl = '$baseUrl/api/v2/vendor';
 
+  static const String homeCategoryApi = '$baseUrl/api/v2/service-featured-category-list';
 
 
 
