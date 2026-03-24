@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
+import '../../../common/widget/media_carousel_widget.dart';
 
 class AboutGiooPlot extends StatelessWidget {
   const AboutGiooPlot({super.key});
@@ -33,6 +34,7 @@ class AboutGiooPlot extends StatelessWidget {
               "http://192.168.1.114/admincashback/public/uploads/property/1764237164_Group%201597885062.png",
             ];
       final description = detail?.description ?? 'No description available';
+      final plotType = detail?.propertyType?.categoryName;
 
       return Container(
         margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
@@ -52,7 +54,7 @@ class AboutGiooPlot extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(5.0),
               child: Container(
-                height: 190.h,
+                height: 200.h,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20.r),
@@ -72,12 +74,7 @@ class AboutGiooPlot extends StatelessWidget {
                     topLeft: Radius.circular(20.r),
                     topRight: Radius.circular(20.r),
                   ),
-                  child: CarouselWidget(
-                    images: images,
-                    height: 172.h,
-                    autoPlayDuration: const Duration(seconds: 3),
-                    borderRadius: 20.r,
-                  ),
+                  child: MediaCarouselScreen(images: images,height: 172.h,),
                 ),
               ),
             ),
@@ -215,11 +212,76 @@ class AboutGiooPlot extends StatelessWidget {
                                     ),
                           ),
                         ),
+                        if(plotType!=null)
+                          ...[
+                            SizedBox(height: 8.h),
+                            Container(
+                              padding: EdgeInsets.symmetric(vertical: 5.h),
+                              child: Row(
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 110.w,
+                                    child: Text(
+                                      'Plot Type',
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        color: AppColor.primary,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Text(
+                                    ':',
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      color: AppColor.black,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Expanded(
+                                    child: Text(
+                                      plotType??'',
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        color: AppColor.black,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                                  .animate()
+                                  .slideX(
+                                begin: 0.5,
+                                end: 0,
+                                duration: 600.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                                  .fadeIn(duration: 500.ms)
+                                  .scale(
+                                begin: const Offset(0.9, 0.9),
+                                end: const Offset(1, 1),
+                                duration: 600.ms,
+                                curve: Curves.easeOutBack,
+                              )
+                                  .then(delay: 200.ms)
+                                  .shimmer(
+                                duration: 800.ms,
+                                color: Colors.white.withOpacity(0.3),
+                              ),
+                            ),
+                          ],
                         SizedBox(height: 8.h),
                         Container(
                           padding: EdgeInsets.symmetric(vertical: 5.h),
-                          child:
-                              Row(
+                          child: Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [

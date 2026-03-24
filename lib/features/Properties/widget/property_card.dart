@@ -13,6 +13,7 @@ class PropertyCard extends StatelessWidget {
   final String description;
   final VoidCallback onTap;
 
+
   const PropertyCard({
     super.key,
     required this.imageUrl,

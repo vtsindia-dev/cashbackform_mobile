@@ -11,7 +11,7 @@ import 'package:intl/intl.dart';
 import '../../../common/colours.dart';
 import '../controller/gioo_controller.dart';
 import 'package:lottie/lottie.dart';
-
+import 'package:fluttertoast/fluttertoast.dart';
 import '../model/gioo_plot.dart';
 
 class ReserveSlot extends StatefulWidget {
@@ -1331,11 +1331,17 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
     /// Only DATE (no time)
     final createdDate = dateFormatter.format(detail.createdAt);
-
+    final isVerified = detail.verify == 1;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         /// SELECTED UNITS
+        _infoItem(
+          isVerified ? Icons.verified : Icons.error_outline,
+          isVerified ? "Verified" : "Not Verified",
+          isVerified ? Colors.green : Colors.red,
+        ),
+        const SizedBox(height: 5),
         _infoItem(
                   Icons.date_range,
                   createdDate,
@@ -1406,15 +1412,12 @@ class _ReserveSlotState extends State<ReserveSlot> {
     final detail = controller.giooPlotDetail.value;
     if (detail == null) return const SizedBox();
 
-    // Count of selected units
     final selectedCount = _isSelectionMode
         ? _tempSelectedUnits.length
         : controller.selectedUnits.length;
 
-    // Price per UNIT — coming from controller
     final pricePerUnit = controller.pricePerUnit.value;
 
-    // NEW LOGIC ⭐ price = count × price per unit
     final totalPrice = selectedCount * pricePerUnit;
 
     return Column(
@@ -1434,8 +1437,98 @@ class _ReserveSlotState extends State<ReserveSlot> {
         5.h.verticalSpace,
         _priceRow("Number of Plots:", "$selectedCount x"),
         const Divider(height: 20, color: Colors.black12),
+        Text(
+          "Apply Coupon",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        10.h.verticalSpace,
 
-        _priceRow("Total Payable:", "₹${totalPrice.toStringAsFixed(2)}", isBold: true),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 50.h,
+                child: TextField(
+                  controller: controller.couponController,
+                  style: TextStyle(fontSize: 13.sp),
+                  decoration: InputDecoration(
+                    hintText: "Enter coupon code",
+                    hintStyle: TextStyle(fontSize: 12.sp),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 10.h,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            10.w.horizontalSpace,
+
+            SizedBox(
+              height: 45.h,
+              width: 90.w,
+              child: ElevatedButton(
+                onPressed: controller.isCouponLoading.value
+                    ? null
+                    : controller.applyCoupon,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.primary,
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                child: controller.isCouponLoading.value
+                    ? SizedBox(
+                  height: 18.w,
+                  width: 18.w,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : Text(
+                  "Apply",
+                  style: TextStyle(fontSize: 13.sp,color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+        10.h.verticalSpace,
+        Container(
+          height: 55.h,
+          padding: EdgeInsets.all(8.w),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Wallet: ₹${controller.walletBalance.value.toStringAsFixed(2)}",
+              ),
+              Row(
+                children: [
+                  Checkbox(
+                    value: controller.useWallet.value,
+                    onChanged: (val) {
+                      controller.useWallet.value = val ?? false;
+                      controller.calculateFinalAmount();
+                    },
+                  ),
+                  const Text("Use Wallet"),
+                ],
+              )
+            ],
+          ),
+        ),
+        10.h.verticalSpace,
+        _priceRow("Final Payable:", "₹${totalPrice.toStringAsFixed(2)}", isBold: true),
       ],
     );
   }
@@ -1457,66 +1550,81 @@ class _ReserveSlotState extends State<ReserveSlot> {
     );
   }
 
-  Widget _buildPayNowButton(GiooPlotController controller) {
-    final enabled = controller.selectedUnits.isNotEmpty && !_isSelectionMode;
+    Widget _buildPayNowButton(GiooPlotController controller) {
+  
+      final enabled = controller.selectedUnits.isNotEmpty && !_isSelectionMode;
+  
+     
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            "Will Process your Registration After payment",
+            style: TextStyle(fontSize: 10.sp, color: AppColor.black),
+          ),
+          10.h.verticalSpace,
+          GestureDetector(
+            onTap: () {
+              if (controller.selectedUnits.isEmpty) {
+                Fluttertoast.showToast(
+                  msg: "Please select at least one plot",
+                  gravity: ToastGravity.BOTTOM,
+                );
+                return;
+              }
+              if (!controller.gioTermsChecked.value) {
+                Fluttertoast.showToast(
+                  msg: "Please accept terms and conditions",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  backgroundColor: Colors.black87,
+                  textColor: Colors.white,
+                  fontSize: 14,
+                );
+                return;
+              }
 
-    if (!controller.gioTermsChecked.value) {
-      SnackBarHelper.showError("Please accept terms and conditions");
-      return SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          "Will Process your Registration After payment",
-          style: TextStyle(fontSize: 10.sp, color: AppColor.black),
-        ),
-        10.h.verticalSpace,
-        GestureDetector(
-          onTap: enabled ? () {
-            if (_isSelectionMode) {
-              // Save temporary selection
-              _confirmSelection();
-            } else {
-              controller.proceedToPayment();
-            }
-          } : null,
-          child: Container(
-            height: 55.h,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: enabled
-                  ? AppColor.orange
-                  : AppColor.orange.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(35.r),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 60.w,
-                  height: 50.w,
-                  child: Lottie.asset(
-                    "assets/images/paynow.json",
-                    repeat: true,
+              if (_isSelectionMode) {
+                _confirmSelection();
+              } else {
+                controller.proceedToPayment();
+              }
+            },
+            child: Container(
+              height: 55.h,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: enabled
+                    ? AppColor.orange
+                    : AppColor.orange.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(35.r),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 60.w,
+                    height: 50.w,
+                    child: Lottie.asset(
+                      "assets/images/paynow.json",
+                      repeat: true,
+                    ),
                   ),
-                ),
-                10.w.horizontalSpace,
-                Text(
-                  _isSelectionMode ? "Confirm Selection" : "Pay Now",
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.black,
+                  10.w.horizontalSpace,
+                  Text(
+                    _isSelectionMode ? "Confirm Selection" : "Pay Now",
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.black,
+                    ),
                   ),
-                ),
-                SizedBox(width: 30.w,)
-              ],
+                  SizedBox(width: 30.w,)
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
+    }
 }

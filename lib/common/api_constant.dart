@@ -90,5 +90,5 @@ class ApiUrl {
 
   static const String vendorApi = '$baseUrl/api/v2/vendor';
 
-
+  static const String applyCoupon = '$baseUrl/api/v2/apply-coupon';
 }

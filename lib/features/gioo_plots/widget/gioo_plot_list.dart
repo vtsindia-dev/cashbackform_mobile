@@ -73,9 +73,22 @@ class GiooPlotList extends StatelessWidget {
     });
   }
 
+  String getSingleImage(List<String> images) {
+    return images.firstWhere(
+          (url) {
+        final lower = url.toLowerCase();
+        return lower.endsWith('.jpg') ||
+            lower.endsWith('.jpeg') ||
+            lower.endsWith('.png') ||
+            lower.endsWith('.webp');
+      },
+      orElse: () => '',
+    );
+  }
   Widget _buildAnimatedPlotCard(GiooPlot plot) {
+    final imageUrl = getSingleImage(plot.images);
     return PropertyCard(
-      imageUrl: plot.images.isNotEmpty ? plot.images[0] : '', // Use first image from list
+      imageUrl: imageUrl,
       title: plot.name,
       price: plot.formattedPrice,
       area: plot.formattedArea,

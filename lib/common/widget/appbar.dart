@@ -60,7 +60,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              _buildLeftSection(),
+              _buildLeftSection(context),
               Expanded(
                 child: _buildMiddleSection(),
               ),
@@ -72,7 +72,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildLeftSection() {
+  Widget _buildLeftSection(BuildContext context) {
     return SizedBox(
       width: 80,
       child: Row(
@@ -81,7 +81,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
             _buildIconButton(
               icon: Icons.arrow_back,
               onTap: onBackPressed ?? () {
-                Get.back();
+                Navigator.pop(context);
               },
             ),
 

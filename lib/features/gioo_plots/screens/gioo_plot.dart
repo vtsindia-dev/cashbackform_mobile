@@ -28,58 +28,56 @@ class _GiooplotState extends State<Giooplot> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F2),
-      appBar: const DynamicAppBar(
-        title: "Gioo Plots",
-        showBackButton: true,
-      ),
-      body: Obx(() => controller.isLoading.value
-          ? const Center(
-        child: GifLoader(
-          message: "Finding best plots...",
-          size: 100,
-        ),
-      )
-          : Column(
-        children: [
-          _CompactFilterSection(controller: controller),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                await controller.refreshData();
-              },
-              child: Obx(() {
-                if (controller.giooPlots.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 20),
-                        const Text(
-                          'No plots found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'Try adjusting your filters',
-                          style: TextStyle(
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
+      appBar: const DynamicAppBar(title: "Gioo Plots", showBackButton: true),
+      body: Obx(
+        () => Column(
+          children: [
+            _CompactFilterSection(controller: controller),
+            controller.isLoading.value
+                ? Expanded(
+                    child: const Center(
+                      child: GifLoader(
+                        message: "Finding best plots...",
+                        size: 100,
+                      ),
                     ),
-                  );
-                }
-                return GiooPlotList();
-              }),
-            ),
-          ),
-          _BottomActionBar(controller: controller),
-        ],
-      )),
+                  )
+                : Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        await controller.refreshData();
+                      },
+                      child: Obx(() {
+                        if (controller.giooPlots.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'No plots found',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Try adjusting your filters',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        return GiooPlotList();
+                      }),
+                    ),
+                  ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -95,6 +93,7 @@ void _showFilterSheet(BuildContext context, GiooPlotController controller) {
 
 class _ModernFilterSheet extends StatefulWidget {
   final GiooPlotController controller;
+
   const _ModernFilterSheet({required this.controller});
 
   @override
@@ -185,25 +184,31 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       widget.controller.selectedPlotTypes.assignAll(_selectedTypes);
 
       // PRICE LOGIC
-      widget.controller.minPrice.value =
-      _priceChanged ? _priceRange.start.toInt().toString() : "";
-      widget.controller.maxPrice.value =
-      _priceChanged ? _priceRange.end.toInt().toString() : "";
+      widget.controller.minPrice.value = _priceChanged
+          ? _priceRange.start.toInt().toString()
+          : "";
+      widget.controller.maxPrice.value = _priceChanged
+          ? _priceRange.end.toInt().toString()
+          : "";
 
       // AREA LOGIC (Now handles Min and Max)
-      widget.controller.minAreaSqft.value =
-      _areaChanged ? _areaRange.start.toInt().toString() : "";
-      widget.controller.maxAreaSqft.value =
-      _areaChanged ? _areaRange.end.toInt().toString() : "";
+      widget.controller.minAreaSqft.value = _areaChanged
+          ? _areaRange.start.toInt().toString()
+          : "";
+      widget.controller.maxAreaSqft.value = _areaChanged
+          ? _areaRange.end.toInt().toString()
+          : "";
 
       // State and City
       widget.controller.selectedState.value = _selectedState;
       widget.controller.selectedCity.value = _selectedCity;
 
-      // Apply filters
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
       await widget.controller.fetchGiooPlots();
 
-      Get.back();
+
     } catch (e) {
       print('Error applying filters: $e');
     } finally {
@@ -323,13 +328,13 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   }
 
   Widget _buildAnimatedSection(
-      int index,
-      String title, {
-        required IconData icon,
-        required Color color,
-        required Widget child,
-        String? trailing,
-      }) {
+    int index,
+    String title, {
+    required IconData icon,
+    required Color color,
+    required Widget child,
+    String? trailing,
+  }) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: Duration(milliseconds: 300 + (index * 100)),
@@ -395,12 +400,12 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
           ),
           boxShadow: isSelected
               ? [
-            BoxShadow(
-              color: const Color(0xFF819E4F).withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ]
+                  BoxShadow(
+                    color: const Color(0xFF819E4F).withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
               : [],
         ),
         child: Text(
@@ -438,7 +443,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
               },
             ),
             ...statesToShow.map(
-                  (state) => _buildSelectorItem(
+              (state) => _buildSelectorItem(
                 label: state.stateName,
                 isSelected: _selectedState?.id == state.id,
                 onTap: () {
@@ -454,7 +459,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
         ),
         if (widget.controller.states.length > _initialItemCount)
           _buildSeeMore(
-                () => setState(() => _showAllStates = !_showAllStates),
+            () => setState(() => _showAllStates = !_showAllStates),
             _showAllStates,
           ),
       ],
@@ -556,7 +561,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
                 onTap: () => setState(() => _selectedCity = null),
               ),
               ...citiesToShow.map(
-                    (city) => _buildSelectorItem(
+                (city) => _buildSelectorItem(
                   label: city.cityName,
                   isSelected: _selectedCity?.id == city.id,
                   onTap: () => setState(() => _selectedCity = city),
@@ -566,13 +571,14 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
           ),
           if (widget.controller.cities.length > _initialItemCount)
             _buildSeeMore(
-                  () => setState(() => _showAllCities = !_showAllCities),
+              () => setState(() => _showAllCities = !_showAllCities),
               _showAllCities,
             ),
         ],
       );
     });
   }
+
   Widget _buildTypeChips() {
     final typesToShow = _showAllPropertyTypes
         ? widget.controller.propertyTypes
@@ -583,18 +589,23 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: typesToShow.map((type) => _buildSelectorItem(
-            label: type.categoryName.replaceAll('GreenHeap ', ''),
-            isSelected: _selectedTypes.contains(type.categoryName),
-            onTap: () => setState(() =>
-            _selectedTypes.contains(type.categoryName)
-                ? _selectedTypes.remove(type.categoryName)
-                : _selectedTypes.add(type.categoryName)),
-          )).toList(),
+          children: typesToShow
+              .map(
+                (type) => _buildSelectorItem(
+                  label: type.categoryName.replaceAll('GreenHeap ', ''),
+                  isSelected: _selectedTypes.contains(type.categoryName),
+                  onTap: () => setState(
+                    () => _selectedTypes.contains(type.categoryName)
+                        ? _selectedTypes.remove(type.categoryName)
+                        : _selectedTypes.add(type.categoryName),
+                  ),
+                ),
+              )
+              .toList(),
         ),
         if (widget.controller.propertyTypes.length > _initialItemCount)
           _buildSeeMore(
-                () =>
+            () =>
                 setState(() => _showAllPropertyTypes = !_showAllPropertyTypes),
             _showAllPropertyTypes,
           ),
@@ -653,8 +664,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
     );
   }
 
-  Widget _buildSliderCard(
-      {required Widget child, required Color accentColor}) {
+  Widget _buildSliderCard({required Widget child, required Color accentColor}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       decoration: BoxDecoration(
@@ -668,8 +678,9 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
           activeTrackColor: accentColor,
           inactiveTrackColor: accentColor.withOpacity(0.1),
           thumbColor: Colors.white,
-          rangeThumbShape:
-          const RoundRangeSliderThumbShape(enabledThumbRadius: 12),
+          rangeThumbShape: const RoundRangeSliderThumbShape(
+            enabledThumbRadius: 12,
+          ),
         ),
         child: child,
       ),
@@ -747,48 +758,49 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       ),
       child: _isApplyingFilters
           ? Container(
-        height: 60,
-        decoration: BoxDecoration(
-          color: const Color(0xFF819E4F),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          ),
-        ),
-      )
+              height: 60,
+              decoration: BoxDecoration(
+                color: const Color(0xFF819E4F),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ),
+            )
           : ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF819E4F),
-          minimumSize: const Size(double.infinity, 60),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 8,
-          shadowColor: const Color(0xFF819E4F).withOpacity(0.4),
-        ),
-        onPressed: _applyFilters,
-        child: const Text(
-          "Show Plots",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF819E4F),
+                minimumSize: const Size(double.infinity, 60),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 8,
+                shadowColor: const Color(0xFF819E4F).withOpacity(0.4),
+              ),
+              onPressed: _applyFilters,
+              child: const Text(
+                "Show Plots",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
     );
   }
 }
 
 class _CompactFilterSection extends StatelessWidget {
   final GiooPlotController controller;
+
   const _CompactFilterSection({required this.controller});
 
   @override
@@ -806,63 +818,11 @@ class _CompactFilterSection extends StatelessWidget {
               color: Colors.black12,
               blurRadius: 4,
               offset: Offset(0, 2),
-            )
+            ),
           ],
         ),
         child: Row(
           children: [
-            Obx(() {
-              if (controller.recentSearch.value.isEmpty) {
-                return const SizedBox.shrink();
-              }
-              return Row(
-                children: [
-                  Container(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.22,
-                    ),
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.25),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            controller.recentSearch.value,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 11,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: controller.clearRecentSearch,
-                          child: const Icon(
-                            Icons.close,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 1.5,
-                    height: 24,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(width: 6),
-                ],
-              );
-            }),
             Expanded(
               child: Row(
                 children: [
@@ -906,8 +866,10 @@ class _CompactFilterSection extends StatelessWidget {
               onTap: controller.applySearch,
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF819E4F), Color(0xFF9CB45A)],
@@ -973,64 +935,5 @@ class _CompactFilterSection extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _BottomActionBar extends StatelessWidget {
-  final GiooPlotController controller;
-  const _BottomActionBar({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Colors.black12, width: 0.5),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "${controller.giooPlots.length} Plots found",
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                ),
-              ),
-              if (controller.isLoadMore.value)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          if (controller.hasFiltersApplied())
-            GestureDetector(
-              onTap: () => controller.clearFilters(),
-              child: Text(
-                "RESET FILTERS",
-                style: TextStyle(
-                  color: Colors.red[400],
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 1,
-                ),
-              ),
-            ),
-        ],
-      ),
-    ));
   }
 }

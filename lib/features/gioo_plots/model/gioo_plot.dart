@@ -616,6 +616,7 @@ class Pivot {
   final List<NearbyLocation> nearby_locations;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int? verify;
 
   GiooPlotDetail({
     required this.id,
@@ -655,6 +656,7 @@ class Pivot {
     required this.nearby_locations,
     required this.createdAt,
     required this.updatedAt,
+    this.verify
   });
 
   factory GiooPlotDetail.fromJson(Map<String, dynamic> json) {
@@ -736,6 +738,7 @@ class Pivot {
       nearbyLocations: parseNearbyLocations(json['nearbyLocations']),
       documents: parseDocuments(json['documents']),
       bookings: parseBookings(json['booking']),
+      verify: json['verify_status'],
       nearby_locations: parseNearbyLocations(json['nearby_locations']),
       createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),

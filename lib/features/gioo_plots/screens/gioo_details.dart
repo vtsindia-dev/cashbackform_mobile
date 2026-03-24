@@ -57,9 +57,15 @@ class _GiooDetailsState extends State<GiooDetails> {
               NearbyProject(),
               GioSchemeOverview(),
               buyersList(controller),
-              BluePrint(),
+              BluePrint(
+                title: "Green Heap Plots Blueprint",
+                imageUrl: controller.giooPlotDetail.value?.bluePrint,
+              ),
+              BluePrint(
+                title: "GreenHeap Plots Structure Detail",
+                imageUrl: controller.giooPlotDetail.value?.plotImage,
+              ),
               ReserveSlot(),
-
               SizedBox(height: 45,)
             ],
           ),

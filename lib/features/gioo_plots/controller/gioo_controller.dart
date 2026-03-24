@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:action_slider/action_slider.dart';
 import 'package:cashback_farms/common/widget/sessionhandler.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
@@ -460,10 +461,8 @@ class GiooPlotController extends GetxController {
 
       // Use weekly booked data
       if (detail.weeklyBooked != null) {
-        weeklyProfit.value =
-            double.tryParse(detail.weeklyBooked!.weeklyProfit) ?? 0.0;
-        weeklyProfitPercent.value =
-            detail.weeklyBooked!.profitMargin;
+        weeklyProfit.value = double.tryParse(detail.weeklyBooked!.unitsBooked.toString()) ?? 0.0;
+        weeklyProfitPercent.value = detail.weeklyBooked!.profitMargin;
       } else {
         weeklyProfit.value = 0.0;
         weeklyProfitPercent.value = 0.0;
@@ -1168,6 +1167,7 @@ class GiooPlotController extends GetxController {
 
   void onSearchChanged(String value) {
     searchQuery.value = value;
+    applySearch();
   }
 
   void applySearch() {
@@ -1634,6 +1634,74 @@ class GiooPlotController extends GetxController {
     gridScrollController.dispose();
     searchController.dispose();
     super.onClose();
+  }
+
+  RxDouble totalAmount = 0.0.obs;
+  RxDouble discountAmount = 0.0.obs;
+  RxDouble finalPayable = 0.0.obs;
+
+  RxDouble walletBalance = 500.0.obs;
+  RxBool useWallet = false.obs;
+
+  TextEditingController couponController = TextEditingController();
+  RxBool isCouponLoading = false.obs;
+
+  Future<void> applyCoupon() async {
+    final code = couponController.text.trim();
+
+    if (code.isEmpty) {
+      Fluttertoast.showToast(msg: "Enter coupon code");
+      return;
+    }
+
+    try {
+      isCouponLoading.value = true;
+      final String? token = await SessionManager.getToken();
+      final response = await ApiService.postRequestWithToken(
+        ApiUrl.applyCoupon,
+          data: {
+            "coupon_code": code,
+          },
+          token: token??''
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+
+        if (data['status'] == true) {
+          discountAmount.value = double.tryParse(data['data']['discount_amount'].toString()) ?? 0.0;
+
+          Fluttertoast.showToast(msg: data['message']);
+        } else {
+          discountAmount.value = 0.0;
+          Fluttertoast.showToast(msg: data['message']);
+        }
+      } else {
+        discountAmount.value = 0.0;
+        Fluttertoast.showToast(msg: "Something went wrong");
+      }
+    } catch (e) {
+      discountAmount.value = 0.0;
+      Fluttertoast.showToast(msg: "Error applying coupon");
+    } finally {
+      isCouponLoading.value = false;
+      calculateFinalAmount();
+    }
+  }
+
+  /// CALCULATE FINAL
+  void calculateFinalAmount() {
+    double amount = totalAmount.value - discountAmount.value;
+
+    if (useWallet.value) {
+      final walletUsed = walletBalance.value > amount
+          ? amount
+          : walletBalance.value;
+
+      amount -= walletUsed;
+    }
+
+    finalPayable.value = amount < 0 ? 0 : amount;
   }
 }
 

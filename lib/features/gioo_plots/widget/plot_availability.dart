@@ -422,36 +422,36 @@ class PlotAvailabilityWidget extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: colorTextMain),
                   ),
-                  4.h.verticalSpace,
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        "$percent% ${percent >= 0 ? '↑' : '↓'} ",
-                        style: TextStyle(
-                            color: percent >= 0 ? const Color(0xFF2ECC71) : Colors.red,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      Text("From previous period",
-                          style: TextStyle(
-                              fontSize: 9.sp, color: Colors.grey.shade400))
-                    ],
-                  )
+                  // 4.h.verticalSpace,
+                  // Wrap(
+                  //   crossAxisAlignment: WrapCrossAlignment.center,
+                  //   children: [
+                  //     Text(
+                  //       "$percent% ${percent >= 0 ? '↑' : '↓'} ",
+                  //       style: TextStyle(
+                  //           color: percent >= 0 ? const Color(0xFF2ECC71) : Colors.red,
+                  //           fontSize: 10.sp,
+                  //           fontWeight: FontWeight.bold),
+                  //     ),
+                  //     Text("From previous period",
+                  //         style: TextStyle(
+                  //             fontSize: 9.sp, color: Colors.grey.shade400))
+                  //   ],
+                  // )
                 ],
               ),
             ),
 
             8.w.horizontalSpace,
 
-            // GAUGE (Fixed Size)
-            SizedBox(
-              height: 70.w,
-              width: 70.w,
-              child: isDashed
-                  ? _buildDashedGauge(percent)
-                  : _buildSolidGauge(percent),
-            )
+            // // GAUGE (Fixed Size)
+            // SizedBox(
+            //   height: 70.w,
+            //   width: 70.w,
+            //   child: isDashed
+            //       ? _buildDashedGauge(percent)
+            //       : _buildSolidGauge(percent),
+            // )
           ],
         )
     )
