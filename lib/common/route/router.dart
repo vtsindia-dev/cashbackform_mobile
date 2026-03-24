@@ -35,6 +35,7 @@ import '../../features/splash/screens/splash.dart';
 import '../../features/syndicate_plot/screens/owned_syndicate_plot.dart';
 import '../../features/syndicate_plot/screens/syndicate_plot.dart';
 import '../../features/transaction/screen/transaction.dart';
+import '../../features/wallet/screen/wallet_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -73,6 +74,7 @@ class AppRoutes {
   static const String serviceList = '/serviceList';
   static const String vendorDataDetail = '/vendorDataDetail';
   static const String searchScreen = '/searchScreen';
+  static const String walletScreen = '/walletScreen';
 
   static List<GetPage> routes = [
     GetPage(
@@ -187,6 +189,11 @@ class AppRoutes {
     GetPage(
       name: plotMarket,
       page: () => PlotMarket(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: walletScreen,
+      page: () => WalletScreen(),
       transition: Transition.cupertino,
     ),
     GetPage(
@@ -334,6 +341,7 @@ class AppRoutes {
   static void toTransactionDetails() => Get.offAllNamed(transactionDeatils);
   static void toRentalEnquiry() => Get.offAllNamed(rentalEnquiry);
   static void toPlotMarketEnquiry() => Get.offAllNamed(plotMarketEnquiry);
+  static void toWalletScreen() => Get.offAllNamed(walletScreen);
   static void toRegister({String? phone}) {
     print("AppRoutes.toRegister called with phone: $phone");
     Get.toNamed(register, arguments: {'phone': phone});

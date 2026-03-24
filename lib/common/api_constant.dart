@@ -75,9 +75,8 @@ class ApiUrl {
 
   static const String servicesSubCategory = '$baseUrl/api/v2/services_sub_cat';
   static const String servicesSubSubCategory = '$baseUrl/api/v2/services_sub_sub_cat';
-
-  static const String vendorStoreUrl = '$baseUrl/vendor/store';
   static const String searchApi = '$baseUrl/api/v2/search';
+  static const String vendorStoreUrl = '$baseUrl/api/v2/vendor';
 
 
 

@@ -290,7 +290,7 @@ class _SearchAndFiltersSection extends StatelessWidget {
 
     if (controller.selectedPropertyTypeId.value > 0) {
       filters.add({
-        'label': "Type: ${controller.selectedPropertyTypeName.value}",
+        'label': "Type: ${controller.selectedPropertyTypeName.value }",
         'onRemove': () => controller.clearPropertyTypeFilter(),
       });
     }

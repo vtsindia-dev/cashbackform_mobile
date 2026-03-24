@@ -1165,7 +1165,6 @@ class PlotMarketController extends GetxController {
         if (responseData != null && responseData is Map) {
           List<dynamic> marketDataList = [];
 
-          // Check if data is directly in the response
           if (responseData['data'] != null && responseData['data'] is List) {
             print('✅ Found data in "data" key as List');
             marketDataList = responseData['data'];
@@ -1211,12 +1210,8 @@ class PlotMarketController extends GetxController {
           } else {
             myMarketPlots.assignAll(parsedPlots);
           }
-
-          // Since your API response doesn't have pagination in this endpoint,
-          // we'll assume no pagination or handle it differently
           myTotalItems.value = myMarketPlots.length;
           print('✅ Total my plots loaded: ${myMarketPlots.length}');
-
         } else {
           print('❌ Response data is null or not a Map');
           SnackBarHelper.showError("Invalid response from server");
@@ -1399,7 +1394,6 @@ class PlotMarketController extends GetxController {
     }
   }
 
-// Load more market enquiries
   Future<void> loadMoreMarketEnquiries() async {
     if (!isLoadingMarketEnquiries.value &&
         hasMoreMarketEnquiries.value &&
@@ -1409,7 +1403,6 @@ class PlotMarketController extends GetxController {
     }
   }
 
-// Refresh market enquiries
   Future<void> refreshMarketEnquiries() async {
     await fetchMarketPlotEnquiries();
   }

@@ -45,6 +45,15 @@ class VendorStoreController extends GetxController {
   final instagramController = TextEditingController();
   final facebookController = TextEditingController();
   final whatsappController = TextEditingController();
+
+  // ─── Observable mirrors for TextEditingControllers ───────────────────────
+  // These are needed because TextEditingController.text is NOT reactive in GetX.
+  // Always update these alongside their paired TextEditingController.
+  var addressText = ''.obs;
+  var latText = ''.obs;
+  var langText = ''.obs;
+  // ─────────────────────────────────────────────────────────────────────────
+
   final userId = 0.obs;
   final ImagePicker _picker = ImagePicker();
   var storeImages = <File>[].obs;
@@ -64,7 +73,7 @@ class VendorStoreController extends GetxController {
   var selectedLocation = Rxn<LatLng>();
   var isMapLoading = false.obs;
   var isLocatingUser = false.obs;
-  var mapMarkers = <Marker>[].obs;
+  var mapMarkers = <Marker>{}.obs;
   var searchResults = <Map<String, dynamic>>[].obs;
   var isSearching = false.obs;
   final String googleApiKey = '';
@@ -113,27 +122,23 @@ class VendorStoreController extends GetxController {
     mapController = controller;
   }
 
-  // Search location using Google Places API directly
   Future<void> searchLocation(String query) async {
     if (query.isEmpty) {
       searchResults.clear();
       return;
     }
-
     try {
       isSearching.value = true;
-
-      final url = 'https://maps.googleapis.com/maps/api/place/  /json'
+      final url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json'
           '?input=$query'
           '&key=$googleApiKey'
-          '&components=country:in'; // Restrict to India, remove if you want all countries
-
+          '&components=country:in';
       final response = await http.get(Uri.parse(url));
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == 'OK') {
-          searchResults.value = List<Map<String, dynamic>>.from(data['predictions']);
+          searchResults.value =
+          List<Map<String, dynamic>>.from(data['predictions']);
         } else {
           searchResults.clear();
         }
@@ -146,46 +151,41 @@ class VendorStoreController extends GetxController {
     }
   }
 
-  // Get place details from place_id
   Future<void> selectSearchResult(Map<String, dynamic> result) async {
     try {
       isMapLoading.value = true;
-
       final placeId = result['place_id'];
       final url = 'https://maps.googleapis.com/maps/api/place/details/json'
           '?place_id=$placeId'
           '&key=$googleApiKey';
-
       final response = await http.get(Uri.parse(url));
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == 'OK') {
           final location = data['result']['geometry']['location'];
           final lat = location['lat'];
           final lng = location['lng'];
-
           final latLng = LatLng(lat, lng);
-
           selectedLocation.value = latLng;
-          mapMarkers.clear();
-          mapMarkers.add(
-            Marker(
-              markerId: const MarkerId('selected_location'),
-              position: latLng,
-              infoWindow: InfoWindow(
-                title: result['description'] ?? 'Selected Location',
-              ),
+
+          final marker = Marker(
+            markerId: const MarkerId('selected_location'),
+            position: latLng,
+            infoWindow: InfoWindow(
+              title: result['description'] ?? 'Selected Location',
             ),
           );
+          mapMarkers.value = {marker};
 
           mapController?.animateCamera(
             CameraUpdate.newLatLngZoom(latLng, 16),
           );
 
           await updateAddressFromLatLng(latLng);
-          addressController.text = result['description'] ?? '';
-          searchAddressController.text = result['description'] ?? '';
+          final desc = result['description'] ?? '';
+          addressController.text = desc;
+          searchAddressController.text = desc;
+          addressText.value = desc; // ← keep observable in sync
         }
       }
     } catch (e) {
@@ -199,13 +199,11 @@ class VendorStoreController extends GetxController {
   Future<void> getCurrentLocation() async {
     try {
       isLocatingUser.value = true;
-
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         SnackBarHelper.showError('Please enable location services');
         return;
       }
-
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -214,34 +212,27 @@ class VendorStoreController extends GetxController {
           return;
         }
       }
-
       if (permission == LocationPermission.deniedForever) {
         SnackBarHelper.showError('Location permissions are permanently denied');
         return;
       }
-
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-
       final latLng = LatLng(position.latitude, position.longitude);
-
       selectedLocation.value = latLng;
-      mapMarkers.clear();
-      mapMarkers.add(
-        Marker(
-          markerId: const MarkerId('current_location'),
-          position: latLng,
-          infoWindow: const InfoWindow(title: 'Current Location'),
-        ),
+
+      final marker = Marker(
+        markerId: const MarkerId('current_location'),
+        position: latLng,
+        infoWindow: const InfoWindow(title: 'Current Location'),
       );
+      mapMarkers.value = {marker};
 
       mapController?.animateCamera(
         CameraUpdate.newLatLngZoom(latLng, 16),
       );
-
       await updateAddressFromLatLng(latLng);
-
     } catch (e) {
       print('❌ Get current location error: $e');
       SnackBarHelper.showError('Failed to get current location');
@@ -253,19 +244,16 @@ class VendorStoreController extends GetxController {
   Future<void> onMapTap(LatLng latLng) async {
     try {
       isMapLoading.value = true;
-
       selectedLocation.value = latLng;
-      mapMarkers.clear();
-      mapMarkers.add(
-        Marker(
-          markerId: const MarkerId('tapped_location'),
-          position: latLng,
-          infoWindow: const InfoWindow(title: 'Selected Location'),
-        ),
+
+      final marker = Marker(
+        markerId: const MarkerId('tapped_location'),
+        position: latLng,
+        infoWindow: const InfoWindow(title: 'Selected Location'),
       );
+      mapMarkers.value = {marker};
 
       await updateAddressFromLatLng(latLng);
-
     } catch (e) {
       print('❌ Map tap error: $e');
     } finally {
@@ -279,29 +267,30 @@ class VendorStoreController extends GetxController {
         latLng.latitude,
         latLng.longitude,
       );
-
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
 
-        latController.text = latLng.latitude.toString();
-        langController.text = latLng.longitude.toString();
+        // Update controllers AND observables together
+        final latStr = latLng.latitude.toString();
+        final lngStr = latLng.longitude.toString();
+        latController.text = latStr;
+        langController.text = lngStr;
+        latText.value = latStr;   // ← observable mirror
+        langText.value = lngStr;  // ← observable mirror
 
         List<String> addressParts = [];
-        if (place.street != null && place.street!.isNotEmpty)
-          addressParts.add(place.street!);
-        if (place.subLocality != null && place.subLocality!.isNotEmpty)
-          addressParts.add(place.subLocality!);
-        if (place.locality != null && place.locality!.isNotEmpty)
-          addressParts.add(place.locality!);
-        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty)
-          addressParts.add(place.administrativeArea!);
-        if (place.country != null && place.country!.isNotEmpty)
-          addressParts.add(place.country!);
+        if (place.street?.isNotEmpty == true) addressParts.add(place.street!);
+        if (place.subLocality?.isNotEmpty == true) addressParts.add(place.subLocality!);
+        if (place.locality?.isNotEmpty == true) addressParts.add(place.locality!);
+        if (place.administrativeArea?.isNotEmpty == true) addressParts.add(place.administrativeArea!);
+        if (place.country?.isNotEmpty == true) addressParts.add(place.country!);
 
-        addressController.text = addressParts.join(', ');
-        searchAddressController.text = addressParts.join(', ');
+        final fullAddress = addressParts.join(', ');
+        addressController.text = fullAddress;
+        searchAddressController.text = fullAddress;
+        addressText.value = fullAddress; // ← observable mirror
 
-        if (place.postalCode != null && place.postalCode!.isNotEmpty) {
+        if (place.postalCode?.isNotEmpty == true) {
           postalCodeController.text = place.postalCode!;
         }
 
@@ -314,30 +303,21 @@ class VendorStoreController extends GetxController {
 
   Future<void> matchLocationWithDatabase(Placemark place) async {
     if (countries.isEmpty) await fetchCountries();
-
     if (place.country != null) {
       final matchedCountry = countries.firstWhereOrNull(
-              (c) => c.countryName.toLowerCase().contains(place.country!.toLowerCase())
-      );
-
+              (c) => c.countryName.toLowerCase().contains(place.country!.toLowerCase()));
       if (matchedCountry != null) {
         selectedCountry.value = matchedCountry;
         await fetchStates(matchedCountry.id);
-
         if (place.administrativeArea != null) {
           final matchedState = states.firstWhereOrNull(
-                  (s) => s.stateName.toLowerCase().contains(place.administrativeArea!.toLowerCase())
-          );
-
+                  (s) => s.stateName.toLowerCase().contains(place.administrativeArea!.toLowerCase()));
           if (matchedState != null) {
             selectedState.value = matchedState;
             await fetchCities(matchedState.id);
-
             if (place.locality != null) {
               final matchedCity = cities.firstWhereOrNull(
-                      (c) => c.cityName.toLowerCase().contains(place.locality!.toLowerCase())
-              );
-
+                      (c) => c.cityName.toLowerCase().contains(place.locality!.toLowerCase()));
               if (matchedCity != null) {
                 selectedCity.value = matchedCity;
                 cityController.text = matchedCity.cityName;
@@ -355,16 +335,13 @@ class VendorStoreController extends GetxController {
     try {
       isCountryLoading.value = true;
       countries.clear();
-
       final response = await ApiService.getRequest(ApiUrl.countryUrl);
-
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['data'] != null && responseData['data'] is List) {
           countries.value = (responseData['data'] as List)
               .map((item) => CountryModel.fromJson(item))
               .toList();
-          print('✅ Loaded ${countries.length} countries');
         }
       }
     } catch (e) {
@@ -382,10 +359,7 @@ class VendorStoreController extends GetxController {
     cities.clear();
     stateController.clear();
     cityController.clear();
-
-    if (country != null) {
-      fetchStates(country.id);
-    }
+    if (country != null) fetchStates(country.id);
   }
 
   // ==================== STATE METHODS ====================
@@ -394,17 +368,14 @@ class VendorStoreController extends GetxController {
     try {
       isStateLoading.value = true;
       states.clear();
-
       final url = '${ApiUrl.stateUrl}?country_id=$countryId&search=';
       final response = await ApiService.getRequest(url);
-
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['data'] != null && responseData['data'] is List) {
           states.value = (responseData['data'] as List)
               .map((item) => StateModel.fromJson(item))
               .toList();
-          print('✅ Loaded ${states.length} states for country $countryId');
         }
       }
     } catch (e) {
@@ -419,7 +390,6 @@ class VendorStoreController extends GetxController {
     selectedCity.value = null;
     cities.clear();
     cityController.clear();
-
     if (state != null) {
       stateController.text = state.stateName;
       fetchCities(state.id);
@@ -432,17 +402,14 @@ class VendorStoreController extends GetxController {
     try {
       isCityLoading.value = true;
       cities.clear();
-
       final url = '${ApiUrl.cityUrl}?state_id=$stateId&search=';
       final response = await ApiService.getRequest(url);
-
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['data'] != null && responseData['data'] is List) {
           cities.value = (responseData['data'] as List)
               .map((item) => CityModel.fromJson(item))
               .toList();
-          print('✅ Loaded ${cities.length} cities for state $stateId');
         }
       }
     } catch (e) {
@@ -454,9 +421,7 @@ class VendorStoreController extends GetxController {
 
   void onCityChanged(CityModel? city) {
     selectedCity.value = city;
-    if (city != null) {
-      cityController.text = city.cityName;
-    }
+    if (city != null) cityController.text = city.cityName;
   }
 
   // ==================== IMAGE PICKING METHODS ====================
@@ -468,13 +433,11 @@ class VendorStoreController extends GetxController {
         maxWidth: 1024,
         maxHeight: 1024,
       );
-
       if (images != null && images.isNotEmpty) {
         if (storeImages.length + images.length > 5) {
           SnackBarHelper.showError('Maximum 5 images allowed');
           return;
         }
-
         for (var image in images) {
           storeImages.add(File(image.path));
         }
@@ -493,10 +456,7 @@ class VendorStoreController extends GetxController {
         maxWidth: 800,
         maxHeight: 800,
       );
-
-      if (image != null) {
-        thumbnailImage.value = File(image.path);
-      }
+      if (image != null) thumbnailImage.value = File(image.path);
     } catch (e) {
       print('❌ Thumbnail pick error: $e');
       SnackBarHelper.showError('Failed to pick thumbnail');
@@ -511,10 +471,7 @@ class VendorStoreController extends GetxController {
         maxWidth: 800,
         maxHeight: 800,
       );
-
-      if (image != null) {
-        thumbnailImage.value = File(image.path);
-      }
+      if (image != null) thumbnailImage.value = File(image.path);
     } catch (e) {
       print('❌ Camera error: $e');
       SnackBarHelper.showError('Failed to take photo');
@@ -535,9 +492,7 @@ class VendorStoreController extends GetxController {
 
   Future<void> loadUserId() async {
     final id = await SessionManager.getUserId();
-    if (id != null) {
-      userId.value = int.parse(id);
-    }
+    if (id != null) userId.value = int.parse(id);
   }
 
   // ==================== FORM VALIDATION ====================
@@ -617,25 +572,25 @@ class VendorStoreController extends GetxController {
         'user_id': userId.value,
         'name': nameController.text.trim(),
         'description': descriptionController.text.trim(),
-        'country_id': selectedCountry.value?.id,
-        'state_id': selectedState.value?.id,
-        'city_id': selectedCity.value?.id,
-        'city': selectedCity.value?.cityName ?? cityController.text.trim(),
-        'state': selectedState.value?.stateName ?? stateController.text.trim(),
+        'country': selectedCountry.value?.id,
+        'state': selectedState.value?.id,
+        'city': selectedCity.value?.id,
+        // 'city': selectedCity.value?.id ?? cityController.text.trim(),
+        // 'state': selectedState.value?.stateName ?? stateController.text.trim(),
         'postal_code': postalCodeController.text.trim(),
         'phone': phoneController.text.trim(),
         'email': emailController.text.trim(),
-        'website': websiteController.text.trim().isNotEmpty ? websiteController.text.trim() : '',
+        'website': websiteController.text.trim(),
         'lat': latController.text.trim(),
         'lang': langController.text.trim(),
         'address': addressController.text.trim(),
-        'instagram': instagramController.text.trim().isNotEmpty ? instagramController.text.trim() : '',
-        'facebook': facebookController.text.trim().isNotEmpty ? facebookController.text.trim() : '',
-        'whatsapp': whatsappController.text.trim().isNotEmpty ? whatsappController.text.trim() : phoneController.text.trim(),
-
+        'instagram': instagramController.text.trim(),
+        'facebook': facebookController.text.trim(),
+        'whatsapp': whatsappController.text.trim().isNotEmpty
+            ? whatsappController.text.trim()
+            : phoneController.text.trim(),
       });
 
-      // Add multiple images
       for (var i = 0; i < storeImages.length; i++) {
         final file = storeImages[i];
         if (await file.exists()) {
@@ -649,7 +604,6 @@ class VendorStoreController extends GetxController {
         }
       }
 
-      // Add thumbnail
       if (thumbnailImage.value != null && await thumbnailImage.value!.exists()) {
         formData.files.add(MapEntry(
           'thumbnail',
@@ -660,32 +614,18 @@ class VendorStoreController extends GetxController {
         ));
       }
 
-      print('📤 Creating vendor store...');
-      final response = await ApiService.postMultipart(
-        ApiUrl.vendorStoreUrl,
-        formData,
-      );
+      final response = await ApiService.postMultipart(ApiUrl.vendorStoreUrl, formData);
 
-      print('📥 Response: ${response.statusCode} - ${response.data}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == true) {
         final responseData = response.data;
-
         if (responseData != null && responseData['status'] == 200) {
           final message = responseData['message'] ?? 'Store created successfully';
-
           if (responseData['data'] != null) {
             store.value = VendorStoreModel.fromJson(responseData['data']);
           }
-
           clearForm();
           SnackBarHelper.showSuccess(message);
-
-          return {
-            'status': 200,
-            'message': message,
-            'data': responseData['data'],
-          };
+          return {'status': 200, 'message': message, 'data': responseData['data']};
         } else {
           final errorMsg = responseData?['message'] ?? 'Failed to create store';
           SnackBarHelper.showError(errorMsg);
@@ -711,17 +651,15 @@ class VendorStoreController extends GetxController {
   Future<void> fetchStore() async {
     try {
       isFetching(true);
-
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
         isFetching(false);
         return;
       }
-
       final response = await ApiService.getAuthenticatedRequest(
-        '${ApiUrl.vendorStoreUrl}?user_id=${userId.value}', token,
+        '${ApiUrl.vendorStoreUrl}?user_id=${userId.value}',
+        token,
       );
-
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData != null && responseData['data'] != null) {
@@ -740,7 +678,6 @@ class VendorStoreController extends GetxController {
 
   Future<void> prefillFormData() async {
     if (store.value == null) return;
-
     final s = store.value!;
 
     nameController.text = s.name;
@@ -749,49 +686,52 @@ class VendorStoreController extends GetxController {
     phoneController.text = s.phone;
     emailController.text = s.email;
     websiteController.text = s.website ?? '';
-    latController.text = s.lat.toString();
-    langController.text = s.lang.toString();
-    addressController.text = s.address;
-    searchAddressController.text = s.address;
     instagramController.text = s.instagram ?? '';
     facebookController.text = s.facebook ?? '';
     whatsappController.text = s.whatsapp ?? s.phone;
 
-    // Set map marker if coordinates exist
+    // Sync address observables
+    final addr = s.address;
+    addressController.text = addr;
+    searchAddressController.text = addr;
+    addressText.value = addr; // ← observable mirror
+
+    final latStr = s.lat.toString();
+    final lngStr = s.lang.toString();
+    latController.text = latStr;
+    langController.text = lngStr;
+    latText.value = latStr;   // ← observable mirror
+    langText.value = lngStr;  // ← observable mirror
+
     if (s.lat != 0 && s.lang != 0) {
       final latLng = LatLng(s.lat, s.lang);
       selectedLocation.value = latLng;
-      mapMarkers.add(
-        Marker(
-          markerId: const MarkerId('stored_location'),
-          position: latLng,
-          infoWindow: InfoWindow(title: s.name),
-        ),
+      final marker = Marker(
+        markerId: const MarkerId('stored_location'),
+        position: latLng,
+        infoWindow: InfoWindow(title: s.name),
       );
+      mapMarkers.value = {marker};
     }
 
     if (s.images != null && s.images!.isNotEmpty) {
       storeImageUrls.value = s.images!;
     }
-
     if (s.thumbnail != null) {
       thumbnailUrl.value = s.thumbnail!;
     }
 
-    // Load and select country, state, city
     if (s.countryId != null) {
       await fetchCountries();
       final country = countries.firstWhereOrNull((c) => c.id == s.countryId);
       if (country != null) {
         selectedCountry.value = country;
-
         if (s.stateId != null) {
           await fetchStates(s.countryId!);
           final state = states.firstWhereOrNull((st) => st.id == s.stateId);
           if (state != null) {
             selectedState.value = state;
             stateController.text = state.stateName;
-
             if (s.cityId != null) {
               await fetchCities(s.stateId!);
               final city = cities.firstWhereOrNull((ci) => ci.id == s.cityId);
@@ -825,6 +765,11 @@ class VendorStoreController extends GetxController {
     facebookController.clear();
     whatsappController.clear();
 
+    // Clear observables
+    addressText.value = '';
+    latText.value = '';
+    langText.value = '';
+
     selectedCountry.value = null;
     selectedState.value = null;
     selectedCity.value = null;
@@ -837,7 +782,7 @@ class VendorStoreController extends GetxController {
     thumbnailImage.value = null;
     storeImageUrls.clear();
     thumbnailUrl.value = '';
-    mapMarkers.clear();
+    mapMarkers.value = {};
     selectedLocation.value = null;
     searchResults.clear();
 
@@ -847,24 +792,16 @@ class VendorStoreController extends GetxController {
   // ==================== GETTERS ====================
 
   String get displayThumbnail {
-    if (thumbnailImage.value != null) {
-      return thumbnailImage.value!.path;
-    }
-    if (thumbnailUrl.value.isNotEmpty) {
-      return thumbnailUrl.value;
-    }
+    if (thumbnailImage.value != null) return thumbnailImage.value!.path;
+    if (thumbnailUrl.value.isNotEmpty) return thumbnailUrl.value;
     return '';
   }
 
   List<String> get displayImages {
-    final List<String> images = [];
-    for (var file in storeImages) {
-      images.add(file.path);
-    }
-    for (var url in storeImageUrls) {
-      images.add(url);
-    }
-    return images;
+    return [
+      ...storeImages.map((f) => f.path),
+      ...storeImageUrls,
+    ];
   }
 
   bool get isFormValid {
@@ -886,13 +823,10 @@ class VendorStoreController extends GetxController {
 
   CameraPosition get initialCameraPosition {
     if (selectedLocation.value != null) {
-      return CameraPosition(
-        target: selectedLocation.value!,
-        zoom: 16,
-      );
+      return CameraPosition(target: selectedLocation.value!, zoom: 16);
     }
     return const CameraPosition(
-      target: LatLng(20.5937, 78.9629), // Center of India
+      target: LatLng(20.5937, 78.9629),
       zoom: 5,
     );
   }

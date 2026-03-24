@@ -98,7 +98,7 @@ class SyndicatePlotController extends GetxController {
     return unitIds;
   }
 
-  List<double> _parseUnitAreas(String unitString) {
+  List<double>   _parseUnitAreas(String unitString) {
     try {
       if (unitString.isEmpty) return [];
       return unitString.split(',').map((e) => double.tryParse(e.trim()) ?? 0.0).toList();
@@ -790,26 +790,19 @@ class SyndicatePlotController extends GetxController {
     return "${area.toStringAsFixed(0)} sq.ft";
   }
 
-  // Get price per plot from admin_block_amount - NEW METHOD
   double getPricePerPlotFromAdminBlock() {
     final detail = syndicateDetail.value;
     if (detail == null) return 0.0;
-
-    // Use admin_block_amount if available and valid
     final adminBlockAmount = detail.adminBlockAmount;
     if (adminBlockAmount != null && adminBlockAmount.isNotEmpty && adminBlockAmount != '0') {
       final price = double.tryParse(adminBlockAmount.replaceAll(',', '')) ?? 0.0;
       print('💰 Using admin_block_amount: $price');
       return price;
     }
-
-    // Fallback to old calculation if admin_block_amount is not available
     final fallbackPrice = getPricePerPlot();
     print('⚠️ Using fallback price: $fallbackPrice (admin_block_amount not available)');
     return fallbackPrice;
   }
-
-  // Get price per plot (old method - kept for backward compatibility)
   double getPricePerPlot() {
     final detail = syndicateDetail.value;
     if (detail == null) return 0.0;
@@ -817,15 +810,11 @@ class SyndicatePlotController extends GetxController {
     return double.tryParse(detail.price.replaceAll(',', '')) ?? 0.0;
   }
 
-  // Calculate total amount for selected plots using admin_block_amount
   double calculateSelectedPlotsAmount() {
     final detail = syndicateDetail.value;
     if (detail == null || selectedPlots.isEmpty) return 0.0;
-
-    // Get price per plot from admin_block_amount
     final pricePerPlot = getPricePerPlotFromAdminBlock();
 
-    // Calculate total amount for selected plots
     final totalAmount = pricePerPlot * selectedPlots.length;
     print('💵 Calculated amount: $pricePerPlot × ${selectedPlots.length} = $totalAmount');
     return totalAmount;

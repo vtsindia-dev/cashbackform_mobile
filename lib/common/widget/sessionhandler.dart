@@ -184,6 +184,7 @@ class SessionManager {
 
       final token = prefs.getString(_tokenKey);
 
+
       print('   Token from storage: $token');
       print('   Token is null: ${token == null}');
       print('   Token is empty: ${token?.isEmpty ?? true}');
