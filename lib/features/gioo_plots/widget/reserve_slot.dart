@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:cashback_farms/common/widget/toster.dart';
 import 'package:cashback_farms/features/gioo_plots/screens/gioterms.dart';
+import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -32,6 +33,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
   bool _hasScrolledToAvailable = false;
   bool _isDisposed = false;
 
+  DashboardController dashboardController = Get.put(DashboardController());
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +42,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
     ever(controller.units, (_) {
       if (_isDisposed) return; // Don't proceed if disposed
 
-      if (controller.units.isNotEmpty && _currentPage * _itemsPerPage >= controller.units.length) {
+      if (controller.units.isNotEmpty &&
+          _currentPage * _itemsPerPage >= controller.units.length) {
         if (mounted) {
           setState(() {
             _currentPage = 0;
@@ -56,6 +60,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
         });
       }
     });
+    controller.resetValues();
+    controller.walletBalance.value = double.tryParse(dashboardController.profile.value?.walletBalance ?? "0") ?? 0;
+    controller.discountPercentage.value = double.tryParse(dashboardController.businessSettings.value?.discountPercentage?.toString() ?? "0") ?? 0;
+    controller.discountMaxCost.value = double.tryParse(dashboardController.businessSettings.value?.discountMaxCost?.toString() ?? "0") ?? 0;
   }
 
   @override
@@ -99,7 +107,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
         if (_gridScrollController.hasClients) {
           // Calculate row position (assuming 10 plots per row)
           final rowIndex = (firstAvailableIndex % _itemsPerPage) ~/ 10;
-          final scrollOffset = rowIndex * 100.0; // Adjust based on your grid item height
+          final scrollOffset =
+              rowIndex * 100.0; // Adjust based on your grid item height
 
           _gridScrollController.animateTo(
             scrollOffset,
@@ -167,7 +176,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
               color: Colors.black.withOpacity(0.05),
               blurRadius: 15,
               offset: const Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Column(
@@ -182,7 +191,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
                   Animate(
                     effects: [
                       FadeEffect(duration: 350.ms),
-                      SlideEffect(begin: const Offset(0, 0.15), duration: 350.ms),
+                      SlideEffect(
+                        begin: const Offset(0, 0.15),
+                        duration: 350.ms,
+                      ),
                     ],
                     child: _buildLegend(controller),
                   ),
@@ -253,9 +265,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
                   'View Available',
                   style: TextStyle(fontSize: 12.sp),
                 ),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColor.orange,
-                ),
+                style: TextButton.styleFrom(foregroundColor: AppColor.orange),
               ),
           ],
         ),
@@ -287,16 +297,22 @@ class _ReserveSlotState extends State<ReserveSlot> {
                       width: 50.w,
                       height: 50.w,
                       decoration: BoxDecoration(
-                        color: selectedPlotCount > 0 ? AppColor.orange.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                        color: selectedPlotCount > 0
+                            ? AppColor.orange.withOpacity(0.1)
+                            : Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8.r),
                         border: Border.all(
-                          color: selectedPlotCount > 0 ? AppColor.orange : Colors.grey.withOpacity(0.3),
+                          color: selectedPlotCount > 0
+                              ? AppColor.orange
+                              : Colors.grey.withOpacity(0.3),
                         ),
                       ),
                       child: Center(
                         child: Icon(
                           Icons.remove,
-                          color: selectedPlotCount > 0 ? AppColor.orange : Colors.grey,
+                          color: selectedPlotCount > 0
+                              ? AppColor.orange
+                              : Colors.grey,
                           size: 24.w,
                         ),
                       ),
@@ -338,7 +354,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Maximum ${maxAvailable} plots available'),
+                            content: Text(
+                              'Maximum ${maxAvailable} plots available',
+                            ),
                             duration: const Duration(seconds: 1),
                           ),
                         );
@@ -348,12 +366,15 @@ class _ReserveSlotState extends State<ReserveSlot> {
                       width: 50.w,
                       height: 50.w,
                       decoration: BoxDecoration(
-                        color: selectedPlotCount < controller.availableCount.value
+                        color:
+                            selectedPlotCount < controller.availableCount.value
                             ? AppColor.orange.withOpacity(0.1)
                             : Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8.r),
                         border: Border.all(
-                          color: selectedPlotCount < controller.availableCount.value
+                          color:
+                              selectedPlotCount <
+                                  controller.availableCount.value
                               ? AppColor.orange
                               : Colors.grey.withOpacity(0.3),
                         ),
@@ -361,7 +382,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
                       child: Center(
                         child: Icon(
                           Icons.add,
-                          color: selectedPlotCount < controller.availableCount.value
+                          color:
+                              selectedPlotCount <
+                                  controller.availableCount.value
                               ? AppColor.orange
                               : Colors.grey,
                           size: 24.w,
@@ -407,7 +430,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
                   if (selectedPlotCount > controller.availableCount.value) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Only ${controller.availableCount.value} plots available'),
+                        content: Text(
+                          'Only ${controller.availableCount.value} plots available',
+                        ),
                         duration: const Duration(seconds: 2),
                       ),
                     );
@@ -451,7 +476,6 @@ class _ReserveSlotState extends State<ReserveSlot> {
     );
   }
 
-
   Widget _buildSelectionHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,11 +513,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.touch_app,
-                    size: 14.w,
-                    color: AppColor.orange,
-                  ),
+                  Icon(Icons.touch_app, size: 14.w, color: AppColor.orange),
                   5.w.horizontalSpace,
                   Text(
                     "Tap to select",
@@ -583,10 +603,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
                 Expanded(
                   child: Text(
                     "Selected plots: ${_tempSelectedUnits.join(', ')}",
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColor.textMain,
-                    ),
+                    style: TextStyle(fontSize: 12.sp, color: AppColor.textMain),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -616,15 +633,20 @@ class _ReserveSlotState extends State<ReserveSlot> {
   void _confirmSelection() {
     // Mark selected units as "Selected" in controller
     for (var unitId in _tempSelectedUnits) {
-      final unitIndex = controller.units.indexWhere((unit) => unit.id == unitId);
+      final unitIndex = controller.units.indexWhere(
+        (unit) => unit.id == unitId,
+      );
       if (unitIndex != -1) {
-        controller.units[unitIndex] = controller.units[unitIndex].copyWith(status: 'Selected');
+        controller.units[unitIndex] = controller.units[unitIndex].copyWith(
+          status: 'Selected',
+        );
       }
     }
 
     // Update controller's selected units
     controller.selectedUnits.value = List.from(_tempSelectedUnits);
-
+    controller.totalAmount.value = controller.selectedUnits.length * controller.pricePerUnit.value;
+    controller.calculateFinalAmount();
     if (mounted) {
       setState(() {
         _isSelectionMode = false;
@@ -637,34 +659,48 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
   // LEGEND ----------------------------------------------------------------
   Widget _buildLegend(GiooPlotController controller) {
-    return Obx(() => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "GreenHeap Plots",
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-            color: AppColor.textMain,
+    return Obx(
+      () => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "GreenHeap Plots",
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColor.textMain,
+            ),
           ),
-        ),
-        10.h.verticalSpace,
-        Wrap(
-          spacing: 12.w,
-          runSpacing: 8.h,
-          children: [
-            _legendItem(AppColor.orange,
+          10.h.verticalSpace,
+          Wrap(
+            spacing: 12.w,
+            runSpacing: 8.h,
+            children: [
+              _legendItem(
+                AppColor.orange,
                 _isSelectionMode
                     ? "Selecting (${_tempSelectedUnits.length})"
-                    : "Selected (${controller.selectedCount.value})"),
-            _legendItem(AppColor.primary, "Booked (${controller.bookedCount.value + controller.adminBookedCount.value})"),
-            _legendItem(Colors.grey.withOpacity(0.5), "Available (${controller.availableCount.value})"),
-            _legendItem(Colors.blue.withOpacity(0.5), "Total Slot (${controller.totalPlotsCount.value})"),
-          ],
-        ),
-      ],
-    ));
+                    : "Selected (${controller.selectedCount.value})",
+              ),
+              _legendItem(
+                AppColor.primary,
+                "Booked (${controller.bookedCount.value + controller.adminBookedCount.value})",
+              ),
+              _legendItem(
+                Colors.grey.withOpacity(0.5),
+                "Available (${controller.availableCount.value})",
+              ),
+              _legendItem(
+                Colors.blue.withOpacity(0.5),
+                "Total Slot (${controller.totalPlotsCount.value})",
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
+
   Widget _legendItem(Color color, String text) {
     return Row(
       children: [
@@ -677,7 +713,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
           ),
         ),
         8.w.horizontalSpace,
-        Text(text, style: TextStyle(fontSize: 12.sp, color: AppColor.textMain)),
+        Text(
+          text,
+          style: TextStyle(fontSize: 12.sp, color: AppColor.textMain),
+        ),
       ],
     );
   }
@@ -694,10 +733,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
             _buildPageNavigation(controller),
             15.h.verticalSpace,
           ],
-          Container(
-            height: 350.h,
-            child: _buildGridForCurrentPage(controller),
-          ),
+          Container(height: 350.h, child: _buildGridForCurrentPage(controller)),
           if (controller.units.length > _itemsPerPage) ...[
             10.h.verticalSpace,
             _buildPageInfo(controller),
@@ -732,7 +768,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
                 borderRadius: BorderRadius.circular(20.r),
                 onTap: () => _jumpToFirstAvailable(),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 10.h,
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -766,24 +805,27 @@ class _ReserveSlotState extends State<ReserveSlot> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-              onPressed: _currentPage > 0 ? () {
-                if (mounted) {
-                  setState(() {
-                    _currentPage--;
-                  });
-                }
-                // Reset scroll position when changing pages
-                if (_gridScrollController.hasClients) {
-                  _gridScrollController.jumpTo(0);
-                }
-              } : null,
+              onPressed: _currentPage > 0
+                  ? () {
+                      if (mounted) {
+                        setState(() {
+                          _currentPage--;
+                        });
+                      }
+                      // Reset scroll position when changing pages
+                      if (_gridScrollController.hasClients) {
+                        _gridScrollController.jumpTo(0);
+                      }
+                    }
+                  : null,
               icon: const Icon(Icons.chevron_left),
               color: _currentPage > 0 ? AppColor.orange : Colors.grey,
             ),
             20.w.horizontalSpace,
             GestureDetector(
               onHorizontalDragEnd: (details) {
-                final totalPages = (controller.units.length / _itemsPerPage).ceil();
+                final totalPages = (controller.units.length / _itemsPerPage)
+                    .ceil();
                 // Swipe right to left = next page
                 if (details.primaryVelocity! < 0) {
                   if (_currentPage < totalPages - 1 && mounted) {
@@ -814,19 +856,23 @@ class _ReserveSlotState extends State<ReserveSlot> {
             ),
             20.w.horizontalSpace,
             IconButton(
-              onPressed: _currentPage < totalPages - 1 ? () {
-                if (mounted) {
-                  setState(() {
-                    _currentPage++;
-                  });
-                }
-                // Reset scroll position when changing pages
-                if (_gridScrollController.hasClients) {
-                  _gridScrollController.jumpTo(0);
-                }
-              } : null,
+              onPressed: _currentPage < totalPages - 1
+                  ? () {
+                      if (mounted) {
+                        setState(() {
+                          _currentPage++;
+                        });
+                      }
+                      // Reset scroll position when changing pages
+                      if (_gridScrollController.hasClients) {
+                        _gridScrollController.jumpTo(0);
+                      }
+                    }
+                  : null,
               icon: const Icon(Icons.chevron_right),
-              color: _currentPage < totalPages - 1 ? AppColor.orange : Colors.grey,
+              color: _currentPage < totalPages - 1
+                  ? AppColor.orange
+                  : Colors.grey,
             ),
           ],
         ),
@@ -893,7 +939,11 @@ class _ReserveSlotState extends State<ReserveSlot> {
     );
   }
 
-  Widget _buildPlotUnitItem(GiooPlotController controller, PlotUnit unit, int unitIndex) {
+  Widget _buildPlotUnitItem(
+    GiooPlotController controller,
+    PlotUnit unit,
+    int unitIndex,
+  ) {
     final isTempSelected = _tempSelectedUnits.contains(unit.id);
     final isPermanentlySelected = controller.selectedUnits.contains(unit.id);
 
@@ -956,16 +1006,22 @@ class _ReserveSlotState extends State<ReserveSlot> {
           border: Border.all(
             color: isFirstAvailableInGrid
                 ? AppColor.orangeAccent
-                : (isPermanentlySelected || isTempSelected ? AppColor.orangeAccent : Colors.transparent),
-            width: isFirstAvailableInGrid ? 3.w : (isPermanentlySelected || isTempSelected ? 2.w : 0),
+                : (isPermanentlySelected || isTempSelected
+                      ? AppColor.orangeAccent
+                      : Colors.transparent),
+            width: isFirstAvailableInGrid
+                ? 3.w
+                : (isPermanentlySelected || isTempSelected ? 2.w : 0),
           ),
-          boxShadow: isFirstAvailableInGrid ? [
-            BoxShadow(
-              color: AppColor.orangeAccent.withOpacity(0.5),
-              blurRadius: 8,
-              spreadRadius: 2,
-            )
-          ] : null,
+          boxShadow: isFirstAvailableInGrid
+              ? [
+                  BoxShadow(
+                    color: AppColor.orangeAccent.withOpacity(0.5),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
         ),
         child: Stack(
           children: [
@@ -981,8 +1037,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (icon != null)
-                    Icon(icon, size: 12.w, color: Colors.white),
+                  if (icon != null) Icon(icon, size: 12.w, color: Colors.white),
                 ],
               ),
             ),
@@ -1030,13 +1085,15 @@ class _ReserveSlotState extends State<ReserveSlot> {
                   margin: EdgeInsets.symmetric(horizontal: 3.w),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: i == _currentPage ? AppColor.orange : Colors.grey.withOpacity(0.3),
+                    color: i == _currentPage
+                        ? AppColor.orange
+                        : Colors.grey.withOpacity(0.3),
                   ),
                 ),
             ],
           )
         else
-        // Show limited dots with current page indicator
+          // Show limited dots with current page indicator
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -1047,7 +1104,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
                 margin: EdgeInsets.symmetric(horizontal: 3.w),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: 0 == _currentPage ? AppColor.orange : Colors.grey.withOpacity(0.3),
+                  color: 0 == _currentPage
+                      ? AppColor.orange
+                      : Colors.grey.withOpacity(0.3),
                 ),
               ),
 
@@ -1059,14 +1118,20 @@ class _ReserveSlotState extends State<ReserveSlot> {
               ],
 
               // Show 5 pages around current page
-              for (int i = max(1, _currentPage - 2); i <= min(totalPages - 2, _currentPage + 2); i++)
+              for (
+                int i = max(1, _currentPage - 2);
+                i <= min(totalPages - 2, _currentPage + 2);
+                i++
+              )
                 Container(
                   width: 6.w,
                   height: 6.w,
                   margin: EdgeInsets.symmetric(horizontal: 3.w),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: i == _currentPage ? AppColor.orange : Colors.grey.withOpacity(0.3),
+                    color: i == _currentPage
+                        ? AppColor.orange
+                        : Colors.grey.withOpacity(0.3),
                   ),
                 ),
 
@@ -1084,7 +1149,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
                 margin: EdgeInsets.symmetric(horizontal: 3.w),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: (totalPages - 1) == _currentPage ? AppColor.orange : Colors.grey.withOpacity(0.3),
+                  color: (totalPages - 1) == _currentPage
+                      ? AppColor.orange
+                      : Colors.grey.withOpacity(0.3),
                 ),
               ),
             ],
@@ -1094,7 +1161,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
         5.h.verticalSpace,
         Text(
           'Page ${_currentPage + 1} of $totalPages • $availableCount available plots',
-          style: TextStyle(fontSize: 12.sp, color: AppColor.textMain.withOpacity(0.7)),
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: AppColor.textMain.withOpacity(0.7),
+          ),
         ),
       ],
     );
@@ -1119,7 +1189,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Not enough available plots. Only ${availableUnits.length} available.'),
+          content: Text(
+            'Not enough available plots. Only ${availableUnits.length} available.',
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -1130,8 +1202,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
   // Update the tap selection to handle edge cases
   void _handleTapSelection(int unitId) {
-    final unit = controller.units.firstWhere((u) => u.id == unitId,
-        orElse: () => PlotUnit(id: -1, label: '', status: 'Booked', area: 0));
+    final unit = controller.units.firstWhere(
+      (u) => u.id == unitId,
+      orElse: () => PlotUnit(id: -1, label: '', status: 'Booked', area: 0),
+    );
 
     if (unit.status == 'Booked') {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1170,7 +1244,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
   Widget _buildSidebarCard(GiooPlotController controller) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(25.w),
+      padding: EdgeInsets.symmetric(horizontal: 20.w,vertical: 20.w),
       decoration: BoxDecoration(
         color: AppColor.backgroundLight,
         borderRadius: BorderRadius.only(
@@ -1208,17 +1282,16 @@ class _ReserveSlotState extends State<ReserveSlot> {
     );
   }
 
-
   Widget gioTermsCheckbox() {
     return Obx(
-          () => Column(
+      () => Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Row(
             mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
               Transform.scale(
                 scale: 0.9,
                 child: Checkbox(
@@ -1237,20 +1310,19 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
               RichText(
                 text: TextSpan(
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColor.textMain,
-                  ),
+                  style: TextStyle(fontSize: 12.sp, color: AppColor.textMain),
                   children: [
                     const TextSpan(text: "I agree to the "),
                     WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
                       child: GestureDetector(
                         onTap: () {
-                          Get.to(() => GioPlotTermsScreen(
-                            terms: controller.terms,
-                            slug: "gioo-plots-terms-and-condition",
-                          ));
+                          Get.to(
+                            () => GioPlotTermsScreen(
+                              terms: controller.terms,
+                              slug: "gioo-plots-terms-and-condition",
+                            ),
+                          );
                         },
                         child: Text(
                           "Terms & Conditions",
@@ -1266,15 +1338,17 @@ class _ReserveSlotState extends State<ReserveSlot> {
                   ],
                 ),
               ),
-                      ],
-                    ),
             ],
           ),
+        ],
+      ),
     );
   }
 
-
-    Widget _buildLocationDetail(GiooPlotController controller, GiooPlotDetail detail) {
+  Widget _buildLocationDetail(
+    GiooPlotController controller,
+    GiooPlotDetail detail,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1295,7 +1369,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
         10.h.verticalSpace,
         Text(
           detail.address ?? "No address",
-          style: TextStyle(fontSize: 12.sp, color: AppColor.black,),
+          style: TextStyle(fontSize: 12.sp, color: AppColor.black),
         ),
         5.h.verticalSpace,
         RichText(
@@ -1324,9 +1398,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _buildStatusAndUnitInfo(
-      GiooPlotController controller,
-      GiooPlotDetail detail,
-      ) {
+    GiooPlotController controller,
+    GiooPlotDetail detail,
+  ) {
     final dateFormatter = DateFormat('dd MMM yyyy');
 
     /// Only DATE (no time)
@@ -1342,20 +1416,14 @@ class _ReserveSlotState extends State<ReserveSlot> {
           isVerified ? Colors.green : Colors.red,
         ),
         const SizedBox(height: 5),
-        _infoItem(
-                  Icons.date_range,
-                  createdDate,
-                  AppColor.black,
-                ),
-        SizedBox(height: 5,),
+        _infoItem(Icons.date_range, createdDate, AppColor.black),
+        SizedBox(height: 5),
 
         _infoItem(
           Icons.location_city_outlined,
           controller.getSelectedUnitsText(),
           AppColor.black,
         ),
-
-
 
         /// SHOW MORE / LESS
         if (controller.selectedUnits.length > 5)
@@ -1417,8 +1485,14 @@ class _ReserveSlotState extends State<ReserveSlot> {
         : controller.selectedUnits.length;
 
     final pricePerUnit = controller.pricePerUnit.value;
-
     final totalPrice = selectedCount * pricePerUnit;
+
+    if (controller.totalAmount.value != totalPrice.toDouble()) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.totalAmount.value = totalPrice.toDouble();
+        controller.calculateFinalAmount();
+      });
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1432,25 +1506,22 @@ class _ReserveSlotState extends State<ReserveSlot> {
           ),
         ),
         15.h.verticalSpace,
-
         _priceRow("Price per Unit:", "₹${pricePerUnit.toStringAsFixed(2)}"),
         5.h.verticalSpace,
         _priceRow("Number of Plots:", "$selectedCount x"),
-        const Divider(height: 20, color: Colors.black12),
-        Text(
-          "Apply Coupon",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        10.h.verticalSpace,
 
+        const Divider(height: 20, color: Colors.black12),
+        Text("Apply Coupon", style: TextStyle(fontWeight: FontWeight.w600)),
+        10.h.verticalSpace,
         Row(
           children: [
             Expanded(
               child: SizedBox(
                 height: 50.h,
-                child: TextField(
+                child: Obx(() => TextField(
                   controller: controller.couponController,
                   style: TextStyle(fontSize: 13.sp),
+                  readOnly: controller.isApplied.value,
                   decoration: InputDecoration(
                     hintText: "Enter coupon code",
                     hintStyle: TextStyle(fontSize: 12.sp),
@@ -1459,27 +1530,31 @@ class _ReserveSlotState extends State<ReserveSlot> {
                       vertical: 10.h,
                     ),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: controller.isApplied.value
+                        ? Colors.grey.shade200
+                        : Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
                       borderSide: BorderSide.none,
                     ),
                   ),
-                ),
+                )),
               ),
             ),
             10.w.horizontalSpace,
-
-            SizedBox(
+            Obx(() => SizedBox(
               height: 45.h,
-              width: 90.w,
+              width: 110.w,
               child: ElevatedButton(
                 onPressed: controller.isCouponLoading.value
                     ? null
+                    : controller.isApplied.value
+                    ? controller.removeCoupon
                     : controller.applyCoupon,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.primary,
-                  padding: EdgeInsets.zero,
+                  backgroundColor: controller.isApplied.value
+                      ? Colors.red
+                      : AppColor.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
@@ -1491,140 +1566,650 @@ class _ReserveSlotState extends State<ReserveSlot> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
                     : Text(
-                  "Apply",
-                  style: TextStyle(fontSize: 13.sp,color: Colors.white),
+                  controller.isApplied.value ? "Remove" : "Apply",
+                  style:
+                  TextStyle(fontSize: 13.sp, color: Colors.white),
                 ),
               ),
-            ),
+            )),
           ],
         ),
         10.h.verticalSpace,
-        Container(
-          height: 55.h,
-          padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Obx(() {
+          final wallet = controller.walletBalance.value;
+          final isUsed = controller.useWallet.value;
+
+          return Column(
             children: [
-              Text(
-                "Wallet: ₹${controller.walletBalance.value.toStringAsFixed(2)}",
-              ),
-              Row(
-                children: [
-                  Checkbox(
-                    value: controller.useWallet.value,
-                    onChanged: (val) {
-                      controller.useWallet.value = val ?? false;
-                      controller.calculateFinalAmount();
-                    },
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 5.h),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isUsed
+                        ? [Colors.green.shade50, Colors.green.shade100]
+                        : [Colors.grey.shade50, Colors.grey.shade100],
                   ),
-                  const Text("Use Wallet"),
-                ],
-              )
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: isUsed ? Colors.green : Colors.grey.shade300,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8.w),
+                      decoration: BoxDecoration(
+                        color: isUsed ? Colors.green : Colors.grey.shade300,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.account_balance_wallet,
+                        color: isUsed ? Colors.white : Colors.black54,
+                        size: 18.sp,
+                      ),
+                    ),
+                    10.w.horizontalSpace,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Wallet Balance",
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            "₹${wallet.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: isUsed ? Colors.green : Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Transform.scale(
+                      scale: 0.8,
+                      child: Switch(
+                        value: isUsed,
+                        activeColor: Colors.green,
+                        onChanged: (val) {
+                          FocusScope.of(context).unfocus();
+                          if (controller.selectedUnits.isEmpty) {
+                            Fluttertoast.showToast(
+                              msg: "Please select at least one plot",
+                              gravity: ToastGravity.BOTTOM,
+                            );
+                            return;
+                          }
+                          controller.useWallet.value = val;
+
+                          // ✅ Reset custom amount when toggled off
+                          if (!val) {
+                            controller.walletUsedAmount.value = 0.0;
+                            controller.walletAmountController.clear();
+                          } else {
+                            // ✅ Default to full wallet balance when toggled on
+                            controller.walletUsedAmount.value =
+                                controller.walletBalance.value;
+                            controller.walletAmountController.text =
+                                controller.walletBalance.value.toStringAsFixed(0);
+                          }
+                          controller.calculateFinalAmount();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ✅ Custom amount input — only shown when wallet is ON
+              if (isUsed) ...[
+                8.h.verticalSpace,
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, color: Colors.green, size: 16.sp),
+                      8.w.horizontalSpace,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Enter amount to use (Max: ₹${wallet.toStringAsFixed(0)})",
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            4.h.verticalSpace,
+                            TextField(
+                              controller: controller.walletAmountController,
+                              keyboardType: TextInputType.number,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green.shade800,
+                              ),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                border: InputBorder.none,
+                                prefixText: "₹ ",
+                                prefixStyle: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green.shade800,
+                                ),
+                                hintText: "0",
+                                hintStyle: TextStyle(color: Colors.grey),
+                              ),
+                              onChanged: controller.onWalletAmountChanged,
+                            ),
+                          ],
+                        ),
+                      ),
+                      // ✅ Use Max button
+                      GestureDetector(
+                        onTap: () {
+                          controller.walletUsedAmount.value = wallet;
+                          controller.walletAmountController.text =
+                              wallet.toStringAsFixed(0);
+                          controller.calculateFinalAmount();
+                        },
+                        child: Container(
+                          padding:
+                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            "MAX",
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
-          ),
-        ),
+          );
+        }),
+        const Divider(height: 20, color: Colors.black12),
+        _buildSpecialDiscountProgress(controller),
         10.h.verticalSpace,
-        _priceRow("Final Payable:", "₹${totalPrice.toStringAsFixed(2)}", isBold: true),
+        Obx(() {
+          final total = controller.totalAmount.value;
+          final couponDiscount = controller.discountAmount.value;
+          final specialDiscount = controller.specialDiscountAmount.value;
+
+          final walletUsed = controller.useWallet.value
+              ? controller.actualWalletUsed.value  // ✅ changed from walletUsedAmount
+              : 0.0;
+
+
+          final savings = specialDiscount + couponDiscount + walletUsed;
+
+          return Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              children: [
+                _priceRow("Total Amount", "₹${total.toStringAsFixed(2)}"),
+                if (specialDiscount > 0)
+                  _priceRow(
+                    "Special Discount (${controller.discountPercentage.value.toInt()}%)",
+                    "- ₹${specialDiscount.toStringAsFixed(2)}",
+                    valueColor: Colors.green,
+                  ),
+
+                if (controller.isApplied.value && couponDiscount > 0)
+                  _priceRow(
+                    "Coupon Discount",
+                    "- ₹${couponDiscount.toStringAsFixed(2)}",
+                    valueColor: Colors.green,
+                  ),
+
+                if (controller.useWallet.value && walletUsed > 0)
+                  _priceRow(
+                    "Wallet Used",
+                    "- ₹${walletUsed.toStringAsFixed(2)}",
+                    valueColor: Colors.blue,
+                  ),
+                if (savings > 0)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "You Saved",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.green,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          "₹${savings.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  child: Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w),
+                        child: Text(
+                          "Payable",
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                    ],
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Final Payable",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.black,
+                      ),
+                    ),
+                    Text(
+                      "₹${controller.finalPayable.value.toStringAsFixed(2)}",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColor.orange,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }
 
-  Widget _priceRow(String label, String value, {bool isBold = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(fontSize: 13.sp, color: AppColor.primary,fontWeight: FontWeight.bold)),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.bold,
-            color: AppColor.black,
-          ),
-        ),
-      ],
-    );
-  }
-
-    Widget _buildPayNowButton(GiooPlotController controller) {
-  
-      final enabled = controller.selectedUnits.isNotEmpty && !_isSelectionMode;
-  
-     
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _priceRow(
+      String label,
+      String value, {
+        Color valueColor = Colors.black,
+      }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            "Will Process your Registration After payment",
-            style: TextStyle(fontSize: 10.sp, color: AppColor.black),
+            label,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          10.h.verticalSpace,
-          GestureDetector(
-            onTap: () {
-              if (controller.selectedUnits.isEmpty) {
-                Fluttertoast.showToast(
-                  msg: "Please select at least one plot",
-                  gravity: ToastGravity.BOTTOM,
-                );
-                return;
-              }
-              if (!controller.gioTermsChecked.value) {
-                Fluttertoast.showToast(
-                  msg: "Please accept terms and conditions",
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  backgroundColor: Colors.black87,
-                  textColor: Colors.white,
-                  fontSize: 14,
-                );
-                return;
-              }
-
-              if (_isSelectionMode) {
-                _confirmSelection();
-              } else {
-                controller.proceedToPayment();
-              }
-            },
-            child: Container(
-              height: 55.h,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: enabled
-                    ? AppColor.orange
-                    : AppColor.orange.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(35.r),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 60.w,
-                    height: 50.w,
-                    child: Lottie.asset(
-                      "assets/images/paynow.json",
-                      repeat: true,
-                    ),
-                  ),
-                  10.w.horizontalSpace,
-                  Text(
-                    _isSelectionMode ? "Confirm Selection" : "Pay Now",
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppColor.black,
-                    ),
-                  ),
-                  SizedBox(width: 30.w,)
-                ],
-              ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: valueColor,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPayNowButton(GiooPlotController controller) {
+    final enabled = controller.selectedUnits.isNotEmpty && !_isSelectionMode;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          "Will Process your Registration After payment",
+          style: TextStyle(fontSize: 10.sp, color: AppColor.black),
+        ),
+        10.h.verticalSpace,
+        GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            if (controller.selectedUnits.isEmpty) {
+              Fluttertoast.showToast(
+                msg: "Please select at least one plot",
+                gravity: ToastGravity.BOTTOM,
+              );
+              return;
+            }
+            if (!controller.gioTermsChecked.value) {
+              Fluttertoast.showToast(
+                msg: "Please accept terms and conditions",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                backgroundColor: Colors.black87,
+                textColor: Colors.white,
+                fontSize: 14,
+              );
+              return;
+            }
+
+            controller.proceedToPayment();
+          },
+          child: Container(
+            height: 55.h,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: enabled
+                  ? AppColor.orange
+                  : AppColor.orange.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(35.r),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 60.w,
+                  height: 50.w,
+                  child: Lottie.asset(
+                    "assets/images/paynow.json",
+                    repeat: true,
+                  ),
+                ),
+                10.w.horizontalSpace,
+                Text(
+                  _isSelectionMode ? "Confirm Selection" : "Pay Now",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.black,
+                  ),
+                ),
+                SizedBox(width: 30.w),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSpecialDiscountProgress(GiooPlotController controller) {
+    return Obx(() {
+      final total = controller.totalAmount.value;
+      final maxCost = controller.discountMaxCost.value;
+      final percentage = controller.discountPercentage.value;
+      final isUnlocked = controller.specialDiscountAmount.value > 0;
+
+      if (maxCost <= 0 || percentage <= 0) return const SizedBox();
+
+      final progress = (total / maxCost).clamp(0.0, 1.0);
+      final remaining = maxCost - total;
+
+      // ✅ Dynamic progress color
+      List<Color> progressColors;
+      if (progress >= 1.0) {
+        progressColors = [Colors.greenAccent, Colors.green];
+      } else if (progress >= 0.75) {
+        progressColors = [Colors.blueAccent, Colors.blue];
+      } else if (progress >= 0.50) {
+        progressColors = [Colors.orangeAccent, Colors.orange];
+      } else {
+        progressColors = [Colors.amber, Colors.deepOrange];
+      }
+
+      return Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isUnlocked
+                ? [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF388E3C)]
+                : [Color(0xFF1A237E), Color(0xFF283593), Color(0xFF303F9F)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: [
+            BoxShadow(
+              color: isUnlocked
+                  ? Colors.green.withOpacity(0.4)
+                  : Colors.indigo.withOpacity(0.4),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🔹 Header
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(7.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isUnlocked ? Icons.lock_open_rounded : Icons.lock_rounded,
+                    color: Colors.white,
+                    size: 16.sp,
+                  ),
+                ),
+                8.w.horizontalSpace,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isUnlocked
+                            ? "🎉 Special Discount Unlocked!"
+                            : "Unlock Special Discount",
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        isUnlocked
+                            ? "You're saving ${percentage.toInt()}% on your order!"
+                            : "Add ₹${remaining.toStringAsFixed(0)} more to get ${percentage.toInt()}% OFF",
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.white.withOpacity(0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                  EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border:
+                    Border.all(color: Colors.white.withOpacity(0.4)),
+                  ),
+                  child: Text(
+                    "${percentage.toInt()}% OFF",
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            12.h.verticalSpace,
+
+            // 🔹 Progress Bar
+            Stack(
+              children: [
+                Container(
+                  height: 10.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return AnimatedContainer(
+                      duration: Duration(milliseconds: 500),
+                      curve: Curves.easeOut,
+                      height: 10.h,
+                      width: constraints.maxWidth * progress,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: progressColors),
+                        borderRadius: BorderRadius.circular(10.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: progressColors.last.withOpacity(0.6),
+                            blurRadius: 6,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+
+            8.h.verticalSpace,
+
+            // 🔹 Milestones (Different Colors)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "₹0",
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
+                ),
+                Row(
+                  children: [
+                    _milestoneChip("25%", progress >= 0.25, Colors.amber),
+                    4.w.horizontalSpace,
+                    _milestoneChip("50%", progress >= 0.50, Colors.orange),
+                    4.w.horizontalSpace,
+                    _milestoneChip("75%", progress >= 0.75, Colors.blue),
+                    4.w.horizontalSpace,
+                    _milestoneChip("100%", progress >= 1.0, Colors.green),
+                  ],
+                ),
+                Text(
+                  "₹${maxCost.toStringAsFixed(0)}",
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+
+            // 🔹 Unlocked Banner
+            if (isUnlocked) ...[
+              10.h.verticalSpace,
+              Container(
+                width: double.infinity,
+                padding:
+                EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(
+                      color: Colors.greenAccent.withOpacity(0.5)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.savings_rounded,
+                        color: Colors.greenAccent, size: 16.sp),
+                    6.w.horizontalSpace,
+                    Text(
+                      "You're saving ₹${controller.specialDiscountAmount.value.toStringAsFixed(2)}!",
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.greenAccent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
       );
-    }
+    });
+  }
+
+  Widget _milestoneChip(String label, bool reached, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: reached
+            ? color.withOpacity(0.3)
+            : Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4.r),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 9.sp,
+          color: reached ? Colors.white : Colors.white.withOpacity(0.5),
+          fontWeight: reached ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+    );
+  }
 }

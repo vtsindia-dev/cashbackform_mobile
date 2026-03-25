@@ -1,4 +1,5 @@
 import 'package:cashback_farms/common/colours.dart';
+import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/images.dart';
@@ -22,6 +23,7 @@ class _DashboardState extends State<Dashboard> {
   double _animationValue = 0.0;
   double _menuAnimationValue = 0.0;
   double _fabDotAnimation = 0.0;
+  DashboardController dashboardController = Get.put(DashboardController());
 
   final List<Widget> _screens = [
     Home(),
@@ -37,6 +39,7 @@ class _DashboardState extends State<Dashboard> {
   @override
   void initState() {
     super.initState();
+    dashboardController.fetchDashboard();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 3000),
       vsync: Navigator.of(context),

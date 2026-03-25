@@ -582,6 +582,7 @@ class BusinessSettings {
   double? refundAmount;
   String? couponServiceCharge;
 
+
   BusinessSettings({
     this.id,
     this.logo,

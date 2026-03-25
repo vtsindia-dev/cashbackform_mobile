@@ -612,10 +612,6 @@ class MaterialController extends GetxController {
       return;
     }
 
-    if (selectedUnit == null) {
-      SnackBarHelper.showInfo('Please select unit');
-      return;
-    }
 
     try {
       isSubmittingEnquiry = true;
@@ -627,7 +623,7 @@ class MaterialController extends GetxController {
       Map<String, dynamic> data = {
         "material_id": materialId,
         "requirement": productQuoteController.text,
-        "unit_id": selectedUnit,
+        "unit_id": selectedUnit??'',
         "quantity": quantity,
         "user_id": userId,
       };

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:action_slider/action_slider.dart';
+import 'package:cashback_farms/common/model/logger_model.dart';
 import 'package:cashback_farms/common/widget/sessionhandler.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -114,6 +115,10 @@ class GiooPlotController extends GetxController {
     fetchGiooPlots();
     fetchGiooBuyingList();
     fetchGioTerms();
+    ever(totalAmount, (_) => calculateFinalAmount());
+    ever(discountAmount, (_) => calculateFinalAmount());
+    ever(useWallet, (_) => calculateFinalAmount());
+    ever(isApplied, (_) => calculateFinalAmount());
   }
 
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
@@ -715,16 +720,38 @@ class GiooPlotController extends GetxController {
         type: 'gioo',
         propertyId: giooPlotDetail.value!.id,
         units: List.from(selectedUnits),
-        amount: totalFinalPrice.value,
+        amount: finalPayable.value,
         propertyName: giooPlotDetail.value!.name,
       );
-      showPaymentDialog();
+
+      if (finalPayable.value == 0) {
+        await razorpayController.handleZeroAmountPayment(
+          couponCode: isApplied.value ? couponController.text.trim() : null,
+          walletAmount: useWallet.value && actualWalletUsed.value > 0
+              ? actualWalletUsed.value.toString()
+              : null,
+          specialDiscountAmount: specialDiscountAmount.value > 0
+              ? specialDiscountAmount.value.toString()
+              : null,
+        );
+        return;
+      }
+
+      razorpayController.initiatePayment(
+        couponCode: isApplied.value ? couponController.text.trim() : null,
+        walletAmount: useWallet.value && actualWalletUsed.value > 0
+            ? actualWalletUsed.value.toString()
+            : null,
+        specialDiscountAmount: specialDiscountAmount.value > 0
+            ? specialDiscountAmount.value.toString()
+            : null,
+      );
     } catch (e) {
-      print('❌ Error setting up payment: $e');
+      Loggers.error('❌ Error setting up payment: $e');
       SnackBarHelper.showError("Failed to setup payment: $e");
-      SnackBarHelper.showError("");
     }
   }
+
 
   Future<void> showPaymentDialog() async {
     if (selectedUnits.isEmpty) {
@@ -737,7 +764,7 @@ class GiooPlotController extends GetxController {
       type: 'gioo',
       propertyId: giooPlotDetail.value!.id,
       units: List.from(selectedUnits),
-      amount: totalFinalPrice.value,
+      amount: finalPayable.value,
       propertyName: giooPlotDetail.value!.name,
     );
 
@@ -838,7 +865,7 @@ class GiooPlotController extends GetxController {
                         ],
                       ),
                       Text(
-                        "₹${totalFinalPrice.value.toStringAsFixed(0)}",
+                        "₹${finalPayable.value.toStringAsFixed(0)}",
                         style: TextStyle(
                           fontSize: 28.sp,
                           fontWeight: FontWeight.w900,
@@ -1231,8 +1258,7 @@ class GiooPlotController extends GetxController {
   }
 
   void calculateTotals() {
-    final selectedUnitList =
-    units.where((unit) => selectedUnits.contains(unit.id)).toList();
+    final selectedUnitList = units.where((unit) => selectedUnits.contains(unit.id)).toList();
 
     if (selectedUnitList.isEmpty) {
       totalSelectedAreaSqft.value = 0.0;
@@ -1640,13 +1666,29 @@ class GiooPlotController extends GetxController {
   RxDouble discountAmount = 0.0.obs;
   RxDouble finalPayable = 0.0.obs;
 
-  RxDouble walletBalance = 500.0.obs;
+  RxDouble discountPercentage = 0.0.obs;
+  RxDouble discountMaxCost = 0.0.obs;
+  RxDouble actualWalletUsed = 0.0.obs;
+  RxDouble walletBalance = 0.0.obs;
   RxBool useWallet = false.obs;
+  RxBool isApplied = false.obs;
+  RxDouble walletUsedAmount = 0.0.obs;
+  TextEditingController walletAmountController = TextEditingController();
+
+  RxDouble specialDiscountAmount = 0.0.obs;
+  RxDouble appliedDiscountAmount = 0.0.obs;
 
   TextEditingController couponController = TextEditingController();
   RxBool isCouponLoading = false.obs;
 
   Future<void> applyCoupon() async {
+    if (selectedUnits.isEmpty) {
+      Fluttertoast.showToast(
+        msg: "Please select at least one plot",
+        gravity: ToastGravity.BOTTOM,
+      );
+      return;
+    }
     final code = couponController.text.trim();
 
     if (code.isEmpty) {
@@ -1669,39 +1711,108 @@ class GiooPlotController extends GetxController {
         final data = response.data;
 
         if (data['status'] == true) {
-          discountAmount.value = double.tryParse(data['data']['discount_amount'].toString()) ?? 0.0;
-
+          discountAmount.value =
+              double.tryParse(data['data']['amount'].toString()) ?? 0.0;
+          isApplied.value = true;
+          calculateFinalAmount();
           Fluttertoast.showToast(msg: data['message']);
         } else {
           discountAmount.value = 0.0;
+          calculateFinalAmount();
           Fluttertoast.showToast(msg: data['message']);
         }
       } else {
         discountAmount.value = 0.0;
+        calculateFinalAmount();
         Fluttertoast.showToast(msg: "Something went wrong");
       }
     } catch (e) {
       discountAmount.value = 0.0;
+      calculateFinalAmount();
       Fluttertoast.showToast(msg: "Error applying coupon");
     } finally {
       isCouponLoading.value = false;
-      calculateFinalAmount();
     }
   }
 
-  /// CALCULATE FINAL
-  void calculateFinalAmount() {
-    double amount = totalAmount.value - discountAmount.value;
+  void resetValues() {
+    totalAmount.value = 0.0;
+    discountAmount.value = 0.0;
+    finalPayable.value = 0.0;
+    appliedDiscountAmount.value = 0.0;
+    specialDiscountAmount.value = 0.0;
+    walletUsedAmount.value = 0.0;
+    actualWalletUsed.value = 0.0;
+    walletAmountController.clear();
+    useWallet.value = false;
+    isApplied.value = false;
+    couponController.clear();
+  }
 
-    if (useWallet.value) {
-      final walletUsed = walletBalance.value > amount
-          ? amount
-          : walletBalance.value;
+  void removeCoupon() {
+    couponController.clear();
+    discountAmount.value = 0.0;
+    isApplied.value = false;
 
-      amount -= walletUsed;
+    calculateFinalAmount();
+
+    Fluttertoast.showToast(msg: "Coupon removed");
+  }
+
+  void onWalletAmountChanged(String value) {
+    double typed = double.tryParse(value) ?? 0.0;
+
+    if (typed > walletBalance.value) {
+      typed = walletBalance.value;
+      walletAmountController.text = typed.toStringAsFixed(0);
+      walletAmountController.selection = TextSelection.fromPosition(
+        TextPosition(offset: walletAmountController.text.length),
+      );
     }
 
-    finalPayable.value = amount < 0 ? 0 : amount;
+    walletUsedAmount.value = typed;
+    calculateFinalAmount();
+  }
+
+  void calculateFinalAmount() {
+    double total = totalAmount.value;
+    double specialDiscount = 0.0;
+
+    if (discountMaxCost.value > 0 && total >= discountMaxCost.value) {
+      specialDiscount = (total * discountPercentage.value) / 100;
+      if (specialDiscount > discountMaxCost.value) {
+        specialDiscount = discountMaxCost.value;
+      }
+    }
+    specialDiscountAmount.value = specialDiscount;
+
+    double couponDiscount = isApplied.value ? discountAmount.value : 0.0;
+    double appliedDiscount = specialDiscount + couponDiscount;
+    appliedDiscountAmount.value = appliedDiscount;
+
+    double amountAfterDiscount = total - appliedDiscount;
+    if (amountAfterDiscount < 0) amountAfterDiscount = 0;
+
+    double walletUsed = 0.0;
+    if (useWallet.value) {
+      double requestedWallet = walletUsedAmount.value > 0
+          ? walletUsedAmount.value
+          : walletBalance.value;
+
+      walletUsed = requestedWallet >= amountAfterDiscount
+          ? amountAfterDiscount
+          : requestedWallet;
+
+      amountAfterDiscount -= walletUsed;
+    }
+
+    actualWalletUsed.value = walletUsed;
+
+    finalPayable.value = amountAfterDiscount < 0 ? 0 : amountAfterDiscount;
+
+    print(
+      '💰 Total=$total, Special=$specialDiscount, Coupon=$couponDiscount, Applied=$appliedDiscount, Wallet=$walletUsed, Final=${finalPayable.value}',
+    );
   }
 }
 

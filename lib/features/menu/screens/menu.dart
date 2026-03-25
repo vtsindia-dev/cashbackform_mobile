@@ -197,9 +197,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
   // ─── WALLET CARD ────────────────────────────────────────────────────────────
 
   Widget _buildWalletCard() {
-    final walletBalance = double.tryParse(
-        dashboardController.profile.value?.walletBalance ?? "0") ??
-        0;
+    final walletBalance = double.tryParse(dashboardController.profile.value?.walletBalance ?? "0") ?? 0;
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),

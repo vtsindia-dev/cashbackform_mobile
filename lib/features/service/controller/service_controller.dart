@@ -575,11 +575,6 @@ class ServiceController extends GetxController {
       return;
     }
 
-    if (selectedUnit == null) {
-      SnackBarHelper.showInfo('Please select unit');
-      return;
-    }
-
     try {
       isSubmittingEnquiry = true;
       update();
@@ -590,10 +585,12 @@ class ServiceController extends GetxController {
       Map<String, dynamic> data = {
         "material_id": materialId,
         "requirement": productQuoteController.text,
-        "unit_id": selectedUnit,
+        "unit_id": selectedUnit??'',
         "quantity": quantity,
         "user_id": userId,
       };
+
+
 
       final response = await ApiService.postRequestWithToken(
         ApiUrl.submitMaterialEnquiry,

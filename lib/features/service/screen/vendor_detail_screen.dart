@@ -124,11 +124,6 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen>
                         ),
                       ),
                       Positioned(
-                        top: 80,
-                        right: 16,
-                        child: _buildVerifiedBadge(),
-                      ),
-                      Positioned(
                         bottom: 16,
                         left: 16,
                         right: 16,
@@ -206,28 +201,6 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen>
           ),
         );
       },
-    );
-  }
-
-  Widget _buildVerifiedBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEB821).withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFEB821).withOpacity(0.4)),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.verified_rounded, color: Color(0xFFFEB821), size: 12),
-          SizedBox(width: 4),
-          Text(
-            'Verified Vendor',
-            style: TextStyle(color: Color(0xFFFEB821), fontSize: 11, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
     );
   }
 

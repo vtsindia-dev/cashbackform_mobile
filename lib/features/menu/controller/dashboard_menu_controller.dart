@@ -252,18 +252,7 @@ class DashboardController extends GetxController {
       if (response.statusCode == 200 && response.data?['status'] == true) {
         final Map<String, dynamic> data = response.data['data'];
         businessSettings.value = BusinessSettings.fromJson(data);
-        print('✅ Business settings loaded successfully');
-        print('   🏢 Business: ${businessSettings.value?.businessName}');
-        print('   📞 Phone: ${businessSettings.value?.businessPhone}');
-        print('   📧 Email: ${businessSettings.value?.businessEmail}');
-        print('   📍 Address: ${businessSettings.value?.businessAddress}');
-        print('   💬 WhatsApp: ${businessSettings.value?.whatsapp}');
-        print('   📸 Instagram: ${businessSettings.value?.instagram}');
-        print('   ▶️ YouTube: ${businessSettings.value?.youtube}');
-        print('   🏷️ Logo URL: ${businessSettings.value?.fullLogoUrl}');
       } else {
-        print('⚠️ Failed to load business settings');
-        print('   Response: ${response.data}');
         _setDefaultBusinessSettings();
       }
     } catch (e) {
