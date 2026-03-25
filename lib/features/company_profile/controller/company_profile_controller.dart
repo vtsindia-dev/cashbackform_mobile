@@ -20,16 +20,11 @@ import '../../../common/widget/toster.dart';
 import '../model/comapany_profile.dart';
 
 class VendorStoreController extends GetxController {
-  // Loading states
   var isLoading = false.obs;
   var isCreating = false.obs;
   var isFetching = false.obs;
-
-  // Store data
   var store = Rxn<VendorStoreModel>();
   var errorMessage = ''.obs;
-
-  // Form controllers
   final nameController = TextEditingController();
   final descriptionController = TextEditingController();
   final cityController = TextEditingController();
@@ -76,7 +71,7 @@ class VendorStoreController extends GetxController {
   var mapMarkers = <Marker>{}.obs;
   var searchResults = <Map<String, dynamic>>[].obs;
   var isSearching = false.obs;
-  final String googleApiKey = '';
+  final String googleApiKey = 'AIzaSyDDJ17OjVJ0TS2qYt7GMOnrMjAu1CYZFg8';
 
   @override
   void onInit() {

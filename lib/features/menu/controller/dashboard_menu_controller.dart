@@ -279,7 +279,7 @@ class DashboardController extends GetxController {
       businessName: 'Geo Rental Farms',
       businessPhone: '+91 81900 59995',
       businessEmail: 'greenheapfarms@gmail.com',
-      businessAddress: 'No. 1, 66th Street, Sector 11, Kalaignar Karunanidhi Nagar, Tamil Nadu, Chennai, India.',
+      businessAddress: 'No. 1, 66th Street, Sector 11, Thalapathy vijay nagar, Tamil Nadu, Chennai, India.',
       whatsapp: '+91 81900 59995',
       instagram: 'https://www.instagram.com/',
       youtube: 'https://www.youtube.com/',

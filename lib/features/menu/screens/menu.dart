@@ -1131,21 +1131,14 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
   Widget _buildMenuList() {
     return Column(
       children: [
-        _menuTile(Icons.wallet, "My Wallet",
-                () => Get.toNamed("/walletScreen")),
-        _menuTile(Icons.info_outline_rounded, "About Us",
-                () => Get.to(() => const AboutUs())),
-        _menuTile(Icons.business_center_rounded, "Company Profile",
-                () => Get.to(() => const VendorStoreView())),
-        _menuTile(Icons.gavel_rounded, "Terms and Conditions",
-                () => Get.to(() => const TermsAndConditionsScreen())),
-        _menuTile(Icons.headset_mic_rounded, "Contact Us",
-                () => Get.toNamed("/contactus")),
-        _menuTile(Icons.receipt_long_rounded, "Transaction Details",
-                () => Get.toNamed("/transactionDeatils")),
-        _menuTile(
-          Icons.support_agent_rounded,
-          "Support",
+        _menuTile(Icons.wallet, "My Wallet", () => Get.toNamed("/walletScreen")),
+        _menuTile(Icons.wallet, "Kyc", () => Get.toNamed("/kycScreen")),
+        _menuTile(Icons.info_outline_rounded, "About Us", () => Get.to(() => const AboutUs())),
+        _menuTile(Icons.business_center_rounded, "Company Profile", () => Get.to(() => const VendorStoreView())),
+        _menuTile(Icons.gavel_rounded, "Terms and Conditions", () => Get.to(() => const TermsAndConditionsScreen())),
+        _menuTile(Icons.headset_mic_rounded, "Contact Us", () => Get.toNamed("/contactus")),
+        _menuTile(Icons.receipt_long_rounded, "Transaction Details", () => Get.toNamed("/transactionDeatils")),
+        _menuTile(Icons.support_agent_rounded, "Support",
               () async {
             final uri = Uri.parse("https://cashback.vrikshatech.in/");
             if (await canLaunchUrl(uri)) {

@@ -1059,6 +1059,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
     );
   }
 
+
   SliverList _buildUnitsList() {
     return SliverList(
       delegate: SliverChildBuilderDelegate(

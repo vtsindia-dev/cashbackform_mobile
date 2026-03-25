@@ -372,9 +372,6 @@ class _CenterPin extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Location FAB (pure stateless — reactive values passed in)
-// ─────────────────────────────────────────────────────────────
 class _LocationFAB extends StatelessWidget {
   final bool isLocating;
   final VoidCallback onTap;
@@ -413,9 +410,6 @@ class _LocationFAB extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Zoom Controls (static)
-// ─────────────────────────────────────────────────────────────
 class _ZoomControls extends StatelessWidget {
   final VendorStoreController controller;
   const _ZoomControls({required this.controller});

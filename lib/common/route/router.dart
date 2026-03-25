@@ -13,6 +13,7 @@ import '../../features/auth/screens/login.dart';
 import '../../features/dashboard/screens/dashboard.dart';
 import '../../features/gioo_plots/screens/owned_plots.dart';
 import '../../features/home/screens/home.dart';
+import '../../features/kyc/screen/kyc_screen.dart';
 import '../../features/material_store/screens/material_vendor_details_screen.dart';
 import '../../features/material_store/screens/material_vendor_list.dart';
 import '../../features/menu/content_screens/contactus.dart';
@@ -75,6 +76,8 @@ class AppRoutes {
   static const String vendorDataDetail = '/vendorDataDetail';
   static const String searchScreen = '/searchScreen';
   static const String walletScreen = '/walletScreen';
+  static const String kycScreen = '/kycScreen';
+
 
   static List<GetPage> routes = [
     GetPage(
@@ -194,6 +197,11 @@ class AppRoutes {
     GetPage(
       name: walletScreen,
       page: () => WalletScreen(),
+      transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: kycScreen,
+      page: () => KYCListScreen(),
       transition: Transition.cupertino,
     ),
     GetPage(
@@ -342,6 +350,7 @@ class AppRoutes {
   static void toRentalEnquiry() => Get.offAllNamed(rentalEnquiry);
   static void toPlotMarketEnquiry() => Get.offAllNamed(plotMarketEnquiry);
   static void toWalletScreen() => Get.offAllNamed(walletScreen);
+  static void toKycScreen() => Get.offAllNamed(kycScreen);
   static void toRegister({String? phone}) {
     print("AppRoutes.toRegister called with phone: $phone");
     Get.toNamed(register, arguments: {'phone': phone});
