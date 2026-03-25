@@ -1,12 +1,16 @@
+// widgets/about_plot.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
+import '../../../common/widget/media_carousel_widget.dart';
 import '../controller/syndicate_controller.dart';
 
 class AboutPlot extends StatelessWidget {
@@ -14,19 +18,17 @@ class AboutPlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SyndicatePlotController controller = Get.find<SyndicatePlotController>();
+    final SyndicatePlotController controller =
+    Get.find<SyndicatePlotController>();
 
     return Obx(() {
       final detail = controller.syndicateDetail.value;
-      final projectName = detail?.name ?? 'No Name';
-      final location = detail?.address ?? 'No Address';
-      final totalLayout = detail?.area ?? 'No Area';
-      final plotCount = '${detail?.unitSpilt ?? 0} Plots';
-      final pricePerSqFt = '₹ ${detail?.price ?? '0'} per sq.ft';
-      final startingPrice = '₹ ${detail?.startingPrice ?? '0'} onwards';
-      final status = detail?.work ?? 'No Status';
-      final ulpin = detail?.uldNo ?? 'Not Available';
-      final images = detail?.images.isNotEmpty == true ? detail!.images : ["http://192.168.1.114/admincashback/public/uploads/property/1764237164_Group%201597885062.png",];
+      final images = detail?.images.isNotEmpty == true
+          ? detail!.images
+          : [
+        'https://admincashback.vrikshatech.in/public/uploads/property/placeholder.png'
+      ];
+
       return Container(
         margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
@@ -42,210 +44,320 @@ class AboutPlot extends StatelessWidget {
         ),
         child: Column(
           children: [
-            _buildCarouselSection(images),
-            _buildArrowButton(controller),
+            // ── Image Carousel with Sold-Out Overlay ──
+            _buildCarouselSection(images, detail?.isSoldOut ?? false),
 
-            Obx(() => _buildExpandableSection(controller,
-              projectName: projectName,
-              location: location,
-              totalLayout: totalLayout,
-              plotCount: plotCount,
-              pricePerSqFt: pricePerSqFt,
-              startingPrice: startingPrice,
-              // status: status,
-              ulpin: ulpin,
-            )),
+            // ── Action row (View Details + Share) ──
+            _buildActionRow(controller),
+
+            // ── Expandable details ──
+            Obx(() => _buildExpandableSection(controller, detail)),
           ],
         ),
       );
     });
   }
 
-  Widget _buildCarouselSection(List<String> images) {
+  // ────────────────────────────────────────
+  Widget _buildCarouselSection(List<String> images, bool isSoldOut) {
     return Padding(
       padding: const EdgeInsets.all(5.0),
-      child: Container(
-        height: 190.h,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20.r),
-            topRight: Radius.circular(20.r),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.white.withOpacity(0.4),
-              blurRadius: 8.r,
-              spreadRadius: 2.r,
-              offset: const Offset(0, 3),
+      child: Stack(
+        children: [
+          Container(
+            height: 190.h,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20.r),
+                topRight: Radius.circular(20.r),
+              ),
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20.r),
-            topRight: Radius.circular(20.r),
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20.r),
+                topRight: Radius.circular(20.r),
+              ),
+              child: MediaCarouselScreen(images: images, height: 172.h),
+            ),
           ),
-          child: CarouselWidget(
-            images: images,
-            height: 172.h,
-            autoPlayDuration: const Duration(seconds: 3),
-            borderRadius: 20.r,
-          ),
-        ),
+
+          // ✅ Sold-Out overlay banner
+          if (isSoldOut)
+            Positioned(
+              top: 12.h,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding:
+                  EdgeInsets.symmetric(horizontal: 20.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade700,
+                    borderRadius: BorderRadius.circular(30.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.block_rounded,
+                          color: Colors.white, size: 14.sp),
+                      SizedBox(width: 6.w),
+                      Text(
+                        'SOLD OUT',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.sp,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scaleXY(
+                  begin: 1.0,
+                  end: 1.05,
+                  duration: 800.ms,
+                  curve: Curves.easeInOut,
+                ),
+              ),
+            ),
+
+          // ✅ Property type badge (top-right)
+          Obx(() {
+            final detail = Get.find<SyndicatePlotController>()
+                .syndicateDetail
+                .value;
+            final typeName = detail?.propertyType?.categoryName ?? '';
+            if (typeName.isEmpty) return const SizedBox.shrink();
+            return Positioned(
+              top: 10.h,
+              right: 10.w,
+              child: Container(
+                padding:
+                EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                decoration: BoxDecoration(
+                  color: AppColor.primary,
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Text(
+                  typeName,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
 
-  Widget _buildArrowButton(SyndicatePlotController controller) {
+  // ────────────────────────────────────────
+  Widget _buildActionRow(SyndicatePlotController controller) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 6.h, horizontal: 5.h),
       child: Obx(
             () => Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                /// View / Hide Details Button
-                GestureDetector(
-                  onTap: controller.toggleExpansion,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColor.primary, AppColor.primarylite],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // View/Hide Details button
+            GestureDetector(
+              onTap: controller.toggleExpansion,
+              child: Container(
+                padding:
+                EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColor.primary, AppColor.primarylite],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      controller.isExpanded.value
+                          ? 'Hide Details'
+                          : 'View Details',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
                       ),
-                      borderRadius: BorderRadius.circular(20.r),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          controller.isExpanded.value
-                              ? 'Hide Details'
-                              : 'View Details',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Icon(
-                          controller.isExpanded.value
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward,
-                          size: 18.sp,
-                          color: Colors.black,
-                        ),
-                      ],
+                    SizedBox(width: 6.w),
+                    Icon(
+                      controller.isExpanded.value
+                          ? Icons.arrow_upward
+                          : Icons.arrow_downward,
+                      size: 18.sp,
+                      color: Colors.black,
                     ),
-                  ),
+                  ],
                 ),
+              ),
+            ),
 
-                /// 🔹 SPACE BETWEEN BUTTONS
-                SizedBox(width: 12.w),
+            SizedBox(width: 12.w),
 
-                /// Share Button
-                GestureDetector(
-                  onTap: () {
-                    if (controller.syndicateDetail.value?.id == null) return;
-
-                    final cleanBaseUrl =
-                    ApiUrl.WebsidebaseUrl.replaceAll('/public', '');
-
-                    final shareUrl =
-                        '$cleanBaseUrl/syndicate-plots/details/${controller.syndicateDetail.value!.id}';
-
-                    Share.share(shareUrl);
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.share, size: 18.sp, color: AppColor.black),
-                        SizedBox(width: 6.w),
-                        Text(
-                          "Share",
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+            // Share button
+            GestureDetector(
+              onTap: () {
+                final id = controller.syndicateDetail.value?.id;
+                if (id == null) return;
+                final cleanBase =
+                ApiUrl.WebsidebaseUrl.replaceAll('/public', '');
+                Share.share('$cleanBase/syndicate-plots/details/$id');
+              },
+              child: Container(
+                padding:
+                EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
-              ],
-            )
-        ,
+                child: Row(
+                  children: [
+                    Icon(Icons.share, size: 18.sp, color: AppColor.black),
+                    SizedBox(width: 6.w),
+                    Text('Share',
+                        style: TextStyle(
+                            fontSize: 13.sp, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-
+  // ────────────────────────────────────────
   Widget _buildExpandableSection(
-      SyndicatePlotController controller, {
-        required String projectName,
-        required String location,
-        required String totalLayout,
-        required String plotCount,
-        required String pricePerSqFt,
-        required String startingPrice,
-        // required String status,
-        required String ulpin,
-      }) {
+      SyndicatePlotController controller, detail) {
     return AnimatedContainer(
       duration: 400.ms,
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       height: controller.isExpanded.value ? null : 0,
       child: controller.isExpanded.value
-          ? _buildDetailsContent(
-        projectName: projectName,
-        location: location,
-        totalLayout: totalLayout,
-        plotCount: plotCount,
-        pricePerSqFt: pricePerSqFt,
-        startingPrice: startingPrice,
-        // status: status,
-        ulpin: ulpin,
-      )
+          ? _buildExpandedContent(controller, detail)
           : const SizedBox(),
     );
   }
 
-  Widget _buildDetailsContent({
-    required String projectName,
-    required String location,
-    required String totalLayout,
-    required String plotCount,
-    required String pricePerSqFt,
-    required String startingPrice,
-    // required String status,
-    required String ulpin,
-  }) {
+  Widget _buildExpandedContent(
+      SyndicatePlotController controller, detail) {
+    if (detail == null) return const SizedBox();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 6.h),
-        _buildDetailRow(label: 'Project Name', value: projectName, delay: 0.ms, index: 0,),
+
+        // ── Core details ──
+        _buildDetailRow(
+            label: 'Property Type',
+            value: detail.propertyType?.categoryName ?? 'N/A',
+            delay: 0.ms,
+            index: 0,
+            valueColor: AppColor.primary),
         SizedBox(height: 8.h),
-        _buildDetailRow(label: 'Location', value: location, delay: 100.ms, index: 1,),
+        _buildDetailRow(
+            label: 'Project Name',
+            value: detail.name,
+            delay: 50.ms,
+            index: 1),
         SizedBox(height: 8.h),
-        _buildDetailRow(label: 'Total Layout', value: totalLayout, delay: 200.ms, index: 2,),
+        _buildDetailRow(
+            label: 'Location',
+            value: detail.address,
+            delay: 100.ms,
+            index: 2),
         SizedBox(height: 8.h),
-        _buildDetailRow(label: 'Plot Count', value: plotCount, delay: 300.ms, index: 3,),
+        _buildDetailRow(
+            label: 'Total Layout',
+            value: detail.area,
+            delay: 150.ms,
+            index: 3),
         SizedBox(height: 8.h),
-        _buildDetailRow(label: 'Price per Sq.Ft', value: pricePerSqFt, delay: 400.ms, index: 4,),
+        _buildDetailRow(
+            label: 'Plot Count',
+            value: '${detail.unitSpilt} Plots',
+            delay: 200.ms,
+            index: 4),
         SizedBox(height: 8.h),
-        _buildDetailRow(label: 'Starting Price', value: startingPrice, delay: 500.ms, index: 5,),
-        // _buildDetailRow(label: 'Status', value: status, delay: 600.ms, index: 6, valueColor: AppColor.secondary,),
+        _buildDetailRow(
+            label: 'Price / Sq.Ft',
+            value: '₹ ${detail.price} per sq.ft',
+            delay: 250.ms,
+            index: 5),
         SizedBox(height: 8.h),
-        _buildDetailRow(label: 'ULPIN', value: ulpin, delay: 700.ms, index: 7,),
-        SizedBox(height: 10.h),
+        _buildDetailRow(
+            label: 'Starting Price',
+            value: '₹ ${detail.startingPrice} onwards',
+            delay: 300.ms,
+            index: 6),
+        SizedBox(height: 8.h),
+        _buildDetailRow(
+            label: 'ULPIN',
+            value: detail.uldNo.isNotEmpty ? detail.uldNo : 'Not Available',
+            delay: 350.ms,
+            index: 7),
+
+        // ── Sold-out status row ──
+        if (detail.isSoldOut) ...[
+          SizedBox(height: 8.h),
+          _buildDetailRow(
+            label: 'Availability',
+            value: 'SOLD OUT',
+            delay: 400.ms,
+            index: 8,
+            valueColor: Colors.red.shade700,
+          ),
+        ],
+
+        SizedBox(height: 14.h),
+      ],
+    );
+  }
+
+  // ────────────────────────────────────────
+  Widget _buildSectionDivider(String label) {
+    return Row(
+      children: [
+        Container(
+          width: 3,
+          height: 16,
+          decoration: BoxDecoration(
+            color: AppColor.primary,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColor.primary,
+            letterSpacing: 1.2,
+          ),
+        ),
       ],
     );
   }
@@ -258,13 +370,9 @@ class AboutPlot extends StatelessWidget {
     Color? valueColor,
   }) {
     final bool isProjectName = label == 'Project Name';
-
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: isProjectName ? 8.h : 5.h),
-      child: isProjectName
-          ? _buildProjectNameHeader(value, delay)
-          : _buildRegularRow(label, value, delay, valueColor),
-    );
+    return isProjectName
+        ? _buildProjectNameHeader(value, delay)
+        : _buildRegularRow(label, value, delay, valueColor);
   }
 
   Widget _buildProjectNameHeader(String value, Duration delay) {
@@ -294,11 +402,12 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  Widget _buildRegularRow(String label, String value, Duration delay, Color? valueColor) {
+  Widget _buildRegularRow(
+      String label, String value, Duration delay, Color? valueColor) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
+        SizedBox(
           width: 110.w,
           child: Text(
             label,
@@ -311,15 +420,12 @@ class AboutPlot extends StatelessWidget {
           ),
         ),
         SizedBox(width: 6.w),
-        Text(
-          ':',
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: AppColor.black,
-            fontWeight: FontWeight.w600,
-            height: 1.2,
-          ),
-        ),
+        Text(':',
+            style: TextStyle(
+                fontSize: 13.sp,
+                color: AppColor.black,
+                fontWeight: FontWeight.w600,
+                height: 1.2)),
         SizedBox(width: 6.w),
         Expanded(
           child: Text(

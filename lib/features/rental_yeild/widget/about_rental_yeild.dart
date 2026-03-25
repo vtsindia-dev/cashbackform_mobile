@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
+import '../../../common/widget/media_carousel_widget.dart';
 import '../controller/rental_yield_controller.dart';
 import '../model/rental_yeild_model.dart';
 
@@ -21,6 +22,7 @@ class AboutPlot extends StatelessWidget {
 
     return Obx(() {
       final propertyName = property.name ?? 'No Name';
+      final yeildamout = property.yieldAmount ?? 'No Name';
       final location = property.address ?? 'No Address';
       final city = property.cityName ?? '';
       final state = property.stateName ?? '';
@@ -239,10 +241,9 @@ class AboutPlot extends StatelessWidget {
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),
         ),
-        child: CarouselWidget(
+        child: MediaCarouselScreen(
           images: images,
           height: 190.h,
-          borderRadius: 20.r,
         ),
       ),
     );
