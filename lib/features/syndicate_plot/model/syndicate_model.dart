@@ -1,8 +1,3 @@
-// syndicate_model.dart
-
-// ──────────────────────────────────────────
-// CommonFacility model (was missing entirely)
-// ──────────────────────────────────────────
 class CommonFacility {
   final int id;
   final String title;
@@ -23,9 +18,6 @@ class CommonFacility {
   }
 }
 
-// ──────────────────────────────────────────
-// SyndicatePlot (list item)
-// ──────────────────────────────────────────
 class SyndicatePlot {
   final int id;
   final String name;
@@ -136,9 +128,6 @@ class SyndicatePlot {
   }
 }
 
-// ──────────────────────────────────────────
-// City / AppState
-// ──────────────────────────────────────────
 class City {
   final int id;
   final int stateId;
@@ -181,10 +170,6 @@ class AppState {
     );
   }
 }
-
-// ──────────────────────────────────────────
-// SyndicateDetail (full detail page model)
-// ──────────────────────────────────────────
 class SyndicateDetail {
   final int id;
   final String name;
@@ -348,10 +333,8 @@ class SyndicateDetail {
 
   double get adminDocumentPriceValue => documentPriceValue;
 
-  /// Document payment amount = admin_document only
   double get totalDocumentPrice => adminDocumentPriceValue;
 
-  /// Plot booking amount = admin_block_amount only
   double get plotBookingPrice =>
       double.tryParse((adminBlockAmount ?? '0').replaceAll(',', '')) ?? 0.0;
 
@@ -371,10 +354,6 @@ class SyndicateDetail {
     return '${unitAreas[unitIndex]} sq.ft';
   }
 }
-
-// ──────────────────────────────────────────
-// Supporting models (unchanged except additions noted)
-// ──────────────────────────────────────────
 
 class PropertyType {
   final int id;

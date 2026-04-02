@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart' as dio;
 
+import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
@@ -36,20 +37,15 @@ class KYCController extends GetxController {
   final RxBool showSignaturePad = false.obs;
   final ImagePicker _picker = ImagePicker();
 
-  // ──────────────────────────────────────────
-  // Lifecycle
-  // ──────────────────────────────────────────
+
   @override
   void onInit() {
     super.onInit();
     fetchKYCList();
   }
 
-  // ──────────────────────────────────────────
-  // Validation
-  // ──────────────────────────────────────────
 
-  /// Returns an error message or null if valid.
+
   String? validateName(String value) {
     final v = value.trim();
     if (v.isEmpty) return 'Full name is required';
@@ -109,7 +105,7 @@ class KYCController extends GetxController {
       }
 
       final response = await ApiService.getAuthenticatedRequest(
-        'https://admincashback.vrikshatech.in/public/api/v2/kyc_list',
+        '${ApiUrl.baseUrl}/api/v2/kyc_list',
         token,
       );
 
@@ -133,6 +129,7 @@ class KYCController extends GetxController {
       errorMessage.value = 'Network error. Please check your connection.';
       return {'status': 500, 'message': errorMessage.value};
     } finally {
+
       isLoading.value = false;
     }
   }

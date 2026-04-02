@@ -39,6 +39,7 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         rentalController.isTermsAccepted.value = false;
+
       },
       child: SingleChildScrollView(
         padding: EdgeInsets.all(12.w),

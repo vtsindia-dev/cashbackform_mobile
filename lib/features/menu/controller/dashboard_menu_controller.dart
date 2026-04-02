@@ -140,7 +140,7 @@ class DashboardController extends GetxController {
       print('📡 Fetching service requests...');
 
       final response = await ApiService.getRequest(
-        ApiUrl.serviceRequest, // Make sure this is defined in your ApiUrl
+        ApiUrl.serviceRequest,
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -165,9 +165,7 @@ class DashboardController extends GetxController {
     }
   }
 
-  // ===============================
-  // VENDOR REQUESTS
-  // ===============================
+
   Future<void> fetchVendorRequests() async {
     if (_isVendorRequestInProgress) {
       print('⏸️ Vendor requests already in progress');

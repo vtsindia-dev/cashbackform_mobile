@@ -133,11 +133,11 @@ class HomeController extends GetxController {
   void toggleBannerExpansion() => isBannerExpanded.value = !isBannerExpanded.value;
   void toggleSyndicateExpansion() => isSyndicateExpanded.value = !isSyndicateExpanded.value;
   void toggleMarketExpansion() => isMarketExpanded.value = !isMarketExpanded.value;
-  void toggleGiooExpansion() => isGiooExpanded.value = !isGiooExpanded.value;
+  void toggleGiooExpansion() => isGiooExpanded.value = !isGiooExpanded.value  ;
 
   // ========== REFRESH ALL DATA ==========
   Future<void> refreshAllData() async {
-    print('🔄 Refreshing all home data...');
+    print('🔄 ');
 
     // Clear all data
     services.clear();

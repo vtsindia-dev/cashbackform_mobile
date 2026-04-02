@@ -17,7 +17,7 @@ class AboutPlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final RentalYieldController controller = Get.find<RentalYieldController>();
-    final amenities = property.amenities ?? [];
+    final amenities = property.amenities ?? []         ;
     final nearbyLocations = property.nearbyLocations ?? [];
 
     return Obx(() {
@@ -81,23 +81,19 @@ class AboutPlot extends StatelessWidget {
               ],
             ),
           ),
-          // Amenities Section (Always visible)
           if (amenities.isNotEmpty) ...[
             SizedBox(height: 15.h),
             _buildAmenitiesSection(amenities),
           ],
-          // Nearby Locations Section (Always visible)
           if (nearbyLocations.isNotEmpty) ...[
             SizedBox(height: 15.h),
             _buildNearbyLocationsSection(nearbyLocations),
           ],
-          // Show Map button only if coordinates are available
           if (lat != null && lng != null) ...[
             SizedBox(height: 10.h),
             _buildHeaderWithMap(lat, lng, fullLocation),
             SizedBox(height: 10.h),
           ],
-          // Property Header with Location
           _buildPropertyHeader(fullLocation),
           SizedBox(height: 10.h),
         ],

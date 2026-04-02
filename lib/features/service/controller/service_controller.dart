@@ -249,6 +249,7 @@ class ServiceController extends GetxController {
           categoriesServiceList = tempList;
         } else {
           categoriesServiceList.addAll(tempList);
+
         }
       }
     } catch (e) {
@@ -256,6 +257,7 @@ class ServiceController extends GetxController {
     }
     isCategoriesServiceLoading = false;
     isFetchingMoreCategoriesService = false;
+
     update();
   }
 

@@ -45,7 +45,7 @@ class CategoriesServiceModel {
 
 }
 
-class Category {
+class Category{
   int? id;
   String? categoryName;
   int? status;
@@ -90,7 +90,7 @@ class SubCategoriesList {
         this.updatedAt,
        });
 
-  SubCategoriesList.fromJson(Map<String, dynamic> json) {
+  SubCategoriesList.  fromJson(Map<String, dynamic> json) {
     id = json['id'];
     serviceCategoryId = json['service_category_id'];
     name = json['name'];

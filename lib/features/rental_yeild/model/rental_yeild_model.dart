@@ -573,13 +573,11 @@ class RentalDetailProperty {
   // Get state name
   String get stateName => state?.stateName ?? '';
 
-  // Get full location
   String get fullLocation {
     final parts = [cityName, stateName].where((e) => e.isNotEmpty).toList();
     return parts.isNotEmpty ? parts.join(', ') : address;
   }
 
-  // Get display rent
   String get displayRent {
     try {
       final amount = double.tryParse(rentAmount) ?? 0;
@@ -593,21 +591,13 @@ class RentalDetailProperty {
       return '₹$rentAmount/month';
     }
   }
-
-  // Get rent as double
   double get rentAmountDouble {
     return double.tryParse(rentAmount) ?? 0.0;
   }
-
-  // Get yield as double
   double get yieldAmountDouble {
     return double.tryParse(yieldAmount) ?? 0.0;
   }
-
-  // Check if documents are paid for
   bool get hasPaidForDocuments => doucmentVerficaiton;
-
-  // Get total document price
   double get totalDocumentPrice => amountPay;
 
   RentalDetailProperty({
@@ -640,7 +630,6 @@ class RentalDetailProperty {
   });
 
   factory RentalDetailProperty.fromJson(Map<String, dynamic> json) {
-    // Helper functions
     double? parseDouble(dynamic value) {
       if (value == null) return null;
       try {

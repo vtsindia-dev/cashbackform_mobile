@@ -327,6 +327,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
 
   Widget _buildServiceCard(CategoriesServiceModel item) {
     String imageUrl = "";
+    String baseUrl = "";
     if (item.image != null && item.image!.isNotEmpty) {
       imageUrl = item.image!.first;
     }

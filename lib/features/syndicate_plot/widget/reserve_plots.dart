@@ -118,7 +118,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                       ),
                       legendBox(
                         const Color(0xFF3B711A),
-                        "Booked (${controller.countStatus("booked")})",
+                        "Booked  (${controller.countStatus("booked")})",
                       ),
                       legendBox(
                         const Color(0xFFB8D79A),

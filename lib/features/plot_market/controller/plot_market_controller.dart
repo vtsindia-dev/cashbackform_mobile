@@ -1157,14 +1157,10 @@ class PlotMarketController extends GetxController {
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-
-        // Print response structure for debugging
         print('🔍 Response type: ${responseData.runtimeType}');
         print('🔍 Response keys: ${responseData is Map ? responseData.keys.toList() : 'Not a map'}');
-
         if (responseData != null && responseData is Map) {
           List<dynamic> marketDataList = [];
-
           if (responseData['data'] != null && responseData['data'] is List) {
             print('✅ Found data in "data" key as List');
             marketDataList = responseData['data'];
@@ -1247,7 +1243,6 @@ class PlotMarketController extends GetxController {
       isLoadMoreMyPlots(false);
     }
   }
-  // Load more for My Plots
   Future<void> loadMoreMyPlots() async {
     if (!isLoadMoreMyPlots.value && myHasMoreData.value) {
       myCurrentPage.value++;
