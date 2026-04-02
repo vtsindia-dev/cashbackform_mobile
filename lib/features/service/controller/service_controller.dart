@@ -94,6 +94,7 @@ class ServiceController extends GetxController {
   String? selectedSubSubCategory;
   String searchText = "";
 
+
   List<Category> categoryList = [];
   List<SubCategoriesList> subCategoryList = [];
   List<SubSubCategoriesList> subSubCategoryList = [];

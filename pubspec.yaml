@@ -69,6 +69,7 @@ dependencies:
   video_thumbnail: ^0.5.6
   fluttertoast: ^8.2.4
   signature: ^6.3.0
+  flutter_polyline_points: ^3.1.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -97,7 +97,6 @@ class _SyndicateBlueprintState extends State<SyndicateBlueprint> {
                 ),
               ),
 
-              // Blueprint Image with Animation
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cashback_farms/features/plot_market/model/plot_market.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,52 +18,15 @@ class CommonFacilityWidget extends StatefulWidget {
 class _CommonFacilityWidgetState
     extends State<CommonFacilityWidget> {
   late ScrollController _scrollController;
-  Timer? _timer;
-  final double _scrollSpeed = 1.0;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startAutoScroll();
-    });
-  }
-
-  void _startAutoScroll() {
-    final facilities =
-        widget.marketPlotDetail?.commonFacility ?? [];
-    if (facilities.length <= 3) return;
-
-    _timer = Timer.periodic(
-      const Duration(milliseconds: 30),
-          (timer) {
-        if (_scrollController.hasClients) {
-          final maxScroll =
-              _scrollController.position.maxScrollExtent;
-          final currentScroll =
-              _scrollController.position.pixels;
-
-          if (currentScroll >= maxScroll) {
-            _scrollController.animateTo(
-              0,
-              duration:
-              const Duration(milliseconds: 400),
-              curve: Curves.linear,
-            );
-          } else {
-            _scrollController
-                .jumpTo(currentScroll + _scrollSpeed);
-          }
-        }
-      },
-    );
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -77,16 +39,12 @@ class _CommonFacilityWidgetState
     if (facilities.isEmpty) {
       return const SizedBox.shrink();
     }
-    final displayList = facilities.length > 3
-        ? [...facilities, ...facilities]
-        : facilities;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding:
-          const EdgeInsets.fromLTRB(20, 20, 10, 12),
+          padding: const EdgeInsets.fromLTRB(20, 20, 10, 12),
           child: Text(
             "Common Facilities",
             style: TextStyle(
@@ -101,13 +59,11 @@ class _CommonFacilityWidgetState
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
-            physics:
-            const BouncingScrollPhysics(),
-            padding:
-            const EdgeInsets.symmetric(horizontal: 15),
-            itemCount: displayList.length,
+            physics: const BouncingScrollPhysics(), // manual scroll
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            itemCount: facilities.length,
             itemBuilder: (context, index) {
-              final item = displayList[index];
+              final item = facilities[index];
               return _buildFacilityCard(item);
             },
           ),
@@ -123,8 +79,7 @@ class _CommonFacilityWidgetState
       const EdgeInsets.only(right: 12, bottom: 8, top: 2),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-        BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
             color: Colors.grey.withOpacity(0.1)),
         boxShadow: [
@@ -140,11 +95,9 @@ class _CommonFacilityWidgetState
         MainAxisAlignment.center,
         children: [
           Container(
-            padding:
-            const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.green
-                  .withOpacity(0.08),
+              color: Colors.green.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
             child: ClipRRect(
@@ -155,8 +108,7 @@ class _CommonFacilityWidgetState
                 height: 32,
                 width: 32,
                 fit: BoxFit.contain,
-                errorBuilder: (context,
-                    error, stackTrace) =>
+                errorBuilder: (context, error, stackTrace) =>
                 const Icon(
                   Icons.bolt,
                   color: Colors.green,
@@ -167,18 +119,14 @@ class _CommonFacilityWidgetState
           ),
           const SizedBox(height: 10),
           Padding(
-            padding:
-            const EdgeInsets.symmetric(
-                horizontal: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Text(
               item.title ?? '',
-              textAlign:
-              TextAlign.center,
+              textAlign: TextAlign.center,
               maxLines: 2,
               style: const TextStyle(
                 fontSize: 11,
-                fontWeight:
-                FontWeight.w600,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

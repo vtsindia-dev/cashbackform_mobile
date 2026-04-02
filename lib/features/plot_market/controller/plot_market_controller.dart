@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:cashback_farms/features/plot_market/model/common_facility_model.dart';
@@ -40,17 +41,18 @@ class PlotMarketController extends GetxController {
   var minAreaSqft = ''.obs;
   var maxAreaSqft = ''.obs;
   var myMarketPlots = <MarketPlot>[].obs;
-  var selectedTabIndex = 0.obs; // 0 = All Plots, 1 = My Plots
+  var selectedTabIndex = 0.obs;
   var isLoadingMyPlots = false.obs;
   var myCurrentPage = 1.obs;
   var myTotalPages = 1.obs;
   var hasMoreMyPlots = true.obs;
+
   // Filter data from API
   var states = <AppState>[].obs;
   var cities = <City>[].obs;
   var plotTypes = <PropertyType>[].obs;
 
-  // Dynamic price ranges - These will be updated from API response
+  // Dynamic price ranges
   var priceMin = 0.0.obs;
   var priceMax = 10000000.0.obs;
   var areaMin = 0.0.obs;
@@ -59,9 +61,10 @@ class PlotMarketController extends GetxController {
   // Other
   var errorMessage = ''.obs;
   var isExpanded = true.obs;
-  var verificationAmount = 499.0.obs; // Default value
+  var verificationAmount = 499.0.obs;
   var amenities = <dynamic>[].obs;
   var nearbyPlaces = <dynamic>[].obs;
+
   // UI State
   var isEnquiryLoading = false.obs;
   var enquiryCount = 0.obs;
@@ -72,13 +75,16 @@ class PlotMarketController extends GetxController {
   var myHasMoreData = true.obs;
   var myTotalItems = 0.obs;
 
-  // Add these Rx variables to your controller class
+  // Market enquiries
   RxList<MarketPlotEnquiry> marketPlotEnquiries = <MarketPlotEnquiry>[].obs;
   RxBool isLoadingMarketEnquiries = false.obs;
   RxInt marketEnquiryCurrentPage = 1.obs;
   RxInt marketEnquiryTotalPages = 1.obs;
   RxBool hasMoreMarketEnquiries = true.obs;
   RxInt totalMarketEnquiries = 0.obs;
+
+  // ── Autocomplete / debounce ──────────────────────────────────────────────
+  Timer? _searchDebounce;
 
   @override
   void onInit() {
@@ -90,9 +96,7 @@ class PlotMarketController extends GetxController {
 
   void toggleExpansion() => isExpanded.value = !isExpanded.value;
 
-
   var getCommonFacilityModel = <CommonFacilityModel>[].obs;
-
   List<int> selectedFacilityIds = [];
 
   void toggleFacility(int id) {
@@ -131,8 +135,6 @@ class PlotMarketController extends GetxController {
     }
   }
 
-
-
   Future<void> sendEnquiry() async {
     isEnquiryLoading.value = true;
     final token = await SessionManager.getToken();
@@ -153,23 +155,20 @@ class PlotMarketController extends GetxController {
       if (response.statusCode == 200 && data['status'] == true) {
         enquiryCount.value = data['counts'];
         message.value = data['message'];
-
-        // Updated snackbar
         SnackBarHelper.showSuccess("Enquiry Submitted successfully");
       } else {
-        // Updated snackbar
         SnackBarHelper.showError(data['message'] ?? 'Something went wrong');
       }
     } on dio.DioException catch (e) {
-      // Updated snackbar
-      SnackBarHelper.showError(e.response?.data['message'] ?? e.message ?? 'Request failed');
+      SnackBarHelper.showError(
+          e.response?.data['message'] ?? e.message ?? 'Request failed');
     } catch (e) {
-      // Updated snackbar
       SnackBarHelper.showError(e.toString());
     } finally {
       isEnquiryLoading.value = false;
     }
   }
+
   Future<void> fetchMarketPlotDetail(int id) async {
     try {
       _clearDetailData();
@@ -181,12 +180,14 @@ class PlotMarketController extends GetxController {
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-        print('📦 Full Response: ${responseData.toString()}'); // Debug print
+        print('📦 Full Response: ${responseData.toString()}');
 
         if (responseData != null && responseData['data'] != null) {
           try {
-            marketDetail.value = MarketPlotDetail.fromJson(responseData['data']);
-            print('✅ Fetched market plot detail: ${marketDetail.value?.name}');
+            marketDetail.value =
+                MarketPlotDetail.fromJson(responseData['data']);
+            print(
+                '✅ Fetched market plot detail: ${marketDetail.value?.name}');
             _logDetailInfo();
           } catch (e, stackTrace) {
             print('❌ Error parsing market plot detail: $e');
@@ -204,7 +205,8 @@ class PlotMarketController extends GetxController {
         SnackBarHelper.showError("Market plot details not found");
         print('❌ 404 Error: ${response.data}');
       } else {
-        final errorMsg = response.data?['message'] ?? 'Failed to fetch market plot details';
+        final errorMsg = response.data?['message'] ??
+            'Failed to fetch market plot details';
         errorMessage(errorMsg);
         SnackBarHelper.showError("Error: $errorMsg");
         print('❌ API Error ${response.statusCode}: ${response.data}');
@@ -218,6 +220,7 @@ class PlotMarketController extends GetxController {
       isLoadingDetail(false);
     }
   }
+
   void _clearDetailData() {
     marketDetail.value = null;
     errorMessage('');
@@ -241,7 +244,6 @@ class PlotMarketController extends GetxController {
     try {
       final token = await SessionManager.getToken();
 
-      // Find the document in the current detail
       final document = marketDetail.value?.documents?.firstWhere(
             (doc) => doc.id == documentId,
         orElse: () => Document(
@@ -261,18 +263,16 @@ class PlotMarketController extends GetxController {
         return;
       }
 
-      // Just launch the URL in browser
       await _launchUrl(document.downloadUrl, token ?? '');
-
     } catch (e) {
       SnackBarHelper.showError("Failed to open document: $e");
     }
   }
+
   Future<void> downloadDocument(int documentId) async {
     try {
       final token = await SessionManager.getToken();
 
-      // Find the document in the current detail
       final document = marketDetail.value?.documents?.firstWhere(
             (doc) => doc.id == documentId,
         orElse: () => Document(
@@ -292,7 +292,6 @@ class PlotMarketController extends GetxController {
         return;
       }
 
-      // Show loading dialog
       Get.dialog(
         const Center(
           child: CircularProgressIndicator(color: AppColor.primary),
@@ -300,7 +299,6 @@ class PlotMarketController extends GetxController {
         barrierDismissible: false,
       );
 
-      // Just launch the URL in browser
       final success = await _launchUrl(document.downloadUrl, token ?? '');
 
       Get.back();
@@ -317,19 +315,8 @@ class PlotMarketController extends GetxController {
   Future<bool> _launchUrl(String url, String token) async {
     try {
       final uri = Uri.parse(url);
-
-      // Add authorization token if available
-      final headers = {
-        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
-      };
-
-      // For webview or browser, we can't directly add headers
-      // So we'll just open the URL directly
       if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
         return true;
       } else {
         SnackBarHelper.showError("Could not launch URL: $url");
@@ -339,6 +326,7 @@ class PlotMarketController extends GetxController {
       rethrow;
     }
   }
+
   Future<void> fetchMarketPlots({bool loadMore = false}) async {
     try {
       if (loadMore) {
@@ -349,7 +337,8 @@ class PlotMarketController extends GetxController {
         hasMoreData.value = true;
       }
 
-      final url = '${ApiUrl.marketPlotList}?page_no=${currentPage.value}${_buildQueryParams()}';
+      final url =
+          '${ApiUrl.marketPlotList}?page_no=${currentPage.value}${_buildQueryParams()}';
       print('🌐 Fetching URL: $url');
 
       final response = await ApiService.getRequest(url);
@@ -358,29 +347,26 @@ class PlotMarketController extends GetxController {
         if (responseData != null &&
             responseData['data'] != null &&
             responseData['data']['market'] != null) {
-
           final marketData = responseData['data']['market'];
           final paginationData = responseData['data']['pagination'];
 
-          // Parse market plots
           if (loadMore) {
             marketPlots.addAll(_parseMarketPlots(marketData));
           } else {
             marketPlots.assignAll(_parseMarketPlots(marketData));
           }
 
-          // IMPORTANT: Extract plot types from the response
           if (!loadMore && responseData['data']['property_type'] != null) {
             final propertyTypesData = responseData['data']['property_type'];
             if (propertyTypesData is List) {
               plotTypes.value = (propertyTypesData as List)
                   .map((item) => PropertyType.fromJson(item))
                   .toList();
-              print('✅ Loaded ${plotTypes.length} plot types from market response');
+              print(
+                  '✅ Loaded ${plotTypes.length} plot types from market response');
             }
           }
 
-          // Extract dynamic ranges from response if available
           _extractDynamicRanges(responseData['data']);
 
           currentPage.value = paginationData['current_page'] ?? 1;
@@ -389,22 +375,15 @@ class PlotMarketController extends GetxController {
           hasMoreData.value = currentPage.value < totalPages.value;
 
           print('✅ Fetched ${marketPlots.length} market plots');
-          print('📄 Current page: $currentPage, Total pages: $totalPages, Total items: $totalItems');
-          print('💰 Price range: ₹$priceMin - ₹$priceMax');
-          print('📏 Area range: ${areaMin.value} - ${areaMax.value} sqft');
-          print('🏠 Plot types available: ${plotTypes.length}');
-
         } else {
           SnackBarHelper.showError("Invalid response format from server");
-          print('❌ Invalid response format: $responseData');
         }
       } else if (response.statusCode == 404) {
         SnackBarHelper.showError("Market plots not found");
-        print('❌ 404 Error: ${response.data}');
       } else {
-        final errorMessage = response.data?['message'] ?? 'Failed to fetch market plots';
+        final errorMessage =
+            response.data?['message'] ?? 'Failed to fetch market plots';
         SnackBarHelper.showError("Error $errorMessage");
-        print('❌ API Error ${response.statusCode}: ${response.data}');
       }
     } catch (e) {
       SnackBarHelper.showError("Network error: $e");
@@ -416,37 +395,83 @@ class PlotMarketController extends GetxController {
     }
   }
 
+  // ── Silent background search (no loading indicator) ──────────────────────
+  void onSearchChanged(String value) {
+    searchQuery.value = value;
+
+    // Cancel any previous pending timer
+    _searchDebounce?.cancel();
+
+    // If field is cleared, reload immediately without filters
+    if (value.trim().isEmpty) {
+      fetchMarketPlots();
+      return;
+    }
+
+    // Wait 300 ms after the user stops typing, then silently fetch
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      _silentSearch();
+    });
+  }
+
+  Future<void> _silentSearch() async {
+    try {
+      final url =
+          '${ApiUrl.marketPlotList}?page_no=1${_buildQueryParams()}';
+      print('🔍 Silent search URL: $url');
+
+      final response = await ApiService.getRequest(url);
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData?['data']?['market'] != null) {
+          final marketData = responseData['data']['market'];
+          final paginationData = responseData['data']['pagination'];
+
+          marketPlots.assignAll(_parseMarketPlots(marketData));
+
+          // Reset pagination to match the new filtered set
+          currentPage.value = paginationData['current_page'] ?? 1;
+          totalPages.value = paginationData['last_page'] ?? 1;
+          totalItems.value = paginationData['total'] ?? 0;
+          hasMoreData.value = currentPage.value < totalPages.value;
+
+          print(
+              '✅ Silent search returned ${marketPlots.length} results');
+        }
+      }
+    } catch (_) {
+      // Fail silently — user may still be typing
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   void _extractDynamicRanges(Map<String, dynamic>? data) {
     try {
       if (data != null) {
-        // Extract price ranges
         if (data['price_min'] != null) {
-          priceMin.value = double.tryParse(data['price_min'].toString()) ?? 0.0;
-          print('💰 Extracted price_min from API: ${priceMin.value}');
+          priceMin.value =
+              double.tryParse(data['price_min'].toString()) ?? 0.0;
         }
         if (data['price_max'] != null) {
-          priceMax.value = double.tryParse(data['price_max'].toString()) ?? 10000000.0;
-          print('💰 Extracted price_max from API: ${priceMax.value}');
+          priceMax.value =
+              double.tryParse(data['price_max'].toString()) ?? 10000000.0;
         }
-
-        // Extract area ranges - Note: your JSON shows "sqft_min" and "sqft_max"
         if (data['sqft_min'] != null) {
-          areaMin.value = double.tryParse(data['sqft_min'].toString()) ?? 0.0;
-          print('📏 Extracted sqft_min from API: ${areaMin.value}');
+          areaMin.value =
+              double.tryParse(data['sqft_min'].toString()) ?? 0.0;
         }
         if (data['sqft_max'] != null) {
-          areaMax.value = double.tryParse(data['sqft_max'].toString()) ?? 10000.0;
-          print('📏 Extracted sqft_max from API: ${areaMax.value}');
+          areaMax.value =
+              double.tryParse(data['sqft_max'].toString()) ?? 10000.0;
         }
-
-        // Also check for area_min and area_max as fallback
         if (data['area_min'] != null && areaMin.value == 0.0) {
-          areaMin.value = double.tryParse(data['area_min'].toString()) ?? 0.0;
-          print('📏 Extracted area_min from API: ${areaMin.value}');
+          areaMin.value =
+              double.tryParse(data['area_min'].toString()) ?? 0.0;
         }
         if (data['area_max'] != null && areaMax.value == 10000.0) {
-          areaMax.value = double.tryParse(data['area_max'].toString()) ?? 10000.0;
-          print('📏 Extracted area_max from API: ${areaMax.value}');
+          areaMax.value =
+              double.tryParse(data['area_max'].toString()) ?? 10000.0;
         }
       }
     } catch (e) {
@@ -465,10 +490,6 @@ class PlotMarketController extends GetxController {
     await fetchMarketPlots();
   }
 
-  void onSearchChanged(String value) {
-    searchQuery.value = value;
-  }
-
   void applySearch() {
     if (searchQuery.value.trim().isEmpty) return;
     recentSearch.value = searchQuery.value.trim();
@@ -479,6 +500,7 @@ class PlotMarketController extends GetxController {
     recentSearch.value = '';
     searchQuery.value = '';
     searchController.clear();
+    _searchDebounce?.cancel();
     fetchMarketPlots();
   }
 
@@ -500,6 +522,7 @@ class PlotMarketController extends GetxController {
         minAreaSqft.value.isNotEmpty ||
         maxAreaSqft.value.isNotEmpty;
   }
+
   int getActiveFilterCount() {
     int count = selectedPlotTypes.length;
     if (searchQuery.value.isNotEmpty) count++;
@@ -509,6 +532,7 @@ class PlotMarketController extends GetxController {
     if (minAreaSqft.value.isNotEmpty || maxAreaSqft.value.isNotEmpty) count++;
     return count;
   }
+
   Future<void> clearFilters() async {
     searchQuery.value = '';
     selectedState.value = null;
@@ -520,41 +544,32 @@ class PlotMarketController extends GetxController {
     maxAreaSqft.value = '';
     searchController.clear();
     cities.clear();
+    _searchDebounce?.cancel();
     await fetchMarketPlots();
   }
+
   String _buildQueryParams() {
     final params = <String>[];
 
-    // Search
     if (searchQuery.value.isNotEmpty) {
       params.add('search=${Uri.encodeComponent(searchQuery.value)}');
     }
-
-    // State
     if (selectedState.value != null) {
       params.add('state=${selectedState.value!.id}');
     }
-
-    // City
     if (selectedCity.value != null) {
       params.add('city=${selectedCity.value!.id}');
     }
-
-    // Plot Types
     if (selectedPlotTypes.isNotEmpty) {
       final typeIds = selectedPlotTypes.map((type) => type.id).toList();
       params.add('plot_type=${typeIds.join(',')}');
     }
-
-    // Price Range
     if (minPrice.value.isNotEmpty) {
       params.add('min_price=${Uri.encodeComponent(minPrice.value)}');
     }
     if (maxPrice.value.isNotEmpty) {
       params.add('max_price=${Uri.encodeComponent(maxPrice.value)}');
     }
-
-    // Area Range
     if (minAreaSqft.value.isNotEmpty) {
       params.add('area_sqft_min=${Uri.encodeComponent(minAreaSqft.value)}');
     }
@@ -564,9 +579,11 @@ class PlotMarketController extends GetxController {
 
     return params.isEmpty ? '' : '&${params.join('&')}';
   }
+
   List<MarketPlot> _parseMarketPlots(List<dynamic> data) {
     return data.map((item) => MarketPlot.fromJson(item)).toList();
   }
+
   MarketPlot? getPlotById(int id) {
     try {
       return marketPlots.firstWhere((plot) => plot.id == id);
@@ -574,6 +591,7 @@ class PlotMarketController extends GetxController {
       return null;
     }
   }
+
   Future<Map<String, dynamic>> submitMarketPlot({
     required Map<String, dynamic> formData,
     List<File> images = const [],
@@ -587,99 +605,59 @@ class PlotMarketController extends GetxController {
       isLoading(true);
       final formDataToSend = dio.FormData();
 
-      print('📤 Preparing form data...');
-
-      // Handle all form fields
       formData.forEach((key, value) {
         if (value != null) {
-          // Handle nearby places - send as JSON string
           if (key == 'nearby' && value is List) {
-            print('📍 Processing nearby places: $value');
-            // Send as JSON string
             final nearbyJson = jsonEncode(value);
-            formDataToSend.fields.add(MapEntry(
-              'nearby',
-              nearbyJson,
-            ));
-            print('   Added nearby as JSON: $nearbyJson');
-          }
-          // Handle amenities list
-          else if (key == 'amenities' && value is List) {
+            formDataToSend.fields.add(MapEntry('nearby', nearbyJson));
+          } else if (key == 'amenities' && value is List) {
             final amenitiesStr = value.map((e) => e.toString()).join(',');
             formDataToSend.fields.add(MapEntry(key, amenitiesStr));
-            print('   Added amenities: $amenitiesStr');
-          }
-          // Handle regular fields
-          else {
+          } else {
             formDataToSend.fields.add(MapEntry(key, value.toString()));
-            print('   Added $key: $value');
           }
         }
       });
 
-      if(selectedFacilityIds !=null && selectedFacilityIds.isNotEmpty){
+      if (selectedFacilityIds != null && selectedFacilityIds.isNotEmpty) {
         for (var facility in selectedFacilityIds) {
-          formDataToSend.fields.add(
-            MapEntry('commonfacility[]', facility.toString()),
-          );
+          formDataToSend.fields
+              .add(MapEntry('commonfacility[]', facility.toString()));
         }
       }
 
-      // Add user ID (make sure this is included)
       final userId = await SessionManager.getUserId();
       if (userId != null) {
         formDataToSend.fields.add(MapEntry('user_id', userId.toString()));
-        print('   Added user_id: $userId');
       }
 
-      // Add images
       for (int i = 0; i < images.length; i++) {
         formDataToSend.files.add(MapEntry(
           'plot_image',
-          await dio.MultipartFile.fromFile(
-            images[i].path,
-            filename: 'image_$i.jpg',
-          ),
+          await dio.MultipartFile.fromFile(images[i].path,
+              filename: 'image_$i.jpg'),
         ));
-        print('📸 Added image ${i + 1}: ${images[i].path}');
       }
 
       if (threeDImage != null) {
         formDataToSend.files.add(MapEntry(
           'three_d_image',
-          await dio.MultipartFile.fromFile(
-            threeDImage.path,
-            filename: 'three_d_image.jpg',
-          ),
+          await dio.MultipartFile.fromFile(threeDImage.path,
+              filename: 'three_d_image.jpg'),
         ));
       }
 
-      // Add plot image
       if (plotImage != null) {
         formDataToSend.files.add(MapEntry(
           'image[]',
-          await dio.MultipartFile.fromFile(
-            plotImage.path,
-            filename: 'plot_image.jpg',
-          ),
+          await dio.MultipartFile.fromFile(plotImage.path,
+              filename: 'plot_image.jpg'),
         ));
-        print('📸 Added plot image: ${plotImage.path}');
-      }
-
-      print('📦 FORM DATA FIELDS');
-      for (var field in formDataToSend.fields) {
-        print('${field.key}: ${field.value}');
-      }
-
-      print('📦 FORM DATA FILES');
-      for (var file in formDataToSend.files) {
-        print('${file.key}: ${file.value.filename}');
       }
 
       final token = await SessionManager.getToken();
-      print('🔑 Using token: ${token != null ? "YES" : "NO"}');
-      final url = isUpdate ? ApiUrl.marketPlotEdit : ApiUrl.marketPlotAdd;
-      print('🌐 ${isUpdate ? 'Updating' : 'Adding'} market plot: $url');
+      final url =
+      isUpdate ? ApiUrl.marketPlotEdit : ApiUrl.marketPlotAdd;
 
       final dioInstance = dio.Dio();
       final response = await dioInstance.post(
@@ -689,19 +667,16 @@ class PlotMarketController extends GetxController {
           headers: {
             "Accept": "application/json",
             "Content-Type": "multipart/form-data",
-            if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
+            if (token != null && token.isNotEmpty)
+              "Authorization": "Bearer $token",
           },
           sendTimeout: const Duration(seconds: 50),
           receiveTimeout: const Duration(seconds: 50),
         ),
       );
 
-      print('📥 Response status: ${response.statusCode}');
-      print('📥 Response data: ${response.data}');
-
       if (response.statusCode == 200) {
         final responseData = response.data;
-        print('✅ ${isUpdate ? 'Updated' : 'Added'} market plot successfully');
         await fetchMarketPlots();
         Navigator.pop(Get.context!);
         return {
@@ -710,17 +685,9 @@ class PlotMarketController extends GetxController {
           'data': responseData['data'],
         };
       } else {
-        print('❌ Error response: ${response.data}');
         final errorMsg = response.data?['message'] ??
             response.data?['error'] ??
             'Failed to ${isUpdate ? 'update' : 'add'} market plot';
-
-        // Check for validation errors
-        if (response.data?['errors'] != null) {
-          final errors = response.data?['errors'];
-          print('❌ Validation errors: $errors');
-        }
-
         return {
           'status': response.statusCode ?? 500,
           'message': errorMsg,
@@ -728,17 +695,12 @@ class PlotMarketController extends GetxController {
         };
       }
     } on dio.DioException catch (e) {
-      print('❌ Dio Exception: ${e.message}');
-      print('❌ Response: ${e.response?.data}');
-      print('❌ Error type: ${e.type}');
-
       String errorMessage = 'Network error';
       if (e.response?.data?['message'] != null) {
         errorMessage = e.response!.data!['message'];
       } else if (e.message != null) {
         errorMessage = e.message!;
       }
-
       return {
         'status': e.response?.statusCode ?? 500,
         'message': errorMessage,
@@ -760,21 +722,18 @@ class PlotMarketController extends GetxController {
     try {
       isLoading(true);
       final url = '${ApiUrl.marketPlotDelete}/$id';
-      print('🌐 Deleting market plot: $url');
       final response = await dio.Dio().delete(url);
       if (response.statusCode == 200) {
-        print('✅ Deleted market plot successfully');
         marketPlots.removeWhere((plot) => plot.id == id);
         refresh();
         return true;
       } else {
-        final errorMsg = response.data?['message'] ?? 'Failed to delete market plot';
-        print('❌ Error: $errorMsg');
+        final errorMsg =
+            response.data?['message'] ?? 'Failed to delete market plot';
         SnackBarHelper.showError(errorMsg);
         return false;
       }
     } catch (e) {
-      print('❌ Exception: $e');
       SnackBarHelper.showError('Network error: $e');
       return false;
     } finally {
@@ -791,7 +750,6 @@ class PlotMarketController extends GetxController {
       final razorpayController = Get.put(RazorpayController());
       final dashboardController = Get.put(DashboardController());
 
-      // --- LOGIC SECTION (Keep your existing logic for amount calculation) ---
       if (plot.verifyStatus == 1) {
         Get.snackbar("Already Verified", "This plot is already verified!",
             snackPosition: SnackPosition.BOTTOM,
@@ -803,7 +761,8 @@ class PlotMarketController extends GetxController {
       double amountToCharge = 499.0;
       final businessSettings = dashboardController.businessSettings.value;
 
-      if (businessSettings?.marketPlotVerifyAmount != null && businessSettings!.marketPlotVerifyAmount! > 0) {
+      if (businessSettings?.marketPlotVerifyAmount != null &&
+          businessSettings!.marketPlotVerifyAmount! > 0) {
         amountToCharge = businessSettings.marketPlotVerifyAmount!;
       } else if (plot.verification != null && plot.verification! > 0) {
         amountToCharge = plot.verification!.toDouble();
@@ -815,15 +774,16 @@ class PlotMarketController extends GetxController {
         propertyName: plot.name,
       );
 
-      // --- UPDATED DESIGN SECTION ---
       Get.dialog(
         AlertDialog(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
           titlePadding: EdgeInsets.zero,
           title: Container(
-            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+            padding:
+            EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
             decoration: BoxDecoration(
               color: AppColor.primary.withOpacity(0.05),
               borderRadius: BorderRadius.only(
@@ -839,7 +799,8 @@ class PlotMarketController extends GetxController {
                     color: AppColor.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.verified_user_rounded, color: AppColor.primary, size: 22.sp),
+                  child: Icon(Icons.verified_user_rounded,
+                      color: AppColor.primary, size: 22.sp),
                 ),
                 SizedBox(width: 12.w),
                 Text(
@@ -862,8 +823,6 @@ class PlotMarketController extends GetxController {
                 style: TextStyle(fontSize: 13.sp, color: Colors.grey[600]),
               ),
               SizedBox(height: 16.h),
-
-              // Selected Property Card
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(12.w),
@@ -879,49 +838,49 @@ class PlotMarketController extends GetxController {
                       plot.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 14.sp, fontWeight: FontWeight.bold),
                     ),
                     Text(
                       plot.location,
                       maxLines: 1,
-                      style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
+                      style:
+                      TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
                     ),
                   ],
                 ),
               ),
-
               SizedBox(height: 16.h),
-
-              // Benefits List
               _buildBenefitItem("Higher search ranking"),
               _buildBenefitItem("Official verification badge"),
               _buildBenefitItem("Verified seller protection"),
-
               SizedBox(height: 20.h),
-
-              // Price Section
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(
+                    horizontal: 12.w, vertical: 12.h),
                 decoration: BoxDecoration(
                   color: AppColor.primary.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: AppColor.primary.withOpacity(0.1)),
+                  border:
+                  Border.all(color: AppColor.primary.withOpacity(0.1)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Total Amount", style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                    Text("Total Amount",
+                        style: TextStyle(
+                            fontSize: 13.sp, fontWeight: FontWeight.w500)),
                     Text(
                       "₹${amountToCharge.toStringAsFixed(0)}",
-                      style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w900, color: AppColor.primary),
+                      style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w900,
+                          color: AppColor.primary),
                     ),
                   ],
                 ),
               ),
-
               SizedBox(height: 12.h),
-
-              // Terms
               Obx(() => InkWell(
                 onTap: () => razorpayController.toggleTerms(),
                 child: Row(
@@ -933,14 +892,16 @@ class PlotMarketController extends GetxController {
                         value: razorpayController.isTermsAccepted.value,
                         onChanged: (v) => razorpayController.toggleTerms(),
                         activeColor: AppColor.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4.r)),
                       ),
                     ),
                     SizedBox(width: 8.w),
                     Expanded(
                       child: Text(
                         "I accept the terms & conditions",
-                        style: TextStyle(fontSize: 11.sp, color: Colors.grey[700]),
+                        style: TextStyle(
+                            fontSize: 11.sp, color: Colors.grey[700]),
                       ),
                     ),
                   ],
@@ -948,8 +909,8 @@ class PlotMarketController extends GetxController {
               )),
             ],
           ),
-          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
-
+          actionsPadding:
+          EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
             Row(
               children: [
@@ -958,9 +919,12 @@ class PlotMarketController extends GetxController {
                     onPressed: () => Get.back(),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: Colors.grey[300]!),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r)),
                     ),
-                    child: Text("Later", style: TextStyle(color: Colors.grey[600],fontSize: 15.w)),
+                    child: Text("Later",
+                        style: TextStyle(
+                            color: Colors.grey[600], fontSize: 15.w)),
                   ),
                 ),
                 SizedBox(width: 5.w),
@@ -969,7 +933,9 @@ class PlotMarketController extends GetxController {
                   child: ElevatedButton(
                     onPressed: () {
                       if (!razorpayController.isTermsAccepted.value) {
-                        Get.snackbar("Required", "Please accept terms", backgroundColor: Colors.red, colorText: Colors.white);
+                        Get.snackbar("Required", "Please accept terms",
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white);
                         return;
                       }
                       Get.back();
@@ -978,9 +944,13 @@ class PlotMarketController extends GetxController {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColor.primary,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r)),
                     ),
-                    child: Text("Proceed", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: Text("Proceed",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -989,11 +959,10 @@ class PlotMarketController extends GetxController {
         ),
       );
     } catch (e) {
-      // Error handling remains same
+      // Error handling
     }
   }
 
-// Updated Helper Widget
   Widget _buildBenefitItem(String text) {
     return Padding(
       padding: EdgeInsets.only(bottom: 6.h),
@@ -1001,26 +970,27 @@ class PlotMarketController extends GetxController {
         children: [
           Icon(Icons.check_circle, color: AppColor.primary, size: 14.sp),
           SizedBox(width: 8.w),
-          Text(text, style: TextStyle(fontSize: 12.sp, color: Colors.black87)),
+          Text(text,
+              style: TextStyle(fontSize: 12.sp, color: Colors.black87)),
         ],
       ),
     );
   }
 
-
   void openAddForm() {
     Get.to(() => MarketPlotForm());
   }
 
-
   Future<void> fetchAmenities() async {
     try {
-      final response = await ApiService.getRequest('${ApiUrl.baseUrl}/api/v2/amenities');
+      final response = await ApiService.getRequest(
+          '${ApiUrl.baseUrl}/api/v2/amenities');
       if (response.statusCode == 200) {
         final responseData = response.data;
-        if (responseData['status'] == 200 && responseData['data'] != null && responseData['data']['amenities'] != null) {
+        if (responseData['status'] == 200 &&
+            responseData['data'] != null &&
+            responseData['data']['amenities'] != null) {
           amenities.value = responseData['data']['amenities'];
-          print('✅ Loaded ${amenities.length} amenities');
         }
       }
     } catch (e) {
@@ -1030,12 +1000,14 @@ class PlotMarketController extends GetxController {
 
   Future<void> fetchNearbyPlaces() async {
     try {
-      final response = await ApiService.getRequest('${ApiUrl.baseUrl}/api/v2/nearby_place');
+      final response = await ApiService.getRequest(
+          '${ApiUrl.baseUrl}/api/v2/nearby_place');
       if (response.statusCode == 200) {
         final responseData = response.data;
-        if (responseData['status'] == 200 && responseData['data'] != null && responseData['data']['nearby_places'] != null) {
+        if (responseData['status'] == 200 &&
+            responseData['data'] != null &&
+            responseData['data']['nearby_places'] != null) {
           nearbyPlaces.value = responseData['data']['nearby_places'];
-          print('✅ Loaded ${nearbyPlaces.length} nearby places');
         }
       }
     } catch (e) {
@@ -1045,7 +1017,8 @@ class PlotMarketController extends GetxController {
 
   Future<void> fetchPropertyTypes() async {
     try {
-      final response = await ApiService.getRequest('${ApiUrl.baseUrl}/api/v2/property_category');
+      final response = await ApiService.getRequest(
+          '${ApiUrl.baseUrl}/api/v2/property_category');
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == 200 && responseData['data'] != null) {
@@ -1058,11 +1031,10 @@ class PlotMarketController extends GetxController {
             updatedAt: DateTime.now(),
           ))
               .toList());
-          print('✅ Loaded ${plotTypes.length} property types');
         }
       }
     } catch (e) {
-      print('   $e');
+      print('❌ Error fetching property types: $e');
     }
   }
 
@@ -1075,7 +1047,6 @@ class PlotMarketController extends GetxController {
           states.value = (statesData['data'] as List)
               .map((item) => AppState.fromJson(item))
               .toList();
-          print('✅ Loaded ${states.length} states');
         }
       }
     } catch (e) {
@@ -1093,15 +1064,12 @@ class PlotMarketController extends GetxController {
 
       if (response.statusCode == 200) {
         final citiesData = response.data;
-
         if (citiesData['data'] != null && citiesData['data'] is List) {
           cities.assignAll(
             (citiesData['data'] as List)
                 .map((item) => City.fromJson(item))
                 .toList(),
           );
-
-          print('✅ Loaded ${cities.length} cities for state $stateId');
         }
       }
     } catch (e) {
@@ -1121,6 +1089,7 @@ class PlotMarketController extends GetxController {
       await fetchCitiesForState(state.id);
     }
   }
+
   Future<void> fetchMyMarketPlots({bool loadMore = false}) async {
     try {
       if (loadMore) {
@@ -1140,62 +1109,41 @@ class PlotMarketController extends GetxController {
         return;
       }
 
-      final url = '${ApiUrl.myMarketPlots}?page_no=${myCurrentPage.value}';
-      print('🌐 Fetching My Plots URL: $url');
+      final url =
+          '${ApiUrl.myMarketPlots}?page_no=${myCurrentPage.value}';
       final response = await dio.Dio().get(
         url,
         options: dio.Options(
           headers: {
             "Accept": "application/json",
             "Authorization": "Bearer $token",
-
           },
         ),
       );
 
-      print('📥 My Plots Response Status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final responseData = response.data;
-        print('🔍 Response type: ${responseData.runtimeType}');
-        print('🔍 Response keys: ${responseData is Map ? responseData.keys.toList() : 'Not a map'}');
         if (responseData != null && responseData is Map) {
           List<dynamic> marketDataList = [];
-          if (responseData['data'] != null && responseData['data'] is List) {
-            print('✅ Found data in "data" key as List');
+          if (responseData['data'] != null &&
+              responseData['data'] is List) {
             marketDataList = responseData['data'];
-          }
-          else if (responseData['market'] != null && responseData['market'] is List) {
-            print('✅ Found data in "market" key as List');
+          } else if (responseData['market'] != null &&
+              responseData['market'] is List) {
             marketDataList = responseData['market'];
-          }
-          else {
-            print('❌ No list data found in response');
+          } else {
             SnackBarHelper.showError("No properties found");
           }
 
-          // Parse the market plots
           List<MarketPlot> parsedPlots = [];
           try {
             parsedPlots = marketDataList.map((item) {
-              try {
-                if (item is Map<String, dynamic>) {
-                  return MarketPlot.fromJson(item);
-                } else {
-                  print('⚠️ Item is not a Map: ${item.runtimeType}');
-                  throw FormatException('Invalid item type');
-                }
-              } catch (e, stackTrace) {
-                print('❌ Error parsing individual plot: $e');
-                print('❌ Stack trace: $stackTrace');
-                print('❌ Problematic item: $item');
-                // Return a placeholder or skip this item
-                rethrow;
+              if (item is Map<String, dynamic>) {
+                return MarketPlot.fromJson(item);
+              } else {
+                throw FormatException('Invalid item type');
               }
             }).toList();
-
-            print('✅ Successfully parsed ${parsedPlots.length} plots');
-
           } catch (parseError) {
             print('❌ Error parsing market plots: $parseError');
             SnackBarHelper.showError("Error parsing property data");
@@ -1207,42 +1155,36 @@ class PlotMarketController extends GetxController {
             myMarketPlots.assignAll(parsedPlots);
           }
           myTotalItems.value = myMarketPlots.length;
-          print('✅ Total my plots loaded: ${myMarketPlots.length}');
         } else {
-          print('❌ Response data is null or not a Map');
           SnackBarHelper.showError("Invalid response from server");
         }
       } else if (response.statusCode == 401) {
-        print('❌ Unauthorized - Token invalid');
         SnackBarHelper.showError("Session expired. Please login again");
       } else if (response.statusCode == 404) {
-        print('❌ Endpoint not found');
         SnackBarHelper.showError("Service temporarily unavailable");
       } else {
         final errorMessage = response.data?['message'] ??
             response.data?['error'] ??
             'Failed to fetch your properties';
-        print('❌ API Error: $errorMessage');
         SnackBarHelper.showError(errorMessage);
       }
     } catch (e, stackTrace) {
       print('❌ Exception in fetchMyMarketPlots: $e');
       print('❌ Stack trace: $stackTrace');
-      print('❌ Error type: ${e.runtimeType}');
-
-      // More specific error messages
       if (e is TypeError) {
         SnackBarHelper.showError("Data format error. Please try again.");
       } else if (e is FormatException) {
         SnackBarHelper.showError("Invalid data received from server.");
       } else {
-        SnackBarHelper.showError("Error loading your properties: ${e.toString().split('\n').first}");
+        SnackBarHelper.showError(
+            "Error loading your properties: ${e.toString().split('\n').first}");
       }
     } finally {
       isLoadingMyPlots(false);
       isLoadMoreMyPlots(false);
     }
   }
+
   Future<void> loadMoreMyPlots() async {
     if (!isLoadMoreMyPlots.value && myHasMoreData.value) {
       myCurrentPage.value++;
@@ -1250,10 +1192,10 @@ class PlotMarketController extends GetxController {
     }
   }
 
-  // Refresh My Plots
   Future<void> refreshMyPlots() async {
     await fetchMyMarketPlots();
   }
+
   Future<void> fetchMarketPlotEnquiries({bool loadMore = false}) async {
     try {
       if (!loadMore) {
@@ -1262,7 +1204,6 @@ class PlotMarketController extends GetxController {
         marketPlotEnquiries.clear();
       }
 
-      // Get token using SessionManager
       final token = await SessionManager.getToken();
 
       if (token == null || token.isEmpty) {
@@ -1291,32 +1232,22 @@ class PlotMarketController extends GetxController {
         },
       );
 
-      print('🌐 Market Enquiry Response Status: ${response.statusCode}');
-      print('🌐 Market Enquiry URL: ${response.requestOptions.uri}');
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = response.data;
 
-        if (responseData['status'] == 200 || responseData['status'] == true) {
+        if (responseData['status'] == 200 ||
+            responseData['status'] == true) {
           final data = responseData['data'] ?? {};
           final List<dynamic> materialData = data['material'] ?? [];
 
-          print('📦 Raw material data: $materialData');
-          print('📦 Material data type: ${materialData.runtimeType}');
-          print('📦 Material count: ${materialData.length}');
-
-          // Parse enquiries
           final List<MarketPlotEnquiry> newEnquiries = [];
           for (var enquiryData in materialData) {
             try {
-              print('🔍 Parsing enquiry: $enquiryData');
               final enquiry = MarketPlotEnquiry.fromJson(enquiryData);
               newEnquiries.add(enquiry);
-              print('✅ Parsed enquiry ID: ${enquiry.id}');
             } catch (e, stackTrace) {
               print('❌ Error parsing enquiry: $e');
               print('❌ Stack trace: $stackTrace');
-              print('❌ Problematic data: $enquiryData');
             }
           }
 
@@ -1326,53 +1257,34 @@ class PlotMarketController extends GetxController {
             marketPlotEnquiries.assignAll(newEnquiries);
           }
 
-          // Update pagination
           final pagination = data['pagination'] ?? {};
-          marketEnquiryCurrentPage.value = pagination['current_page'] ?? 1;
+          marketEnquiryCurrentPage.value =
+              pagination['current_page'] ?? 1;
           marketEnquiryTotalPages.value = pagination['last_page'] ?? 1;
           totalMarketEnquiries.value = pagination['total'] ?? 0;
-          hasMoreMarketEnquiries.value = marketEnquiryCurrentPage.value < marketEnquiryTotalPages.value;
-
-          print('✅ Fetched ${marketPlotEnquiries.length} market plot enquiries');
-          print('📊 Pagination: Current ${marketEnquiryCurrentPage.value}, Total ${marketEnquiryTotalPages.value}');
-          print('📊 Has property: ${marketPlotEnquiries.where((e) => e.property != null).length}');
-          print('📊 Without property: ${marketPlotEnquiries.where((e) => e.property == null).length}');
-
+          hasMoreMarketEnquiries.value =
+              marketEnquiryCurrentPage.value < marketEnquiryTotalPages.value;
         } else {
-          throw Exception('API returned error status: ${responseData['status']}');
+          throw Exception(
+              'API returned error status: ${responseData['status']}');
         }
       } else {
-        throw Exception('Failed to load market enquiries: ${response.statusCode}');
+        throw Exception(
+            'Failed to load market enquiries: ${response.statusCode}');
       }
     } on dio.DioException catch (e) {
       print('❌ Dio Error fetching market enquiries: ${e.message}');
-      print('❌ Response: ${e.response?.data}');
-      print('❌ Error type: ${e.type}');
-
       if (e.response?.statusCode == 401) {
-        Get.snackbar(
-          'Session Expired',
-          'Please login again',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
-        );
+        Get.snackbar('Session Expired', 'Please login again',
+            backgroundColor: Colors.red, colorText: Colors.white);
       } else if (e.response?.statusCode == 404) {
-        Get.snackbar(
-          'Endpoint Not Found',
-          'Market enquiry endpoint not available',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
-        );
+        Get.snackbar('Endpoint Not Found',
+            'Market enquiry endpoint not available',
+            backgroundColor: Colors.red, colorText: Colors.white);
       } else {
-        Get.snackbar(
-          'Network Error',
-          'Unable to fetch market enquiries. Please try again.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
-        );
+        Get.snackbar('Network Error',
+            'Unable to fetch market enquiries. Please try again.',
+            backgroundColor: Colors.red, colorText: Colors.white);
       }
     } catch (e, stackTrace) {
       print('❌ Error fetching market enquiries: $e');
@@ -1402,7 +1314,6 @@ class PlotMarketController extends GetxController {
     await fetchMarketPlotEnquiries();
   }
 
-// Clear market enquiries
   void clearMarketEnquiries() {
     marketPlotEnquiries.clear();
     marketEnquiryCurrentPage.value = 1;
@@ -1411,7 +1322,6 @@ class PlotMarketController extends GetxController {
     hasMoreMarketEnquiries.value = true;
   }
 
-// Get enquiry by ID
   MarketPlotEnquiry? getMarketEnquiryById(int id) {
     try {
       return marketPlotEnquiries.firstWhere((enquiry) => enquiry.id == id);
@@ -1420,22 +1330,25 @@ class PlotMarketController extends GetxController {
     }
   }
 
-// Get total enquiry count
   int getTotalMarketEnquiries() {
     return marketPlotEnquiries.length;
   }
 
-// Get enquiries with property
   List<MarketPlotEnquiry> getEnquiriesWithProperty() {
-    return marketPlotEnquiries.where((enquiry) => enquiry.property != null).toList();
+    return marketPlotEnquiries
+        .where((enquiry) => enquiry.property != null)
+        .toList();
   }
 
-// Get enquiries without property
   List<MarketPlotEnquiry> getEnquiriesWithoutProperty() {
-    return marketPlotEnquiries.where((enquiry) => enquiry.property == null).toList();
+    return marketPlotEnquiries
+        .where((enquiry) => enquiry.property == null)
+        .toList();
   }
+
   @override
   void onClose() {
+    _searchDebounce?.cancel();
     _clearDetailData();
     super.onClose();
   }

@@ -3,8 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
 import '../../../common/colours.dart';
-import '../../../common/widget/carousel.dart';
+import '../../../common/widget/media_carousel_widget.dart';
 import '../controller/plot_market_controller.dart';
 
 class AboutPlot extends StatelessWidget {
@@ -20,11 +21,20 @@ class AboutPlot extends StatelessWidget {
       final projectName = detail?.name ?? 'No Name';
       final location = detail?.fullAddress ?? 'No Address';
       final plotCounts = '${detail?.plotCount ?? 0} Plots';
+
+      // Dynamic verify status with proper text mapping
+      final verifiedStatus = _getVerifyStatusText(detail?.verifyStatus ?? 0);
+
       final plotAreaSqFt = '${detail?.area ?? 0} Sq.ft';
       final totalPrice = '₹ ${detail?.price ?? '0'}';
-      final pricePerSqFt = '₹ ${detail?.price ?? '0'} per Sq.ft';
-      final postedDate = '19/09/2025';
-      final lastUpdate = '29/10/2025';
+      final pricePerSqFt = '${detail?.pricePerSqft ?? '0'}';
+
+      // Dynamic dates from the API
+      final postedDate = _formatDate(detail?.createdAt);
+      final lastUpdate = _formatDate(detail?.updatedAt);
+
+      // Check if property is sold out
+      final isSoldOut = detail?.status == 0 || detail?.soldout == 1;
 
       final images = detail?.images.isNotEmpty == true
           ? detail!.images
@@ -45,7 +55,7 @@ class AboutPlot extends StatelessWidget {
         ),
         child: Column(
           children: [
-            _buildCarousel(images,detail?.shareLink??''),
+            _buildCarousel(images, detail?.shareLink ?? '', isSoldOut),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [_buildViewDetailsButton(controller)],
@@ -56,11 +66,13 @@ class AboutPlot extends StatelessWidget {
                 projectName: projectName,
                 location: location,
                 plotCounts: plotCounts,
+                verifiedStatus: verifiedStatus,
                 plotAreaSqFt: plotAreaSqFt,
                 totalPrice: totalPrice,
                 pricePerSqFt: pricePerSqFt,
                 postedDate: postedDate,
                 lastUpdate: lastUpdate,
+                isSoldOut: isSoldOut,
               ),
             ),
           ],
@@ -69,7 +81,45 @@ class AboutPlot extends StatelessWidget {
     });
   }
 
-  Widget _buildCarousel(List<String> images,String? shareLink) {
+  // Helper method to get verify status text
+  String _getVerifyStatusText(int status) {
+    switch (status) {
+      case 0:
+        return 'Pending';
+      case 1:
+        return 'Verified ✓';
+      case 2:
+        return 'Rejected';
+      case 3:
+        return 'Under Review';
+      default:
+        return 'Not Defined';
+    }
+  }
+
+  // Helper method to get status color (optional, for visual indicator)
+  Color _getVerifyStatusColor(int status) {
+    switch (status) {
+      case 0:
+        return Colors.orange;
+      case 1:
+        return Colors.green;
+      case 2:
+        return Colors.red;
+      case 3:
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Helper method to format date
+  String _formatDate(DateTime? dateTime) {
+    if (dateTime == null) return 'Not Available';
+    return DateFormat('dd/MM/yyyy').format(dateTime);
+  }
+
+  Widget _buildCarousel(List<String> images, String shareLink, bool isSoldOut) {
     return Padding(
       padding: const EdgeInsets.all(5.0),
       child: ClipRRect(
@@ -79,37 +129,71 @@ class AboutPlot extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            CarouselWidget(
+            MediaCarouselScreen(
               images: images,
               height: 190.h,
-              borderRadius: 20.r,
             ),
-            if(shareLink!=null)
-            Positioned(
-              top: 12,
-              right: 12,
-              child: GestureDetector(
-                onTap: () async {
-                  await SharePlus.instance.share(
-                    ShareParams(
-                      text: shareLink,
-                    ),
-                  );
-                },
+            // Sold Out Badge
+            if (isSoldOut)
+              Positioned(
+                top: 12,
+                left: 12,
                 child: Container(
-                  padding: EdgeInsets.all(8),
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(20.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Icon(
-                    Icons.share,
-                    color: Colors.white,
-                    size: 20.sp,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.shopping_cart, size: 14.sp, color: Colors.white),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'SOLD OUT',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
+            if (shareLink.isNotEmpty)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: GestureDetector(
+                  onTap: () async {
+                    await SharePlus.instance.share(
+                      ShareParams(
+                        text: shareLink,
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.share,
+                      color: Colors.white,
+                      size: 20.sp,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -157,11 +241,13 @@ class AboutPlot extends StatelessWidget {
         required String projectName,
         required String location,
         required String plotCounts,
+        required String verifiedStatus,
         required String plotAreaSqFt,
         required String totalPrice,
         required String pricePerSqFt,
         required String postedDate,
         required String lastUpdate,
+        required bool isSoldOut,
       }) {
     return AnimatedContainer(
       duration: 400.ms,
@@ -172,11 +258,13 @@ class AboutPlot extends StatelessWidget {
         projectName: projectName,
         location: location,
         plotCounts: plotCounts,
+        verifiedStatus: verifiedStatus,
         plotAreaSqFt: plotAreaSqFt,
         totalPrice: totalPrice,
         pricePerSqFt: pricePerSqFt,
         postedDate: postedDate,
         lastUpdate: lastUpdate,
+        isSoldOut: isSoldOut,
       )
           : const SizedBox(),
     );
@@ -186,11 +274,13 @@ class AboutPlot extends StatelessWidget {
     required String projectName,
     required String location,
     required String plotCounts,
+    required String verifiedStatus,
     required String plotAreaSqFt,
     required String totalPrice,
     required String pricePerSqFt,
     required String postedDate,
     required String lastUpdate,
+    required bool isSoldOut,
   }) {
     return GetBuilder<PlotMarketController>(
       builder: (controllerx) {
@@ -212,6 +302,7 @@ class AboutPlot extends StatelessWidget {
             SizedBox(height: 12.h),
             _plotInfoGrid(
               plotCounts: plotCounts,
+              verifiedStatus: verifiedStatus,
               plotAreaSqFt: plotAreaSqFt,
               totalPrice: totalPrice,
               pricePerSqFt: pricePerSqFt,
@@ -231,24 +322,32 @@ class AboutPlot extends StatelessWidget {
               ],
             ),
             SizedBox(height: 20.h),
-        _centerEnquiryButton(controllerx)
-            .animate(onPlay: (controller) => controller.repeat()) // repeat indefinitely
-            .shake(duration: 800.ms, hz: 2),// shake animation
+            // Show Sold Out button instead of Send Enquiry if sold out
+            if (isSoldOut)
+              _buildSoldOutButton()
+                  .animate()
+                  .shake(duration: 800.ms, hz: 2)
+            else
+              _centerEnquiryButton(controllerx)
+                  .animate(onPlay: (controller) => controller.repeat())
+                  .shake(duration: 800.ms, hz: 2),
             SizedBox(height: 15.h),
           ],
         );
-      }
+      },
     );
   }
 
   Widget _plotInfoGrid({
     required String plotCounts,
+    required String verifiedStatus,
     required String plotAreaSqFt,
     required String totalPrice,
     required String pricePerSqFt,
   }) {
     final items = [
       {"title": "Plot Count", "value": plotCounts},
+      {"title": "Verify Status", "value": verifiedStatus},
       {"title": "Plot Area", "value": plotAreaSqFt},
       {"title": "Total Price", "value": totalPrice},
       {"title": "Per Sq.Ft", "value": pricePerSqFt},
@@ -369,50 +468,41 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  // Widget _centerEnquiryButton() {
-  //   final EnquiryController enquiryController = Get.find<EnquiryController>();
-  //
-  //   return Obx(() => Center(
-  //     child: InkWell(
-  //       borderRadius: BorderRadius.circular(30.r),
-  //       onTap: enquiryController.isEnquiryLoading.value
-  //           ? null
-  //           : () {
-  //         enquiryController.sendEnquiry();
-  //       },
-  //       child: Container(
-  //         padding:
-  //         EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),
-  //         decoration: BoxDecoration(
-  //           gradient: const LinearGradient(
-  //             colors: [AppColor.primary, AppColor.primarylite],
-  //           ),
-  //           borderRadius: BorderRadius.circular(30.r),
-  //         ),
-  //         child: enquiryController.isEnquiryLoading.value
-  //             ? SizedBox(
-  //           height: 18.sp,
-  //           width: 18.sp,
-  //           child: const CircularProgressIndicator(
-  //             strokeWidth: 2,
-  //             color: Colors.black,
-  //           ),
-  //         )
-  //             : Text(
-  //           "Send Enquiry",
-  //           style: TextStyle(
-  //             color: Colors.black,
-  //             fontWeight: FontWeight.bold,
-  //             fontSize: 15.sp,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   ));
-  // }
-  Widget _centerEnquiryButton(
-      PlotMarketController enquiryController,
-      ) {
+  Widget _buildSoldOutButton() {
+    return Center(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade400,
+          borderRadius: BorderRadius.circular(30.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.shopping_cart, size: 18.sp, color: Colors.white),
+            SizedBox(width: 8.w),
+            Text(
+              "Sold Out",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 15.sp,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _centerEnquiryButton(PlotMarketController enquiryController) {
     return Obx(() => Center(
       child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
@@ -422,8 +512,7 @@ class AboutPlot extends StatelessWidget {
           enquiryController.sendEnquiry();
         },
         child: Container(
-          padding:
-          EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),
+          padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [AppColor.primary, AppColor.primarylite],
@@ -451,6 +540,4 @@ class AboutPlot extends StatelessWidget {
       ),
     ));
   }
-
-
 }

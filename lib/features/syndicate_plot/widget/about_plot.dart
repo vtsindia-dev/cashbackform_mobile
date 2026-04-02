@@ -31,6 +31,7 @@ class AboutPlot extends StatelessWidget {
 
       return Container(
         margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20.r),
@@ -44,13 +45,8 @@ class AboutPlot extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // ── Image Carousel with Sold-Out Overlay ──
             _buildCarouselSection(images, detail?.isSoldOut ?? false),
-
-            // ── Action row (View Details + Share) ──
             _buildActionRow(controller),
-
-            // ── Expandable details ──
             Obx(() => _buildExpandableSection(controller, detail)),
           ],
         ),

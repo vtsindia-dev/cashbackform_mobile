@@ -1,5 +1,6 @@
-import 'package:intl/intl.dart'; // Add this import
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+
 class MarketPlot {
   final int id;
   final String name;
@@ -64,21 +65,23 @@ class MarketPlot {
     this.amenities,
     this.nearbyPlaces,
     this.plotCount,
-    this.threeDImage
+    this.threeDImage,
   });
 
   factory MarketPlot.fromJson(Map<String, dynamic> json) {
-    // Parse amenities from string "6,15"
     List<int>? parseAmenities(String? amenitiesStr) {
       if (amenitiesStr == null || amenitiesStr.isEmpty) return null;
       try {
-        return amenitiesStr.split(',').map((e) => int.tryParse(e.trim()) ?? 0).where((e) => e > 0).toList();
+        return amenitiesStr
+            .split(',')
+            .map((e) => int.tryParse(e.trim()) ?? 0)
+            .where((e) => e > 0)
+            .toList();
       } catch (e) {
         return null;
       }
     }
 
-    // Parse nearby places
     List<Map<String, dynamic>>? parseNearbyPlaces(dynamic places) {
       if (places == null || places is! List) return null;
       return List<Map<String, dynamic>>.from(places);
@@ -110,28 +113,29 @@ class MarketPlot {
       verifyStatus: json['verify_status'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at']?.toString() ?? ''),
       updatedAt: DateTime.parse(json['updated_at']?.toString() ?? ''),
-        threeDImage : json['three_d_image'],
+      threeDImage: json['three_d_image'],
       propertyType: json['property_type'] != null
           ? PropertyType.fromJson(json['property_type'])
           : null,
       verification: _parseVerificationAmount(json['market_plot_amount']),
       amenities: parseAmenities(json['aminities']?.toString()),
       nearbyPlaces: parseNearbyPlaces(json['nearby_places']),
-        plotCount : json['plot_count']
+      plotCount: json['plot_count'],
     );
   }
 
   static List<String> _parseImages(dynamic imageData) {
     if (imageData == null) return [];
-
-    if (imageData is String) {
-      return [imageData];
-    } else if (imageData is List) {
-      return imageData.map((item) => item?.toString() ?? '').where((item) => item.isNotEmpty).toList();
+    if (imageData is String) return [imageData];
+    if (imageData is List) {
+      return imageData
+          .map((item) => item?.toString() ?? '')
+          .where((item) => item.isNotEmpty)
+          .toList();
     }
-
     return [];
   }
+
   static int? _parseVerificationAmount(dynamic amount) {
     if (amount == null) return null;
     if (amount is int) return amount;
@@ -139,20 +143,19 @@ class MarketPlot {
     if (amount is num) return amount.toInt();
     return null;
   }
-  // Helper methods
+
   String get formattedPrice => _formatNumber(price);
   String get formattedArea => '$area sq.ft';
-  String get location => '${city?.cityName ?? ''}, ${state?.stateName ?? ''}'.trim();
+  String get location =>
+      '${city?.cityName ?? ''}, ${state?.stateName ?? ''}'.trim();
   bool get isVerified => verifyStatus == 1;
   bool get hasPlotImage => plotImage != null && plotImage!.isNotEmpty;
-
   String get firstImage => images.isNotEmpty ? images.first : '';
 
   String _formatNumber(String number) {
     try {
       final numValue = double.tryParse(number);
       if (numValue == null) return number;
-
       if (numValue >= 10000000) {
         return '₹${(numValue / 10000000).toStringAsFixed(1)}Cr';
       } else if (numValue >= 100000) {
@@ -187,21 +190,24 @@ class City {
 
   factory City.fromJson(Map<String, dynamic> json) {
     return City(
-      id: json['id'] is int?
+      id: json['id'] is int
           ? json['id']
           : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-      stateId: json['state_id'] is int?
+      stateId: json['state_id'] is int
           ? json['state_id']
           : int.tryParse(json['state_id']?.toString() ?? '') ?? 0,
       cityName: json['city_name']?.toString() ?? '',
-      status: json['status'] is int?
+      status: json['status'] is int
           ? json['status']
           : int.tryParse(json['status']?.toString() ?? '') ?? 0,
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }
+
 class MarketPlotDetail {
   final int id;
   final String name;
@@ -223,6 +229,7 @@ class MarketPlotDetail {
   final String? work;
   final String agentId;
   final int status;
+  final int? soldout;
   final int verifyStatus;
   final String? uldNo;
   final List<int>? amenities;
@@ -233,10 +240,12 @@ class MarketPlotDetail {
   final DateTime updatedAt;
   final double? marketPlotAmount;
   final bool documentVerified;
-  List<CommonFacility>? commonFacility;
-  int? plotCount;
-  String? shareLink;
-  String? threeDImage;
+  final List<CommonFacility>? commonFacility;
+  final int? plotCount;
+  final String? shareLink;
+  final String? threeDImage;
+  final List<MapSet>? mapSet;
+  // ADDED: for nearby/similar properties
 
   MarketPlotDetail({
     required this.id,
@@ -256,6 +265,7 @@ class MarketPlotDetail {
     required this.images,
     this.plotImage,
     this.bluePrint,
+    this.soldout,
     required this.work,
     required this.agentId,
     required this.status,
@@ -272,21 +282,24 @@ class MarketPlotDetail {
     this.commonFacility,
     this.plotCount,
     this.shareLink,
-    this.threeDImage
+    this.threeDImage,
+    this.mapSet, // ADDED
   });
 
   factory MarketPlotDetail.fromJson(Map<String, dynamic> json) {
-    // Parse amenities from string "6,15"
     List<int>? parseAmenities(String? amenitiesStr) {
       if (amenitiesStr == null || amenitiesStr.isEmpty) return null;
       try {
-        return amenitiesStr.split(',').map((e) => int.tryParse(e.trim()) ?? 0).where((e) => e > 0).toList();
+        return amenitiesStr
+            .split(',')
+            .map((e) => int.tryParse(e.trim()) ?? 0)
+            .where((e) => e > 0)
+            .toList();
       } catch (e) {
         return null;
       }
     }
 
-    // Parse images
     List<String> parseImages(dynamic imageData) {
       if (imageData == null) return [];
       if (imageData is List) {
@@ -295,25 +308,26 @@ class MarketPlotDetail {
       return [];
     }
 
-    // Parse amenity list
     List<Amenity> parseAmenityList(dynamic amenities) {
       if (amenities == null || amenities is! List) return [];
       return amenities.map((e) => Amenity.fromJson(e)).toList();
     }
 
-    // Parse documents
     List<Document> parseDocuments(dynamic documents) {
       if (documents == null || documents is! List) return [];
       return documents.map((e) => Document.fromJson(e)).toList();
     }
 
-    // Parse nearby locations
     List<NearbyLocation> parseNearbyLocations(dynamic locations) {
       if (locations == null || locations is! List) return [];
       return locations.map((e) => NearbyLocation.fromJson(e)).toList();
     }
 
-    // Safely parse market plot amount (handle both string and number)
+    List<MapSet> parseMapSet(dynamic mapSetData) {
+      if (mapSetData == null || mapSetData is! List) return [];
+      return mapSetData.map((e) => MapSet.fromJson(e)).toList();
+    }
+
     double? parseMarketPlotAmount(dynamic amount) {
       if (amount == null) return null;
       if (amount is num) {
@@ -323,13 +337,14 @@ class MarketPlotDetail {
       }
       return null;
     }
+
     int safeInt(dynamic value, {int defaultValue = 0}) {
       if (value == null) return defaultValue;
       if (value is int) return value;
       if (value is num) return value.toInt();
       return int.tryParse(value.toString()) ?? defaultValue;
     }
-    // Safely parse document verified
+
     bool parseDocumentVerified(dynamic verified) {
       if (verified == null) return false;
       if (verified is bool) return verified;
@@ -365,27 +380,28 @@ class MarketPlotDetail {
       work: json['work']?.toString() ?? '',
       agentId: json['agent_id']?.toString() ?? '',
       status: safeInt(json['status']),
+      soldout: safeInt(json['sold_status']),
       verifyStatus: safeInt(json['verify_status']),
       uldNo: json['uld_no']?.toString(),
       amenities: parseAmenities(json['aminities']?.toString()),
       amenityList: parseAmenityList(json['amenity']),
       documents: parseDocuments(json['documents']),
       nearbyLocations: parseNearbyLocations(json['nearby_locations']),
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
       marketPlotAmount: parseMarketPlotAmount(json['market_plot_amount']),
       documentVerified: parseDocumentVerified(json['document_verified']),
-        plotCount : json['plot_count'],
-      threeDImage :  json['three_d_image'],
-      shareLink : json['share'],
+      plotCount: json['plot_count'],
+      threeDImage: json['three_d_image'],
+      shareLink: json['share'],
       commonFacility: json['commonfacility'] != null
           ? List<CommonFacility>.from(
-        json['commonfacility'].map((v) => CommonFacility.fromJson(v)),
-      )
+          json['commonfacility'].map((v) => CommonFacility.fromJson(v)))
           : [],
-
+      mapSet: parseMapSet(json['map_set']), // ADDED
     );
-
   }
 
   bool get isVerified => verifyStatus == 1;
@@ -428,6 +444,20 @@ class MarketPlotDetail {
       final areaValue = double.tryParse(area);
       if (priceValue != null && areaValue != null && areaValue > 0) {
         final perSqft = priceValue / areaValue;
+        return '₹${perSqft.toStringAsFixed(2)}';
+      }
+      return '₹0';
+    } catch (e) {
+      return '₹0';
+    }
+  }
+
+  String get pricePerSqftWithUnit {
+    try {
+      final priceValue = double.tryParse(price);
+      final areaValue = double.tryParse(area);
+      if (priceValue != null && areaValue != null && areaValue > 0) {
+        final perSqft = priceValue / areaValue;
         return '₹${perSqft.toStringAsFixed(2)} per sq.ft';
       }
       return '₹0 per sq.ft';
@@ -435,7 +465,95 @@ class MarketPlotDetail {
       return '₹0 per sq.ft';
     }
   }
+
+  String get verifyStatusText {
+    switch (verifyStatus) {
+      case 0:
+        return 'Pending';
+      case 1:
+        return 'Verified ✓';
+      case 2:
+        return 'Rejected';
+      case 3:
+        return 'Under Review';
+      default:
+        return 'Not Defined';
+    }
+  }
+
+  Color get verifyStatusColor {
+    switch (verifyStatus) {
+      case 0:
+        return Colors.orange;
+      case 1:
+        return Colors.green;
+      case 2:
+        return Colors.red;
+      case 3:
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String get formattedCreatedDate {
+    return DateFormat('dd/MM/yyyy').format(createdAt);
+  }
+
+  String get formattedUpdatedDate {
+    return DateFormat('dd/MM/yyyy').format(updatedAt);
+  }
 }
+
+// NEW: MapSet class for nearby/similar properties
+class MapSet {
+  final int id;
+  final String name;
+  final String lat;
+  final String long;
+  final List<String> image;
+  final String distance;
+
+  MapSet({
+    required this.id,
+    required this.name,
+    required this.lat,
+    required this.long,
+    required this.image,
+    required this.distance,
+  });
+
+  factory MapSet.fromJson(Map<String, dynamic> json) {
+    List<String> parseImages(dynamic imageData) {
+      if (imageData == null) return [];
+      if (imageData is List) {
+        return imageData.map((e) => e.toString()).toList();
+      }
+      return [];
+    }
+
+    return MapSet(
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
+      lat: json['lat']?.toString() ?? '',
+      long: json['long']?.toString() ?? '',
+      image: parseImages(json['image']),
+      distance: json['distance']?.toString() ?? '0 KM',
+    );
+  }
+
+  String get firstImage => image.isNotEmpty ? image.first : '';
+  double get distanceValue {
+    try {
+      return double.tryParse(distance.replaceAll(' KM', '')) ?? 0.0;
+    } catch (e) {
+      return 0.0;
+    }
+  }
+}
+
 class Document {
   final int id;
   final int propertyId;
@@ -459,21 +577,24 @@ class Document {
 
   factory Document.fromJson(Map<String, dynamic> json) {
     return Document(
-      id: json['id'] is int?
+      id: json['id'] is int
           ? json['id']
           : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-      propertyId: json['property_id'] is int?
+      propertyId: json['property_id'] is int
           ? json['property_id']
           : int.tryParse(json['property_id']?.toString() ?? '') ?? 0,
       file: json['file']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
       docType: json['douc_type']?.toString(),
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
       downloadUrl: json['download_url']?.toString() ?? '',
     );
   }
 }
+
 class Amenity {
   final int id;
   final String title;
@@ -491,13 +612,15 @@ class Amenity {
 
   factory Amenity.fromJson(Map<String, dynamic> json) {
     return Amenity(
-      id: json['id'] is int?
+      id: json['id'] is int
           ? json['id']
           : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       title: json['title']?.toString() ?? '',
       image: json['image']?.toString() ?? '',
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }
@@ -521,17 +644,20 @@ class NearbyLocation {
 
   factory NearbyLocation.fromJson(Map<String, dynamic> json) {
     return NearbyLocation(
-      id: json['id'] is int?
+      id: json['id'] is int
           ? json['id']
           : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       title: json['title']?.toString() ?? '',
       image: json['image']?.toString() ?? '',
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
       pivot: json['pivot'] != null ? Pivot.fromJson(json['pivot']) : null,
     );
   }
 }
+
 class Pivot {
   final int marketPropertyId;
   final int nearbyLocationId;
@@ -548,7 +674,6 @@ class Pivot {
   });
 
   factory Pivot.fromJson(Map<String, dynamic> json) {
-    // Helper method to safely parse distance
     double parseDistance(dynamic distance) {
       if (distance == null) return 0.0;
       if (distance is double) return distance;
@@ -561,18 +686,21 @@ class Pivot {
     }
 
     return Pivot(
-      marketPropertyId: json['market_property_id'] is int?
+      marketPropertyId: json['market_property_id'] is int
           ? json['market_property_id']
           : int.tryParse(json['market_property_id']?.toString() ?? '') ?? 0,
-      nearbyLocationId: json['nearby_location_id'] is int?
+      nearbyLocationId: json['nearby_location_id'] is int
           ? json['nearby_location_id']
           : int.tryParse(json['nearby_location_id']?.toString() ?? '') ?? 0,
       distance: parseDistance(json['distance']),
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }
+
 class AppState {
   final int id;
   final String stateName;
@@ -590,11 +718,11 @@ class AppState {
 
   factory AppState.fromJson(Map<String, dynamic> json) {
     return AppState(
-      id: json['id'] is int?
+      id: json['id'] is int
           ? json['id']
           : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       stateName: json['state_name']?.toString() ?? '',
-      status: json['status'] is int?
+      status: json['status'] is int
           ? json['status']
           : int.tryParse(json['status']?.toString() ?? '') ?? 0,
       createdAt: json['created_at']?.toString(),
@@ -602,6 +730,7 @@ class AppState {
     );
   }
 }
+
 class PropertyType {
   final int id;
   final String categoryName;
@@ -627,8 +756,6 @@ class PropertyType {
     );
   }
 }
-
-// Add these classes in your models section or at the top of the controller
 
 class MarketPlotEnquiry {
   final int id;
@@ -663,14 +790,8 @@ class MarketPlotEnquiry {
     );
   }
 
-  String get formattedDate {
-    return DateFormat('dd MMM yyyy').format(createdAt);
-  }
-
-  String get formattedTime {
-    return DateFormat('hh:mm a').format(createdAt);
-  }
-
+  String get formattedDate => DateFormat('dd MMM yyyy').format(createdAt);
+  String get formattedTime => DateFormat('hh:mm a').format(createdAt);
   String get enquiryStatus {
     if (counts >= 5) return "High Priority";
     if (counts >= 3) return "Active";
@@ -718,7 +839,6 @@ class MarketPlotEnquiryProperty {
   });
 
   factory MarketPlotEnquiryProperty.fromJson(Map<String, dynamic> json) {
-    // Parse images list
     List<String> images = [];
     if (json['image'] is List) {
       for (var image in json['image']) {
@@ -727,7 +847,6 @@ class MarketPlotEnquiryProperty {
         }
       }
     }
-
 
     return MarketPlotEnquiryProperty(
       id: json['id'] ?? 0,
@@ -795,8 +914,13 @@ class CommonFacility {
   String? createdAt;
   String? updatedAt;
 
-  CommonFacility(
-      {this.id, this.title, this.image, this.createdAt, this.updatedAt});
+  CommonFacility({
+    this.id,
+    this.title,
+    this.image,
+    this.createdAt,
+    this.updatedAt,
+  });
 
   CommonFacility.fromJson(Map<String, dynamic> json) {
     id = json['id'];

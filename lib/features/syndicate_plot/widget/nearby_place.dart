@@ -611,9 +611,6 @@ class _SoldOutBanner extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty State
-// ─────────────────────────────────────────────────────────────────────────────
 class _EmptyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
