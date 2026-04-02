@@ -1079,8 +1079,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
     final int cancelStatus = detail.cancelStatus ?? 0;
     final int refundStatus = detail.refundStatus ?? 0;
     final bool isActive = cancelStatus == 0;
-    final bool isRequestSent = cancelStatus == 1;
-    final bool isCancelled = cancelStatus == 2;
     /// STATUS TEXT & COLOR - Updated to match React logic
     ///
     String bookingStatusText;
@@ -1092,7 +1090,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
     else if (cancelStatus == 1) {
       bookingStatusText = 'Request Sent';
       bookingStatusColor = Colors.orange;
-    } else if (cancelStatus == 2) {
+    } else if (cancelStatus == 3) {
       if (refundStatus == 0) {
         bookingStatusText = 'Cancelled';
         bookingStatusColor = const Color(0xFFEF4444); // Rose Red
@@ -1586,15 +1584,16 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
       );
 
       // Refresh the details
-      await controller.fetchGiooBuyingListDetails();
+      final result = await controller.fetchGiooBuyingListDetails();
 
-    } catch (error) {
-      // Close dialog
-      if (Navigator.of(Get.context!).canPop()) {
+      if(result == true){
         Navigator.of(Get.context!).pop();
       }
 
-      // Show error message
+    } catch (error) {
+      if (Navigator.of(Get.context!).canPop()) {
+        Navigator.of(Get.context!).pop();
+      }
       Get.showSnackbar(
         GetSnackBar(
           message: 'Failed to cancel plot unit: $error',

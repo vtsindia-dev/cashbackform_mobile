@@ -1399,8 +1399,7 @@ class GiooPlotController extends GetxController {
     }
   }
 
-  Future<void> fetchGiooBuyingListDetails(
-      {bool loadMore = false, int? transactionId}) async {
+  Future<bool> fetchGiooBuyingListDetails({bool loadMore = false, int? transactionId}) async {
     try {
       if (transactionId != null) {
         selectedTransactionId.value = transactionId;
@@ -1409,7 +1408,7 @@ class GiooPlotController extends GetxController {
       final txnId = transactionId ?? selectedTransactionId.value;
       if (txnId == null) {
         SnackBarHelper.showError("Transaction ID is required");
-        return;
+        return false;
       }
 
       // Check token first
@@ -1418,11 +1417,11 @@ class GiooPlotController extends GetxController {
         print('❌ No token found for details fetch');
         SnackBarHelper.showError('Please login');
         isLoadingBuyingDetail(false);
-        return;
+        return false;
       }
 
       if (loadMore) {
-        if (!hasMoreBuyingDetailData.value) return;
+        if (!hasMoreBuyingDetailData.value)  return false;
         buyingDetailPage.value++;
       } else {
         isLoadingBuyingDetail(true);
@@ -1466,22 +1465,28 @@ class GiooPlotController extends GetxController {
               responseData['message'] ?? "Failed to fetch buying details");
           print('❌ API Error: ${responseData['message']}');
         }
+        return true;
       } else if (response.statusCode == 401) {
         print('🔐 Session expired (401) for details');
         SnackBarHelper.showError("Session expired. Please login again.");
+        return false;
       } else if (response.statusCode == 403) {
         SnackBarHelper.showError(
             "You don't have permission to view these details");
+        return false;
       } else if (response.statusCode == 404) {
         SnackBarHelper.showError("Transaction details not found");
+        return false;
       } else {
         SnackBarHelper.showError(
             "Failed to fetch buying details: ${response.statusCode}");
         print('❌ Error fetching buying details: ${response.data}');
+        return false;
       }
     } catch (e) {
       SnackBarHelper.showError("Network error: $e");
       print('❌ Network error fetching buying details: $e');
+      return false;
     } finally {
       isLoadingBuyingDetail(false);
     }

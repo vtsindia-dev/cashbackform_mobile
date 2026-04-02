@@ -306,6 +306,7 @@ class DashboardController extends GetxController {
           // After profile is loaded, fetch role-based data
           final role = profile.value?.role?.role ?? 'User';
           fetchDataForRole(role);
+
         }
 
         // Update counters

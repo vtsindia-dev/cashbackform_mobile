@@ -33,6 +33,32 @@ class _GiooplotState extends State<Giooplot> {
         () => Column(
           children: [
             _CompactFilterSection(controller: controller),
+            SizedBox(height: 10),
+            Container(
+              padding: EdgeInsets.all(10),
+              margin: EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: Color(0xfffefce9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Color(0xfffdba15)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Color(0xfffdba15)),
+                  SizedBox(width: 10,),
+                  Expanded(
+                    child: Text(
+                      'Select your slot, get your payment verified, wait while we process your registration, and finally your plot will be successfully registered.',
+                      style: TextStyle(
+                        color: Color(0xff8a6f1c),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             controller.isLoading.value
                 ? Expanded(
                     child: const Center(
@@ -207,8 +233,6 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
         Navigator.pop(context);
       }
       await widget.controller.fetchGiooPlots();
-
-
     } catch (e) {
       print('Error applying filters: $e');
     } finally {

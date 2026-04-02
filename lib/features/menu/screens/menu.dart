@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:cashback_farms/features/gift_coupon_and_encashment/screen/gift_screen.dart';
 import 'package:cashback_farms/features/menu/screens/about_us.dart';
 import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:cashback_farms/features/menu/screens/terms_&_conditions.dart';
@@ -1131,6 +1132,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       children: [
         _menuTile(Icons.wallet, "My Wallet", () => Get.toNamed("/walletScreen")),
         _menuTile(Icons.wallet, "Kyc", () => Get.toNamed("/kycScreen")),
+        _menuTile(Icons.receipt_long_rounded, "Gift Coupon", () => Get.to(() => const GiftScreen())),
         _menuTile(Icons.info_outline_rounded, "About Us", () => Get.to(() => const AboutUs())),
         _menuTile(Icons.business_center_rounded, "Company Profile", () => Get.to(() => const VendorStoreView())),
         _menuTile(Icons.gavel_rounded, "Terms and Conditions", () => Get.to(() => const TermsAndConditionsScreen())),

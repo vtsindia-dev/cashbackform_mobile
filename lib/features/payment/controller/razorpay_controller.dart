@@ -398,7 +398,8 @@ class RazorpayController extends GetxController {
             responseData['status'] == true ||
             responseData['success'] == true) {
           Loggers.success('✅ Gioo payment synced successfully');
-          _markGiooUnitsAsBooked();
+          final gc = Get.find<GiooPlotController>();
+          gc.fetchGiooPlotDetail(propertyId.value);
         } else {
           throw Exception(responseData['message'] ?? 'Sync failed');
         }
@@ -981,14 +982,14 @@ class RazorpayController extends GetxController {
     sc.update();
   }
 
-  void _markGiooUnitsAsBooked() {
-    final gc = Get.find<GiooPlotController>();
-    for (var id in selectedUnits) {
-      int idx = gc.units.indexWhere((u) => u.id == id);
-      if (idx != -1) gc.units[idx] = gc.units[idx].copyWith(status: 'Booked');
-    }
-    gc.units.refresh();
-  }
+    // void _markGiooUnitsAsBooked() {
+    //   final gc = Get.find<GiooPlotController>();
+    //   for (var id in selectedUnits) {
+    //     int idx = gc.units.indexWhere((u) => u.id == id);
+    //     if (idx != -1) gc.units[idx] = gc.units[idx].copyWith(status: 'Booked');
+    //   }
+    //   gc.units.refresh();
+    // }
 
   void _handleError(PaymentFailureResponse response) {
     isProcessing.value = false;

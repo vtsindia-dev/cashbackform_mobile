@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:cashback_farms/common/widget/toster.dart';
 import 'package:cashback_farms/features/gioo_plots/screens/gioterms.dart';
+import 'package:cashback_farms/features/legal_and_policies/screen.dart';
 import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -38,9 +40,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
   @override
   void initState() {
     super.initState();
-    // Listen for unit changes
     ever(controller.units, (_) {
-      if (_isDisposed) return; // Don't proceed if disposed
+      if (_isDisposed) return;
 
       if (controller.units.isNotEmpty &&
           _currentPage * _itemsPerPage >= controller.units.length) {
@@ -51,7 +52,6 @@ class _ReserveSlotState extends State<ReserveSlot> {
         }
       }
 
-      // Auto-scroll to first available plot when units are loaded
       if (controller.units.isNotEmpty && !_hasScrolledToAvailable) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!_isDisposed && mounted) {
@@ -61,9 +61,25 @@ class _ReserveSlotState extends State<ReserveSlot> {
       }
     });
     controller.resetValues();
-    controller.walletBalance.value = double.tryParse(dashboardController.profile.value?.walletBalance ?? "0") ?? 0;
-    controller.discountPercentage.value = double.tryParse(dashboardController.businessSettings.value?.discountPercentage?.toString() ?? "0") ?? 0;
-    controller.discountMaxCost.value = double.tryParse(dashboardController.businessSettings.value?.discountMaxCost?.toString() ?? "0") ?? 0;
+    controller.walletBalance.value =
+        double.tryParse(
+          dashboardController.profile.value?.walletBalance ?? "0",
+        ) ??
+        0;
+    controller.discountPercentage.value =
+        double.tryParse(
+          dashboardController.businessSettings.value?.discountPercentage
+                  ?.toString() ??
+              "0",
+        ) ??
+        0;
+    controller.discountMaxCost.value =
+        double.tryParse(
+          dashboardController.businessSettings.value?.discountMaxCost
+                  ?.toString() ??
+              "0",
+        ) ??
+        0;
   }
 
   @override
@@ -73,12 +89,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
     super.dispose();
   }
 
-  // Auto-scroll to first available plot
   void _scrollToFirstAvailablePlot() {
     if (_isDisposed || !mounted) return;
     if (_hasScrolledToAvailable || controller.units.isEmpty) return;
-
-    // Find first available plot
     int firstAvailableIndex = -1;
     for (int i = 0; i < controller.units.length; i++) {
       if (controller.units[i].status == 'Available') {
@@ -88,10 +101,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
     }
 
     if (firstAvailableIndex >= 0) {
-      // Calculate which page contains the first available plot
       final pageForAvailable = (firstAvailableIndex / _itemsPerPage).floor();
-
-      // If it's not on current page, go to that page
       if (pageForAvailable != _currentPage) {
         if (mounted) {
           setState(() {
@@ -99,17 +109,12 @@ class _ReserveSlotState extends State<ReserveSlot> {
           });
         }
       }
-
-      // Scroll to the position after a small delay
       Future.delayed(const Duration(milliseconds: 300), () {
         if (_isDisposed || !mounted) return;
 
         if (_gridScrollController.hasClients) {
-          // Calculate row position (assuming 10 plots per row)
           final rowIndex = (firstAvailableIndex % _itemsPerPage) ~/ 10;
-          final scrollOffset =
-              rowIndex * 100.0; // Adjust based on your grid item height
-
+          final scrollOffset = rowIndex * 100.0;
           _gridScrollController.animateTo(
             scrollOffset,
             duration: const Duration(milliseconds: 500),
@@ -122,12 +127,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
     }
   }
 
-  // Quick jump button functionality
   void _jumpToFirstAvailable() {
     if (_isDisposed || !mounted) return;
     if (controller.units.isEmpty) return;
 
-    // Find first available plot
     int firstAvailableIndex = -1;
     for (int i = 0; i < controller.units.length; i++) {
       if (controller.units[i].status == 'Available') {
@@ -187,7 +190,6 @@ class _ReserveSlotState extends State<ReserveSlot> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Legend with animation
                   Animate(
                     effects: [
                       FadeEffect(duration: 350.ms),
@@ -199,8 +201,6 @@ class _ReserveSlotState extends State<ReserveSlot> {
                     child: _buildLegend(controller),
                   ),
                   15.h.verticalSpace,
-
-                  // Conditional widgets
                   if (!_isSelectionMode)
                     Animate(
                       effects: [FadeEffect(duration: 350.ms)],
@@ -645,7 +645,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
     // Update controller's selected units
     controller.selectedUnits.value = List.from(_tempSelectedUnits);
-    controller.totalAmount.value = controller.selectedUnits.length * controller.pricePerUnit.value;
+    controller.totalAmount.value =
+        controller.selectedUnits.length * controller.pricePerUnit.value;
     controller.calculateFinalAmount();
     if (mounted) {
       setState(() {
@@ -1244,7 +1245,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
   Widget _buildSidebarCard(GiooPlotController controller) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 20.w,vertical: 20.w),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.w),
       decoration: BoxDecoration(
         color: AppColor.backgroundLight,
         borderRadius: BorderRadius.only(
@@ -1307,35 +1308,50 @@ class _ReserveSlotState extends State<ReserveSlot> {
               ),
 
               6.w.horizontalSpace,
-
-              RichText(
-                text: TextSpan(
-                  style: TextStyle(fontSize: 12.sp, color: AppColor.textMain),
-                  children: [
-                    const TextSpan(text: "I agree to the "),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: GestureDetector(
-                        onTap: () {
-                          Get.to(
-                            () => GioPlotTermsScreen(
-                              terms: controller.terms,
-                              slug: "gioo-plots-terms-and-condition",
-                            ),
-                          );
-                        },
-                        child: Text(
-                          "Terms & Conditions",
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColor.primary,
-                            fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
-                          ),
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    style: TextStyle(fontSize: 12.sp, color: AppColor.textMain),
+                    children: [
+                      const TextSpan(text: "I accept the "),
+                      TextSpan(
+                        text: "Privacy Policy",
+                        style: TextStyle(
+                          color: AppColor.primary,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
                         ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Get.to(
+                              () => LegalPageScreen(
+                                slug: "gioo_nano_plots_booking_privacy_policy",
+                                title: "Privacy Policy",
+                              ),
+                            );
+                          },
                       ),
-                    ),
-                  ],
+                      const TextSpan(text: " and "),
+                      TextSpan(
+                        text: "Terms & Conditions",
+                        style: TextStyle(
+                          color: AppColor.primary,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Get.to(
+                              () => LegalPageScreen(
+                                slug:
+                                    "gioo_nano_plots_booking_terms_and_condition",
+                                title: "Terms & Conditions",
+                              ),
+                            );
+                          },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1518,60 +1534,66 @@ class _ReserveSlotState extends State<ReserveSlot> {
             Expanded(
               child: SizedBox(
                 height: 50.h,
-                child: Obx(() => TextField(
-                  controller: controller.couponController,
-                  style: TextStyle(fontSize: 13.sp),
-                  readOnly: controller.isApplied.value,
-                  decoration: InputDecoration(
-                    hintText: "Enter coupon code",
-                    hintStyle: TextStyle(fontSize: 12.sp),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
-                    ),
-                    filled: true,
-                    fillColor: controller.isApplied.value
-                        ? Colors.grey.shade200
-                        : Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                      borderSide: BorderSide.none,
+                child: Obx(
+                  () => TextField(
+                    controller: controller.couponController,
+                    style: TextStyle(fontSize: 13.sp),
+                    readOnly: controller.isApplied.value,
+                    decoration: InputDecoration(
+                      hintText: "Enter coupon code",
+                      hintStyle: TextStyle(fontSize: 12.sp),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 10.h,
+                      ),
+                      filled: true,
+                      fillColor: controller.isApplied.value
+                          ? Colors.grey.shade200
+                          : Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
-                )),
+                ),
               ),
             ),
             10.w.horizontalSpace,
-            Obx(() => SizedBox(
-              height: 45.h,
-              width: 110.w,
-              child: ElevatedButton(
-                onPressed: controller.isCouponLoading.value
-                    ? null
-                    : controller.isApplied.value
-                    ? controller.removeCoupon
-                    : controller.applyCoupon,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: controller.isApplied.value
-                      ? Colors.red
-                      : AppColor.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
+            Obx(
+              () => SizedBox(
+                height: 45.h,
+                width: 110.w,
+                child: ElevatedButton(
+                  onPressed: controller.isCouponLoading.value
+                      ? null
+                      : controller.isApplied.value
+                      ? controller.removeCoupon
+                      : controller.applyCoupon,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: controller.isApplied.value
+                        ? Colors.red
+                        : AppColor.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
                   ),
-                ),
-                child: controller.isCouponLoading.value
-                    ? SizedBox(
-                  height: 18.w,
-                  width: 18.w,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : Text(
-                  controller.isApplied.value ? "Remove" : "Apply",
-                  style:
-                  TextStyle(fontSize: 13.sp, color: Colors.white),
+                  child: controller.isCouponLoading.value
+                      ? SizedBox(
+                          height: 18.w,
+                          width: 18.w,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          controller.isApplied.value ? "Remove" : "Apply",
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
-            )),
+            ),
           ],
         ),
         10.h.verticalSpace,
@@ -1656,8 +1678,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
                             // ✅ Default to full wallet balance when toggled on
                             controller.walletUsedAmount.value =
                                 controller.walletBalance.value;
-                            controller.walletAmountController.text =
-                                controller.walletBalance.value.toStringAsFixed(0);
+                            controller.walletAmountController.text = controller
+                                .walletBalance
+                                .value
+                                .toStringAsFixed(0);
                           }
                           controller.calculateFinalAmount();
                         },
@@ -1671,7 +1695,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
               if (isUsed) ...[
                 8.h.verticalSpace,
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 10.h,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.shade50,
                     borderRadius: BorderRadius.circular(10.r),
@@ -1723,13 +1750,15 @@ class _ReserveSlotState extends State<ReserveSlot> {
                       GestureDetector(
                         onTap: () {
                           controller.walletUsedAmount.value = wallet;
-                          controller.walletAmountController.text =
-                              wallet.toStringAsFixed(0);
+                          controller.walletAmountController.text = wallet
+                              .toStringAsFixed(0);
                           controller.calculateFinalAmount();
                         },
                         child: Container(
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 5.h,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.green,
                             borderRadius: BorderRadius.circular(6.r),
@@ -1760,9 +1789,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
           final specialDiscount = controller.specialDiscountAmount.value;
 
           final walletUsed = controller.useWallet.value
-              ? controller.actualWalletUsed.value  // ✅ changed from walletUsedAmount
+              ? controller
+                    .actualWalletUsed
+                    .value // ✅ changed from walletUsedAmount
               : 0.0;
-
 
           final savings = specialDiscount + couponDiscount + walletUsed;
 
@@ -1830,10 +1860,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
                         padding: EdgeInsets.symmetric(horizontal: 8.w),
                         child: Text(
                           "Payable",
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: Colors.grey,
-                          ),
+                          style: TextStyle(fontSize: 11.sp, color: Colors.grey),
                         ),
                       ),
                       Expanded(child: Divider(color: Colors.grey.shade300)),
@@ -1870,10 +1897,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _priceRow(
-      String label,
-      String value, {
-        Color valueColor = Colors.black,
-      }) {
+    String label,
+    String value, {
+    Color valueColor = Colors.black,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
@@ -2066,13 +2093,14 @@ class _ReserveSlotState extends State<ReserveSlot> {
                   ),
                 ),
                 Container(
-                  padding:
-                  EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20.r),
-                    border:
-                    Border.all(color: Colors.white.withOpacity(0.4)),
+                    border: Border.all(color: Colors.white.withOpacity(0.4)),
                   ),
                   child: Text(
                     "${percentage.toInt()}% OFF",
@@ -2161,19 +2189,22 @@ class _ReserveSlotState extends State<ReserveSlot> {
               10.h.verticalSpace,
               Container(
                 width: double.infinity,
-                padding:
-                EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+                padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8.r),
                   border: Border.all(
-                      color: Colors.greenAccent.withOpacity(0.5)),
+                    color: Colors.greenAccent.withOpacity(0.5),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.savings_rounded,
-                        color: Colors.greenAccent, size: 16.sp),
+                    Icon(
+                      Icons.savings_rounded,
+                      color: Colors.greenAccent,
+                      size: 16.sp,
+                    ),
                     6.w.horizontalSpace,
                     Text(
                       "You're saving ₹${controller.specialDiscountAmount.value.toStringAsFixed(2)}!",
@@ -2197,9 +2228,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
       decoration: BoxDecoration(
-        color: reached
-            ? color.withOpacity(0.3)
-            : Colors.white.withOpacity(0.1),
+        color: reached ? color.withOpacity(0.3) : Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(4.r),
       ),
       child: Text(

@@ -10,8 +10,8 @@ import '../controller/gioo_controller.dart';
 
 class PlotAvailabilityWidget extends StatelessWidget {
   const PlotAvailabilityWidget({super.key});
-  final Color colorBooked = AppColor.primary; // Olive Green
-  final Color colorAvailable = AppColor.orange; // Amber
+  final Color colorBooked = AppColor.primary;
+  final Color colorAvailable = AppColor.orange;
   final Color colorTextMain = const Color(0xFF2D2D2D);
 
   @override
@@ -21,7 +21,6 @@ class PlotAvailabilityWidget extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.all(16.w),
       child: Obx(() {
-        // Show loading skeleton if no data
         if (controller.giooPlotDetail.value == null) {
           return _buildLoadingSkeleton();
         }
@@ -29,15 +28,12 @@ class PlotAvailabilityWidget extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Top Bar Chart Section (Animation for Entrance)
             _buildBarChartSection(controller)
                 .animate()
                 .slideX(begin: -0.2, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
                 .fadeIn(duration: 500.ms),
 
             20.h.verticalSpace,
-
-            // 2. Bottom Profit Cards Section (Animation for Entrance)
             Row(
               children: [
                 Expanded(
@@ -67,7 +63,6 @@ class PlotAvailabilityWidget extends StatelessWidget {
     );
   }
 
-  // Loading skeleton while data is being fetched
   Widget _buildLoadingSkeleton() {
     return Column(
       children: [
@@ -101,16 +96,12 @@ class PlotAvailabilityWidget extends StatelessWidget {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // SECTION 1: BAR CHART CARD
-  // ---------------------------------------------------------------------------
+
   Widget _buildBarChartSection(GiooPlotController controller) {
-    // Get dynamic data
     final ranges = controller.unitRanges;
     final bookedValues = controller.bookedValues;
     final availableValues = controller.availableValues;
 
-    // Format month names to short form
     final formattedRanges = _formatRanges(ranges, controller.selectedStatsType.value);
 
     return Container(
@@ -128,7 +119,6 @@ class PlotAvailabilityWidget extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -158,19 +148,14 @@ class PlotAvailabilityWidget extends StatelessWidget {
               _buildToggleButtons(controller),
             ],
           ),
-
           30.h.verticalSpace,
-
-          // The Chart
           SizedBox(
             height: 220.h,
             child: ranges.isEmpty
                 ? _buildEmptyChart()
                 : _buildChartWithData(formattedRanges, bookedValues, availableValues),
           ),
-
           15.h.verticalSpace,
-
           Text(
             controller.selectedStatsType.value == "Weekly" ? "Days" : "Months",
             style: TextStyle(
@@ -182,7 +167,113 @@ class PlotAvailabilityWidget extends StatelessWidget {
   }
 
   Widget _buildChartWithData(List<String> ranges, List<double> bookedValues, List<double> availableValues) {
-    // Calculate max Y value
+    double maxVal = 0;
+    if (bookedValues.isNotEmpty) maxVal = max(maxVal, bookedValues.reduce(max));
+    if (availableValues.isNotEmpty) maxVal = max(maxVal, availableValues.reduce(max));
+
+    double maxY = (maxVal * 1.2).ceilToDouble();
+    if (maxY < 10) maxY = 100;
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxY / 4,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.grey.shade100,
+            strokeWidth: 1,
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: maxY / 4,
+              reservedSize: 35.w,
+              getTitlesWidget: (value, meta) => Text(
+                value.toInt().toString(),
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 10.sp),
+              ),
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30.h,
+              interval: 1,
+              getTitlesWidget: (value, meta) {
+                int index = value.toInt();
+
+                if (value != index.toDouble() || index < 0 || index >= ranges.length) {
+                  return const SizedBox();
+                }
+
+                return Padding(
+                  padding: EdgeInsets.only(top: 8.h),
+                  child: Text(
+                    ranges[index],
+                    style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 10.sp,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        minX: 0,
+        maxX: (ranges.length - 1).toDouble(),
+        minY: 0,
+        maxY: maxY,
+        lineBarsData: [
+          LineChartBarData(
+            spots: List.generate(availableValues.length, (i) => FlSpot(i.toDouble(), availableValues[i])),
+            isCurved: true,
+            curveSmoothness: 0.35,
+            color: colorAvailable,
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                radius: 4,
+                color: Colors.white,
+                strokeWidth: 2,
+                strokeColor: colorAvailable,
+              ),
+            ),
+            belowBarData: BarAreaData(show: false),
+          ),
+          LineChartBarData(
+            spots: List.generate(bookedValues.length, (i) => FlSpot(i.toDouble(), bookedValues[i])),
+            isCurved: true,
+            curveSmoothness: 0.35,
+            color: colorBooked,
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                radius: 4,
+                color: Colors.white,
+                strokeWidth: 2,
+                strokeColor: colorBooked,
+              ),
+            ),
+            belowBarData: BarAreaData(show: false),
+          ),
+        ],
+      ),
+    );
+  }
+
+/*  Widget _buildChartWithData(List<String> ranges, List<double> bookedValues, List<double> availableValues) {
     double maxY = 0;
     if (bookedValues.isNotEmpty && availableValues.isNotEmpty) {
       for (int i = 0; i < bookedValues.length; i++) {
@@ -191,9 +282,8 @@ class PlotAvailabilityWidget extends StatelessWidget {
       }
     }
 
-    // Round up to nearest 10 for better grid
-    maxY = (maxY * 1.1).ceilToDouble(); // Add 10% padding
-    if (maxY < 10) maxY = 100; // Default minimum
+    maxY = (maxY * 1.1).ceilToDouble();
+    if (maxY < 10) maxY = 100;
 
     return BarChart(
       BarChartData(
@@ -208,7 +298,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30.w,
-              interval: maxY / 5, // Show 5 intervals
+              interval: maxY / 5,
               getTitlesWidget: (value, meta) {
                 return Padding(
                   padding: EdgeInsets.only(right: 4.w),
@@ -236,7 +326,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
                       ranges[index],
                       style: TextStyle(
                         color: Colors.grey.shade500,
-                        fontSize: 9.sp, // Slightly larger font
+                        fontSize: 9.sp,
                       ),
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
@@ -266,7 +356,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
               BarChartRodData(
                 toY: (index < bookedValues.length ? bookedValues[index] : 0) +
                     (index < availableValues.length ? availableValues[index] : 0),
-                width: 12.w, // Slightly wider bars
+                width: 12.w,
                 borderRadius: BorderRadius.circular(2.r),
                 rodStackItems: [
                   BarChartRodStackItem(
@@ -288,7 +378,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
         }),
       ),
     );
-  }
+  }*/
 
   Widget _buildEmptyChart() {
     return Center(
@@ -455,7 +545,6 @@ class PlotAvailabilityWidget extends StatelessWidget {
           ],
         )
     )
-    // NON-REPEATING ENTRANCE ANIMATION + COLORIZE FILL EFFECT
         .animate()
         .slideX(begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
         .fadeIn(duration: 500.ms)
@@ -464,12 +553,12 @@ class PlotAvailabilityWidget extends StatelessWidget {
 
   }
 
-  // --- WIDGET FOR DASHED GAUGE (Weekly Profit) ---
+
   Widget _buildDashedGauge(int percent) {
     return CustomPaint(
       painter: DashedRingPainter(
         percent: percent / 100,
-        activeColor: const Color(0xFF00C853), // Bright Green
+        activeColor: const Color(0xFF00C853),
         inactiveColor: Colors.grey.shade100,
         width: 8.w,
       ),
@@ -496,7 +585,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
     );
   }
 
-  // --- WIDGET FOR SOLID GAUGE (Overall Booked) ---
+
   Widget _buildSolidGauge(int percent) {
     const Color primaryColor = Color(0xFF8BB55F);
 
@@ -505,12 +594,12 @@ class PlotAvailabilityWidget extends StatelessWidget {
       children: [
         PieChart(
           PieChartData(
-            startDegreeOffset: 270, // Start from top
+            startDegreeOffset: 270,
             sectionsSpace: 0,
             centerSpaceRadius: 25.w,
             sections: [
               PieChartSectionData(
-                color: primaryColor, // Olive Green
+                color: primaryColor,
                 value: percent.toDouble(),
                 title: '',
                 radius: 8.w,
@@ -546,10 +635,9 @@ class PlotAvailabilityWidget extends StatelessWidget {
     );
   }
 
-  // Helper method to format ranges (convert full month names to abbreviations)
+
   List<String> _formatRanges(List<String> ranges, String selectedStatsType) {
     if (selectedStatsType == "Monthly") {
-      // Map full month names to abbreviations
       final monthAbbreviations = {
         'January': 'Jan',
         'February': 'Feb',
@@ -566,7 +654,6 @@ class PlotAvailabilityWidget extends StatelessWidget {
       };
 
       return ranges.map((range) {
-        // Check if it's a full month name
         for (var fullName in monthAbbreviations.keys) {
           if (range.toLowerCase().contains(fullName.toLowerCase())) {
             return monthAbbreviations[fullName]!;
@@ -575,7 +662,6 @@ class PlotAvailabilityWidget extends StatelessWidget {
         return range;
       }).toList();
     } else {
-      // For weekly view, keep as is but use first 3 letters
       return ranges.map((range) {
         if (range.length > 3) {
           return range.substring(0, 3);
@@ -586,9 +672,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// CUSTOM PAINTER FOR DASHED RING (Remains unchanged)
-// -----------------------------------------------------------------------------
+
 class DashedRingPainter extends CustomPainter {
   final double percent;
   final Color activeColor;

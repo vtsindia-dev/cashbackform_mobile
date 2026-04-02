@@ -580,7 +580,9 @@ class BusinessSettings {
   String? sealImage;
   String? signatureImage;
   double? refundAmount;
-  String? couponServiceCharge;
+  double? couponServiceCharge;
+  double? minCouponVal;
+  double? maxCouponVal;
 
 
   BusinessSettings({
@@ -656,6 +658,8 @@ class BusinessSettings {
     this.signatureImage,
     this.refundAmount,
     this.couponServiceCharge,
+    this.minCouponVal,
+    this.maxCouponVal,
   });
 
   factory BusinessSettings.fromJson(Map<String, dynamic> json) {
@@ -763,7 +767,13 @@ class BusinessSettings {
       refundAmount: json['refund_amount'] != null
           ? double.tryParse(json['refund_amount'].toString())
           : null,
-      couponServiceCharge: json['coupon_service_charge'] as String?,
+      couponServiceCharge: json['coupon_service_charge'] != null ? double.tryParse(json['coupon_service_charge'].toString()) : null,
+      minCouponVal: json['min_coupon_val'] != null
+          ? double.tryParse(json['min_coupon_val'].toString())
+          : null,
+      maxCouponVal: json['max_coupon_val'] != null
+          ? double.tryParse(json['max_coupon_val'].toString())
+          : null,
     );
   }
 

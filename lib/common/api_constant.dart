@@ -73,22 +73,18 @@ class ApiUrl {
 
   static const String submitReview = '$baseUrl/api/v2/shop/review';
   static const String materialUnit = '$baseUrl/api/v2/units';
-
   static const String servicesSubCategory = '$baseUrl/api/v2/services_sub_cat';
   static const String servicesSubSubCategory = '$baseUrl/api/v2/services_sub_sub_cat';
   static const String searchApi = '$baseUrl/api/v2/search';
   static const String vendorStoreUrl = '$baseUrl/api/v2/vendor';
-
   static const String homeCategoryApi = '$baseUrl/api/v2/service-featured-category-list';
-
-
-
 
   static const String materialCategory = '$baseUrl/api/v2/material_category';
   static const String materialSubCategory = '$baseUrl/api/v2/material_sub_cat';
   static const String materialSubSubCategory = '$baseUrl/api/v2/material_sub_sub_cat';
-
   static const String vendorApi = '$baseUrl/api/v2/vendor';
-
   static const String applyCoupon = '$baseUrl/api/v2/apply-coupon';
+
+  static const String couponList = '$baseUrl/api/v2/coupon-list';
+  static const String generateCoupon = '$baseUrl/api/v2/generate-coupon';
 }
