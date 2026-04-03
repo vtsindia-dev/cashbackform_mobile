@@ -37,6 +37,7 @@ import '../../features/syndicate_plot/screens/owned_syndicate_plot.dart';
 import '../../features/syndicate_plot/screens/syndicate_plot.dart';
 import '../../features/transaction/screen/transaction.dart';
 import '../../features/wallet/screen/wallet_screen.dart';
+import '../../network/screen/no_internet_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -77,6 +78,8 @@ class AppRoutes {
   static const String searchScreen = '/searchScreen';
   static const String walletScreen = '/walletScreen';
   static const String kycScreen = '/kycScreen';
+  static const String noInternet = '/noInternet';
+
 
 
   static List<GetPage> routes = [
@@ -203,6 +206,11 @@ class AppRoutes {
       name: kycScreen,
       page: () => KYCListScreen(),
       transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: noInternet,
+      page: () => const NoInternetScreen(),
+      transition: Transition.fade,
     ),
     GetPage(
       name: register,
@@ -351,6 +359,7 @@ class AppRoutes {
   static void toPlotMarketEnquiry() => Get.offAllNamed(plotMarketEnquiry);
   static void toWalletScreen() => Get.offAllNamed(walletScreen);
   static void toKycScreen() => Get.offAllNamed(kycScreen);
+  static void toNoInternetScreen() => Get.offAllNamed(noInternet);
   static void toRegister({String? phone}) {
     print("AppRoutes.toRegister called with phone: $phone");
     Get.toNamed(register, arguments: {'phone': phone});

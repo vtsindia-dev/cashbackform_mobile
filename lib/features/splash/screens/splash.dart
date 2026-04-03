@@ -7,6 +7,7 @@ import '../../../common/app_constant.dart';
 import '../../../common/images.dart';
 import '../../../common/route/router.dart';
 import '../../../common/widget/sessionhandler.dart';
+import '../../../deeplink/deeplink_service/service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -38,11 +39,7 @@ class _SplashScreenState extends State<SplashScreen>
     _logoFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
-        curve: Interval(
-          0.0,
-          0.3,
-          curve: Curves.easeInOut,
-        ),
+        curve: Interval(0.0, 0.3, curve: Curves.easeInOut),
       ),
     );
 
@@ -63,11 +60,7 @@ class _SplashScreenState extends State<SplashScreen>
     _textFadeOutAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _animationController,
-        curve: Interval(
-          0.7,
-          1.0,
-          curve: Curves.easeOut,
-        ),
+        curve: Interval(0.7, 1.0, curve: Curves.easeOut),
       ),
     );
 
@@ -75,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        Future.delayed(Duration(milliseconds: 700), () {
+        Future.delayed(const Duration(milliseconds: 700), () {
           _checkAuthenticationStatus();
         });
       }
@@ -84,6 +77,12 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkAuthenticationStatus() async {
     try {
+      // ✅ WARM START guard — if deep link already navigated, don't touch the stack
+      if (DeepLinkService().isHandlingLink) {
+        print('🔗 Splash: deep link handling in progress — skipping navigation');
+        return;
+      }
+
       final isLoggedIn = await SessionManager.isLoggedIn();
       final userData = await SessionManager.getUserData();
 
@@ -92,33 +91,55 @@ class _SplashScreenState extends State<SplashScreen>
       print('SplashScreen - userData: $userData');
       print('SplashScreen - userData is null: ${userData == null}');
 
+      // ✅ Check again after async gap — link might have fired while we awaited
+      if (DeepLinkService().isHandlingLink) {
+        print('🔗 Splash: deep link fired during auth check — aborting');
+        return;
+      }
+
       if (isLoggedIn && userData != null) {
         print('✅ User is logged in and userData exists');
 
         final isExpired = await SessionManager.isSessionExpired();
         print('SplashScreen - isSessionExpired: $isExpired');
 
+        // ✅ Final check before navigating
+        if (DeepLinkService().isHandlingLink) {
+          print('🔗 Splash: deep link fired during session check — aborting');
+          return;
+        }
+
         if (isExpired) {
           print('❌ Session expired, clearing and going to login');
           await SessionManager.clearSession();
           Get.offAllNamed(AppRoutes.login);
+
         } else {
           print('✅ Session valid, going to dashboard');
+
+          final hasPendingDeepLink = DeepLinkService().pendingUri != null;
           Get.offAllNamed(AppRoutes.dashboard);
+
+          if (hasPendingDeepLink) {
+            // Cold start — navigate to detail after dashboard loads
+            Future.delayed(const Duration(milliseconds: 600), () {
+              DeepLinkService().consumePendingUri();
+            });
+          }
         }
+
       } else {
         print('❌ User not logged in or userData is null');
         print('  - isLoggedIn: $isLoggedIn');
-        print('   - userData is null: ${userData == null}');
+        print('  - userData is null: ${userData == null}');
         Get.offAllNamed(AppRoutes.login);
       }
-    }
-    catch (e) {
+
+    } catch (e) {
       print('❌ Error checking authentication: $e');
       Get.offAllNamed(AppRoutes.login);
     }
-  }
-  @override
+  }  @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
