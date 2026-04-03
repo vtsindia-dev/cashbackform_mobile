@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
+import '../../../common/widget/note_info.dart';
+import '../../menu/controller/dashboard_menu_controller.dart';
 import '../controller/residential_controller.dart';
 import '../model/residential_model.dart';
 import '../widget/residential_plotlist.dart';
@@ -32,6 +34,7 @@ class _ResidentialPropertiesScreenState extends State<ResidentialPropertiesScree
               : Column(
             children: [
               _CompactFilterSection(controller: controller),
+              _buildNoteContent(),
               Expanded(child: ResidentialPropertyList()),
               _BottomActionBar(controller: controller),
             ],
@@ -40,6 +43,34 @@ class _ResidentialPropertiesScreenState extends State<ResidentialPropertiesScree
       },
     );
   }
+  Widget _buildNoteContent() {
+    final dashboardController = Get.find<DashboardController>();
+
+    return Obx(() {
+      if (dashboardController.isLoadingSettings.value) {
+        return const SizedBox.shrink(); // Or show a small loader
+      }
+
+      final settings = dashboardController.businessSettings.value;
+      if (settings == null) return const SizedBox.shrink();
+
+      return Column(
+        children: [
+          if (settings.plotDescription != null &&
+              settings.plotDescription!.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 0.h),
+              child: CompactNoteCard(
+                title: "Gioo Flat/Villas Information",
+                description: settings.plotDescription!,
+                icon: Icons.lan,
+              ),
+            ),
+        ],
+      );
+    });
+  }
+
 }
 
 void _showFilterSheet(BuildContext context, ResidentialPropertyController controller) {

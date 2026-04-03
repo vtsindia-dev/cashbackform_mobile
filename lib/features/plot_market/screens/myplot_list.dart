@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../common/colours.dart';
 import '../../../common/route/router.dart';
 import '../../../common/widget/loader.dart';
+import '../../../common/widget/note_info.dart';
 import '../../../common/widget/toster.dart';
 import '../../menu/controller/dashboard_menu_controller.dart';
 import '../controller/plot_market_controller.dart';

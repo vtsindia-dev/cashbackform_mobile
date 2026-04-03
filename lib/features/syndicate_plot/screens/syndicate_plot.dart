@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
+import '../../../common/widget/note_info.dart';
+import '../../menu/controller/dashboard_menu_controller.dart';
 import '../controller/syndicate_controller.dart';
 import '../widget/syndicate_plot_list.dart';
 import '../model/syndicate_model.dart';
@@ -47,11 +49,14 @@ class _SyndicatePlotState extends State<SyndicatePlot> {
 
         return Column(
           children: [
+
             _SearchAndFiltersSection(
               controller: controller,
               searchController: _searchController,
             ),
-          Container(
+            _buildNoteContent(),
+
+            Container(
               height : MediaQuery.of(context).size.height * 0.74,
               child: SyndicatePlotList()),
             Spacer(),
@@ -60,7 +65,35 @@ class _SyndicatePlotState extends State<SyndicatePlot> {
         );
       }),
     );
-  }}
+  }
+  Widget _buildNoteContent() {
+    final dashboardController = Get.find<DashboardController>();
+
+    return Obx(() {
+      if (dashboardController.isLoadingSettings.value) {
+        return const SizedBox.shrink(); // Or show a small loader
+      }
+
+      final settings = dashboardController.businessSettings.value;
+      if (settings == null) return const SizedBox.shrink();
+
+      return Column(
+        children: [
+          if (settings.syndicateDescription != null &&
+              settings.syndicateDescription!.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 0.h),
+              child: CompactNoteCard(
+                title: "Gioo Syndicate Information",
+                description: settings.syndicateDescription!,
+                icon: Icons.lan,
+              ),
+            ),
+        ],
+      );
+    });
+  }
+}
 
 // Search Bar with Filter Chips below
 class _SearchAndFiltersSection extends StatelessWidget {

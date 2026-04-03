@@ -555,28 +555,19 @@ class SyndicatePlotController extends GetxController {
     await fetchSyndicatePlots();
   }
 
+  // ✅ FIXED: fires on every character with 300ms debounce
   void onSearchChanged(String value) {
     searchQuery.value = value;
     if (_debounce?.isActive ?? false) _debounce?.cancel();
 
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (value.trim().length >= 100) {
-        recentSearch.value = value.trim();
-        fetchSyndicatePlots();
-      }
-      else if (value.isEmpty && searchQuery.value.isNotEmpty) {
-        searchQuery.value = '';
-        recentSearch.value = '';
-        fetchSyndicatePlots();
-      }
-      else if (value.trim().isNotEmpty && value.trim().length < 5) {
-        // Do nothing
-      }
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      recentSearch.value = value.trim();
+      fetchSyndicatePlots();
     });
   }
 
+  // ✅ FIXED: works with any input, clears when empty
   void applySearch() {
-    if (searchQuery.value.trim().isEmpty) return;
     recentSearch.value = searchQuery.value.trim();
     fetchSyndicatePlots();
   }
@@ -1041,7 +1032,6 @@ class SyndicatePlotController extends GetxController {
                     // Pricing Breakdown
                     _buildPriceDetail("Base Amount", "₹${amount.toStringAsFixed(2)}"),
                     SizedBox(height: 8.h),
-                    // _buildPriceDetail("GST (18%)", "₹${gstAmount.toStringAsFixed(2)}"),
 
                     SizedBox(height: 16.h),
 

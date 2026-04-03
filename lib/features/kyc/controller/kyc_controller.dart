@@ -103,12 +103,10 @@ class KYCController extends GetxController {
         errorMessage.value = 'Please login to view KYC documents';
         return {'status': 401, 'message': errorMessage.value};
       }
-
       final response = await ApiService.getAuthenticatedRequest(
         '${ApiUrl.baseUrl}/api/v2/kyc_list',
         token,
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
         if (data['status'] == true) {

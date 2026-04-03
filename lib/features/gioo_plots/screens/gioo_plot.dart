@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
+import '../../../common/widget/note_info.dart';
+import '../../menu/controller/dashboard_menu_controller.dart';
 import '../controller/gioo_controller.dart';
 import '../model/gioo_plot.dart';
 import '../widget/gioo_plot_list.dart';
@@ -33,32 +36,7 @@ class _GiooplotState extends State<Giooplot> {
         () => Column(
           children: [
             _CompactFilterSection(controller: controller),
-            SizedBox(height: 10),
-            Container(
-              padding: EdgeInsets.all(10),
-              margin: EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: Color(0xfffefce9),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Color(0xfffdba15)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: Color(0xfffdba15)),
-                  SizedBox(width: 10,),
-                  Expanded(
-                    child: Text(
-                      'Select your slot, get your payment verified, wait while we process your registration, and finally your plot will be successfully registered.',
-                      style: TextStyle(
-                        color: Color(0xff8a6f1c),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildNoteContent(),
             controller.isLoading.value
                 ? Expanded(
                     child: const Center(
@@ -105,6 +83,33 @@ class _GiooplotState extends State<Giooplot> {
         ),
       ),
     );
+  }
+  Widget _buildNoteContent() {
+    final dashboardController = Get.find<DashboardController>();
+
+    return Obx(() {
+      if (dashboardController.isLoadingSettings.value) {
+        return const SizedBox.shrink(); // Or show a small loader
+      }
+
+      final settings = dashboardController.businessSettings.value;
+      if (settings == null) return const SizedBox.shrink();
+
+      return Column(
+        children: [
+          if (settings.gioonanoDescription != null &&
+              settings.gioonanoDescription!.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 0.h),
+              child: CompactNoteCard(
+                title: "Gioo Nano Information",
+                description: settings.gioonanoDescription!,
+                icon: Icons.lan,
+              ),
+            ),
+        ],
+      );
+    });
   }
 }
 

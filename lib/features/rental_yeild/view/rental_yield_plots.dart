@@ -1,9 +1,12 @@
 import 'package:cashback_farms/features/rental_yeild/model/rental_yeild_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
+import '../../../common/widget/note_info.dart';
+import '../../menu/controller/dashboard_menu_controller.dart';
 import '../controller/rental_yield_controller.dart';
 import '../widget/rental_yield_list.dart';
 
@@ -29,12 +32,41 @@ class _RentalYieldScreenState extends State<RentalYieldScreen> {
           : Column(
         children: [
           _CompactFilterSection(controller: controller),
+          _buildNoteContent(),
           Expanded(child: RentalYieldList()),
           _BottomActionBar(controller: controller),
         ],
       )),
     );
   }
+  Widget _buildNoteContent() {
+    final dashboardController = Get.find<DashboardController>();
+
+    return Obx(() {
+      if (dashboardController.isLoadingSettings.value) {
+        return const SizedBox.shrink(); // Or show a small loader
+      }
+
+      final settings = dashboardController.businessSettings.value;
+      if (settings == null) return const SizedBox.shrink();
+
+      return Column(
+        children: [
+          if (settings.gioorentalDescription != null &&
+              settings.gioorentalDescription!.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 0.h),
+              child: CompactNoteCard(
+                title: "Gioo Rental Information",
+                description: settings.gioorentalDescription!,
+                icon: Icons.lan,
+              ),
+            ),
+        ],
+      );
+    });
+  }
+
 }
 
 void _showFilterSheet(BuildContext context, RentalYieldController controller) {

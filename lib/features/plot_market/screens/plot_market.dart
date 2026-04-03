@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
+import '../../../common/widget/note_info.dart';
+import '../../menu/controller/dashboard_menu_controller.dart';
 import '../controller/plot_market_controller.dart';
 import '../model/plot_market.dart';
 import '../widget/plot_market_list.dart';
@@ -33,12 +35,39 @@ class PlotMarket extends StatelessWidget {
     return Column(
       children: [
         _buildSearchFilterSection(controller),
-        SizedBox(height: 8.h),
+        _buildNoteContent(),
         Expanded(
           child: PlotMarketList(),
         ),
       ],
     );
+  }
+  Widget _buildNoteContent() {
+    final dashboardController = Get.find<DashboardController>();
+
+    return Obx(() {
+      if (dashboardController.isLoadingSettings.value) {
+        return const SizedBox.shrink(); // Or show a small loader
+      }
+
+      final settings = dashboardController.businessSettings.value;
+      if (settings == null) return const SizedBox.shrink();
+
+      return Column(
+        children: [
+          if (settings.landDescription != null &&
+              settings.landDescription!.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 0.h),
+              child: CompactNoteCard(
+                title: "Gioo Land Information",
+                description: settings.landDescription!,
+                icon: Icons.lan,
+              ),
+            ),
+        ],
+      );
+    });
   }
 
   Widget _buildSearchFilterSection(PlotMarketController controller) {
