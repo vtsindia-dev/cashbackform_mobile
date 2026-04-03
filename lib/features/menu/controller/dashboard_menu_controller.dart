@@ -1,3 +1,4 @@
+import 'package:cashback_farms/common/model/logger_model.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dio/dio.dart';
@@ -76,7 +77,6 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
     _setupControllerListeners();
-    fetchDashboard();
     fetchBusinessSettings();
     _fetchInitialRoleBasedData();
   }
@@ -278,12 +278,9 @@ class DashboardController extends GetxController {
     print('⚠️ Using default business settings');
   }
 
-  // ===============================
-  // DASHBOARD METHODS
-  // ===============================
   Future<void> fetchDashboard() async {
     if (_isRequestInProgress) {
-      print('⏸️ Dashboard request already in progress');
+      Loggers.error('⏸️ Dashboard request already in progress');
       return;
     }
 
@@ -300,22 +297,17 @@ class DashboardController extends GetxController {
       if (response.statusCode == 200 && response.data?['data'] != null) {
         final Map<String, dynamic> data = response.data['data'];
 
-        // Update profile
         if (data['profile'] != null) {
           profile.value = Profile.fromJson(data['profile']);
-          // After profile is loaded, fetch role-based data
           final role = profile.value?.role?.role ?? 'User';
           fetchDataForRole(role);
-
         }
 
-        // Update counters
         myProperties.value = data['myproperties'] ?? 0;
         marketEnquiryCount.value = data['market_enquiry_count'] ?? 0;
         materialEnquiryCount.value = data['material_enquiry_count'] ?? 0;
         residentialEnquiry.value = data['residential_enquiry'] ?? 0;
 
-        // Update lists
         if (data['gioo_booked'] != null && data['gioo_booked'] is List) {
           giooBooked.assignAll(
             (data['gioo_booked'] as List)
@@ -323,7 +315,6 @@ class DashboardController extends GetxController {
                 .toList(),
           );
         }
-
         if (data['market_enquiry'] != null && data['market_enquiry'] is List) {
           marketEnquiry.assignAll(
             (data['market_enquiry'] as List)
@@ -331,18 +322,13 @@ class DashboardController extends GetxController {
                 .toList(),
           );
         }
-
-        print('✅ Dashboard loaded successfully');
-        print('   🏠 My Properties: ${myProperties.value}');
-        print('   📊 Market Enquiries: ${marketEnquiryCount.value}');
-        print('   👤 User Role: ${profile.value?.role?.role ?? "User"}');
       } else {
+        Loggers.error('❌ Invalid dashboard response: ${response.data}');
         SnackBarHelper.showError('Failed to load dashboard');
-        print('❌ Invalid dashboard response: ${response.data}');
       }
     } catch (e) {
-      SnackBarHelper.showError('Network error');
-      print('❌ Dashboard error: $e');
+      Loggers.error('❌ Dashboard error: $e');
+      SnackBarHelper.showError('Failed to load dashboard');
     } finally {
       isLoading(false);
       _isRequestInProgress = false;

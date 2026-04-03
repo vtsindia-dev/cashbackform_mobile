@@ -39,7 +39,10 @@ class _DashboardState extends State<Dashboard> {
   @override
   void initState() {
     super.initState();
-    dashboardController.fetchDashboard();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      dashboardController.fetchDashboard();
+    });
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 3000),
       vsync: Navigator.of(context),

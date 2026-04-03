@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'common/route/router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'deeplink/deeplink_service/service.dart';
 import 'network/network_service/no_internet_service.dart';
 
@@ -17,7 +16,6 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Init deep link BEFORE runApp so cold-start links are captured
   await DeepLinkService().init();
 
   runApp(const MyApp());
@@ -48,8 +46,6 @@ class MyApp extends StatelessWidget {
         initialRoute: AppRoutes.splash,
         getPages: AppRoutes.routes,
         debugShowCheckedModeBanner: false,
-
-        // Register NetworkService as soon as GetMaterialApp is ready
         initialBinding: BindingsBuilder(() {
           Get.put(NetworkService(), permanent: true);
         }),
@@ -65,7 +61,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 
 
 // CashBack IOS serverfile -----------------------(iOS Universal Links)

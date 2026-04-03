@@ -87,4 +87,12 @@ class ApiUrl {
 
   static const String couponList = '$baseUrl/api/v2/coupon-list';
   static const String generateCoupon = '$baseUrl/api/v2/generate-coupon';
+
+  static const String enhanceCouponCheckApi = '$baseUrl/api/v2/enhance_coupon_check';
+
+  static const String enhancePostApi = '$baseUrl/api/v2/enhancement';
+
+  static String enhancementListApi = '$baseUrl/api/v2/enhancement_list';
+
+
 }

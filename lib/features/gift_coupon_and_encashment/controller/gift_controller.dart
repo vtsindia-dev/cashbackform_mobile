@@ -1,3 +1,4 @@
+import 'package:cashback_farms/common/widget/toster.dart';
 import 'package:cashback_farms/features/gift_coupon_and_encashment/model/model.dart';
 import 'package:cashback_farms/repository/user_repository.dart';
 import 'package:get/get.dart';
@@ -38,33 +39,15 @@ class GiftController extends GetxController{
 
       if (response['status'] == 200) {
         getMyPurchasedVouchersList();
-        Get.snackbar(
-          'Success',
-          'Your gift voucher has been purchased successfully.',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        SnackBarHelper.showSuccess('Your gift voucher has been purchased successfully.',);
         return true;
       }else{
-        Get.snackbar(
-          'Failed',
-          response['message'] ?? 'Something went wrong, please try again.',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        SnackBarHelper.showError(response['message'] ?? 'Something went wrong, please try again.');
         return false;
       }
     }catch(e){
       debugPrint('Error :: ${e}');
-      Get.snackbar(
-        'Error',
-        'An error occurred, please try again.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      SnackBarHelper.showError('An error occurred, please try again.');
       return false;
     } finally {
       isLoading = false;
