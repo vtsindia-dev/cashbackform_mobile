@@ -582,8 +582,7 @@ class BusinessSettings {
   double? refundAmount;
   double? couponServiceCharge;
   double? minCouponVal;
-  double? maxCouponVal;
-
+  double? maxCouponVal;   
 
   BusinessSettings({
     this.id,
