@@ -1,3 +1,4 @@
+import 'package:cashback_farms/common/api_constant.dart';
 import 'package:cashback_farms/common/colours.dart';
 import 'package:cashback_farms/common/model/logger_model.dart';
 import 'package:cashback_farms/common/widget/sessionhandler.dart';
@@ -8,9 +9,12 @@ import 'package:cashback_farms/features/menu/controller/dashboard_menu_controlle
 import 'package:cashback_farms/features/profile/controller/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum PaymentType { online, wallet }
 
@@ -994,9 +998,23 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(child: _actionBtn(Icons.download_rounded, 'Download', () {})),
+                      Expanded(child: _actionBtn(Icons.download_rounded, 'Download', () {
+                        _downloadVoucher(id: coupon.id.toString());
+                      })),
                       const SizedBox(width: 10),
-                      Expanded(child: _actionBtn(Icons.share_rounded, 'Share', () {})),
+                      Expanded(
+                        child: _actionBtn(Icons.share_rounded, 'Share', () {
+                          final shareText = '''
+🎁 Coupon Code: $code
+💰 Amount: ₹${amt.toInt()}
+📅 Expires on: ${_formatDate(coupon.expiryDate)}
+
+Use this coupon now!
+''';
+
+                          Share.share(shareText);
+                        }),
+                      ),
                     ],
                   ),
                 ],
@@ -1006,6 +1024,22 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
         ),
       ),
     );
+  }
+
+  void _downloadVoucher({String? id}) async {
+    String url =  '${ApiUrl.baseUrl}/api/v2/coupon-invoice-download/$id';
+    if (id != null) {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        Fluttertoast.showToast(
+          msg: "Could not open download link.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+        );
+      }
+    }
   }
 
   Widget _iconBtn(IconData icon, VoidCallback onTap) => GestureDetector(
