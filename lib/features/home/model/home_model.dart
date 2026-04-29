@@ -4,18 +4,22 @@ class FeaturedBanner {
   final String image;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? redirectUrl;
+
 
   FeaturedBanner({
     required this.id,
     required this.image,
     required this.createdAt,
     required this.updatedAt,
+    this.redirectUrl
   });
 
   factory FeaturedBanner.fromJson(Map<String, dynamic> json) {
     return FeaturedBanner(
       id: json['id'] ?? 0,
       image: json['image'] ?? '',
+      redirectUrl: json['redirect_url'],
       createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
       updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
     );

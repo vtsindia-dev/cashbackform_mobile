@@ -1,4 +1,3 @@
-// lib/features/company_profile/screen/add_company_profile.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,9 +7,6 @@ import '../controller/company_profile_controller.dart';
 import '../model/comapany_profile.dart';
 import 'address_map.dart';
 
-// ─────────────────────────────────────────────────────────────
-// Main View
-// ─────────────────────────────────────────────────────────────
 class VendorStoreView extends StatefulWidget {
   const VendorStoreView({super.key});
 

@@ -21,6 +21,8 @@ class AboutPlot extends StatelessWidget {
       final projectName = detail?.name ?? 'No Name';
       final location = detail?.fullAddress ?? 'No Address';
       final plotCounts = '${detail?.plotCount ?? 0} Plots';
+      final plottype = detail?.propertyType?.categoryName ?? 'Not Defined';
+      final propertyId = detail?.id ?? 0; // Get property ID
 
       // Dynamic verify status with proper text mapping
       final verifiedStatus = _getVerifyStatusText(detail?.verifyStatus ?? 0);
@@ -73,6 +75,8 @@ class AboutPlot extends StatelessWidget {
                 postedDate: postedDate,
                 lastUpdate: lastUpdate,
                 isSoldOut: isSoldOut,
+                plottype: plottype,
+                propertyId: propertyId, // Pass property ID
               ),
             ),
           ],
@@ -248,6 +252,8 @@ class AboutPlot extends StatelessWidget {
         required String postedDate,
         required String lastUpdate,
         required bool isSoldOut,
+        required String plottype,
+        required int propertyId, // Add propertyId parameter
       }) {
     return AnimatedContainer(
       duration: 400.ms,
@@ -265,6 +271,8 @@ class AboutPlot extends StatelessWidget {
         postedDate: postedDate,
         lastUpdate: lastUpdate,
         isSoldOut: isSoldOut,
+        plottype: plottype,
+        propertyId: propertyId, // Pass propertyId
       )
           : const SizedBox(),
     );
@@ -281,6 +289,8 @@ class AboutPlot extends StatelessWidget {
     required String postedDate,
     required String lastUpdate,
     required bool isSoldOut,
+    required String plottype,
+    required int propertyId, // Add propertyId parameter
   }) {
     return GetBuilder<PlotMarketController>(
       builder: (controllerx) {
@@ -306,6 +316,7 @@ class AboutPlot extends StatelessWidget {
               plotAreaSqFt: plotAreaSqFt,
               totalPrice: totalPrice,
               pricePerSqFt: pricePerSqFt,
+              plottype: plottype,
             ),
             SizedBox(height: 15.h),
             Row(
@@ -328,7 +339,7 @@ class AboutPlot extends StatelessWidget {
                   .animate()
                   .shake(duration: 800.ms, hz: 2)
             else
-              _centerEnquiryButton(controllerx)
+              _centerEnquiryButton(controllerx, propertyId) // Pass propertyId
                   .animate(onPlay: (controller) => controller.repeat())
                   .shake(duration: 800.ms, hz: 2),
             SizedBox(height: 15.h),
@@ -344,6 +355,7 @@ class AboutPlot extends StatelessWidget {
     required String plotAreaSqFt,
     required String totalPrice,
     required String pricePerSqFt,
+    required String plottype,
   }) {
     final items = [
       {"title": "Plot Count", "value": plotCounts},
@@ -351,6 +363,7 @@ class AboutPlot extends StatelessWidget {
       {"title": "Plot Area", "value": plotAreaSqFt},
       {"title": "Total Price", "value": totalPrice},
       {"title": "Per Sq.Ft", "value": pricePerSqFt},
+      {"title": "Plot Type", "value": plottype},
     ];
 
     return SizedBox(
@@ -502,14 +515,15 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  Widget _centerEnquiryButton(PlotMarketController enquiryController) {
+  Widget _centerEnquiryButton(PlotMarketController enquiryController, int propertyId) {
     return Obx(() => Center(
       child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
         onTap: enquiryController.isEnquiryLoading.value
             ? null
             : () {
-          enquiryController.sendEnquiry();
+          // Pass property ID to sendEnquiry method
+          enquiryController.sendEnquiry(propertyId);
         },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),

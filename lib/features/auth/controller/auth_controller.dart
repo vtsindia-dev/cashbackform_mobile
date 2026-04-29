@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:cashback_farms/features/auth/models/location_model.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:permission_handler/permission_handler.dart';
@@ -13,6 +14,7 @@ import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 class AuthController extends GetxController with CodeAutoFill {
   var phoneNumber = ''.obs;
   var isOtpSent = false.obs;
@@ -24,6 +26,8 @@ class AuthController extends GetxController with CodeAutoFill {
   var selectedRole = 1.obs;
   var selectedImage = Rxn<File>();
   var hoveredGender = (-1).obs;
+  var fcmToken = ''.obs;
+
   List<CountryModel> countries = [];
   List<StateModel> states = [];
   List<CityModel> cities = [];
@@ -42,10 +46,12 @@ class AuthController extends GetxController with CodeAutoFill {
   final TextEditingController pinCodeController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
+
   String? appSignature;
   String? code;
   RxBool hasShownPhoneHint = false.obs;
   final ImagePicker _picker = ImagePicker();
+
   @override
   void onInit() {
     super.onInit();
@@ -53,7 +59,49 @@ class AuthController extends GetxController with CodeAutoFill {
     _checkPermissions();
     listenForCode();
     fetchCountries();
+    _getFcmToken();
+    _listenFcmTokenRefresh();
   }
+
+  // ─── FCM ──────────────────────────────────────────────────────────────────────
+
+  Future<void> _getFcmToken() async {
+    try {
+      NotificationSettings settings =
+      await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        String? token = await FirebaseMessaging.instance.getToken();
+        if (token != null && token.isNotEmpty) {
+          fcmToken.value = token;
+          print("✅ FCM Token: $token");
+        } else {
+          print("⚠️ FCM Token is null");
+        }
+      } else {
+        print("⚠️ Notification permission denied");
+      }
+    } catch (e) {
+      print("❌ Error getting FCM token: $e");
+    }
+  }
+
+  void _listenFcmTokenRefresh() {
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      fcmToken.value = newToken;
+      print("🔄 FCM Token refreshed: $newToken");
+      // Just save locally — sent to backend on next login
+      await SessionManager.saveFcmToken(newToken);
+    });
+  }
+
+  // ─── OTP AUTO FILL ────────────────────────────────────────────────────────────
+
   @override
   void codeUpdated() {
     code = this.code;
@@ -66,6 +114,9 @@ class AuthController extends GetxController with CodeAutoFill {
       }
     }
   }
+
+  // ─── IMAGE PICKER ─────────────────────────────────────────────────────────────
+
   Future<void> pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -81,11 +132,13 @@ class AuthController extends GetxController with CodeAutoFill {
       SnackBarHelper.showError("Failed to pick image: $e");
     }
   }
+
+  // ─── PHONE HINT ───────────────────────────────────────────────────────────────
+
   Future<void> getPhoneNumberHint() async {
     try {
       print('Requesting phone number hint...');
 
-      // Check phone permission
       var phoneStatus = await Permission.phone.status;
       if (!phoneStatus.isGranted) {
         phoneStatus = await Permission.phone.request();
@@ -95,7 +148,6 @@ class AuthController extends GetxController with CodeAutoFill {
         }
       }
 
-      // Request phone number hint
       String? phoneNumber = await SmsAutoFill().hint;
       print('Phone hint result: $phoneNumber');
 
@@ -116,11 +168,13 @@ class AuthController extends GetxController with CodeAutoFill {
       SnackBarHelper.showError("Auto-fill not available");
     }
   }
+
   String _processPhoneNumber(String phoneHint) {
     try {
       print('Raw phone hint: $phoneHint');
       String digitsOnly = phoneHint.replaceAll(RegExp(r'[^\d+]'), '');
       print('Digits only: $digitsOnly');
+
       if (digitsOnly.startsWith('+91')) {
         String number = digitsOnly.substring(3);
         return number.length == 10 ? number : '';
@@ -138,6 +192,9 @@ class AuthController extends GetxController with CodeAutoFill {
       return '';
     }
   }
+
+  // ─── PERMISSIONS ──────────────────────────────────────────────────────────────
+
   Future<void> _checkPermissions() async {
     try {
       var smsStatus = await Permission.sms.status;
@@ -147,13 +204,14 @@ class AuthController extends GetxController with CodeAutoFill {
         smsStatus = await Permission.sms.request();
         print("SMS Permission after request: $smsStatus");
       }
+
       var phoneStatus = await Permission.phone.status;
       print("Phone Permission Status: $phoneStatus");
-
     } catch (e) {
       print("Permission check error: $e");
     }
   }
+
   Future<void> _getAppSignature() async {
     try {
       appSignature = await SmsAutoFill().getAppSignature;
@@ -164,6 +222,9 @@ class AuthController extends GetxController with CodeAutoFill {
       print("Error getting app signature: $e");
     }
   }
+
+  // ─── SEND OTP ─────────────────────────────────────────────────────────────────
+
   Future<void> sendOtp(String phone) async {
     try {
       isLoading(true);
@@ -176,6 +237,7 @@ class AuthController extends GetxController with CodeAutoFill {
           "key_id": appSignature ?? '',
         },
       );
+
       if (response.statusCode == 200) {
         final responseData = response.data;
         serverOtp.value = responseData['otp']?.toString() ?? '';
@@ -193,6 +255,9 @@ class AuthController extends GetxController with CodeAutoFill {
       isLoading(false);
     }
   }
+
+  // ─── VERIFY OTP + LOGIN ───────────────────────────────────────────────────────
+
   Future<void> verifyOtp(String otp) async {
     try {
       isLoading(true);
@@ -201,37 +266,38 @@ class AuthController extends GetxController with CodeAutoFill {
       if (otp == serverOtp.value) {
         SnackBarHelper.showSuccess("OTP verified successfully!");
 
+        // Refresh FCM token before login to ensure latest token
+        await _getFcmToken();
+
         final loginResponse = await ApiService.postRequest(
           ApiUrl.login,
           {
             "phone": phoneNumber.value,
             "otp": otp,
+            "fcm_token": fcmToken.value, // ✅ FCM token sent to backend
           },
         );
 
         print("=== FULL LOGIN RESPONSE ===");
         print("Status: ${loginResponse.statusCode}");
         print("Data: ${loginResponse.data}");
+        print("FCM Token sent: ${fcmToken.value}");
         print("=== END RESPONSE ===");
 
         if (loginResponse.statusCode == 200) {
           final responseData = loginResponse.data;
 
-          // Check different possible response structures
           Map<String, dynamic>? userData;
           String? token;
 
           if (responseData['data'] != null) {
-            // Structure: {data: {user: {...}, token: '...'}}
             userData = responseData['data']['user'];
             token = responseData['data']['token'];
           } else {
-            // Structure: {user: {...}, token: '...'}
             userData = responseData['user'];
             token = responseData['token'];
           }
 
-          // Alternative token field names
           token ??= responseData['access_token'];
           token ??= responseData['auth_token'];
 
@@ -245,10 +311,10 @@ class AuthController extends GetxController with CodeAutoFill {
           print('✅ Extracted user data: $userData');
           print('✅ Extracted token: ${token.substring(0, min(token.length, 20))}...');
 
-          // Save session
+          // Save session and FCM token locally
           await SessionManager.saveUserSession(userData, token: token);
+          await SessionManager.saveFcmToken(fcmToken.value);
 
-          // Verify token was saved
           final savedToken = await SessionManager.getToken();
           if (savedToken != null && savedToken.isNotEmpty) {
             SnackBarHelper.showSuccess("Login Successful!");
@@ -262,7 +328,7 @@ class AuthController extends GetxController with CodeAutoFill {
         } else if (loginResponse.statusCode == 404) {
           SnackBarHelper.showInfo("New user! Redirecting to registration...");
           await cancel();
-          Get.toNamed('/register', arguments: {"phone": phoneNumber .value});
+          Get.toNamed('/register', arguments: {"phone": phoneNumber.value});
         } else {
           SnackBarHelper.showError("Login failed");
         }
@@ -276,30 +342,29 @@ class AuthController extends GetxController with CodeAutoFill {
       isLoading(false);
     }
   }
-  
-  
-  Future<void> fetchCountries() async{
-    final countryresponse =  await ApiService.getRequest(ApiUrl.countryUrl);
-    print("country -- ${countryresponse}");
-    if (countryresponse.statusCode == 200) {
-      countries?.clear();
-      CountryResponse response = CountryResponse.fromJson(countryresponse.data);
-      countries = response.data;
 
-    }
-    else{
+  // ─── LOCATION ─────────────────────────────────────────────────────────────────
+
+  Future<void> fetchCountries() async {
+    final countryresponse = await ApiService.getRequest(ApiUrl.countryUrl);
+    print("country -- $countryresponse");
+
+    if (countryresponse.statusCode == 200) {
+      countries.clear();
+      CountryResponse response =
+      CountryResponse.fromJson(countryresponse.data);
+      countries = response.data;
+    } else {
       SnackBarHelper.showError("Failed to fetch countries");
     }
-
   }
 
   Future<void> fetchStates(int countryId) async {
     isstateLoading = true;
     update();
 
-    final stateResponse =
-    await ApiService.getRequest("${ApiUrl.stateUrl}?country_id=$countryId");
-
+    final stateResponse = await ApiService.getRequest(
+        "${ApiUrl.stateUrl}?country_id=$countryId");
     print("state -- $stateResponse");
 
     if (stateResponse.statusCode == 200) {
@@ -313,13 +378,13 @@ class AuthController extends GetxController with CodeAutoFill {
     update();
   }
 
-  Future<void> fetchCity(int cityId) async{
-
+  Future<void> fetchCity(int cityId) async {
     isCityoading = true;
     update();
 
-    final cityRespose = await ApiService.getRequest("${ApiUrl.cityUrl}${cityId}");
-    print("city -- ${cityRespose}");
+    final cityRespose =
+    await ApiService.getRequest("${ApiUrl.cityUrl}$cityId");
+    print("city -- $cityRespose");
 
     if (cityRespose.statusCode == 200) {
       CityResponse response = CityResponse.fromJson(cityRespose.data);
@@ -332,12 +397,16 @@ class AuthController extends GetxController with CodeAutoFill {
     update();
   }
 
-  
+  // ─── REGISTER ─────────────────────────────────────────────────────────────────
+
   Future<void> register() async {
     try {
       if (!_validateForm()) return;
 
       isLoading(true);
+
+      // Refresh FCM token before register
+      await _getFcmToken();
 
       var formData = dio.FormData.fromMap({
         'first_name': firstNameController.text.trim(),
@@ -352,6 +421,7 @@ class AuthController extends GetxController with CodeAutoFill {
         "country_id": selectedCountry?.id,
         "state_id": selectedState?.id,
         "city_id": selectedCity?.id,
+        "fcm_token": fcmToken.value, // ✅ FCM token sent on register too
       });
 
       if (selectedImage.value != null) {
@@ -359,7 +429,8 @@ class AuthController extends GetxController with CodeAutoFill {
           'image',
           await dio.MultipartFile.fromFile(
             selectedImage.value!.path,
-            filename: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            filename:
+            'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
           ),
         ));
       }
@@ -382,6 +453,7 @@ class AuthController extends GetxController with CodeAutoFill {
         print('Token: $token');
 
         await SessionManager.saveUserSession(userData, token: token);
+        await SessionManager.saveFcmToken(fcmToken.value);
 
         final isLoggedIn = await SessionManager.isLoggedIn();
         print('After registration - isLoggedIn: $isLoggedIn');
@@ -403,9 +475,12 @@ class AuthController extends GetxController with CodeAutoFill {
       isLoading(false);
     }
   }
+
+  // ─── VALIDATION ───────────────────────────────────────────────────────────────
+
   bool _validateForm() {
     if (firstNameController.text.isEmpty) {
-      SnackBarHelper.showError("Please   first name");
+      SnackBarHelper.showError("Please enter first name");
       return false;
     }
     if (lastNameController.text.isEmpty) {
@@ -416,11 +491,11 @@ class AuthController extends GetxController with CodeAutoFill {
       SnackBarHelper.showError("Please enter valid 10-digit phone number");
       return false;
     }
-    if (emailController.text.isEmpty || !emailController.text.contains('@')) {
+    if (emailController.text.isEmpty ||
+        !emailController.text.contains('@')) {
       SnackBarHelper.showError("Please enter valid email");
       return false;
     }
-
     if (dobController.text.isEmpty) {
       SnackBarHelper.showError("Please select date of birth");
       return false;
@@ -437,31 +512,30 @@ class AuthController extends GetxController with CodeAutoFill {
       SnackBarHelper.showError("Please select a profile image");
       return false;
     }
-
-    if(selectedCountry == null)
-      {
-        SnackBarHelper.showError("Please select country");
-        return false;
-      }
-    if(selectedCountry == null)
-      {
-        SnackBarHelper.showError("Please select state");
-        return false;
-      }
-    if(selectedCountry == null)
-      {
-        SnackBarHelper.showError("Please select city");
-        return false;
-      }
-
+    if (selectedCountry == null) {
+      SnackBarHelper.showError("Please select country");
+      return false;
+    }
+    if (selectedState == null) {
+      SnackBarHelper.showError("Please select state");
+      return false;
+    }
+    if (selectedCity == null) {
+      SnackBarHelper.showError("Please select city");
+      return false;
+    }
     return true;
   }
+
+  // ─── RESEND OTP ───────────────────────────────────────────────────────────────
+
   Future<void> resendOtp() async {
     if (canResend.value) {
       print("Resending OTP...");
       await sendOtp(phoneNumber.value);
     }
   }
+
   void startResendTimer() {
     countdown.value = 60;
     canResend(false);
@@ -474,6 +548,9 @@ class AuthController extends GetxController with CodeAutoFill {
       }
     });
   }
+
+  // ─── CLEANUP ──────────────────────────────────────────────────────────────────
+
   @override
   Future<void> cancel() async {
     try {
@@ -483,6 +560,7 @@ class AuthController extends GetxController with CodeAutoFill {
       print("Error during cleanup: $e");
     }
   }
+
   void reset() {
     phoneNumber.value = "";
     isOtpSent.value = false;
@@ -494,9 +572,12 @@ class AuthController extends GetxController with CodeAutoFill {
     otpController.clear();
     hasShownPhoneHint.value = false;
   }
+
   void setDateOfBirth(DateTime date) {
-    dobController.text = "${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}";
+    dobController.text =
+    "${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}";
   }
+
   @override
   void onClose() {
     cancel();
@@ -504,7 +585,6 @@ class AuthController extends GetxController with CodeAutoFill {
     otpController.dispose();
     firstNameController.dispose();
     lastNameController.dispose();
-    phoneController.dispose();
     emailController.dispose();
     pinCodeController.dispose();
     addressController.dispose();

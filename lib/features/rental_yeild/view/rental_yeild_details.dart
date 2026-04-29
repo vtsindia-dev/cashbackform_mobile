@@ -37,11 +37,7 @@ class _RentalPropertyDetailsScreenState extends State<RentalPropertyDetailsScree
       if (widget.id == null) {
         return;
       }
-
-      // Clear cache to get fresh data
       controller.clearPropertyDetailsCache();
-
-      // Fetch property details
       await controller.getPropertyDetails(widget.id!);
     } catch (e) {
       print('Error in initState: $e');

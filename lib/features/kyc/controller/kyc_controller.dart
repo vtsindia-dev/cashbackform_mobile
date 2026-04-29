@@ -33,7 +33,6 @@ class KYCController extends GetxController {
   final Rx<File?> aadharDoc = Rx<File?>(null);
   final Rx<File?> signDoc = Rx<File?>(null);
   final Rx<File?> capturedSignature = Rx<File?>(null);
-
   final RxBool showSignaturePad = false.obs;
   final ImagePicker _picker = ImagePicker();
 
@@ -66,7 +65,6 @@ class KYCController extends GetxController {
     return null;
   }
 
-  /// Aadhar: 12 digits, must not start with 0 or 1
   String? validateAadhar(String value) {
     final v = value.trim();
     if (v.isEmpty) return 'Aadhar number is required';
@@ -132,30 +130,31 @@ class KYCController extends GetxController {
     }
   }
 
-  // ──────────────────────────────────────────
-  // API — Submit KYC
-  // ──────────────────────────────────────────
+
   Future<Map<String, dynamic>> submitKYC() async {
     try {
       isSubmitting.value = true;
       errorMessage.value = '';
 
+      // 1. Basic Validation (Ensure name, PAN, and Aadhar are filled)
       if (!_validateForm()) {
         return {'status': 400, 'message': errorMessage.value};
       }
 
+      // 2. Authentication Check
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
         errorMessage.value = 'Please login to submit KYC';
         return {'status': 401, 'message': errorMessage.value};
       }
 
+      // 3. Prepare Form Data
       final formData = dio.FormData.fromMap({});
       formData.fields.add(MapEntry('name[]', name.value.trim()));
       formData.fields.add(MapEntry('pan_no[]', panNo.value.trim().toUpperCase()));
       formData.fields.add(MapEntry('aadhar_no[]', aadharNo.value.trim()));
 
-      // PAN document — required
+      // PAN document — Required
       if (panDoc.value != null && await panDoc.value!.exists()) {
         formData.files.add(MapEntry(
           'pan_doc[]',
@@ -169,7 +168,7 @@ class KYCController extends GetxController {
         return {'status': 400, 'message': errorMessage.value};
       }
 
-      // Aadhar document — required
+      // Aadhar document — Required
       if (aadharDoc.value != null && await aadharDoc.value!.exists()) {
         formData.files.add(MapEntry(
           'aadhar_doc[]',
@@ -183,7 +182,8 @@ class KYCController extends GetxController {
         return {'status': 400, 'message': errorMessage.value};
       }
 
-      // Signature — required (drawn or uploaded)
+      // Signature — OPTIONAL
+      // If signFile is null or doesn't exist, we just don't add it to formData
       final signFile = signDoc.value ?? capturedSignature.value;
       if (signFile != null && await signFile.exists()) {
         final ext = signDoc.value != null ? 'jpg' : 'png';
@@ -194,11 +194,9 @@ class KYCController extends GetxController {
             filename: 'sign_${DateTime.now().millisecondsSinceEpoch}.$ext',
           ),
         ));
-      } else {
-        errorMessage.value = 'Please add your signature (draw or upload)';
-        return {'status': 400, 'message': errorMessage.value};
       }
 
+      // 4. API Request Setup
       final dioClient = dio.Dio();
       dioClient.options.headers['Authorization'] = 'Bearer $token';
 
@@ -207,6 +205,7 @@ class KYCController extends GetxController {
         data: formData,
       );
 
+      // 5. Handle Response
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
         if (data['status'] == true) {
@@ -221,36 +220,36 @@ class KYCController extends GetxController {
           return {'status': 400, 'message': msg};
         }
       } else {
-        final msg = response.data?['message'] ??
-            'Server error (${response.statusCode})';
+        final msg = response.data?['message'] ?? 'Server error (${response.statusCode})';
         errorMessage.value = msg;
         return {'status': response.statusCode ?? 500, 'message': msg};
       }
+
     } on dio.DioException catch (e) {
       debugPrint('❌ submitKYC DioException: $e');
       String msg;
       if (e.response != null) {
-        msg = e.response?.data?['message'] ??
-            'Server error (${e.response?.statusCode})';
+        msg = e.response?.data?['message'] ?? 'Server error (${e.response?.statusCode})';
       } else if (e.type == dio.DioExceptionType.connectionTimeout) {
-        msg = 'Connection timed out. Check your internet and try again.';
+        msg = 'Connection timed out. Check your internet.';
       } else if (e.type == dio.DioExceptionType.receiveTimeout) {
-        msg = 'Server took too long to respond. Please retry.';
+        msg = 'Server took too long to respond.';
       } else {
         msg = 'Network error. Please check your connection.';
       }
       errorMessage.value = msg;
       return {'status': 500, 'message': msg};
+
     } catch (e) {
       debugPrint('❌ submitKYC error: $e');
       final msg = 'Unexpected error: ${e.toString()}';
       errorMessage.value = msg;
       return {'status': 500, 'message': msg};
+
     } finally {
       isSubmitting.value = false;
     }
   }
-
   // ──────────────────────────────────────────
   // Image Picker Helpers
   // ──────────────────────────────────────────

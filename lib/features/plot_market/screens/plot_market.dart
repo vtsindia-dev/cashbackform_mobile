@@ -31,7 +31,8 @@ class PlotMarket extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(PlotMarketController controller) {
+  Widget _buildContent(PlotMarketController
+  controller) {
     return Column(
       children: [
         _buildSearchFilterSection(controller),
@@ -60,7 +61,7 @@ class PlotMarket extends StatelessWidget {
             Padding(
               padding: EdgeInsets.only(top: 0.h),
               child: CompactNoteCard(
-                title: "Gioo Land Information",
+                title: "Land Information",
                 description: settings.landDescription!,
                 icon: Icons.lan,
               ),
@@ -241,7 +242,6 @@ class PlotMarket extends StatelessWidget {
       ),
     );
   }
-
   void _showFilterSheet(PlotMarketController controller) {
     showModalBottomSheet(
       context: Get.context!,
@@ -250,11 +250,10 @@ class PlotMarket extends StatelessWidget {
       builder: (context) => _ModernFilterSheet(controller: controller),
     );
   }
+
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Modern Filter Sheet
-// ─────────────────────────────────────────────────────────────────────────────
+
 class _ModernFilterSheet extends StatefulWidget {
   final PlotMarketController controller;
   const _ModernFilterSheet({required this.controller});

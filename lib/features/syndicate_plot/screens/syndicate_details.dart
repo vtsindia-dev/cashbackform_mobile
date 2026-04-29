@@ -58,12 +58,12 @@ class _SyndicateDetailsState extends State<SyndicateDetails> {
                   children: [
                     AboutPlot(),
                     SchemeOverview(),
-                    ReservePlotsScreen(reserveButtonKey: _reserveButtonKey), // Pass the key
+                    ReservePlotsScreen(reserveButtonKey: _reserveButtonKey),
                     LegalDocumentsScreen(),
                     SyndicateBlueprint(),
                     SyndicateNearby(),
                     Description(),
-                    Referrals(reservePlotsKey: _reserveButtonKey), // Pass the same key
+                    Referrals(reservePlotsKey: _reserveButtonKey),
                     SizedBox(height: 45,)
                   ],
                 ),

@@ -59,6 +59,7 @@ class _ResidentialPropertiesScreenState extends State<ResidentialPropertiesScree
           if (settings.plotDescription != null &&
               settings.plotDescription!.isNotEmpty)
             Padding(
+
               padding: EdgeInsets.only(top: 0.h),
               child: CompactNoteCard(
                 title: "Gioo Flat/Villas Information",
@@ -118,7 +119,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   void _initFilters() {
     final c = widget.controller;
 
-    // Price Init
+
     _priceChanged = c.selectedMinPrice.value.isNotEmpty;
     double startP = _priceChanged ? double.parse(c.selectedMinPrice.value) : c.priceMin.value;
     double endP = c.selectedMaxPrice.value.isNotEmpty ? double.parse(c.selectedMaxPrice.value) : c.priceMax.value;
@@ -126,8 +127,6 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       startP.clamp(c.priceMin.value, c.priceMax.value),
       endP.clamp(c.priceMin.value, c.priceMax.value),
     );
-
-    // Area Init
     _areaChanged = c.selectedMinArea.value.isNotEmpty;
     double startA = _areaChanged ? double.parse(c.selectedMinArea.value) : c.sqftMin.value.toDouble();
     double endA = c.selectedMaxArea.value.isNotEmpty ? double.parse(c.selectedMaxArea.value) : c.sqftMax.value.toDouble();

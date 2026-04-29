@@ -20,9 +20,7 @@ class _LoginState extends State<Login> {
   @override
   void initState() {
     super.initState();
-    // Listen to phone number changes
     authController.phoneController.addListener(() {
-      // When user manually types, reset the auto-fill flag
       if (authController.hasShownPhoneHint.value) {
         authController.hasShownPhoneHint.value = false;
       }

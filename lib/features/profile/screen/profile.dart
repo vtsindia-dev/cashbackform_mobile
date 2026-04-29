@@ -207,7 +207,6 @@ class ProfileForm extends StatelessWidget {
             hint: 'john.doe@email.com',
             icon: Icons.email_outlined,
             isRequired: true,
-            enabled: false,
             index: 2,
           ),
           SizedBox(height: 16.h),

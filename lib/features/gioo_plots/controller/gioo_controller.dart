@@ -146,7 +146,17 @@ class GiooPlotController extends GetxController {
         selectedState.value != null ||
         selectedCity.value != null;
   }
-
+  void resetAllFilters() {
+    selectedPlotTypes.clear();
+    minPrice.value = '';
+    maxPrice.value = '';
+    minAreaSqft.value = '';
+    selectedState.value = null;
+    selectedCity.value = null;
+    cities.clear();
+    searchQuery.value = '';
+    searchController.clear();
+  }
   // Get active filter count for UI
   int getActiveFilterCount() {
     int count = selectedPlotTypes.length;
@@ -1705,41 +1715,71 @@ class GiooPlotController extends GetxController {
       isCouponLoading.value = true;
       final String? token = await SessionManager.getToken();
       final response = await ApiService.postRequestWithToken(
-        ApiUrl.applyCoupon,
+          ApiUrl.applyCoupon,
           data: {
             "coupon_code": code,
           },
-          token: token??''
+          token: token ?? ''
       );
 
       if (response.statusCode == 200) {
         final data = response.data;
 
         if (data['status'] == true) {
-          discountAmount.value =
-              double.tryParse(data['data']['amount'].toString()) ?? 0.0;
+          final couponAmount = double.tryParse(data['data']['amount'].toString()) ?? 0.0;
+
+          // Calculate current total and special discount first
+          double total = totalAmount.value;
+          double specialDiscount = 0.0;
+
+          if (discountMaxCost.value > 0 && total >= discountMaxCost.value) {
+            specialDiscount = (total * discountPercentage.value) / 100;
+            if (specialDiscount > discountMaxCost.value) {
+              specialDiscount = discountMaxCost.value;
+            }
+          }
+
+          // Calculate amount after special discount
+          double amountAfterSpecialDiscount = total - specialDiscount;
+
+          // ✅ Check if coupon discount exceeds amount after special discount
+          if (couponAmount > amountAfterSpecialDiscount) {
+            Fluttertoast.showToast(
+              msg: "Coupon amount ₹${couponAmount.toStringAsFixed(2)} More than payable ₹${amountAfterSpecialDiscount.toStringAsFixed(2)}",              gravity: ToastGravity.BOTTOM,
+              toastLength: Toast.LENGTH_LONG,
+            );
+            discountAmount.value = 0.0;
+            isApplied.value = false;
+            calculateFinalAmount();
+            return;
+          }
+
+          // ✅ Apply coupon if validation passes
+          discountAmount.value = couponAmount;
           isApplied.value = true;
           calculateFinalAmount();
           Fluttertoast.showToast(msg: data['message']);
         } else {
           discountAmount.value = 0.0;
+          isApplied.value = false;
           calculateFinalAmount();
           Fluttertoast.showToast(msg: data['message']);
         }
       } else {
         discountAmount.value = 0.0;
+        isApplied.value = false;
         calculateFinalAmount();
         Fluttertoast.showToast(msg: "Something went wrong");
       }
     } catch (e) {
       discountAmount.value = 0.0;
+      isApplied.value = false;
       calculateFinalAmount();
       Fluttertoast.showToast(msg: "Error applying coupon");
     } finally {
       isCouponLoading.value = false;
     }
   }
-
   void resetValues() {
     totalAmount.value = 0.0;
     discountAmount.value = 0.0;
@@ -1792,6 +1832,23 @@ class GiooPlotController extends GetxController {
     specialDiscountAmount.value = specialDiscount;
 
     double couponDiscount = isApplied.value ? discountAmount.value : 0.0;
+
+    // ✅ Auto-remove coupon if it exceeds amount after special discount
+    double amountAfterSpecialDiscount = total - specialDiscount;
+    if (isApplied.value && couponDiscount > amountAfterSpecialDiscount) {
+      isApplied.value = false;
+      discountAmount.value = 0.0;
+      couponController.clear();
+      couponDiscount = 0.0;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Fluttertoast.showToast(
+          msg: "Coupon removed - exceeds order value",
+          gravity: ToastGravity.BOTTOM,
+        );
+      });
+    }
+
     double appliedDiscount = specialDiscount + couponDiscount;
     appliedDiscountAmount.value = appliedDiscount;
 
@@ -1818,8 +1875,7 @@ class GiooPlotController extends GetxController {
     print(
       '💰 Total=$total, Special=$specialDiscount, Coupon=$couponDiscount, Applied=$appliedDiscount, Wallet=$walletUsed, Final=${finalPayable.value}',
     );
-  }
-}
+  }}
 
 class PlotUnit {
   final int id;

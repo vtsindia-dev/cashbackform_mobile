@@ -213,7 +213,7 @@ class AboutPlot extends StatelessWidget {
             // Share button
             GestureDetector(
               onTap: () {
-                final id = controller.syndicateDetail.value?.id;
+                final id = controller.syndicateDetail.value?.id?? '';
                 if (id == null) return;
                 final cleanBase =
                 ApiUrl.WebsidebaseUrl.replaceAll('/public', '');

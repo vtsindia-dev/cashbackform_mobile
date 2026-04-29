@@ -4,18 +4,16 @@ import 'package:cashback_farms/common/widget/api_service.dart';
 import 'package:cashback_farms/features/search/model/common_search_model.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 class FilterModel {
-final String title;
-final String value;
+  final String title;
+  final String value;
 
-FilterModel({required this.title, required this.value});
+    FilterModel({required this.title, required this.value});
 }
 
-
 class CommonSearchController extends GetxController {
-
-
   List<FilterModel> filterCategoryItems = [
     FilterModel(title: 'All', value: 'all'),
     FilterModel(title: 'Land', value: 'market'),
@@ -40,9 +38,70 @@ class CommonSearchController extends GetxController {
   int totalPages = 1;
 
   List<CommonSearchModel> searchList = [];
+  List<CommonSearchModel> suggestionList = [];
+  Timer? _debounceTimer;
+
+  @override
+  void onInit() {
+    super.onInit();
+    searchTextController.addListener(_onSearchTextChanged);
+  }
+
+  @override
+  void onClose() {
+    _debounceTimer?.cancel();
+    searchTextController.removeListener(_onSearchTextChanged);
+    searchTextController.dispose();
+    super.onClose();
+  }
+
+  void _onSearchTextChanged() {
+    // Clear suggestions immediately when text is empty
+    if (searchTextController.text.isEmpty) {
+      suggestionList.clear();
+      update();
+      return;
+    }
+
+    // Debounce the API call for non-empty text
+    if (_debounceTimer?.isActive ?? false) _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (searchTextController.text.isNotEmpty) {
+        fetchSuggestions();
+      }
+    });
+  }
+
+  Future<void> fetchSuggestions() async {
+    try {
+      String url = "${ApiUrl.searchApi}?page=1&per_page=10";
+      String selectedCategory = filterCategoryItems[selectedIndex].value;
+
+      if (selectedCategory != "all") {
+        url += "&property_type=$selectedCategory";
+      }
+      if (searchTextController.text.isNotEmpty) {
+        url += "&search=${searchTextController.text}";
+      }
+
+      final response = await ApiService.getRequest(url);
+
+      if (response.data != null) {
+        List list = response.data['data']?['items'] ?? [];
+        List<CommonSearchModel> tempList = list.map((e) => CommonSearchModel.fromJson(e)).toList();
+        suggestionList = tempList;
+        update();
+      }
+    } catch (e) {
+      Loggers.error('Suggestion Error :: $e');
+      suggestionList = [];
+      update();
+    }
+  }
 
   Future<void> resetSearch() async {
     searchList.clear();
+    suggestionList.clear();
     currentPage = 1;
     totalPages = 1;
     isLoadMore = false;
@@ -53,7 +112,6 @@ class CommonSearchController extends GetxController {
   }
 
   Future<void> fetchSearch({bool isInitialLoad = true}) async {
-
     if (isInitialLoad) {
       searchList.clear();
       currentPage = 1;
@@ -88,6 +146,7 @@ class CommonSearchController extends GetxController {
           !searchList.any((old) => old.id == newItem.id)).toList();
           searchList.addAll(newItems);
         }
+        suggestionList.clear();
       }
     } catch (e) {
       Loggers.error('Search Error :: $e');

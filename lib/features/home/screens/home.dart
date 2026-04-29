@@ -3,6 +3,7 @@ import 'package:cashback_farms/common/widget/carousel.dart';
 import 'package:cashback_farms/features/home/widget/featured_gio_rental_yield_plots.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../common/widget/loader.dart';
 import '../../drawer/screen/drawer.dart';
 import '../controller/homecontroller.dart';
@@ -27,7 +28,32 @@ class _HomeState extends State<Home> {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   final HomeController controller = Get.put(HomeController());
-
+  void _launchURL(String url) async {
+    try {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar(
+          'Error',
+          'Cannot open link',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Invalid URL',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,23 +77,55 @@ class _HomeState extends State<Home> {
                   HomeSearchBar(),
                   const SizedBox(height: 20),
 
-                  Obx(() {
-                    return CarouselWidget(
-                      images: controller.featuredBanners.isNotEmpty
-                          ? controller.featuredBanners
-                          .map((banner) => banner.image)
-                          .where((image) => image.isNotEmpty)
-                          .toList()
-                          : [
-                        'assets/images/banner1.png',
-                        'assets/images/banner2.png',
-                      ],
-                      height: 160,
-                      autoPlayDuration: Duration(seconds: 3),
-                      borderRadius: 20,
-                    );
-                  }),
-                  const SizedBox(height: 10),
+                Obx(() {
+                  final banners = controller.featuredBanners;
+                  final List<String> images = banners.isNotEmpty
+                      ? banners.map((banner) => banner.image).where((image) => image.isNotEmpty).toList()
+                      : ['assets/images/banner1.png', 'assets/images/banner2.png'];
+
+                  final List<String> redirectUrls = banners.isNotEmpty
+                      ? banners
+                      .map((banner) => banner.redirectUrl)
+                      .where((url) => url != null && url.isNotEmpty)
+                      .cast<String>()
+                      .toList()
+                      : [];
+
+                  return CarouselWidget(
+                    images: images,
+                    redirectUrls: redirectUrls.isNotEmpty ? redirectUrls : null,
+                    height: 160,
+                    autoPlayDuration: const Duration(seconds: 3),
+                    borderRadius: 20,
+                    onTap: (url) {
+                      if (url.isNotEmpty) {
+                        print('Banner tapped with URL: $url');
+
+                        // Handle different URL patterns
+                        if (url.contains('residential-property')) {
+                          // Navigate to residential property screen
+                          // Get.toNamed(AppRoutes.residentialDetails);
+                        } else if (url.contains('plot-marketplace')) {
+                          // Navigate to plot marketplace
+                          // Get.toNamed(AppRoutes.plotMarket);
+                        } else if (url.contains('syndicate-plots')) {
+                          // Navigate to syndicate plots
+                          // Get.toNamed(AppRoutes.syndicateDetails);
+                        } else {
+                          // Open external URL
+                          _launchURL(url);
+                        }
+                      }
+                    },
+                    onError: (index, error) {
+                      // Handle image loading errors silently
+                      print('Image failed to load at index $index: $error');
+                    },
+                  );
+                }),
+
+// Add this method in your widget
+                              const SizedBox(height: 10),
                   PropertyMain(),
                   const SizedBox(height: 20),
                   Column(

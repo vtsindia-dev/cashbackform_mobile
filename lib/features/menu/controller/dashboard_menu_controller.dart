@@ -73,6 +73,9 @@ class DashboardController extends GetxController {
   bool _isServiceRequestInProgress = false;
   bool _isVendorRequestInProgress = false;
   bool _isAgentRequestInProgress = false;
+
+
+
   @override
   void onInit() {
     super.onInit();
@@ -123,27 +126,20 @@ class DashboardController extends GetxController {
     }
   }
 
-  // ===============================
-  // SERVICE REQUESTS
-  // ===============================
   Future<void> fetchServiceRequests() async {
     if (_isServiceRequestInProgress) {
       print('⏸️ Service requests already in progress');
       return;
     }
-
     try {
       _isServiceRequestInProgress = true;
       isLoadingServiceRequests(true);
-
       final token = await SessionManager.getToken();
       print('📡 Fetching service requests...');
-
       final response = await ApiService.getRequest(
         ApiUrl.serviceRequest,
         headers: {'Authorization': 'Bearer $token'},
       );
-
       if (response.statusCode == 200 && response.data != null) {
         if (response.data['status'] == true) {
           final List<dynamic> data = response.data['data'] ?? [];
@@ -164,18 +160,14 @@ class DashboardController extends GetxController {
       _isServiceRequestInProgress = false;
     }
   }
-
-
   Future<void> fetchVendorRequests() async {
     if (_isVendorRequestInProgress) {
       print('⏸️ Vendor requests already in progress');
       return;
     }
-
     try {
       _isVendorRequestInProgress = true;
       isLoadingVendorRequests(true);
-
       final token = await SessionManager.getToken();
       print('📡 Fetching vendor requests...');
 
@@ -212,12 +204,10 @@ class DashboardController extends GetxController {
     try {
       _isAgentRequestInProgress = true;
       isLoadingAgentRequests(true);
-
       final token = await SessionManager.getToken();
       print('📡 Fetching agent requests...');
-
       final response = await ApiService.getRequest(
-        ApiUrl.agentRequest, // Make sure this is defined in your ApiUrl
+        ApiUrl.agentRequest,
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -280,7 +270,7 @@ class DashboardController extends GetxController {
 
   Future<void> fetchDashboard() async {
     if (_isRequestInProgress) {
-      Loggers.error('⏸️ Dashboard request already in progress');
+      Loggers.error('⏸️ Dashboard request already   progress');
       return;
     }
 

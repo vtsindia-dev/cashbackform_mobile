@@ -148,7 +148,6 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  // Updated Header with Map Widget using lat/lng
   Widget _buildHeaderWithMap(double latitude, double longitude, String address) {
     final String googleMapsUrl = 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude&query_place_id=${Uri.encodeComponent(address)}';
     final String googleMapsAppUrl = 'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving';

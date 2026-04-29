@@ -92,17 +92,15 @@ class ResidentialPropertyController extends GetxController {
         isLoadMore(false); // Ensure load more is reset
       }
 
-      // Don't fetch if already loading more or no more data
       if (loadMore && (!hasMoreData.value || isLoadMore.value)) {
         return;
       }
 
       if (loadMore) {
         isLoadMore(true);
-        currentPage.value++; // Increment page only when loading more
+        currentPage.value++;
       } else {
         isLoading(true);
-        // Don't reset currentPage here unless it's a refresh
         if (!refresh) {
           currentPage.value = 1;
         }

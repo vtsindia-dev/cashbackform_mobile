@@ -46,7 +46,7 @@ class _CommonFacilityWidgetState
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 10, 12),
           child: Text(
-            "Common Facilities",
+            "Common   ",
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w800,
@@ -101,8 +101,7 @@ class _CommonFacilityWidgetState
               shape: BoxShape.circle,
             ),
             child: ClipRRect(
-              borderRadius:
-              BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(4),
               child: Image.network(
                 item.image ?? '',
                 height: 32,

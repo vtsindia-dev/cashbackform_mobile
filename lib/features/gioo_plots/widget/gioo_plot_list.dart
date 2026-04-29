@@ -23,7 +23,7 @@ class GiooPlotList extends StatelessWidget {
       }
 
       if (plots.isEmpty) {
-        return const Center(child: Text('No Gioo plots found'));
+        return const Center(child: Text('No Gioo Nano Plots found'));
       }
 
       final rowCount = (plots.length / 2).ceil();
@@ -97,11 +97,10 @@ class GiooPlotList extends StatelessWidget {
       onTap: () {
         print("View Gioo Plot: ${plot.name}");
         Get.toNamed('/giooDetails', arguments: {"id": plot.id, "title": plot.name});
-
+        print('the Gioo plot is printed ');
+        print('');
       },
-    )
-        .animate()
-        .scale(
+    ).animate().scale(
       begin: const Offset(0.8, 0.8),
       end: const Offset(1, 1),
       duration: 600.ms,

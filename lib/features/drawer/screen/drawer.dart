@@ -1,5 +1,4 @@
-import 'package:cashback_farms/features/menu/screens/about_us.dart';
-import 'package:cashback_farms/features/contact/screens/contact_us.dart';
+ import 'package:cashback_farms/features/menu/screens/about_us.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
@@ -101,10 +100,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Residential Enquiry', onTap: () => Get.toNamed('/myResidentialEnquiry')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'Rental Yield', onTap: () => Get.toNamed('/rentalYieldList')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'Rental Yield Enquiry', onTap: () => Get.toNamed('/rentalEnquiry')),
-                  _menuOption(context, asset: Images.plotRegistered, title: 'Plot Market Enquiry', onTap: () => Get.toNamed('/plotMarketEnquiry')),
+                  _menuOption(context, asset: Images.plotRegistered, title: 'Land Enquiry', onTap: () => Get.toNamed('/plotMarketEnquiry')),
                   // _menuOption(context, asset: Images.aboutUs, title: 'About Us', onTap: () => Get.to(()=>AboutUs())),
                   _menuOption(context, asset: Images.contactUs, title: 'Contact Us', onTap: () => Get.toNamed('/contactus')),
-                  _menuOption(context, asset: Images.plotRegistered, title: 'My Plot market', onTap: () => Get.toNamed('/myProperty')),
+                  _menuOption(context, asset: Images.plotRegistered, title: 'My Land', onTap: () => Get.toNamed('/myProperty')),
                   _menuOption(context, asset: Images.logout, title: 'Logout', onTap: () => _showLogoutConfirmation(context)),
                   _menuOption(context, asset: Images.delete, title: 'Delete Account', delete: true, onTap: () => _showDeleteAccountConfirmation(context),
                   ),

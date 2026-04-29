@@ -1,20 +1,23 @@
 import 'dart:math';
-import 'package:cashback_farms/features/gift_coupon_and_encashment/screen/encashment_screen.dart';
-import 'package:cashback_farms/features/gift_coupon_and_encashment/screen/gift_screen.dart';
-import 'package:cashback_farms/features/menu/screens/about_us.dart';
-import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
-import 'package:cashback_farms/features/menu/screens/terms_&_conditions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
 import '../../../common/route/router.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../../common/widget/loader.dart';
+import '../../gift_coupon_and_encashment/screen/encashment_screen.dart';
+import '../../gift_coupon_and_encashment/screen/gift_screen.dart';
+import '../../menu/screens/about_us.dart';
+import '../../menu/controller/dashboard_menu_controller.dart';
+import '../../menu/screens/terms_&_conditions.dart';
 import '../../company_profile/screen/add_company_profile.dart';
 
 class Menu extends StatefulWidget {
@@ -25,7 +28,6 @@ class Menu extends StatefulWidget {
 }
 
 class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
-  String selectedRole = "User";
   late DashboardController dashboardController;
   late AnimationController _progressController;
 
@@ -41,10 +43,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        selectedRole =
-            dashboardController.profile.value?.role?.role ?? "User";
-      });
       _progressController.forward();
     });
   }
@@ -75,7 +73,15 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                   .animate()
                   .fade(duration: 400.ms)
                   .slideY(begin: -0.15),
-              SizedBox(height: 16.h),
+              SizedBox(height: 14.h),
+              _buildRoleChips()
+                  .animate()
+                  .fade(duration: 420.ms, delay: 20.ms),
+              SizedBox(height: 12.h),
+              _buildReferralCodeCard()
+                  .animate()
+                  .fade(duration: 430.ms, delay: 30.ms),
+              SizedBox(height: 12.h),
               _buildWalletCard()
                   .animate()
                   .fade(duration: 430.ms, delay: 60.ms),
@@ -84,8 +90,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                   .animate()
                   .fade(duration: 430.ms, delay: 120.ms),
               SizedBox(height: 20.h),
-              _buildRoleSection(),
-              SizedBox(height: 24.h),
               _buildSectionLabel("Menu"),
               SizedBox(height: 10.h),
               _buildMenuList()
@@ -97,6 +101,397 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         );
       }),
     );
+  }
+
+  // ─── ROLE CHIPS (display only — no list content switching) ───────────────
+
+  Widget _buildRoleChips() {
+    final profile = dashboardController.profile.value;
+    if (profile == null) return const SizedBox.shrink();
+
+    final bool isAgent = profile.isAgent == 1;
+    final bool isVendor = profile.isVendor == 1;
+    final bool isServices = profile.isServices == 1;
+
+    // If user has only the base role, no chips needed
+    if (!isAgent && !isVendor && !isServices) return const SizedBox.shrink();
+
+    final List<_RoleChipData> chips = [];
+
+    // Always include User chip
+    chips.add(_RoleChipData(
+      label: "User",
+      icon: Icons.person_rounded,
+      color: AppColor.primary,
+    ));
+
+    if (isAgent) {
+      chips.add(_RoleChipData(
+        label: "Agent",
+        icon: Icons.support_agent_rounded,
+        color: const Color(0xFF2563EB),
+      ));
+    }
+
+    if (isVendor) {
+      chips.add(_RoleChipData(
+        label: "Vendor",
+        icon: Icons.storefront_rounded,
+        color: AppColor.orange,
+      ));
+    }
+
+    if (isServices) {
+      chips.add(_RoleChipData(
+        label: "Service",
+        icon: Icons.build_circle_rounded,
+        color: const Color(0xFF7C3AED),
+      ));
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: AppColor.white,
+        borderRadius: BorderRadius.circular(18.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Your Roles",
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColor.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
+            children: chips.map((chip) => _buildSingleRoleChip(chip)).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSingleRoleChip(_RoleChipData chip) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+      decoration: BoxDecoration(
+        color: chip.color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: chip.color.withOpacity(0.35), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 22.w,
+            height: 22.w,
+            decoration: BoxDecoration(
+              color: chip.color.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(chip.icon, size: 12.sp, color: chip.color),
+          ),
+          SizedBox(width: 6.w),
+          Text(
+            chip.label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: chip.color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── REFERRAL CODE CARD ─────────────────────────────────────────────────────
+  //
+  // Rules (from spec):
+  // user only                                              → NO
+  // user + Agent                                           → YES
+  // user + Vendor (Company/Material profile)               → YES
+  // user + Service only                                    → NO
+  // user + Service + Agent                                 → YES
+  // user + Agent + Vendor                                  → YES
+  // user + Vendor + Service                                → YES
+  // user + Agent + Vendor + Service                        → YES
+
+  Widget _buildReferralCodeCard() {
+    final profile = dashboardController.profile.value;
+    if (profile == null) return const SizedBox.shrink();
+
+    final bool isAgent    = profile.isAgent == 1;
+    final bool isVendor   = profile.isVendor == 1;
+    final bool isServices = profile.isServices == 1;
+
+    final bool shouldShow = _shouldShowReferralCode(
+      isAgent: isAgent,
+      isVendor: isVendor,
+      isServices: isServices,
+    );
+
+    if (!shouldShow || profile.code == null || profile.code!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final String message = _getReferralMessage(
+      isAgent: isAgent,
+      isVendor: isVendor,
+      isServices: isServices,
+    );
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColor.primary.withOpacity(0.13),
+            AppColor.primarylite.withOpacity(0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: AppColor.primary.withOpacity(0.25), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.primary.withOpacity(0.07),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: AppColor.primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(Icons.card_giftcard_rounded,
+                    color: AppColor.primary, size: 18.sp),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.textMain,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+
+          // ── Code box
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(
+                  color: AppColor.primary.withOpacity(0.18), width: 1),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Your Referral Code",
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: AppColor.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      // Letter-by-letter boxes
+                      Wrap(
+                        spacing: 4.w,
+                        children: profile.code!.split('').map((char) {
+                          return Container(
+                            width: 24.w,
+                            height: 30.h,
+                            decoration: BoxDecoration(
+                              color: AppColor.primary.withOpacity(0.07),
+                              borderRadius: BorderRadius.circular(6.r),
+                              border: Border.all(
+                                color: AppColor.primary.withOpacity(0.22),
+                                width: 1,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              char,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColor.primary,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Column(
+                  children: [
+                    _buildCopyButton(profile.code!),
+                    SizedBox(height: 6.h),
+                    _buildShareButton(profile.code!),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Core referral visibility logic
+  bool _shouldShowReferralCode({
+    required bool isAgent,
+    required bool isVendor,
+    required bool isServices,
+  }) {
+    // Pure User → NO
+    if (!isAgent && !isVendor && !isServices) return false;
+
+    // Service only → NO
+    if (!isAgent && !isVendor && isServices) return false;
+
+    // All remaining combos → YES
+    // Agent only          → YES
+    // Vendor only         → YES
+    // Service + Agent     → YES
+    // Agent + Vendor      → YES
+    // Vendor + Service    → YES
+    // Agent+Vendor+Service→ YES
+    return true;
+  }
+
+  String _getReferralMessage({
+    required bool isAgent,
+    required bool isVendor,
+    required bool isServices,
+  }) {
+    if (isAgent && !isVendor && !isServices) {
+      return "Share your code & earn rewards when others join as Agents!";
+    }
+    if (!isAgent && isVendor && !isServices) {
+      return "Share your code with other vendors and earn rewards!";
+    }
+    if (isAgent && !isVendor && isServices) {
+      return "Share your code to grow your Agent & Service network!";
+    }
+    if (isAgent && isVendor && !isServices) {
+      return "Share your code to expand your Agent & Vendor network!";
+    }
+    if (!isAgent && isVendor && isServices) {
+      return "Share your code to grow your Vendor & Service network!";
+    }
+    if (isAgent && isVendor && isServices) {
+      return "Share your code to expand your multi-role network!";
+    }
+    return "Share your referral code and earn exciting rewards!";
+  }
+
+  Widget _buildCopyButton(String code) {
+    return GestureDetector(
+      onTap: () {
+        Clipboard.setData(ClipboardData(text: code));
+        SnackBarHelper.showSuccess(
+          "Referral code copied!",
+          duration: const Duration(seconds: 2),
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+        decoration: BoxDecoration(
+          color: AppColor.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10.r),
+          border:
+          Border.all(color: AppColor.primary.withOpacity(0.2), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.copy_rounded, size: 13.sp, color: AppColor.primary),
+            SizedBox(width: 4.w),
+            Text(
+              "Copy",
+              style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColor.primary,
+                  fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShareButton(String code) {
+    return GestureDetector(
+      onTap: () async {
+        final profile = dashboardController.profile.value;
+        final role = profile?.role?.role ?? "User";
+        await Share.share(_getShareMessage(code, role));
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+        decoration: BoxDecoration(
+          color: AppColor.primary,
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.share_rounded, size: 13.sp, color: Colors.white),
+            SizedBox(width: 4.w),
+            Text(
+              "Share",
+              style: TextStyle(
+                  fontSize: 11.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getShareMessage(String code, String role) {
+    return "Join me on Cashback Farms! Use my referral code: $code to get started as a $role and earn exciting rewards! 🚀\n\nDownload the app now!";
   }
 
   // ─── HEADER ────────────────────────────────────────────────────────────────
@@ -129,8 +524,8 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
             padding: EdgeInsets.all(3.w),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                  color: Colors.white.withOpacity(0.55), width: 2),
+              border:
+              Border.all(color: Colors.white.withOpacity(0.55), width: 2),
             ),
             child: CircleAvatar(
               radius: 32.r,
@@ -139,10 +534,8 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
               (profile?.avatar != null && profile!.avatar.isNotEmpty)
                   ? NetworkImage(profile.avatar)
                   : null,
-              child:
-              (profile?.avatar == null || profile!.avatar.isEmpty)
-                  ? Icon(Icons.person_rounded,
-                  size: 28.sp, color: Colors.white)
+              child: (profile?.avatar == null || profile!.avatar.isEmpty)
+                  ? Icon(Icons.person_rounded, size: 28.sp, color: Colors.white)
                   : null,
             ),
           ),
@@ -164,8 +557,8 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                 ),
                 SizedBox(height: 6.h),
                 Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 10.w, vertical: 3.h),
+                  padding:
+                  EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20.r),
@@ -199,7 +592,9 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
   // ─── WALLET CARD ────────────────────────────────────────────────────────────
 
   Widget _buildWalletCard() {
-    final walletBalance = double.tryParse(dashboardController.profile.value?.walletBalance ?? "0") ?? 0;
+    final walletBalance = double.tryParse(
+        dashboardController.profile.value?.walletBalance ?? "0") ??
+        0;
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
@@ -252,8 +647,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
             ),
           ),
           Container(
-            padding:
-            EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
             decoration: BoxDecoration(
               color: AppColor.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12.r),
@@ -280,7 +674,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         dashboardController.profile.value?.cumulativeAmount ?? "0") ??
         0;
 
-    // Use BusinessSettings helper methods — all dynamic from API
     final double milestone = settings?.cumulativeMaxCostValue ?? 5000.0;
     final double walletCredit = settings?.walletCreditAmount ?? 500.0;
     final double progressRaw =
@@ -313,7 +706,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       ),
       child: Column(
         children: [
-          // Top: ring + stats
           Padding(
             padding: EdgeInsets.all(18.w),
             child: Row(
@@ -322,8 +714,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                 AnimatedBuilder(
                   animation: _progressController,
                   builder: (context, _) {
-                    final animated =
-                        _progressController.value * progress;
+                    final animated = _progressController.value * progress;
                     return SizedBox(
                       width: 96.w,
                       height: 96.w,
@@ -331,8 +722,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                         painter: _SmoothRingPainter(
                           progress: animated,
                           activeColor: AppColor.primary,
-                          trackColor:
-                          AppColor.primarylite.withOpacity(0.4),
+                          trackColor: AppColor.primarylite.withOpacity(0.4),
                         ),
                         child: Center(
                           child: Column(
@@ -349,9 +739,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                               Text(
                                 "done",
                                 style: TextStyle(
-                                  fontSize: 10.sp,
-                                  color: AppColor.grey,
-                                ),
+                                    fontSize: 10.sp, color: AppColor.grey),
                               ),
                             ],
                           ),
@@ -406,8 +794,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
               ],
             ),
           ),
-
-          // Progress bar
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 18.w),
             child: Column(
@@ -419,8 +805,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                     Text(
                       "Next: ₹${nextMilestone.toStringAsFixed(0)}",
                       style: TextStyle(
-                          fontSize: 11.sp,
-                          color: AppColor.textSecondary),
+                          fontSize: 11.sp, color: AppColor.textSecondary),
                     ),
                     Text(
                       "₹${remaining.toStringAsFixed(0)} left",
@@ -452,11 +837,8 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
               ],
             ),
           ),
-
           SizedBox(height: 16.h),
           Divider(height: 1, color: AppColor.lightGrey),
-
-          // Dynamic description from BusinessSettings.cumulativeDescription
           _buildCumulativeDescription(settings, walletCredit, milestone),
         ],
       ),
@@ -480,8 +862,8 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                   fontWeight: FontWeight.w700,
                   color: textColor)),
           Text(label,
-              style: TextStyle(
-                  fontSize: 9.sp, color: AppColor.textSecondary)),
+              style:
+              TextStyle(fontSize: 9.sp, color: AppColor.textSecondary)),
         ],
       ),
     );
@@ -489,15 +871,12 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
 
   Widget _buildCumulativeDescription(
       dynamic settings, double walletCredit, double milestone) {
-    // Pull directly from BusinessSettings.cumulativeDescription (API field)
     final String rawDesc = settings?.cumulativeDescription ?? "";
-
     List<_DescItem> items;
 
     if (rawDesc.isNotEmpty) {
       items = _parseCumulativeDescription(rawDesc);
     } else {
-      // Fallback with computed values from settings helpers
       items = [
         _DescItem(
           icon: Icons.block_rounded,
@@ -556,8 +935,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     );
   }
 
-  /// Parses the cumulative_description string into structured items.
-  /// Sections are separated by double newlines; each starts with a keyword label.
   List<_DescItem> _parseCumulativeDescription(String raw) {
     final Map<String, Map<String, dynamic>> keywordMap = {
       "Exclusion": {
@@ -668,450 +1045,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     );
   }
 
-  // ─── ROLE SECTION ───────────────────────────────────────────────────────────
-
-  Widget _buildRoleSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildRoleButtons(),
-        SizedBox(height: 14.h),
-        _buildRoleBasedContent(),
-      ],
-    );
-  }
-
-  Widget _buildRoleButtons() {
-    final List<String> roles = ["User", "Agent", "Vendor"];
-    return Container(
-      height: 46.h,
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: roles.map((role) {
-          final bool active = selectedRole == role;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() => selectedRole = role);
-                dashboardController.fetchDataForRole(role);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeInOut,
-                margin: EdgeInsets.symmetric(horizontal: 2.w),
-                decoration: BoxDecoration(
-                  color: active ? AppColor.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(11.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  role,
-                  style: TextStyle(
-                    color: active ? AppColor.white : AppColor.grey,
-                    fontWeight:
-                    active ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 14.sp,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildRoleBasedContent() {
-    if (selectedRole == "Agent" &&
-        dashboardController.isLoadingAgentRequests.value) {
-      return _buildLoadingShimmer();
-    } else if (selectedRole == "Vendor" &&
-        dashboardController.isLoadingVendorRequests.value) {
-      return _buildLoadingShimmer();
-    } else if (selectedRole == "User" &&
-        dashboardController.isLoadingServiceRequests.value) {
-      return _buildLoadingShimmer();
-    }
-
-    switch (selectedRole) {
-      case "Agent":
-        return _buildAgentContent();
-      case "Vendor":
-        return _buildVendorContent();
-      default:
-        return _buildUserContent();
-    }
-  }
-
-  Widget _buildLoadingShimmer() {
-    return Container(
-      height: 130.h,
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(18.r),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(
-                color: AppColor.primary, strokeWidth: 2.5),
-            SizedBox(height: 10.h),
-            Text(
-              "Loading $selectedRole data...",
-              style: TextStyle(
-                  fontSize: 13.sp, color: AppColor.textSecondary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─── USER CONTENT ───────────────────────────────────────────────────────────
-
-  Widget _buildUserContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionLabel("Overview"),
-        SizedBox(height: 12.h),
-        _buildDashboardGrid(),
-      ],
-    );
-  }
-
-  Widget _buildDashboardGrid() {
-    final c = dashboardController;
-    final List<Map<String, dynamic>> data = [
-      {
-        "title": "Plot Enquiries",
-        "count": c.marketEnquiryCount.value,
-        "percent": c.marketEnquiryCount.value > 0 ? 70 : 0,
-        "color": AppColor.primary,
-        "icon": Icons.landscape_rounded,
-      },
-      {
-        "title": "Material Enquiries",
-        "count": c.materialEnquiryCount.value,
-        "percent": c.materialEnquiryCount.value > 0 ? 55 : 0,
-        "color": AppColor.orange,
-        "icon": Icons.inventory_2_rounded,
-      },
-      {
-        "title": "Residential",
-        "count": c.residentialEnquiry.value,
-        "percent": c.residentialEnquiry.value > 0 ? 40 : 0,
-        "color": AppColor.info,
-        "icon": Icons.home_rounded,
-      },
-      {
-        "title": "My Properties",
-        "count": c.myProperties.value,
-        "percent": c.myProperties.value > 0 ? 60 : 0,
-        "color": AppColor.accent,
-        "icon": Icons.villa_rounded,
-      },
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: data.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12.w,
-        mainAxisSpacing: 12.h,
-        childAspectRatio: 0.94,
-      ),
-      itemBuilder: (context, index) {
-        final item = data[index];
-        return _dashboardCard(
-          title: item["title"],
-          count: item["count"],
-          percent: item["percent"],
-          color: item["color"],
-          icon: item["icon"],
-        ).animate(delay: (index * 55).ms).fade().scale(
-            begin: const Offset(0.93, 0.93));
-      },
-    );
-  }
-
-  Widget _dashboardCard({
-    required String title,
-    required int count,
-    required int percent,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.13),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 68.w,
-            height: 68.w,
-            child: CustomPaint(
-              painter: DashedRingPainter(
-                percent: percent / 100,
-                activeColor: color,
-                inactiveColor: color.withOpacity(0.12),
-                width: 6.w,
-              ),
-              child: Center(
-                child: Container(
-                  width: 40.w,
-                  height: 40.w,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: color, size: 19.sp),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 10.h),
-          Text(
-            "$count",
-            style: TextStyle(
-              fontSize: 23.sp,
-              fontWeight: FontWeight.w800,
-              color: AppColor.textMain,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: AppColor.textSecondary,
-              height: 1.3,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            "$percent%",
-            style: TextStyle(
-              fontSize: 10.sp,
-              color: color,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─── AGENT CONTENT ──────────────────────────────────────────────────────────
-
-  Widget _buildAgentContent() {
-    final agentRequests = dashboardController.agentRequests;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionLabel("Agent Requests"),
-        SizedBox(height: 12.h),
-        agentRequests.isEmpty
-            ? _buildEmptyState(
-            "No agent requests found",
-            Icons.person_search_rounded)
-            : ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount:
-          agentRequests.length > 3 ? 3 : agentRequests.length,
-          itemBuilder: (context, index) =>
-              _buildRequestCard(agentRequests[index], "agent"),
-        ),
-        if (agentRequests.length > 3)
-          _buildViewAllButton(
-              "View All (${agentRequests.length})", "/agent-requests"),
-      ],
-    );
-  }
-
-  // ─── VENDOR CONTENT ─────────────────────────────────────────────────────────
-
-  Widget _buildVendorContent() {
-    final vendorRequests = dashboardController.vendorRequests;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionLabel("Vendor Requests"),
-        SizedBox(height: 12.h),
-        vendorRequests.isEmpty
-            ? _buildEmptyState(
-            "No vendor requests found",
-            Icons.store_mall_directory_rounded)
-            : ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount:
-          vendorRequests.length > 3 ? 3 : vendorRequests.length,
-          itemBuilder: (context, index) =>
-              _buildRequestCard(vendorRequests[index], "vendor"),
-        ),
-        if (vendorRequests.length > 3)
-          _buildViewAllButton(
-              "View All (${vendorRequests.length})", "/vendor-requests"),
-      ],
-    );
-  }
-
-  Widget _buildEmptyState(String text, IconData icon) {
-    return Container(
-      height: 110.h,
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(18.r),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 28.sp, color: AppColor.lightGrey),
-            SizedBox(height: 8.h),
-            Text(text,
-                style: TextStyle(
-                    fontSize: 13.sp, color: AppColor.textSecondary)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildViewAllButton(String label, String route) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: TextButton(
-        onPressed: () => Get.toNamed(route),
-        child: Text(
-          label,
-          style: TextStyle(
-              color: AppColor.primary,
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRequestCard(dynamic request, String type) {
-    final Color typeColor =
-    type == "agent" ? AppColor.primary : AppColor.orange;
-    final IconData typeIcon = type == "agent"
-        ? Icons.person_outline_rounded
-        : Icons.store_outlined;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44.w,
-            height: 44.w,
-            decoration: BoxDecoration(
-              color: typeColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(typeIcon, color: typeColor, size: 20.sp),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  request['title'] ??
-                      '${type.capitalizeFirst} Request',
-                  style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColor.textMain),
-                ),
-                SizedBox(height: 3.h),
-                Text(
-                  'ID: ${request['id'] ?? 'N/A'}',
-                  style: TextStyle(
-                      fontSize: 11.sp,
-                      color: AppColor.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding:
-            EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: _getStatusColor(request['status'] ?? 'pending')
-                  .withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20.r),
-            ),
-            child: Text(
-              request['status'] ?? 'Pending',
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: _getStatusColor(request['status'] ?? 'pending'),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'approved':
-        return AppColor.success;
-      case 'rejected':
-        return AppColor.error;
-      case 'completed':
-        return AppColor.primary;
-      default:
-        return AppColor.warning;
-    }
-  }
-
   // ─── HELPERS ────────────────────────────────────────────────────────────────
 
   Widget _buildSectionLabel(String title) {
@@ -1131,24 +1064,32 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
   Widget _buildMenuList() {
     return Column(
       children: [
-        _menuTile(Icons.wallet, "My Wallet", () => Get.toNamed("/walletScreen")),
-        _menuTile(Icons.wallet, "Kyc", () => Get.toNamed("/kycScreen")),
-        _menuTile(Icons.receipt_long_rounded, "Gift Coupon", () => Get.to(() => const GiftScreen())),
-        _menuTile(Icons.receipt_long_rounded, "Encashment", () => Get.to(() => const EnCashMentScreen())),
-        _menuTile(Icons.info_outline_rounded, "About Us", () => Get.to(() => const AboutUs())),
-        _menuTile(Icons.business_center_rounded, "Company Profile", () => Get.to(() => const VendorStoreView())),
-        _menuTile(Icons.gavel_rounded, "Terms and Conditions", () => Get.to(() => const TermsAndConditionsScreen())),
-        _menuTile(Icons.headset_mic_rounded, "Contact Us", () => Get.toNamed("/contactus")),
-        _menuTile(Icons.receipt_long_rounded, "Transaction Details", () => Get.toNamed("/transactionDeatils")),
-        _menuTile(Icons.support_agent_rounded, "Support",
-              () async {
-            final uri = Uri.parse("https://cashback.vrikshatech.in/");
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri,
-                  mode: LaunchMode.externalApplication);
-            }
-          },
-        ),
+        _menuTile(Icons.wallet, "My Wallet",
+                () => Get.toNamed("/walletScreen")),
+        _menuTile(
+            Icons.verified_user, "Kyc", () => Get.toNamed("/kycScreen")),
+        _menuTile(Icons.notification_add_outlined, "Notification",
+                () => Get.toNamed("/NotificationsPage")),
+        _menuTile(Icons.card_giftcard, "Gift Coupon",
+                () => Get.to(() => const GiftScreen())),
+        _menuTile(Icons.currency_exchange, "Encashment",
+                () => Get.to(() => const EnCashMentScreen())),
+        _menuTile(Icons.info_outline_rounded, "About Us",
+                () => Get.to(() => const AboutUs())),
+        _menuTile(Icons.business_center_rounded, "Company Profile",
+                () => Get.to(() => const VendorStoreView())),
+        _menuTile(Icons.gavel_rounded, "Terms and Conditions",
+                () => Get.to(() => const TermsAndConditionsScreen())),
+        _menuTile(Icons.headset_mic_rounded, "Contact Us",
+                () => Get.toNamed("/contactus")),
+        _menuTile(Icons.receipt_long, "Transaction Details",
+                () => Get.toNamed("/transactionDeatils")),
+        // _menuTile(Icons.support_agent_rounded, "Support", () async {
+        //   final uri = Uri.parse("https://cashback.vrikshatech.in/");
+        //   if (await canLaunchUrl(uri)) {
+        //     await launchUrl(uri, mode: LaunchMode.externalApplication);
+        //   }
+        // }),
         _menuTile(
           Icons.logout_rounded,
           "Logout",
@@ -1166,8 +1107,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       onTap: onTap,
       child: Container(
         margin: EdgeInsets.only(bottom: 10.h),
-        padding:
-        EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
         decoration: BoxDecoration(
           color: AppColor.white,
           borderRadius: BorderRadius.circular(16.r),
@@ -1196,8 +1136,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                 title,
                 style: TextStyle(
                   fontSize: 15.sp,
-                  color:
-                  isLogout ? AppColor.red : AppColor.textMain,
+                  color: isLogout ? AppColor.red : AppColor.textMain,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1209,6 +1148,19 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       ),
     );
   }
+}
+
+// ─── ROLE CHIP DATA MODEL ────────────────────────────────────────────────────
+
+class _RoleChipData {
+  final String label;
+  final IconData icon;
+  final Color color;
+  const _RoleChipData({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
 }
 
 // ─── DESC ITEM MODEL ─────────────────────────────────────────────────────────
@@ -1234,8 +1186,8 @@ void _showLogoutConfirmation(BuildContext context) {
     builder: (BuildContext context) {
       return AlertDialog(
         backgroundColor: AppColor.white,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(35)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1273,8 +1225,7 @@ void _showLogoutConfirmation(BuildContext context) {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                       side: const BorderSide(color: AppColor.grey),
@@ -1294,8 +1245,7 @@ void _showLogoutConfirmation(BuildContext context) {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColor.primary,
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
@@ -1329,7 +1279,7 @@ Future<void> _performLogout() async {
   }
 }
 
-// ─── DASHED RING PAINTER (original, unchanged) ───────────────────────────────
+// ─── DASHED RING PAINTER ─────────────────────────────────────────────────────
 
 class DashedRingPainter extends CustomPainter {
   final double percent;
@@ -1377,7 +1327,7 @@ class DashedRingPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// ─── SMOOTH RING PAINTER (cumulative progress) ────────────────────────────────
+// ─── SMOOTH RING PAINTER ─────────────────────────────────────────────────────
 
 class _SmoothRingPainter extends CustomPainter {
   final double progress;
@@ -1422,4 +1372,13 @@ class _SmoothRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SmoothRingPainter old) =>
       old.progress != progress;
+}
+
+// ─── String extension ────────────────────────────────────────────────────────
+
+extension StringExtension on String {
+  String get capitalizeFirst {
+    if (isEmpty) return this;
+    return this[0].toUpperCase() + substring(1);
+  }
 }

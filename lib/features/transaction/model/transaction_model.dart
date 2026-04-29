@@ -1,9 +1,9 @@
-import 'package:get/get.dart';
-
+// transaction_model.dart
 class Transaction {
   final int id;
   final String userName;
   final String propertyType;
+  final String propertyName; // Added for rental transactions
   final String paymentType;
   final String amount;
   final String invoiceUrl;
@@ -13,6 +13,7 @@ class Transaction {
     required this.id,
     required this.userName,
     required this.propertyType,
+    required this.propertyName,
     required this.paymentType,
     required this.amount,
     required this.invoiceUrl,
@@ -23,35 +24,12 @@ class Transaction {
     return Transaction(
       id: json['id'] ?? 0,
       userName: json['user_name'] ?? '',
-      propertyType: json['property_type'] ?? '',
+      propertyType: json['property_type'] ?? json['property_name'] ?? '', 
+      propertyName: json['property_name'] ?? json['property_type'] ?? '',
       paymentType: json['payment_type'] ?? '',
-      amount: json['amount'] ?? '0.00',
+      amount: json['amount']?.toString() ?? '0',
       invoiceUrl: json['invoice_url'] ?? '',
       createdAt: json['created_at'] ?? '',
-    );
-  }
-}
-
-class TransactionResponse {
-  final bool status;
-  final String message;
-  final List<Transaction> data;
-  final TransactionMeta meta;
-
-  TransactionResponse({
-    required this.status,
-    required this.message,
-    required this.data,
-    required this.meta,
-  });
-
-  factory TransactionResponse.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> dataList = json['data'] ?? [];
-    return TransactionResponse(
-      status: json['status'] ?? false,
-      message: json['message'] ?? '',
-      data: dataList.map((item) => Transaction.fromJson(item)).toList(),
-      meta: TransactionMeta.fromJson(json['meta'] ?? {}),
     );
   }
 }
@@ -79,9 +57,35 @@ class TransactionMeta {
   }
 }
 
+class TransactionResponse {
+  final bool status;
+  final String message;
+  final List<Transaction> data;
+  final TransactionMeta meta;
+
+  TransactionResponse({
+    required this.status,
+    required this.message,
+    required this.data,
+    required this.meta,
+  });
+
+  factory TransactionResponse.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> dataList = json['data'] ?? [];
+
+    return TransactionResponse(
+      status: json['status'] ?? false,
+      message: json['message'] ?? '',
+      data: dataList.map((item) => Transaction.fromJson(item)).toList(),
+      meta: TransactionMeta.fromJson(json['meta'] ?? {}),
+    );
+  }
+}
+
 enum TransactionType {
   gioo,
   syndicate,
   residential,
   market,
+  rental,
 }

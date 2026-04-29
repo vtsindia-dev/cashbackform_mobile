@@ -38,6 +38,20 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
     super.initState();
   }
 
+  @override
+  void dispose() {
+    couponController.dispose();
+    accountNumberController.dispose();
+    upiController.dispose();
+    upiPhoneController.dispose();
+    bankNameController.dispose();
+    ifscController.dispose();
+    beneficiaryController.dispose();
+    bankPhoneController.dispose();
+    couponsFocusNode.dispose();
+    super.dispose();
+  }
+
   Widget _buildRow(String label, String value, {bool isTotal = false, bool isSecondary = false, Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -88,7 +102,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context)=>const EncashmentListScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (context)=> const EncashmentListScreen()));
             },
             icon: const Icon(
               Icons.list,
@@ -103,6 +117,8 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -145,6 +161,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                   ),
                   padding: const EdgeInsets.all(15),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Row(
                         children: [
@@ -158,7 +175,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10,),
+                      const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -184,15 +201,16 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                                     child: TextFormField(
                                       controller: couponController,
                                       focusNode: couponsFocusNode,
-                                      readOnly:
-                                      encashmentController.isAppliedCoupon ? true : false,
+                                      readOnly: encashmentController.isAppliedCoupon ? true : false,
                                       decoration: InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: 'Enter coupon code',
-                                          hintStyle: TextStyle(
-                                              color: Colors.grey.withOpacity(0.7),
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w400)),
+                                        border: InputBorder.none,
+                                        hintText: 'Enter coupon code',
+                                        hintStyle: TextStyle(
+                                            color: Colors.grey.withOpacity(0.7),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -271,10 +289,12 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                             ],
                           ),
                           child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Padding(
                                 padding: const EdgeInsets.all(16),
                                 child: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _buildRow("Coupon Worth", "₹${encashmentController.totalAmount.toStringAsFixed(0)}", isSecondary: true),
                                     const SizedBox(height: 12),
@@ -300,10 +320,10 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                             ],
                           ),
                         ),
-                      if(encashmentController.isShowForm)
-                      ...[
+                      if(encashmentController.isShowForm) ...[
                         const SizedBox(height: 20),
                         Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -311,7 +331,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: Colors.grey.shade300),
                               ),
-                              child: RadioListTile(
+                              child: RadioListTile<String>(
                                 value: "upi",
                                 groupValue: paymentType,
                                 onChanged: (value) {
@@ -326,16 +346,14 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                                 contentPadding: EdgeInsets.zero,
                               ),
                             ),
-
                             const SizedBox(height: 10),
-
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: Colors.grey.shade300),
                               ),
-                              child: RadioListTile(
+                              child: RadioListTile<String>(
                                 value: "bank",
                                 groupValue: paymentType,
                                 onChanged: (value) {
@@ -352,7 +370,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10,),
+                        const SizedBox(height: 10),
                         if (paymentType == "upi") ...[
                           const Text(
                             'UPI Details',
@@ -376,7 +394,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                             size,
                             'Enter phone number',
                             requiredField: true,
-                            keyboardType: TextInputType.number
+                            keyboardType: TextInputType.number,
                           ),
                         ],
                         if (paymentType == "bank") ...[
@@ -402,7 +420,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                             size,
                             'Enter account number',
                             requiredField: true,
-                              keyboardType: TextInputType.number
+                            keyboardType: TextInputType.number,
                           ),
                           _buildTextFieldSection(
                             'IFSC Code',
@@ -424,10 +442,10 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                             size,
                             'Enter phone number',
                             requiredField: true,
-                              keyboardType: TextInputType.number
+                            keyboardType: TextInputType.number,
                           ),
                         ],
-                        const SizedBox(height: 10,),
+                        const SizedBox(height: 10),
                         GestureDetector(
                           onTap: encashmentController.isFormLoading ? (){} :() async {
                             FocusScope.of(context).unfocus();
@@ -503,7 +521,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                             if(result){
                               encashmentController.removeCoupon(showMessage : false);
                               clearAllFields();
-                              Navigator.push(context, MaterialPageRoute(builder: (context)=>const EncashmentListScreen()));
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=> const EncashmentListScreen()));
                             }
                           },
                           child: Container(
@@ -513,8 +531,10 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                               color: AppColor.primary,
                               borderRadius: BorderRadius.circular(25),
                             ),
-                            child:   Center(
-                              child: encashmentController.isFormLoading ? const CircularProgressIndicator(color: Colors.white,): const Text(
+                            child: Center(
+                              child: encashmentController.isFormLoading
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : const Text(
                                 'Submit',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -532,7 +552,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                 const SizedBox(height: 15),
                 InkWell(
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>const EncashmentListScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=> const EncashmentListScreen()));
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: Ink(
@@ -557,16 +577,16 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                       ],
                     ),
                   ),
-                )
+                ),
               ],
             ),
           );
-        }
+        },
       ),
     );
   }
 
-  Column _buildTextFieldSection(
+  Widget _buildTextFieldSection(
       String label,
       TextEditingController controller,
       Size size,
@@ -577,6 +597,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
         int maxLines = 1,
       }) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -596,29 +617,27 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                   '*',
                   style: TextStyle(color: Colors.red),
                 ),
-              )
+              ),
           ],
         ),
-        const SizedBox(
-          height: 2,
-        ),
+        const SizedBox(height: 2),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 5),
-          child: buildTextField(
-              keyboardType: keyboardType ?? TextInputType.text,
-              controller: controller,
-              size: size,
-              hintText: hintText,
-              maxLines: maxLines,
-              readOnly: readOnly ?? false),
+          child: _buildTextField(
+            keyboardType: keyboardType ?? TextInputType.text,
+            controller: controller,
+            size: size,
+            hintText: hintText,
+            maxLines: maxLines,
+            readOnly: readOnly ?? false,
+          ),
         ),
-        const SizedBox(
-          height: 2,
-        ),
+        const SizedBox(height: 2),
       ],
     );
   }
-  Widget buildTextField({
+
+  Widget _buildTextField({
     required TextEditingController controller,
     required Size size,
     required String hintText,
@@ -626,26 +645,28 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
     bool readOnly = false,
     int maxLines = 1,
   }) {
-    return Container(
+    return SizedBox(
       width: size.width,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        readOnly: readOnly,
-        maxLines: maxLines,
-        style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          hintText: hintText,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 12,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          readOnly: readOnly,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            border: InputBorder.none,
           ),
-          border: InputBorder.none,
         ),
       ),
     );

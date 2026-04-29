@@ -110,9 +110,6 @@ class VendorStoreController extends GetxController {
       await Permission.location.request();
     }
   }
-
-  // ==================== GOOGLE MAPS METHODS ====================
-
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
   }
@@ -124,10 +121,7 @@ class VendorStoreController extends GetxController {
     }
     try {
       isSearching.value = true;
-      final url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json'
-          '?input=$query'
-          '&key=$googleApiKey'
-          '&components=country:in';
+      final url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$googleApiKey&components=country:in';
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

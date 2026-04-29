@@ -1,0 +1,32 @@
+{
+  "project_info": {
+    "project_number": "523459218953",
+    "project_id": "cashback-90cba",
+    "storage_bucket": "cashback-90cba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:523459218953:android:d4f00cfc6ef07620fff2d8",
+        "android_client_info": {
+          "package_name": "com.cashback_farms.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAd_tEChMYShy9EqldVLM-JpSldnlfmzg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+
+
+

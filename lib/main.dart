@@ -1,4 +1,4 @@
-import 'package:cashback_farms/common/colours.dart';
+import  'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -6,7 +6,20 @@ import 'package:google_fonts/google_fonts.dart';
 import 'common/route/router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'deeplink/deeplink_service/service.dart';
+import 'firebase_option.dart';
 import 'network/network_service/no_internet_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'notifcation/service/notification_service.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print("🔔 Background message received: ${message.messageId}");
+  print("   Title: ${message.notification?.title}");
+  print("   Body: ${message.notification?.body}");
+  print("   Data: ${message.data}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +28,33 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  // ─── FIREBASE INIT ──────────────────────────────────────────────────────────
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Register background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Request notification permission (iOS + Android 13+)
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
+
+  // For iOS — show notification in foreground
+  await FirebaseMessaging.instance
+      .setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
 
   await DeepLinkService().init();
 
@@ -48,8 +88,8 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         initialBinding: BindingsBuilder(() {
           Get.put(NetworkService(), permanent: true);
+          Get.put(NotificationService(), permanent: true); // ADD THIS
         }),
-
         builder: (context, child) {
           return SafeArea(
             top: false,
@@ -61,41 +101,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-
-// CashBack IOS serverfile -----------------------(iOS Universal Links)
-//
-//
-// {
-// "applinks": {
-// "apps": [],
-// "details": [
-// {
-// "appID": "TEAMID.com.yourcompany.cashback_farms",
-// "paths": [
-// "/plot-marketplace/details/*",
-// "/gioo-plots/details/*",
-// "/syndicate-plots/details/*",
-// "/rental-yield-plots/details/*",
-// "/residential-property/details/*"
-// ]
-// }
-// ]
-// }
-// }
-//
-//
-//
-//
-// CashBack Android serverfile -----------------------(Android App Links)
-//
-// [{
-// "relation": ["delegate_permission/common.handle_all_urls"],
-// "target": {
-// "namespace": "android_app",
-// "package_name": "com.yourcompany.cashback_farms",
-// "sha256_cert_fingerprints": [
-// "YOUR_SHA256_FINGERPRINT_HERE"
-// ]
-// }
-// }]

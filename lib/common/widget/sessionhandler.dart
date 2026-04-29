@@ -90,7 +90,6 @@ class SessionManager {
         await prefs.setString(_tokenKey, token);
         print('✅ Token saved successfully: ${token.substring(0, min(token.length, 20))}...');
       } else {
-        // Check if token is in userData
         String? tokenFromData = userData['token']?.toString() ??
             userData['access_token']?.toString() ??
             userData['auth_token']?.toString();
@@ -141,7 +140,17 @@ class SessionManager {
     }
     print('✅ === VERIFICATION COMPLETE ===');
   }
+// Add in sessionhandler.dart
+  static Future<void> saveFcmToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('fcm_token', token);
+    print("✅ FCM Token saved locally");
+  }
 
+  static Future<String?> getFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('fcm_token');
+  }
   // Check if user is logged in
 // Check if user is logged in
   static Future<bool> isLoggedIn() async {

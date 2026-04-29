@@ -405,4 +405,105 @@ class ApiService {
       rethrow;
     }
   }
+  static Future<Response> getNotifications({
+    required String token,
+    int page = 1,
+  }) async {
+    try {
+      return await dio.get(
+        '${ApiUrl.baseUrl}/api/v2/user/notifications?page=$page',
+        options: Options(
+          headers: {"Authorization": "Bearer $token"},
+        ),
+      );
+    } on DioException catch (e) {
+      return _createErrorResponse(
+        path: '${ApiUrl.baseUrl}/api/v2/user/notifications',
+        error: e,
+        defaultMessage: 'Failed to fetch notifications',
+      );
+    }
+  }
+
+  /// Get unread notification count
+  static Future<Response> getNotificationCount({required String token}) async {
+    try {
+      return await dio.get(
+        '${ApiUrl.baseUrl}/api/v2/user/notification-count',
+        options: Options(
+          headers: {"Authorization": "Bearer $token"},
+        ),
+      );
+    } on DioException catch (e) {
+      return _createErrorResponse(
+        path: '${ApiUrl.baseUrl}/user/notification-count',
+        error: e,
+        defaultMessage: 'Failed to get notification count',
+      );
+    }
+  }
+
+  /// Mark single notification as read
+  static Future<Response> markNotificationAsRead({
+    required String token,
+    required int notificationId,
+  }) async {
+    try {
+      return await dio.post(
+        '${ApiUrl.baseUrl}/api/v2/user/notifications/$notificationId/read',
+        options: Options(
+          headers: {"Authorization": "Bearer $token"},
+        ),
+      );
+    } on DioException catch (e) {
+      return _createErrorResponse(
+        path: '${ApiUrl.baseUrl}/api/v2/user/notifications/$notificationId/read',
+        error: e,
+        defaultMessage: 'Failed to mark notification as read',
+      );
+    }
+  }
+
+  /// Clear all notifications (mark all as read)
+  static Future<Response> clearAllNotifications({required String token}) async {
+    try {
+      return await dio.post(
+        '${ApiUrl.baseUrl}/api/v2/user/notifications/clear',
+        options: Options(
+          headers: {"Authorization": "Bearer $token"},
+        ),
+      );
+    } on DioException catch (e) {
+      return _createErrorResponse(
+        path: '${ApiUrl.baseUrl}/api/v2/user/notifications/clear',
+        error: e,
+        defaultMessage: 'Failed to clear notifications',
+      );
+    }
+  }
+// Delete a single notification
+  static Future<Response> deleteNotification({
+    required String token,
+    required int notificationId,
+  }) async {
+    try {
+      return await dio.delete(
+        '${ApiUrl.baseUrl}/api/v2/notification/$notificationId',
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Accept": "application/json",
+          },
+        ),
+      );
+    } on DioException catch (e) {
+      return _createErrorResponse(
+        path: '${ApiUrl.baseUrl}/api/v2   /notification/$notificationId',
+        error: e,
+        defaultMessage: 'Failed to delete notification',
+      );
+    }
+  }
+  // Keep your existing _createErrorResponse method
+
 }

@@ -128,7 +128,6 @@ class Brand {
   }
 }
 
-// lib/features/service/models/service_category_model.dart
 class ServiceCategory {
   final int id;
   final String serviceName;
@@ -178,8 +177,6 @@ class ServiceCategory {
     );
   }
 }
-
-// lib/features/service/models/review_model.dart
 class Review {
   final int id;
   final int vendorId;
@@ -217,7 +214,6 @@ class Review {
     );
   }
 }
-
 class ReviewUser {
   final int id;
   final int? role;
@@ -270,8 +266,6 @@ class ReviewUser {
     );
   }
 }
-
-// lib/features/service/models/vendor_material_model.dart
 class VendorMaterial {
   final int id;
   final int userId;
@@ -300,7 +294,6 @@ class VendorMaterial {
     );
   }
 }
-
 class Material {
   final int id;
   final String materialName;
@@ -353,8 +346,6 @@ class Material {
     );
   }
 }
-
-// lib/features/service/models/vendor_service_model.dart
 class VendorService {
   final int id;
   final int userId;
@@ -383,8 +374,6 @@ class VendorService {
     );
   }
 }
-
-// lib/features/service/models/material_enquiry_model.dart
 class MaterialEnquiryResponse {
   final bool status;
   final MaterialEnquiryData data;
@@ -401,7 +390,6 @@ class MaterialEnquiryResponse {
     );
   }
 }
-
 class MaterialEnquiryData {
   final List<MaterialEnquiry> materialEnquiry;
   final Pagination pagination;
@@ -420,7 +408,6 @@ class MaterialEnquiryData {
     );
   }
 }
-
 class MaterialEnquiry {
   final int id;
   final int userId;
@@ -464,8 +451,6 @@ class MaterialEnquiry {
     );
   }
 }
-
-// lib/features/service/models/service_enquiry_model.dart
 class ServiceEnquiry {
   final int id;
   final int userId;
@@ -509,7 +494,6 @@ class ServiceEnquiry {
     );
   }
 }
-
 class ServiceEnquiryResponse {
   final bool status;
   final ServiceEnquiryData data;
@@ -526,7 +510,6 @@ class ServiceEnquiryResponse {
     );
   }
 }
-
 class ServiceEnquiryData {
   final List<ServiceEnquiry> serviceEnquiry;
   final Pagination pagination;
@@ -545,8 +528,6 @@ class ServiceEnquiryData {
     );
   }
 }
-
-// lib/features/service/models/user_model.dart
 class User {
   final int id;
   final String name;
@@ -572,8 +553,6 @@ class User {
     );
   }
 }
-
-// lib/features/service/models/location_model.dart
 class City {
   final int id;
   final int stateId;

@@ -2,12 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../common/colours.dart';
 import '../../../common/route/router.dart';
 import '../../../common/widget/loader.dart';
-import '../../../common/widget/note_info.dart';
 import '../../../common/widget/toster.dart';
 import '../../menu/controller/dashboard_menu_controller.dart';
 import '../controller/plot_market_controller.dart';
@@ -26,6 +24,9 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
   final ScrollController _scrollController = ScrollController();
   final dashboardController = Get.put(DashboardController());
 
+  // Debounce flag to prevent multiple scroll calls
+  bool _isLoadingMore = false;
+
   @override
   void initState() {
     super.initState();
@@ -43,10 +44,21 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
   }
 
   void _scrollListener() {
+    // Debounce to prevent multiple calls
+    if (_isLoadingMore) return;
+
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 100) {
       if (controller.myHasMoreData.value && !controller.isLoadMoreMyPlots.value) {
-        controller.loadMoreMyPlots();
+        _isLoadingMore = true;
+        controller.loadMoreMyPlots().then((_) {
+          // Reset debounce after a short delay
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _isLoadingMore = false;
+          });
+        }).catchError((_) {
+          _isLoadingMore = false;
+        });
       }
     }
   }
@@ -62,7 +74,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
             child: Obx(() {
               if (controller.isLoadingMyPlots.value && controller.myMarketPlots.isEmpty) {
                 return Center(
-                  child: GifLoader(message: "Loading Your Properties", size: 120),
+                  child: GifLoader(message: "Loading Your Lands", size: 120),
                 );
               }
 
@@ -71,20 +83,15 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
               }
 
               return RefreshIndicator(
-                onRefresh: controller.refreshMyPlots,
+                onRefresh: () async {
+                  _isLoadingMore = false;
+                  await controller.refreshMyPlots();
+                },
                 color: AppColor.primary,
                 child: ListView(
                   controller: _scrollController,
                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                   children: [
-                    // Stats Card
-                    // _buildStatsCard(),
-                    // SizedBox(height: 16.h),
-
-                    // // Filter Chips
-                    // _buildFilterChips(),
-                    // SizedBox(height: 16.h),
-
                     // Plots Grid
                     GridView.builder(
                       shrinkWrap: true,
@@ -93,7 +100,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 12.w,
                         mainAxisSpacing: 12.h,
-                        childAspectRatio: 0.72,
+                        childAspectRatio: 0.65,
                       ),
                       itemCount: controller.myMarketPlots.length,
                       itemBuilder: (context, index) {
@@ -102,7 +109,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                           plot: plot,
                           onTap: () => Get.toNamed(
                             AppRoutes.plotMarketDetails,
-                            arguments: {"id": plot.id,"title": plot.name},
+                            arguments: {"id": plot.id, "title": plot.name},
                           ),
                           onEdit: () => controller.openEditForm(plot),
                           onDelete: () => _confirmDelete(plot),
@@ -112,6 +119,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                       },
                     ),
 
+                    // Load more indicator
                     if (controller.isLoadMoreMyPlots.value)
                       Padding(
                         padding: EdgeInsets.symmetric(vertical: 20.h),
@@ -122,6 +130,22 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                           ),
                         ),
                       ),
+
+                    // End of list message
+                    if (!controller.myHasMoreData.value && controller.myMarketPlots.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20.h),
+                        child: Center(
+                          child: Text(
+                            "You've reached the end",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ),
+                      ),
+
                     SizedBox(height: 80.h),
                   ],
                 ),
@@ -134,6 +158,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
         onPressed: controller.openAddForm,
         backgroundColor: AppColor.primary,
         child: Icon(Icons.add, size: 24.sp),
+
       ),
     );
   }
@@ -167,7 +192,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                 ),
                 SizedBox(width: 12.w),
                 Text(
-                  "My Properties",
+                  "My Lands",
                   style: TextStyle(
                     fontSize: 20.sp,
                     color: Colors.white,
@@ -176,174 +201,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                 ),
               ],
             ),
-
-            // Quick stats row
-            // Obx(() => Row(
-            //   mainAxisAlignment: MainAxisAlignment.spaceAround,
-            //   children: [
-            //     _buildStatItem(
-            //       "Total",
-            //       controller.myTotalItems.value.toString(),
-            //       Icons.home,
-            //     ),
-            //     _buildStatItem(
-            //       "Verified",
-            //       controller.myMarketPlots.where((p) => p.verifyStatus == 1).length.toString(),
-            //       Icons.verified,
-            //       color: Colors.green,
-            //     ),
-            //     _buildStatItem(
-            //       "Pending",
-            //       controller.myMarketPlots.where((p) => p.verifyStatus == 0).length.toString(),
-            //       Icons.pending,
-            //       color: Colors.orange,
-            //     ),
-            //   ],
-            // )),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon, {Color? color}) {
-    return Column(
-      children: [
-        Icon(icon, size: 22.sp, color: color ?? Colors.white),
-        SizedBox(height: 4.h),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16.sp,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: Colors.white70,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatsCard() {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Manage Your Properties",
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColor.textMain,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                "Add, edit or delete your properties",
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColor.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          ElevatedButton(
-            onPressed: controller.openAddForm,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primary,
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.add, size: 16.sp),
-                SizedBox(width: 4.w),
-                Text("Add New", style: TextStyle(fontSize: 12.sp)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChips() {
-    return Obx(() {
-      final verifiedCount = controller.myMarketPlots
-          .where((plot) => plot.verifyStatus == 1)
-          .length;
-      final pendingCount = controller.myMarketPlots
-          .where((plot) => plot.verifyStatus == 0)
-          .length;
-
-      return SizedBox(
-        height: 40.h,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          children: [
-            _buildFilterChip("All", true),
-            SizedBox(width: 8.w),
-            _buildFilterChip("Verified ($verifiedCount)", false),
-            SizedBox(width: 8.w),
-            _buildFilterChip("Pending ($pendingCount)", false),
-            SizedBox(width: 8.w),
-            _buildFilterChip("For Sale", false),
-            SizedBox(width: 8.w),
-            _buildFilterChip("For Rent", false),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildFilterChip(String label, bool isSelected) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      decoration: BoxDecoration(
-        color: isSelected ? AppColor.primary : Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: isSelected ? AppColor.primary : Colors.grey.shade300,
-        ),
-        boxShadow: isSelected ? [] : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: isSelected ? Colors.white : AppColor.textMain,
-            fontWeight: FontWeight.w500,
-          ),
         ),
       ),
     );
@@ -398,8 +256,8 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                 Icon(Icons.add_circle_outline, size: 18.sp),
                 SizedBox(width: 8.w),
                 Text(
-                  "Add Your First Property",
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+                  "Add Your Land Here",
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Colors.white),
                 ),
               ],
             ),
@@ -464,6 +322,9 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
         final success = await controller.deleteMarketPlot(plot.id);
         if (success) {
           SnackBarHelper.showSuccess("Property deleted successfully");
+          // Reset pagination state and refresh
+          _isLoadingMore = false;
+          await controller.refreshMyPlots();
         }
       },
     );

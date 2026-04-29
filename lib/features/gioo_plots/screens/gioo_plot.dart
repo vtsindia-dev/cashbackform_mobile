@@ -23,7 +23,6 @@ class _GiooplotState extends State<Giooplot> {
   @override
   void initState() {
     super.initState();
-    // Fetch initial data
     controller.fetchGiooPlots();
   }
 
@@ -31,7 +30,7 @@ class _GiooplotState extends State<Giooplot> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F2),
-      appBar: const DynamicAppBar(title: "Gioo Plots", showBackButton: true),
+      appBar: const DynamicAppBar(title: "Gioo Nano Plots", showBackButton: true),
       body: Obx(
         () => Column(
           children: [
@@ -70,6 +69,7 @@ class _GiooplotState extends State<Giooplot> {
                                 const Text(
                                   'Try adjusting your filters',
                                   style: TextStyle(color: Colors.grey),
+
                                 ),
                               ],
                             ),
@@ -89,9 +89,8 @@ class _GiooplotState extends State<Giooplot> {
 
     return Obx(() {
       if (dashboardController.isLoadingSettings.value) {
-        return const SizedBox.shrink(); // Or show a small loader
+        return const SizedBox.shrink();
       }
-
       final settings = dashboardController.businessSettings.value;
       if (settings == null) return const SizedBox.shrink();
 
@@ -879,6 +878,9 @@ class _CompactFilterSection extends StatelessWidget {
                       onTap: () {
                         controller.searchController.clear();
                         controller.searchQuery.value = '';
+                        controller.applySearch();
+                        controller.fetchGiooPlots();
+                        controller.resetAllFilters(); // Optional: Reset all filters
                       },
                       child: const Icon(
                         Icons.close,

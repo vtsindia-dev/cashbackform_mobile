@@ -235,8 +235,8 @@ class GiooBooked {
   final int userId;
   final String units;
   final String amount;
-  final int walletAmount;
-  final int onlineAmount;
+  final double walletAmount;  // Changed from int to double
+  final double onlineAmount;  // Changed from int to double
   final int transactionId;
   final String? returnAmount;
   final String? returnDate;
@@ -269,8 +269,8 @@ class GiooBooked {
       userId: json['user_id'],
       units: json['units']?.toString() ?? '',
       amount: json['amount']?.toString() ?? '0',
-      walletAmount: json['wallet_amount'] ?? 0,
-      onlineAmount: json['online_amount'] ?? 0,
+      walletAmount: (json['wallet_amount'] ?? 0).toDouble(), // Convert to double
+      onlineAmount: (json['online_amount'] ?? 0).toDouble(), // Convert to double
       transactionId: json['transaction_id'],
       returnAmount: json['return_amount']?.toString(),
       returnDate: json['return_date'],
@@ -281,13 +281,12 @@ class GiooBooked {
     );
   }
 }
-
 class MarketEnquiry {
   final int id;
   final int userId;
   final int? propertyId;
-  final int counts;
-  final int sold;
+  final int counts;  // If this is getting double from JSON, change to double
+  final int sold;    // If this is getting double from JSON, change to double
   final DateTime createdAt;
   final DateTime updatedAt;
   final dynamic property;
@@ -308,15 +307,14 @@ class MarketEnquiry {
       id: json['id'],
       userId: json['user_id'],
       propertyId: json['property_id'],
-      counts: json['counts'] ?? 0,
-      sold: json['sold'] ?? 0,
+      counts: (json['counts'] ?? 0).toInt(), // Ensure int
+      sold: (json['sold'] ?? 0).toInt(),     // Ensure int
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
       property: json['property'],
     );
   }
 }
-
 class MaterialEnquiry {
   final int id;
   final int materialId;
@@ -551,8 +549,6 @@ class BusinessSettings {
   String? whatsapp;
   DateTime? createdAt;
   DateTime? updatedAt;
-
-  // New fields from JSON
   String? discountMaxCost;
   double? discountPercentage;
   String? cumulativeMaxCost;
@@ -582,7 +578,7 @@ class BusinessSettings {
   double? refundAmount;
   double? couponServiceCharge;
   double? minCouponVal;
-  double? maxCouponVal;   
+  double? maxCouponVal;
 
   BusinessSettings({
     this.id,

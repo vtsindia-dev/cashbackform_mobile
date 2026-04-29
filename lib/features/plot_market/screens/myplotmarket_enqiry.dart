@@ -19,12 +19,102 @@ class MarketPlotEnquiryScreen extends StatefulWidget {
 class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
   final controller = Get.put(PlotMarketController());
 
+  // Search related variables
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  List<MarketPlotEnquiry> _filteredEnquiries = [];
+  List<String> _searchSuggestions = [];
+  bool _isSearching = false;
+  String _currentSearchQuery = '';
+
   @override
   void initState() {
+    super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.fetchMarketPlotEnquiries();
     });
-    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim().toLowerCase();
+    _currentSearchQuery = query;
+
+    if (query.isEmpty) {
+      setState(() {
+        _filteredEnquiries = [];
+        _searchSuggestions = [];
+        _isSearching = false;
+      });
+    } else {
+      setState(() {
+        _isSearching = true;
+        _filterSuggestions(query);
+      });
+    }
+  }
+
+  void _filterSuggestions(String query) {
+    final allEnquiries = controller.marketPlotEnquiries;
+
+    // Filter enquiries based on search query
+    final filtered = allEnquiries.where((enquiry) {
+      final propertyName = enquiry.property?.name?.toLowerCase() ?? '';
+      final enquiryId = enquiry.id.toString();
+      final propertyAddress = enquiry.property?.address?.toLowerCase() ?? '';
+
+      return propertyName.contains(query) ||
+          enquiryId.contains(query) ||
+          propertyAddress.contains(query);
+    }).toList();
+
+    setState(() {
+      _filteredEnquiries = filtered;
+
+      // Generate suggestions from property names
+      final suggestions = <String>[];
+      for (var enquiry in allEnquiries) {
+        if (enquiry.property?.name != null &&
+            enquiry.property!.name.toLowerCase().contains(query) &&
+            !suggestions.contains(enquiry.property!.name)) {
+          suggestions.add(enquiry.property!.name);
+        }
+        if (suggestions.length >= 5) break;
+      }
+      _searchSuggestions = suggestions;
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {
+      _filteredEnquiries = [];
+      _searchSuggestions = [];
+      _isSearching = false;
+      _currentSearchQuery = '';
+    });
+    FocusScope.of(context).unfocus();
+  }
+
+  void _selectSuggestion(String suggestion) {
+    _searchController.text = suggestion;
+    _onSearchChanged();
+    FocusScope.of(context).unfocus();
+  }
+
+  List<MarketPlotEnquiry> get _displayedEnquiries {
+    if (_isSearching && _currentSearchQuery.isNotEmpty) {
+      return _filteredEnquiries;
+    }
+    return controller.marketPlotEnquiries;
   }
 
   @override
@@ -34,7 +124,7 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.h),
         child: DynamicAppBar(
-          title: "Market Plot Enquiries",
+          title: "My Land Enquiries",
           showBackButton: true,
           actions: [
             IconButton(
@@ -55,21 +145,64 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
           return _buildEmptyEnquiryState();
         }
 
-        return RefreshIndicator(
-          color: AppColor.primary,
-          backgroundColor: AppColor.white,
-          onRefresh: () => controller.refreshMarketEnquiries(),
-          child: Column(
-            children: [
-              Expanded(
+        return Column(
+          children: [
+            // Search Bar
+            _buildSearchBar(),
+
+            // Search Suggestions
+            if (_isSearching && _searchSuggestions.isNotEmpty && _currentSearchQuery.isNotEmpty)
+              _buildSearchSuggestions(),
+
+            // Results count
+            if (_isSearching && _currentSearchQuery.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Found ${_filteredEnquiries.length} result${_filteredEnquiries.length != 1 ? 's' : ''}",
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColor.textSecondary,
+                      ),
+                    ),
+                    if (_filteredEnquiries.isNotEmpty)
+                      TextButton(
+                        onPressed: _clearSearch,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                        ),
+                        child: Text(
+                          "Clear Search",
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: AppColor.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColor.primary,
+                backgroundColor: AppColor.white,
+                onRefresh: () async {
+                  _clearSearch();
+                  await controller.refreshMarketEnquiries();
+                },
                 child: ListView.builder(
                   padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 15.h),
-                  itemCount: controller.marketPlotEnquiries.length + 1,
+                  itemCount: _displayedEnquiries.length + 1,
                   physics: const BouncingScrollPhysics(),
                   itemBuilder: (context, index) {
                     // Load more indicator
-                    if (index == controller.marketPlotEnquiries.length) {
-                      if (controller.hasMoreMarketEnquiries.value) {
+                    if (index == _displayedEnquiries.length) {
+                      if (controller.hasMoreMarketEnquiries.value && !_isSearching) {
                         return Padding(
                           padding: EdgeInsets.symmetric(vertical: 16.h),
                           child: Center(
@@ -92,15 +225,101 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
                       return SizedBox.shrink();
                     }
 
-                    final enquiry = controller.marketPlotEnquiries[index];
+                    final enquiry = _displayedEnquiries[index];
                     return _buildEnquiryCard(enquiry);
                   },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         );
       }),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+      child: TextField(
+        controller: _searchController,
+        focusNode: _searchFocusNode,
+        decoration: InputDecoration(
+          hintText: "Search by property name, ID or address...",
+          hintStyle: TextStyle(fontSize: 13.sp, color: AppColor.textSecondary),
+          prefixIcon: Icon(Iconsax.search_normal, size: 18.sp, color: AppColor.primary),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+            icon: Icon(Iconsax.close_circle, size: 18.sp, color: AppColor.grey),
+            onPressed: _clearSearch,
+          )
+              : null,
+          filled: true,
+          fillColor: AppColor.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15.r),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15.r),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15.r),
+            borderSide: BorderSide(color: AppColor.primary, width: 1.5.w),
+          ),
+          contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchSuggestions() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 18.w),
+      decoration: BoxDecoration(
+        color: AppColor.white,
+        borderRadius: BorderRadius.circular(15.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+            child: Row(
+              children: [
+                Icon(Iconsax.search_normal, size: 14.sp, color: AppColor.primary),
+                SizedBox(width: 8.w),
+                Text(
+                  "Suggestions",
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ..._searchSuggestions.map((suggestion) => ListTile(
+            leading: Icon(Iconsax.house, size: 16.sp, color: AppColor.primary),
+            title: Text(
+              suggestion,
+              style: TextStyle(fontSize: 13.sp),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Icon(Iconsax.arrow_right, size: 16.sp, color: AppColor.grey),
+            onTap: () => _selectSuggestion(suggestion),
+            dense: true,
+          )),
+        ],
+      ),
     );
   }
 
@@ -220,7 +439,7 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
       ),
       child: Column(
         children: [
-          // Header: Enquiry Info
+          // Header: Enquiry Info with Remove Icon
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
             child: Row(
@@ -252,37 +471,43 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
                             color: AppColor.textSecondary,
                           ),
                         ),
-                        // SizedBox(height: 2.h),
-                        // Container(
-                        //   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                        //   decoration: BoxDecoration(
-                        //     color: enquiry.statusColor.withOpacity(0.1),
-                        //     borderRadius: BorderRadius.circular(12.r),
-                        //   ),
-                        //   child: Text(
-                        //     enquiry.enquiryStatus,
-                        //     style: TextStyle(
-                        //       fontSize: 9.sp,
-                        //       fontWeight: FontWeight.w600,
-                        //       color: enquiry.statusColor,
-                        //     ),
-                        //   ),
-                        // ),
                       ],
                     ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Row(
                   children: [
-                    Text(
-                      enquiry.formattedDate,
-                      style: TextStyle(fontSize: 10.sp, color: AppColor.grey),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          enquiry.formattedDate,
+                          style: TextStyle(fontSize: 10.sp, color: AppColor.grey),
+                        ),
+                        Text(
+                          enquiry.formattedTime,
+                          style: TextStyle(fontSize: 9.sp, color: AppColor.grey),
+                        ),
+                      ],
                     ),
-                    Text(
-                      enquiry.formattedTime,
-                      style: TextStyle(fontSize: 9.sp, color: AppColor.grey),
-                    ),
+
+                    // SizedBox(width: 12.w),
+                    // // Remove Icon Button
+                    // GestureDetector(
+                    //   onTap: () => _confirmDeleteEnquiry(enquiry),
+                    //   child: Container(
+                    //     padding: EdgeInsets.all(6.w),
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.red.withOpacity(0.1),
+                    //       shape: BoxShape.circle,
+                    //     ),
+                    //     child: Icon(
+                    //       Iconsax.trash,
+                    //       size: 14.sp,
+                    //       color: Colors.red,
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ],
@@ -304,50 +529,35 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
             child: Row(
               children: [
-                // Enquiry Count
-                Row(
-                  children: [
-
-                  ],
-                ),
                 Spacer(),
-
                 // Action Buttons
                 if (hasProperty)
-                  Row(
-                    children: [
-                      // View Plot Button
-                      InkWell(
-                        onTap: () {
-                          _viewPlotDetails(enquiry.property!);
-                        },
+                  InkWell(
+                    onTap: () {
+                      _viewPlotDetails(enquiry.property!);
+                    },
+                    borderRadius: BorderRadius.circular(10.r),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: AppColor.primary,
                         borderRadius: BorderRadius.circular(10.r),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                          decoration: BoxDecoration(
-                            color: AppColor.primary,
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Iconsax.eye, size: 12.sp, color: AppColor.white),
-                              SizedBox(width: 6.w),
-                              Text(
-                                "View Plot",
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColor.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ),
-                      SizedBox(width: 8.w),
-
-
-                    ],
+                      child: Row(
+                        children: [
+                          Icon(Iconsax.eye, size: 12.sp, color: AppColor.white),
+                          SizedBox(width: 6.w),
+                          Text(
+                            "View Plot",
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   )
                 else
                   Text(
@@ -363,6 +573,76 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _confirmDeleteEnquiry(MarketPlotEnquiry enquiry) {
+    Get.defaultDialog(
+      title: "Delete Enquiry",
+      titleStyle: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Are you sure you want to delete this enquiry?",
+            style: TextStyle(fontSize: 13.sp),
+          ),
+          SizedBox(height: 12.h),
+          Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: AppColor.lightGrey,
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Enquiry #${enquiry.id}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.sp,
+                  ),
+                ),
+                if (enquiry.property?.name != null)
+                  Text(
+                    enquiry.property!.name,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: AppColor.textSecondary,
+                    ),
+                  ),
+                SizedBox(height: 4.h),
+                Text(
+                  enquiry.formattedDate,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: AppColor.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12.h),
+        ],
+      ),
+      textConfirm: "Delete",
+      textCancel: "Cancel",
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.red,
+      cancelTextColor: AppColor.textSecondary,
+      // onConfirm: () async {
+      //   Get.back();
+      //   final success = await controller.deleteMarketEnquiry(enquiry.id);
+      //   if (success) {
+      //     SnackBarHelper.showSuccess("Enquiry deleted successfully");
+      //     // Clear search if needed
+      //     if (_isSearching) {
+      //       _clearSearch();
+      //     }
+      //   }
+      // },
     );
   }
 
@@ -495,8 +775,6 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
                     ),
                   ],
                 ),
-
-
               ],
             ),
           ),
@@ -547,200 +825,12 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
   }
 
   void _viewPlotDetails(MarketPlotEnquiryProperty property) {
-    // Navigate to plot details screen
     Get.toNamed(
       '/plotMarketDetails',
       arguments: {
         'id': property.id,
         'title': property.name,
       },
-    );
-  }
-
-  void _viewImages(MarketPlotEnquiryProperty property) {
-    if (property.images.isEmpty) return;
-
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
-        content: Container(
-          width: Get.width * 0.9,
-          height: Get.height * 0.7,
-          decoration: BoxDecoration(
-            color: AppColor.white,
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Property Images",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Get.back(),
-                      icon: Icon(Iconsax.close_circle),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: PageView.builder(
-                  itemCount: property.images.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(15.r),
-                        child: Image.network(
-                          property.images[index],
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                color: AppColor.primary,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                "${property.images.length} images",
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColor.textSecondary,
-                ),
-              ),
-              SizedBox(height: 16.h),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showEnquiryStats() {
-    final withProperty = controller.getEnquiriesWithProperty().length;
-    final withoutProperty = controller.getEnquiriesWithoutProperty().length;
-    final total = controller.totalMarketEnquiries.value;
-
-    Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.all(20.w),
-        decoration: BoxDecoration(
-          color: AppColor.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 60.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: AppColor.grey.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            SizedBox(height: 20.h),
-            Text(
-              "Enquiry Statistics",
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildStatCard(
-                  title: "Total",
-                  value: total.toString(),
-                  icon: Iconsax.receipt_item,
-                  color: AppColor.primary,
-                ),
-                _buildStatCard(
-                  title: "With Plot",
-                  value: withProperty.toString(),
-                  icon: Iconsax.home,
-                  color: Colors.green,
-                ),
-                _buildStatCard(
-                  title: "Without",
-                  value: withoutProperty.toString(),
-                  icon: Iconsax.info_circle,
-                  color: Colors.orange,
-                ),
-              ],
-            ),
-            SizedBox(height: 20.h),
-            ElevatedButton(
-              onPressed: () => Get.back(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.primary,
-                foregroundColor: AppColor.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                minimumSize: Size(Get.width * 0.8, 48.h),
-              ),
-              child: Text("Close"),
-            ),
-            SizedBox(height: 10.h),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(12.w),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 24.sp, color: color),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: AppColor.textSecondary,
-          ),
-        ),
-      ],
     );
   }
 

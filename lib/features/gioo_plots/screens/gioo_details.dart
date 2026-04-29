@@ -52,6 +52,7 @@ class _GiooDetailsState extends State<GiooDetails> {
         return SingleChildScrollView(
           child: Column(
             children: [
+
               AboutGiooPlot(),
               PlotAvailabilityWidget(),
               NearbyProject(),

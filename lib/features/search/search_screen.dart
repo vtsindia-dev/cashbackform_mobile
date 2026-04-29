@@ -25,12 +25,11 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-
     controller.resetSearch();
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
-              _scrollController.position.maxScrollExtent - 200 &&
+          _scrollController.position.maxScrollExtent - 200 &&
           !controller.isLoadMore &&
           controller.currentPage < controller.totalPages) {
         controller.loadMoreSearch();
@@ -69,7 +68,7 @@ class _SearchScreenState extends State<SearchScreen> {
               _itemKeys.addAll(
                 List.generate(
                   controller.filterCategoryItems.length,
-                  (index) => GlobalKey(),
+                      (index) => GlobalKey(),
                 ),
               );
             }
@@ -78,9 +77,23 @@ class _SearchScreenState extends State<SearchScreen> {
                 const SizedBox(height: 10),
                 searchWidget(controller),
                 const SizedBox(height: 10),
-                _buildCategoryBar(controller),
-                const SizedBox(height: 10),
-                _buildList(controller),
+                // Show suggestions when typing
+                if (controller.searchTextController.text.isNotEmpty &&
+                    controller.suggestionList.isNotEmpty &&
+                    !controller.isLoading)
+                  _buildSuggestions(controller),
+                if (controller.searchTextController.text.isEmpty ||
+                    controller.suggestionList.isEmpty ||
+                    controller.isLoading)
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _buildCategoryBar(controller),
+                        const SizedBox(height: 10),
+                        Expanded(child: _buildList(controller)),
+                      ],
+                    ),
+                  ),
               ],
             );
           },
@@ -89,6 +102,132 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  Widget _buildSuggestions(CommonSearchController controller) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        // Softer, more modern shadow
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.5,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: ListView.separated(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          itemCount: controller.suggestionList.length,
+          separatorBuilder: (context, index) => Padding(
+            padding: const EdgeInsets.only(left: 80), // Aligns divider with text
+            child: Divider(height: 1, color: Colors.grey.shade100),
+          ),
+          itemBuilder: (context, index) {
+            final item = controller.suggestionList[index];
+            final String title = item.type == "plot" ? item.propertyName ?? "" : item.name ?? "";
+            final String subtitle = item.type == "plot" ? item.location ?? '' : item.address ?? "";
+
+            return InkWell(
+              onTap: () {
+                FocusScope.of(context).unfocus();
+                controller.searchTextController.text = title;
+                controller.resetSearch();
+                _navigateByTitle(item);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    // --- IMAGE SECTION ---
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.grey.shade100,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          item.image?[0] ?? '', // Replace with your model's image field
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            item.type == "plot" ? Icons.landscape : Icons.business,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2D3142),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  subtitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // --- TYPE BADGE ---
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColor.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        getTypeLabel(item.type).toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 9,
+                          letterSpacing: 0.5,
+                          color: AppColor.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
   Widget _buildCategoryBar(CommonSearchController controller) {
     return SizedBox(
       height: 45,
@@ -116,24 +255,24 @@ class _SearchScreenState extends State<SearchScreen> {
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color.fromRGBO(199, 221, 148, 1),
-                          Color.fromRGBO(146, 175, 93, 1),
-                        ],
-                      )
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color.fromRGBO(199, 221, 148, 1),
+                    Color.fromRGBO(146, 175, 93, 1),
+                  ],
+                )
                     : null,
                 color: isSelected ? null : Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(25),
                 boxShadow: isSelected
                     ? [
-                        const BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ]
+                  const BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ]
                     : [],
               ),
               child: Center(
@@ -182,16 +321,26 @@ class _SearchScreenState extends State<SearchScreen> {
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: "Search Your Location...",
-                hintStyle: TextStyle(
+                hintStyle: const TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                 ),
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                suffixIcon: controller.searchTextController.text.isNotEmpty
+                    ? IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () {
+                    controller.searchTextController.clear();
+                    controller.suggestionList.clear();
+                    controller.resetSearch();
+                  },
+                )
+                    : null,
               ),
             ),
           ),
@@ -234,14 +383,32 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     if (list.isEmpty) {
-      return Expanded(child: Center(child: Text("No Data Found")));
+      return Expanded(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.search_off, size: 64, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                "No Data Found",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     return Expanded(
       child: RefreshIndicator(
         color: AppColor.primary,
         onRefresh: () async => controller.resetSearch(),
         child: ListView.separated(
-          separatorBuilder: (context, i) => SizedBox(height: 10),
+          separatorBuilder: (context, i) => const SizedBox(height: 10),
           controller: _scrollController,
           padding: const EdgeInsets.all(12),
           physics: const AlwaysScrollableScrollPhysics(),
@@ -330,17 +497,17 @@ class _SearchScreenState extends State<SearchScreen> {
                     Positioned.fill(
                       child: imageUrl.isNotEmpty
                           ? Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (c, e, s) => Image.asset(
-                                'assets/images/no-image.jpg',
-                                fit: BoxFit.cover,
-                              ),
-                            )
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => Image.asset(
+                          'assets/images/no-image.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                      )
                           : Image.asset(
-                              'assets/images/no-image.jpg',
-                              fit: BoxFit.cover,
-                            ),
+                        'assets/images/no-image.jpg',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     Positioned.fill(
                       child: Container(
@@ -491,45 +658,41 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                       ],
                     ),
-                      Row(
-                        children: [
-                          if (item.city?.cityName != null) ...[
-                            Flexible(
-                              child: Text(
-                                item.city!.cityName!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(width: 4),
-
-                            Text(
-                              "•",
+                    Row(
+                      children: [
+                        if (item.city?.cityName != null) ...[
+                          Flexible(
+                            child: Text(
+                              item.city!.cityName!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Colors.grey.shade400,
-                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                                fontSize: 11,
                               ),
-                            ),
-
-                            const SizedBox(width: 4),
-                          ],
-
-                          Text(
-                            item.type == "rental" || item.type == "synticate" || item.type == "geo" ||   item.type == "market"
-                                ? '${item.area} /sq.ft'
-                                : '${item.areaSqftPrice} /sq.ft',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 11,
                             ),
                           ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "•",
+                            style: TextStyle(
+                              color: Colors.grey.shade400,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
                         ],
-                      ),
+                        Text(
+                          item.type == "rental" || item.type == "synticate" || item.type == "geo" || item.type == "market"
+                              ? '${item.area} /sq.ft'
+                              : '${item.areaSqftPrice} /sq.ft',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

@@ -44,7 +44,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
               showBackButton: true,
             ),
             body: encashmentController.isMyEnCashMentListLoading
-                ? const Center(child: CircularProgressIndicator(color: AppColor.primary,))
+                ? const Center(child: CircularProgressIndicator(color: AppColor.primary))
                 : encashmentController.getMyEnCashMentList == null || encashmentController.getMyEnCashMentList!.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
@@ -56,11 +56,10 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
               },
             ),
           );
-        }
+        },
       ),
     );
   }
-
 
   Widget _buildEncashmentCard(EnCashMentModel item) {
     int resuse = item.reuse ?? 0;
@@ -101,6 +100,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Column(
+          mainAxisSize: MainAxisSize.min, // ✅ Add this
           children: [
             /// HEADER
             Container(
@@ -112,12 +112,12 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                 ),
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min, // ✅ Add this
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(6),
@@ -140,29 +140,27 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                       const Spacer(),
                       Text(
                         formatDate(item.createdAt),
-                        style:
-                        const TextStyle(fontSize: 11, color: Colors.black,fontWeight: FontWeight.w600),
+                        style: const TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
-                  if (resuse == 1)
-                 ...[
-                   const SizedBox(height: 5),
-                   const Row(
-                     children: [
-                       Icon(Icons.refresh, size: 16, color: Colors.green),
-                       SizedBox(width: 6),
-                       Text(
-                         "Coupon Reactivated - You can use this coupon again",
-                         style: TextStyle(
-                           fontSize: 12,
-                           fontWeight: FontWeight.w600,
-                           color: Colors.green,
-                         ),
-                       ),
-                     ],
-                   ),
-                 ]
+                  if (resuse == 1) ...[
+                    const SizedBox(height: 5),
+                    const Row(
+                      children: [
+                        Icon(Icons.refresh, size: 16, color: Colors.green),
+                        SizedBox(width: 6),
+                        Text(
+                          "Coupon Reactivated - You can use this coupon again",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -171,6 +169,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
             Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
+                mainAxisSize: MainAxisSize.min, // ✅ Add this
                 children: [
                   /// REF + AMOUNT
                   Row(
@@ -180,10 +179,10 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text("Reference",
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.grey)),
+                                style: TextStyle(fontSize: 12, color: Colors.grey)),
                             const SizedBox(height: 3),
-                            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Colors.orange.shade50,
                                 borderRadius: BorderRadius.circular(6),
@@ -227,6 +226,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min, // ✅ Add this
                         children: [
                           Row(
                             children: [
@@ -246,11 +246,8 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                isGpay
-                                    ? "UPI Payment"
-                                    : "Bank Transfer",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600),
+                                isGpay ? "UPI Payment" : "Bank Transfer",
+                                style: const TextStyle(fontWeight: FontWeight.w600),
                               ),
                               const Spacer(),
                               Text(
@@ -266,21 +263,14 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
 
                           /// DETAILS
                           if (isGpay) ...[
-                            _buildDetailRow(Icons.person, 'UPI ID',
-                                bank.gpayUpiId ?? ""),
-                            _buildDetailRow(Icons.phone, 'Phone',
-                                bank.gpayPhoneNumber ?? ""),
+                            _buildDetailRow(Icons.person, 'UPI ID', bank.gpayUpiId ?? ""),
+                            _buildDetailRow(Icons.phone, 'Phone', bank.gpayPhoneNumber ?? ""),
                           ] else ...[
-                            _buildDetailRow(Icons.business, 'Bank Name',
-                                bank.bankName ?? ""),
-                            _buildDetailRow(Icons.numbers, 'Account No',
-                                bank.bankAccountNumber ?? ""),
-                            _buildDetailRow(Icons.code, 'IFSC',
-                                bank.bankIfscCode ?? ""),
-                            _buildDetailRow(Icons.person, 'Beneficiary',
-                                bank.bankBeneficiaryName ?? ""),
-                            _buildDetailRow(Icons.phone, 'Phone',
-                                bank.bankPhoneNumber ?? ""),
+                            _buildDetailRow(Icons.business, 'Bank Name', bank.bankName ?? ""),
+                            _buildDetailRow(Icons.numbers, 'Account No', bank.bankAccountNumber ?? ""),
+                            _buildDetailRow(Icons.code, 'IFSC', bank.bankIfscCode ?? ""),
+                            _buildDetailRow(Icons.person, 'Beneficiary', bank.bankBeneficiaryName ?? ""),
+                            _buildDetailRow(Icons.phone, 'Phone', bank.bankPhoneNumber ?? ""),
                           ],
                         ],
                       ),
@@ -292,9 +282,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                     children: [
                       Text(
                         "Service Charge: ₹${item.gst ?? 0}",
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600),
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                       ),
                       if (item.cancelStatus == 1)
                         Container(
@@ -305,8 +293,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                           ),
                           child: const Row(
                             children: [
-                              Icon(Icons.cancel,
-                                  size: 12, color: Colors.red),
+                              Icon(Icons.cancel, size: 12, color: Colors.red),
                               SizedBox(width: 4),
                               Text(
                                 "Cancelled",
@@ -329,7 +316,6 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
     );
   }
 
-
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -339,19 +325,13 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
           const SizedBox(width: 8),
           Text(
             "$label:",
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -362,12 +342,32 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Expanded(child: Center(child: Text('No encashment requests found')));
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.history,
+            size: 64,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No encashment requests found',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
 String formatDate(String? dateStr) {
-  if (dateStr == null || dateStr.isEmpty) return '';
+  if (dateStr ==  null || dateStr.isEmpty) return '';
   try {
     DateTime parsed = DateTime.parse(dateStr).toLocal();
     return DateFormat("dd-MM-yyyy hh:mm a").format(parsed);

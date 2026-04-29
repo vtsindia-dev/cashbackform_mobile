@@ -578,7 +578,8 @@ class Pivot {
       updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
     );
   }
-}class GiooPlotDetail {
+}
+class GiooPlotDetail {
   final int id;
   final String name;
   final PropertyType? propertyType;
@@ -617,6 +618,12 @@ class Pivot {
   final DateTime createdAt;
   final DateTime updatedAt;
   final int? verify;
+  final List<CommonFacility>? commonfacility;
+  final int? soldStatus;
+  final String? soldAmount;
+  final String? share;
+  final String? frontendUrl;
+  final String? threeDImage;
 
   GiooPlotDetail({
     required this.id,
@@ -656,7 +663,13 @@ class Pivot {
     required this.nearby_locations,
     required this.createdAt,
     required this.updatedAt,
-    this.verify
+    this.verify,
+    this.commonfacility,
+    this.soldStatus,
+    this.soldAmount,
+    this.share,
+    this.frontendUrl,
+    this.threeDImage,
   });
 
   factory GiooPlotDetail.fromJson(Map<String, dynamic> json) {
@@ -703,6 +716,11 @@ class Pivot {
       return documents.map((e) => Document.fromJson(e)).toList();
     }
 
+    List<CommonFacility> parseCommonFacility(dynamic facility) {
+      if (facility == null || facility is! List) return [];
+      return facility.map((e) => CommonFacility.fromJson(e)).toList();
+    }
+
     return GiooPlotDetail(
       id: json['id'] ?? 0,
       name: json['name']?.toString() ?? '',
@@ -740,11 +758,44 @@ class Pivot {
       bookings: parseBookings(json['booking']),
       verify: json['verify_status'],
       nearby_locations: parseNearbyLocations(json['nearby_locations']),
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
+      commonfacility: parseCommonFacility(json['commonfacility']),
+      soldStatus: json['sold_status'],
+      soldAmount: json['sold_amount']?.toString(),
+      share: json['share']?.toString(),
+      frontendUrl: json['frontend_url']?.toString(),
+      threeDImage: json['three_d_image']?.toString(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'].toString())
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'].toString())
+          : DateTime.now(),
     );
   }
 }
+class CommonFacility {
+  final int? id;
+  final String? name;
+  final String? icon;
+  final int? status;
+
+  CommonFacility({
+    this.id,
+    this.name,
+    this.icon,
+    this.status,
+  });
+
+  factory CommonFacility.fromJson(Map<String, dynamic> json) {
+    return CommonFacility(
+      id: json['id'],
+      name: json['name']?.toString(),
+      icon: json['icon']?.toString(),
+      status: json['status'],
+    );
+  }
+}
+
 class AdminBlock {
   final String units;
   AdminBlock({

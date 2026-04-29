@@ -1,4 +1,4 @@
-package com.example.cashback_farms
+package com.cashback_farms.app
 
 import io.flutter.embedding.android.FlutterActivity
 

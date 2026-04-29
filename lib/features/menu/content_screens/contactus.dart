@@ -434,7 +434,7 @@ class ContactUsScreen extends StatelessWidget {
               children: [
                 if (hasInstagram)
                   _socialMediaButton(
-                    icon: Icons.account_circle,
+                    assetPath: 'assets/images/instagram.png',
                     color: Colors.pink,
                     label: "Instagram",
                     onTap: () => _openInstagram(settings),
@@ -442,21 +442,20 @@ class ContactUsScreen extends StatelessWidget {
                 if (hasYouTube && hasInstagram) SizedBox(width: 20.w),
                 if (hasYouTube)
                   _socialMediaButton(
-                    icon: Icons.play_circle_fill,
+                    assetPath: 'assets/images/youtube.png',
                     color: Colors.red,
                     label: "YouTube",
                     onTap: () => _openYouTube(settings),
                   ),
               ],
-            ),
-          ],
+            )          ],
         ),
       );
     });
   }
 
   Widget _socialMediaButton({
-    required IconData icon,
+    required String assetPath, // Changed from IconData
     required Color color,
     required String label,
     required VoidCallback onTap,
@@ -468,12 +467,17 @@ class ContactUsScreen extends StatelessWidget {
           Container(
             width: 50.w,
             height: 50.h,
+            padding: EdgeInsets.all(12.w), // Added padding so the image doesn't touch the borders
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(25.r),
               border: Border.all(color: color.withOpacity(0.3)),
             ),
-            child: Icon(icon, color: color, size: 24.sp),
+            child: Image.asset(
+              assetPath,
+              color: color, // Optional: Removes original image colors to match your theme
+              fit: BoxFit.contain,
+            ),
           ),
           SizedBox(height: 8.h),
           Text(

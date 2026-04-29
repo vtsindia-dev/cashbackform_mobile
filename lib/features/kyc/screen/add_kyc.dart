@@ -489,6 +489,7 @@ class KYCDocumentForm extends StatelessWidget {
         onPressed: controller.isSubmitting.value ? null : _onSubmit,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColor.primary,
+
           foregroundColor: AppColor.white,
           disabledBackgroundColor: AppColor.primary.withOpacity(0.5),
           elevation: 0,
@@ -522,6 +523,7 @@ class KYCDocumentForm extends StatelessWidget {
   Future<void> _onSubmit() async {
     // Run inline validation before calling controller
     final nameErr = _validateName(controller.name.value);
+
     final panErr = _validatePAN(controller.panNo.value);
     final aadharErr = _validateAadhar(controller.aadharNo.value);
 

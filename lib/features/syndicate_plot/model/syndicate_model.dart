@@ -106,12 +106,10 @@ class SyndicatePlot {
     return [];
   }
 
-  bool get isSoldOut => soldStatus == 1; // ✅
-
+  bool get isSoldOut => soldStatus == 1;
   String get formattedPrice => _formatNumber(price);
   String get formattedArea => '$area sq.ft';
-  String get location =>
-      '${city?.cityName ?? ''}, ${state?.stateName ?? ''}'.trim();
+  String get location => '${city?.cityName ?? ''}, ${state?.stateName ?? ''}'.trim();
   String get firstImage => images.isNotEmpty ? images.first : '';
   List<String> get allImages => images;
 
@@ -312,10 +310,7 @@ class SyndicateDetail {
           : [],
     );
   }
-
-  // ── Convenience getters ─────────────────
-  bool get isSoldOut => soldStatus == 1; // ✅
-
+  bool get isSoldOut => soldStatus == 1;
   List<double> get unitAreas {
     try {
       if (unit.isEmpty) return List.filled(unitSpilt, 0.0);
@@ -324,13 +319,10 @@ class SyndicateDetail {
       return List.filled(unitSpilt, 0.0);
     }
   }
-
   double get pricePerSqFt =>
       double.tryParse(price.replaceAll(',', '')) ?? 0.0;
-
   double get documentPriceValue =>
       double.tryParse(adminDocumentPrice.replaceAll(',', '')) ?? 0.0;
-
   double get adminDocumentPriceValue => documentPriceValue;
 
   double get totalDocumentPrice => adminDocumentPriceValue;

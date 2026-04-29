@@ -49,6 +49,7 @@ class    _GifLoaderState extends State<GifLoader>
                 decoration: BoxDecoration(
                   color: AppColor.primary.withOpacity(0.2),
                   shape: BoxShape.circle,
+
                 ),
                 child: Image.asset(
                   widget.gifAsset,

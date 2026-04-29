@@ -46,10 +46,8 @@ class _SyndicatePlotState extends State<SyndicatePlot> {
         if (controller.isLoading.value) {
           return const Center(child: GifLoader(message: "Loading...", size: 100));
         }
-
         return Column(
           children: [
-
             _SearchAndFiltersSection(
               controller: controller,
               searchController: _searchController,

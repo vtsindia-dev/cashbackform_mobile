@@ -5,7 +5,6 @@ class ApiUrl {
   static const String baseUrl = "https://admincashback.vrikshatech.in/public";
   static const String WebsidebaseUrl = "https://cashback.vrikshatech.in/public";
 
-
   static const String login = "$baseUrl/api/v2/login";
   static const String otp = "$baseUrl/api/v2/otp";
   static const String register = "$baseUrl/api/v2/register";
@@ -23,7 +22,7 @@ class ApiUrl {
   static const String marketList = "$baseUrl/api/v2/material_list";
   static const String marketPlotAdd = "$baseUrl/api/v2/market_store";
   static const String marketPlotEdit = "$baseUrl/api/v2/market_update";
-  static const String marketPlotDelete = "$baseUrl/api/v2/marketdelete";
+  static const String marketPlotDelete = "$baseUrl/api/v2/market_property_delete";
   static const String serviceList = "$baseUrl/api/v2/services_list";
   static const String serviceDetail = "$baseUrl/api/v2/services_list";
   static const String materialDetail = "$baseUrl/api/v2/material";
@@ -65,12 +64,10 @@ class ApiUrl {
   static const String servicesList = '$baseUrl/api/v2/services_list';
   static const String vendorDetails = '$baseUrl/api/v2/vendor/service';
   static const String commonFacilities = '$baseUrl/api/v2/common-facilities';
-
   static const String submitMaterialEnquiry = '$baseUrl/api/v2/material_enquriy';
   static const String submitServiceEnquiry = '$baseUrl/api/v2/services_enquriy';
   static const String materialEnquiryList = '$baseUrl/material_enquriy';
   static const String serviceEnquiryList = '$baseUrl/services_enquriy';
-
   static const String submitReview = '$baseUrl/api/v2/shop/review';
   static const String materialUnit = '$baseUrl/api/v2/units';
   static const String servicesSubCategory = '$baseUrl/api/v2/services_sub_cat';
@@ -78,20 +75,15 @@ class ApiUrl {
   static const String searchApi = '$baseUrl/api/v2/search';
   static const String vendorStoreUrl = '$baseUrl/api/v2/vendor';
   static const String homeCategoryApi = '$baseUrl/api/v2/service-featured-category-list';
-
   static const String materialCategory = '$baseUrl/api/v2/material_category';
   static const String materialSubCategory = '$baseUrl/api/v2/material_sub_cat';
   static const String materialSubSubCategory = '$baseUrl/api/v2/material_sub_sub_cat';
   static const String vendorApi = '$baseUrl/api/v2/vendor';
   static const String applyCoupon = '$baseUrl/api/v2/apply-coupon';
-
   static const String couponList = '$baseUrl/api/v2/coupon-list';
   static const String generateCoupon = '$baseUrl/api/v2/generate-coupon';
-
   static const String enhanceCouponCheckApi = '$baseUrl/api/v2/enhance_coupon_check';
-
   static const String enhancePostApi = '$baseUrl/api/v2/enhancement';
-
   static String enhancementListApi = '$baseUrl/api/v2/enhancement_list';
 
 

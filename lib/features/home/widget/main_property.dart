@@ -19,7 +19,7 @@ class PropertyMain extends StatelessWidget {
   ];
 
   final List<Color> iconColors = const [
-    Color(0xFF6A5AE0),
+         Color(0xFF6A5AE0),
     Color(0xFF2CC8B3),
     Color(0xFFF49B33),
     Color(0xFFE54788),
@@ -31,7 +31,7 @@ class PropertyMain extends StatelessWidget {
     final rowCount = (properties.length / 2).ceil();
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start ,
       children: [
         Text(
           "Explore All",
@@ -66,6 +66,7 @@ class PropertyMain extends StatelessWidget {
                       .fadeIn(duration: 500.ms),
                 ),
                 SizedBox(width: 12.w),
+
 
                 Expanded(
                   child: right < properties.length

@@ -12,11 +12,12 @@ import '../../../common/colours.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../legal_and_policies/screen.dart';
 import '../../menu/controller/dashboard_menu_controller.dart';
 import '../../payment/controller/razorpay_controller.dart';
 import '../model/plot_market.dart';
 import '../screens/add_plot.dart';
-
+import 'package:flutter/gestures.dart';
 class PlotMarketController extends GetxController {
   var isLoading = false.obs;
   var isLoadMore = false.obs;
@@ -135,15 +136,23 @@ class PlotMarketController extends GetxController {
     }
   }
 
-  Future<void> sendEnquiry() async {
+  Future<void> sendEnquiry(int propertyId) async {
     isEnquiryLoading.value = true;
     final token = await SessionManager.getToken();
+
     try {
+      // Create form data or JSON body
+      final Map<String, dynamic> requestData = {
+        'property_id': propertyId,
+      };
+
       final response = await dio.Dio().post(
         ApiUrl.sendMarketEnquiry,
+        data: requestData, // Send property_id in request body
         options: dio.Options(
           headers: {
             "Accept": "application/json",
+            "Content-Type": "application/json", // Add content type
             if (token != null && token.isNotEmpty)
               "Authorization": "Bearer $token",
           },
@@ -153,22 +162,26 @@ class PlotMarketController extends GetxController {
       final data = response.data;
 
       if (response.statusCode == 200 && data['status'] == true) {
-        enquiryCount.value = data['counts'];
-        message.value = data['message'];
-        SnackBarHelper.showSuccess("Enquiry Submitted successfully");
+        enquiryCount.value = data['counts'] ?? 0;
+        message.value = data['message'] ?? '';
+        SnackBarHelper.showSuccess(data['message'] ?? "Enquiry Submitted successfully");
       } else {
         SnackBarHelper.showError(data['message'] ?? 'Something went wrong');
       }
     } on dio.DioException catch (e) {
-      SnackBarHelper.showError(
-          e.response?.data['message'] ?? e.message ?? 'Request failed');
+      String errorMsg = 'Request failed';
+      if (e.response?.data != null) {
+        errorMsg = e.response?.data['message'] ?? e.response?.data['error'] ?? e.message ?? 'Request failed';
+      } else {
+        errorMsg = e.message ?? 'Request failed';
+      }
+      SnackBarHelper.showError(errorMsg);
     } catch (e) {
       SnackBarHelper.showError(e.toString());
     } finally {
       isEnquiryLoading.value = false;
     }
   }
-
   Future<void> fetchMarketPlotDetail(int id) async {
     try {
       _clearDetailData();
@@ -592,12 +605,13 @@ class PlotMarketController extends GetxController {
     }
   }
 
-  Future<Map<String, dynamic>> submitMarketPlot({
+  submitMarketPlot({
     required Map<String, dynamic> formData,
     List<File> images = const [],
     File? plotImage,
     File? bluePrint,
     File? threeDImage,
+    File? video,
     List<int>? selectedFacilityIds,
     bool isUpdate = false,
   }) async {
@@ -631,33 +645,57 @@ class PlotMarketController extends GetxController {
         formDataToSend.fields.add(MapEntry('user_id', userId.toString()));
       }
 
+      // ── Add multiple images to 'plot_image[]' field ──
       for (int i = 0; i < images.length; i++) {
+        String extension = images[i].path.split('.').last;
+        // Only add if it's an image file
+        if (['jpg', 'jpeg', 'png', 'webp'].contains(extension.toLowerCase())) {
+          formDataToSend.files.add(MapEntry(
+            'image[]',
+            await dio.MultipartFile.fromFile(
+              images[i].path,
+              filename: 'image_$i.$extension',
+            ),
+          ));
+        }
+      }
+
+      // ── Add video to a separate field (adjust field name as per your backend) ──
+      if (video != null) {
+        String extension = video.path.split('.').last;
         formDataToSend.files.add(MapEntry(
-          'plot_image',
-          await dio.MultipartFile.fromFile(images[i].path,
-              filename: 'image_$i.jpg'),
+          'image[]', // Try this field name
+          await dio.MultipartFile.fromFile(
+            video.path,
+            filename: 'property_video.$extension',
+          ),
         ));
       }
 
+      // ── Add 3D image ──
       if (threeDImage != null) {
         formDataToSend.files.add(MapEntry(
           'three_d_image',
-          await dio.MultipartFile.fromFile(threeDImage.path,
-              filename: 'three_d_image.jpg'),
+          await dio.MultipartFile.fromFile(
+            threeDImage.path,
+            filename: 'three_d_image.${threeDImage.path.split('.').last}',
+          ),
         ));
       }
 
-      if (plotImage != null) {
+      // ── Add plot image (blueprint) ──
+      if (bluePrint != null) {
         formDataToSend.files.add(MapEntry(
-          'image[]',
-          await dio.MultipartFile.fromFile(plotImage.path,
-              filename: 'plot_image.jpg'),
+          'plot_image',
+          await dio.MultipartFile.fromFile(
+            bluePrint.path,
+            filename: 'plot_image.${bluePrint.path.split('.').last}',
+          ),
         ));
       }
 
       final token = await SessionManager.getToken();
-      final url =
-      isUpdate ? ApiUrl.marketPlotEdit : ApiUrl.marketPlotAdd;
+      final url = isUpdate ? ApiUrl.marketPlotEdit : ApiUrl.marketPlotAdd;
 
       final dioInstance = dio.Dio();
       final response = await dioInstance.post(
@@ -670,8 +708,8 @@ class PlotMarketController extends GetxController {
             if (token != null && token.isNotEmpty)
               "Authorization": "Bearer $token",
           },
-          sendTimeout: const Duration(seconds: 50),
-          receiveTimeout: const Duration(seconds: 50),
+          sendTimeout: const Duration(seconds: 50000000),
+          receiveTimeout: const Duration(seconds: 50000000),
         ),
       );
 
@@ -717,12 +755,26 @@ class PlotMarketController extends GetxController {
       isLoading(false);
     }
   }
-
   Future<bool> deleteMarketPlot(int id) async {
     try {
       isLoading(true);
+
+      final token = await SessionManager.getToken();
       final url = '${ApiUrl.marketPlotDelete}/$id';
-      final response = await dio.Dio().delete(url);
+
+      final dioInstance = dio.Dio();
+
+      final response = await dioInstance.post(
+        url,
+        options: dio.Options(
+          headers: {
+            "Accept": "application/json",
+            if (token != null && token.isNotEmpty)
+              "Authorization": "Bearer $token",
+          },
+        ),
+      );
+
       if (response.statusCode == 200) {
         marketPlots.removeWhere((plot) => plot.id == id);
         refresh();
@@ -740,7 +792,6 @@ class PlotMarketController extends GetxController {
       isLoading(false);
     }
   }
-
   void openEditForm(MarketPlot plot) {
     Get.to(() => MarketPlotForm(plot: plot));
   }
@@ -778,12 +829,10 @@ class PlotMarketController extends GetxController {
         AlertDialog(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
           titlePadding: EdgeInsets.zero,
           title: Container(
-            padding:
-            EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
             decoration: BoxDecoration(
               color: AppColor.primary.withOpacity(0.05),
               borderRadius: BorderRadius.only(
@@ -844,8 +893,7 @@ class PlotMarketController extends GetxController {
                     Text(
                       plot.location,
                       maxLines: 1,
-                      style:
-                      TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
                     ),
                   ],
                 ),
@@ -856,13 +904,11 @@ class PlotMarketController extends GetxController {
               _buildBenefitItem("Verified seller protection"),
               SizedBox(height: 20.h),
               Container(
-                padding: EdgeInsets.symmetric(
-                    horizontal: 12.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
                 decoration: BoxDecoration(
                   color: AppColor.primary.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(12.r),
-                  border:
-                  Border.all(color: AppColor.primary.withOpacity(0.1)),
+                  border: Border.all(color: AppColor.primary.withOpacity(0.1)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -881,9 +927,11 @@ class PlotMarketController extends GetxController {
                 ),
               ),
               SizedBox(height: 12.h),
+              // Updated Terms & Conditions with RichText
               Obx(() => InkWell(
                 onTap: () => razorpayController.toggleTerms(),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
                       height: 24.w,
@@ -898,10 +946,48 @@ class PlotMarketController extends GetxController {
                     ),
                     SizedBox(width: 8.w),
                     Expanded(
-                      child: Text(
-                        "I accept the terms & conditions",
-                        style: TextStyle(
-                            fontSize: 11.sp, color: Colors.grey[700]),
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(fontSize: 12.sp, color: AppColor.textMain),
+                          children: [
+                            const TextSpan(text: "I accept the "),
+                            // TextSpan(
+                            //   text: "Privacy Policy",
+                            //   style: TextStyle(
+                            //     color: AppColor.primary,
+                            //     fontWeight: FontWeight.w600,
+                            //     decoration: TextDecoration.underline,
+                            //   ),
+                            //   recognizer: TapGestureRecognizer()
+                            //     ..onTap = () {
+                            //       Get.to(
+                            //             () => LegalPageScreen(
+                            //           slug: "plot_market_place_verification_payment_terms_and_condition",
+                            //           title: "Privacy Policy",
+                            //         ),
+                            //       );
+                            //     },
+                            // ),
+                            // const TextSpan(text: " and "),
+                            TextSpan(
+                              text: "Terms & Conditions",
+                              style: TextStyle(
+                                color: AppColor.primary,
+                                fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Get.to(
+                                        () => LegalPageScreen(
+                                      slug: "plot_market_place_verification_payment_terms_and_condition",
+                                      title: "Terms & Conditions",
+                                    ),
+                                  );
+                                },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -909,8 +995,7 @@ class PlotMarketController extends GetxController {
               )),
             ],
           ),
-          actionsPadding:
-          EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           actions: [
             Row(
               children: [
@@ -933,7 +1018,7 @@ class PlotMarketController extends GetxController {
                   child: ElevatedButton(
                     onPressed: () {
                       if (!razorpayController.isTermsAccepted.value) {
-                        Get.snackbar("Required", "Please accept terms",
+                        Get.snackbar("Required", "Please accept the Privacy Policy and Terms & Conditions",
                             backgroundColor: Colors.red,
                             colorText: Colors.white);
                         return;
@@ -957,8 +1042,7 @@ class PlotMarketController extends GetxController {
             ),
           ],
         ),
-      );
-    } catch (e) {
+      );    } catch (e) {
       // Error handling
     }
   }
@@ -1109,8 +1193,7 @@ class PlotMarketController extends GetxController {
         return;
       }
 
-      final url =
-          '${ApiUrl.myMarketPlots}?page_no=${myCurrentPage.value}';
+      final url = '${ApiUrl.myMarketPlots}?page_no=${myCurrentPage.value}';
       final response = await dio.Dio().get(
         url,
         options: dio.Options(
@@ -1125,14 +1208,47 @@ class PlotMarketController extends GetxController {
         final responseData = response.data;
         if (responseData != null && responseData is Map) {
           List<dynamic> marketDataList = [];
-          if (responseData['data'] != null &&
-              responseData['data'] is List) {
+
+          // Check for pagination metadata
+          int? totalPages;
+          int? currentPage;
+          int? perPage;
+          int? total;
+
+          if (responseData['data'] != null && responseData['data'] is List) {
             marketDataList = responseData['data'];
-          } else if (responseData['market'] != null &&
-              responseData['market'] is List) {
+
+            // Extract pagination info if available
+            if (responseData['meta'] != null) {
+              total = responseData['meta']['total'];
+              currentPage = responseData['meta']['current_page'];
+              perPage = responseData['meta']['per_page'];
+              totalPages = responseData['meta']['last_page'];
+            } else if (responseData['pagination'] != null) {
+              total = responseData['pagination']['total'];
+              currentPage = responseData['pagination']['current_page'];
+              perPage = responseData['pagination']['per_page'];
+              totalPages = responseData['pagination']['last_page'];
+            }
+
+            // Calculate if more data exists
+            if (totalPages != null) {
+              myHasMoreData.value = myCurrentPage.value < totalPages;
+            } else if (perPage != null && total != null) {
+              myHasMoreData.value = marketDataList.length >= perPage &&
+                  (myMarketPlots.length + marketDataList.length) < total;
+            } else {
+              // Fallback: if we receive less than expected items, assume no more data
+              myHasMoreData.value = marketDataList.isNotEmpty;
+            }
+          } else if (responseData['market'] != null && responseData['market'] is List) {
             marketDataList = responseData['market'];
+            myHasMoreData.value = marketDataList.isNotEmpty;
           } else {
-            SnackBarHelper.showError("No properties found");
+            myHasMoreData.value = false;
+            if (!loadMore) {
+              SnackBarHelper.showError("No properties found");
+            }
           }
 
           List<MarketPlot> parsedPlots = [];
@@ -1150,19 +1266,37 @@ class PlotMarketController extends GetxController {
           }
 
           if (loadMore) {
-            myMarketPlots.addAll(parsedPlots);
+            // Prevent duplicate entries by checking existing IDs
+            final existingIds = myMarketPlots.map((p) => p.id).toSet();
+            final newPlots = parsedPlots.where((p) => !existingIds.contains(p.id)).toList();
+            myMarketPlots.addAll(newPlots);
+
+            // If we received fewer items than expected, no more data
+            if (parsedPlots.isEmpty || parsedPlots.length < (perPage ?? 10)) {
+              myHasMoreData.value = false;
+            }
           } else {
             myMarketPlots.assignAll(parsedPlots);
           }
+
           myTotalItems.value = myMarketPlots.length;
+
+          // Debug print
+          print('📊 Pagination: Page ${myCurrentPage.value}, HasMore: ${myHasMoreData.value}, Items: ${myMarketPlots.length}');
         } else {
-          SnackBarHelper.showError("Invalid response from server");
+          myHasMoreData.value = false;
+          if (!loadMore) {
+            SnackBarHelper.showError("Invalid response from server");
+          }
         }
       } else if (response.statusCode == 401) {
+        myHasMoreData.value = false;
         SnackBarHelper.showError("Session expired. Please login again");
       } else if (response.statusCode == 404) {
+        myHasMoreData.value = false;
         SnackBarHelper.showError("Service temporarily unavailable");
       } else {
+        myHasMoreData.value = false;
         final errorMessage = response.data?['message'] ??
             response.data?['error'] ??
             'Failed to fetch your properties';
@@ -1171,6 +1305,7 @@ class PlotMarketController extends GetxController {
     } catch (e, stackTrace) {
       print('❌ Exception in fetchMyMarketPlots: $e');
       print('❌ Stack trace: $stackTrace');
+      myHasMoreData.value = false;
       if (e is TypeError) {
         SnackBarHelper.showError("Data format error. Please try again.");
       } else if (e is FormatException) {
@@ -1186,13 +1321,26 @@ class PlotMarketController extends GetxController {
   }
 
   Future<void> loadMoreMyPlots() async {
-    if (!isLoadMoreMyPlots.value && myHasMoreData.value) {
-      myCurrentPage.value++;
-      await fetchMyMarketPlots(loadMore: true);
+    // Prevent multiple simultaneous load more requests
+    if (isLoadMoreMyPlots.value) {
+      print('⏸️ Load more already in progress, skipping...');
+      return;
     }
+
+    if (!myHasMoreData.value) {
+      print('🏁 No more data to load');
+      return;
+    }
+
+    print('🔄 Loading more plots - Page: ${myCurrentPage.value + 1}');
+    myCurrentPage.value++;
+    await fetchMyMarketPlots(loadMore: true);
   }
 
   Future<void> refreshMyPlots() async {
+    print('🔄 Refreshing plots...');
+    myCurrentPage.value = 1;
+    myHasMoreData.value = true;
     await fetchMyMarketPlots();
   }
 

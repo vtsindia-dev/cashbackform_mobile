@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
+
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 
@@ -33,6 +38,7 @@ class MarketPlot {
   final List<Map<String, dynamic>>? nearbyPlaces;
   int? plotCount;
   String? threeDImage;
+  final bool documentVerification; // New field
 
   MarketPlot({
     required this.id,
@@ -66,17 +72,24 @@ class MarketPlot {
     this.nearbyPlaces,
     this.plotCount,
     this.threeDImage,
+    required this.documentVerification,
   });
 
   factory MarketPlot.fromJson(Map<String, dynamic> json) {
     List<int>? parseAmenities(String? amenitiesStr) {
       if (amenitiesStr == null || amenitiesStr.isEmpty) return null;
       try {
-        return amenitiesStr
-            .split(',')
-            .map((e) => int.tryParse(e.trim()) ?? 0)
-            .where((e) => e > 0)
-            .toList();
+        // Handle both string format and array format
+        if (amenitiesStr.startsWith('[')) {
+          final list = jsonDecode(amenitiesStr) as List;
+          return list.map((e) => int.tryParse(e.toString()) ?? 0).where((e) => e > 0).toList();
+        } else {
+          return amenitiesStr
+              .split(',')
+              .map((e) => int.tryParse(e.trim()) ?? 0)
+              .where((e) => e > 0)
+              .toList();
+        }
       } catch (e) {
         return null;
       }
@@ -85,6 +98,17 @@ class MarketPlot {
     List<Map<String, dynamic>>? parseNearbyPlaces(dynamic places) {
       if (places == null || places is! List) return null;
       return List<Map<String, dynamic>>.from(places);
+    }
+
+    // Parse document_verification - can be bool, int, or string
+    bool parseDocumentVerification(dynamic value) {
+      if (value == null) return false;
+      if (value is bool) return value;
+      if (value is int) return value == 1;
+      if (value is String) {
+        return value.toLowerCase() == 'true' || value == '1';
+      }
+      return false;
     }
 
     return MarketPlot(
@@ -111,8 +135,8 @@ class MarketPlot {
       priceperSqft: json['price_sqft']?.toString(),
       status: json['status'] as int? ?? 0,
       verifyStatus: json['verify_status'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? ''),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? ''),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toString()),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toString()),
       threeDImage: json['three_d_image'],
       propertyType: json['property_type'] != null
           ? PropertyType.fromJson(json['property_type'])
@@ -121,6 +145,7 @@ class MarketPlot {
       amenities: parseAmenities(json['aminities']?.toString()),
       nearbyPlaces: parseNearbyPlaces(json['nearby_places']),
       plotCount: json['plot_count'],
+      documentVerification: parseDocumentVerification(json['doucment_verficaiton']),
     );
   }
 
@@ -148,9 +173,49 @@ class MarketPlot {
   String get formattedArea => '$area sq.ft';
   String get location =>
       '${city?.cityName ?? ''}, ${state?.stateName ?? ''}'.trim();
+
   bool get isVerified => verifyStatus == 1;
   bool get hasPlotImage => plotImage != null && plotImage!.isNotEmpty;
   String get firstImage => images.isNotEmpty ? images.first : '';
+
+  // New getters for verification status
+  String get verificationStatusText {
+    if (documentVerification) {
+      return "Paid";
+    } else {
+      return "Verify Land";
+    }
+  }
+
+  Color get verificationStatusColor {
+    if (documentVerification) {
+      return Colors.green;
+    } else {
+      return Colors.orange;
+    }
+  }
+
+  IconData get verificationStatusIcon {
+    if (documentVerification) {
+      return Icons.paid;
+    } else {
+      return Icons.verified_outlined;
+    }
+  }
+
+  String get verifyBadgeText {
+    if (verifyStatus == 1) {
+      return "Verified ✓";
+    }
+    return "Not Verified";
+  }
+
+  Color get verifyBadgeColor {
+    if (verifyStatus == 1) {
+      return Colors.green;
+    }
+    return Colors.grey;
+  }
 
   String _formatNumber(String number) {
     try {
@@ -170,7 +235,6 @@ class MarketPlot {
     }
   }
 }
-
 class City {
   final int id;
   final int stateId;

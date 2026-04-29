@@ -134,10 +134,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       startY.clamp(0.0, 20.0),
       endY.clamp(0.0, 20.0),
     );
-
-    // Property Types - Initialize empty since your API doesn't seem to have property types
     _selectedPropertyTypes = [];
-
     _selectedStateId = c.selectedStateId.value;
     _selectedCityId = c.selectedCityId.value;
     _selectedFurnishingStatus = ''; // Your API doesn't have this
@@ -343,6 +340,7 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
       ),
     );
   }
+
 
   Widget _buildStateSelector() {
     final statesToShow = _showAllStates

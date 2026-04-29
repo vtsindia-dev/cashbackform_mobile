@@ -128,6 +128,7 @@ class SyndicatePlotController extends GetxController {
         plots[index]["status"] = "selected";
       }
     }
+
     update();
   }
 
@@ -780,39 +781,60 @@ class SyndicatePlotController extends GetxController {
   String formatArea(double area) {
     return "${area.toStringAsFixed(0)} sq.ft";
   }
+  double getFixedBookingAmount() {
+    final detail = syndicateDetail.value;
+    if (detail == null) return 0.0;
+
+    // Use adminBlockAmount as the fixed total amount, not per plot
+    final adminBlockAmount = detail.adminBlockAmount;
+    print('💰 Fixed Booking Amount raw: $adminBlockAmount');
+
+    if (adminBlockAmount != null && adminBlockAmount.isNotEmpty && adminBlockAmount != '0') {
+      final cleanedAmount = adminBlockAmount.replaceAll(',', '');
+      final amount = double.tryParse(cleanedAmount) ?? 0.0;
+      print('💰 Fixed Booking Amount: $amount');
+      return amount;
+    }
+
+    // Fallback
+    return 5000.0; // Default fixed amount
+  }
 
   double getPricePerPlotFromAdminBlock() {
     final detail = syndicateDetail.value;
     if (detail == null) return 0.0;
+
     final adminBlockAmount = detail.adminBlockAmount;
+    print('💰 Admin Block Amount raw: $adminBlockAmount');
+
     if (adminBlockAmount != null && adminBlockAmount.isNotEmpty && adminBlockAmount != '0') {
-      final price = double.tryParse(adminBlockAmount.replaceAll(',', '')) ?? 0.0;
-      print('💰 Using admin_block_amount: $price');
+      final cleanedAmount = adminBlockAmount.replaceAll(',', '');
+      final price = double.tryParse(cleanedAmount) ?? 0.0;
+      print('💰 This is the FIXED total amount, not per plot: $price');
       return price;
     }
+
     final fallbackPrice = getPricePerPlot();
-    print('⚠️ Using fallback price: $fallbackPrice (admin_block_amount not available)');
+    print('⚠️ Using fallback price: $fallbackPrice');
     return fallbackPrice;
-  }
-  double getPricePerPlot() {
+  }  double getPricePerPlot() {
     final detail = syndicateDetail.value;
     if (detail == null) return 0.0;
 
     return double.tryParse(detail.price.replaceAll(',', '')) ?? 0.0;
   }
-
   double calculateSelectedPlotsAmount() {
     final detail = syndicateDetail.value;
     if (detail == null || selectedPlots.isEmpty) return 0.0;
-    final pricePerPlot = getPricePerPlotFromAdminBlock();
 
-    final totalAmount = pricePerPlot * selectedPlots.length;
-    print('💵 Calculated amount: $pricePerPlot × ${selectedPlots.length} = $totalAmount');
-    return totalAmount;
-  }
+    // Return FIXED amount regardless of how many plots are selected
+    final fixedAmount = getFixedBookingAmount();
 
-  // Get unit details for selected plots with area
-  List<Map<String, dynamic>> getSelectedUnitDetails() {
+    print('💵 Fixed amount (NOT per plot): $fixedAmount for ${selectedPlots.length} plots');
+    print('💰 Admin Block Amount from detail: ${detail.adminBlockAmount}');
+
+    return fixedAmount;
+  }  List<Map<String, dynamic>> getSelectedUnitDetails() {
     final detail = syndicateDetail.value;
     if (detail == null || selectedPlots.isEmpty) return [];
 
@@ -837,8 +859,6 @@ class SyndicatePlotController extends GetxController {
 
     return details;
   }
-
-  // Generate plots from API data with area
   void generatePlotsFromApiData() {
     final detail = syndicateDetail.value;
     if (detail == null) return;
@@ -848,11 +868,15 @@ class SyndicatePlotController extends GetxController {
     final plotAreas = getPlotAreas();
     final pricePerPlot = getPricePerPlotFromAdminBlock();
 
+    print('🎯 Generating $totalPlots plots with price per plot: $pricePerPlot');
+    print('💰 Admin Block Amount from API: ${detail.adminBlockAmount}');
+
     // Get all booked plot IDs from bookings
     final Set<int> bookedPlotIds = <int>{};
     for (final booking in bookings) {
       final unitIds = _parseUnitIds(booking.units);
       bookedPlotIds.addAll(unitIds);
+      print('📋 Booking units: ${booking.units} -> Parsed: $unitIds');
     }
 
     // Generate plots list with area
@@ -873,16 +897,19 @@ class SyndicatePlotController extends GetxController {
 
     plots.value = generatedPlots;
     selectedPlots.clear(); // Clear previous selections
+
+    print('✅ Generated ${plots.length} plots');
+    print('   Available: ${countStatus("available")}');
+    print('   Booked: ${countStatus("booked")}');
+
     update();
   }
-
   double getDocumentPrice() {
     final detail = syndicateDetail.value;
     if (detail == null) return 0.0;
 
     return detail.documentPriceValue;
   }
-
   void initiatePlotPayment() {
     if (selectedPlots.isEmpty) {
       SnackBarHelper.showError("Please select at least one plot");
@@ -897,6 +924,9 @@ class SyndicatePlotController extends GetxController {
 
     // Calculate amount using admin_block_amount
     final amount = calculateSelectedPlotsAmount();
+    print('💰 Payment amount calculated: $amount for ${selectedPlots.length} plots');
+    print('💰 Price per plot: ${getPricePerPlotFromAdminBlock()}');
+
     if (amount <= 0) {
       SnackBarHelper.showError("Invalid amount calculation");
       return;
@@ -911,51 +941,65 @@ class SyndicatePlotController extends GetxController {
       propertyId: detail.id,
       units: selectedPlots.toList(),
       unitDetails: unitDetails,
-      amount: amount,
+      amount: amount, // Make sure this is the correct total amount
       type: 'syndicate',
     );
 
     // Show payment summary dialog
     showPlotPaymentSummaryBottomSheet(amount, unitDetails);
   }
-
   void initiateDocumentPayment(int documentId, String documentType) {
-    final detail = syndicateDetail.value;
-    if (detail == null) {
-      SnackBarHelper.showError("Property details not available");
+    // Check if user has booked plots
+    final hasBookedPlots = countStatus("booked") > 0;
+
+    if (!hasBookedPlots) {
+      SnackBarHelper.showError(
+          "Please book a plot first to access documents"
+      );
       return;
     }
 
-    // Get document price
-    final amount = getDocumentPrice();
-    if (amount <= 0) {
-      SnackBarHelper.showError("Document price not available");
-      return;
+    // If you still want to allow document viewing/downloading without payment
+    // just call viewDocument or downloadDocument directly
+    if (documentId == 0) {
+      // For "ALL" documents case
+      SnackBarHelper.showSuccess("Documents are now unlocked!");
+    } else {
+      viewDocument(documentId);
     }
-
-    final paymentController = Get.put(RazorpayController());
-    paymentController.setupDocumentPayment(
-      propertyId: detail.id,
-      documentId: documentId,
-      documentType: documentType,
-      amount: amount,
-    );
-
-    showDocumentPaymentSummaryDialog(amount, documentType);
   }
-
+  // void initiateDocumentPayment(int documentId, String documentType) {
+  //   final detail = syndicateDetail.value;
+  //   if (detail == null) {
+  //     SnackBarHelper.showError("Property details not available");
+  //     return;
+  //   }
+  //
+  //   // Get document price
+  //   final amount = getDocumentPrice();
+  //   if (amount <= 0) {
+  //     SnackBarHelper.showError("Document price not available");
+  //     return;
+  //   }
+  //
+  //   final paymentController = Get.put(RazorpayController());
+  //   paymentController.setupDocumentPayment(
+  //     propertyId: detail.id,
+  //     documentId: documentId,
+  //     documentType: documentType,
+  //     amount: amount,
+  //   );
+  //
+  //   showDocumentPaymentSummaryDialog(amount, documentType);
+  // }
   void showPlotPaymentSummaryBottomSheet(double amount, List<Map<String, dynamic>> unitDetails) {
-    final gstAmount = amount;
     final totalAmount = amount;
     final razorpayController = Get.find<RazorpayController>();
     final detail = syndicateDetail.value;
+    final selectedCount = selectedPlots.length;
 
-    // Determine price source
-    final priceSource = detail?.adminBlockAmount != null &&
-        detail!.adminBlockAmount!.isNotEmpty &&
-        detail.adminBlockAmount != '0'
-        ? "Admin Block Amount"
-        : "Calculated Price";
+    final fixedAmount = getFixedBookingAmount();
+    final perPlotDisplay = selectedCount > 0 ? (fixedAmount / selectedCount) : fixedAmount;
 
     Get.bottomSheet(
       isScrollControlled: true,
@@ -993,7 +1037,7 @@ class SyndicatePlotController extends GetxController {
                       Text("Review your plot investment", style: TextStyle(fontSize: 13.sp, color: Colors.grey[500])),
                       SizedBox(height: 4.h),
                       Text(
-                        "Price Source: $priceSource",
+                        "Fixed Booking Amount (Not per plot)",
                         style: TextStyle(
                           fontSize: 10.sp,
                           color: Colors.grey[600],
@@ -1020,18 +1064,52 @@ class SyndicatePlotController extends GetxController {
                   children: [
                     _buildModernRow("Property", detail?.name ?? "N/A", Icons.location_city_rounded),
                     SizedBox(height: 12.h),
-                    _buildModernRow("Total Plots", "${unitDetails.length} Units", Icons.grid_view_rounded),
+                    _buildModernRow("Selected Plots", "${selectedCount} Unit${selectedCount > 1 ? 's' : ''}", Icons.grid_view_rounded),
                     SizedBox(height: 12.h),
-                    _buildModernRow("Price per Plot", "₹${getPricePerPlotFromAdminBlock().toStringAsFixed(2)}", Icons.monetization_on),
+                    _buildModernRow("Price Breakdown", "${selectedCount} plot${selectedCount > 1 ? 's' : ''} × ₹${(fixedAmount / selectedCount).toStringAsFixed(2)}", Icons.calculate_rounded),
 
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 16.h),
                       child: Divider(color: Colors.grey[200], thickness: 1),
                     ),
 
-                    // Pricing Breakdown
-                    _buildPriceDetail("Base Amount", "₹${amount.toStringAsFixed(2)}"),
-                    SizedBox(height: 8.h),
+                    // Show calculation
+                    Container(
+                      padding: EdgeInsets.all(12.w),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            "Fixed Booking Amount",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue[800],
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            "Total: ₹${fixedAmount.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue[800],
+                            ),
+                          ),
+                          if (selectedCount > 1)
+                            Text(
+                              "(Same price regardless of plot count)",
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                color: Colors.blue[600],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
 
                     SizedBox(height: 16.h),
 
@@ -1138,9 +1216,7 @@ class SyndicatePlotController extends GetxController {
         ),
       ),
     );
-  }
-
-  Widget _buildModernRow(String label, String value, IconData icon) {
+  }  Widget _buildModernRow(String label, String value, IconData icon) {
     return Row(
       children: [
         Icon(icon, size: 18.sp, color: const Color(0xFF64748B)),

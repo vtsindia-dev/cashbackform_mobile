@@ -65,21 +65,21 @@ class _ReserveSlotState extends State<ReserveSlot> {
         double.tryParse(
           dashboardController.profile.value?.walletBalance ?? "0",
         ) ??
-        0;
+            0;
     controller.discountPercentage.value =
         double.tryParse(
           dashboardController.businessSettings.value?.discountPercentage
-                  ?.toString() ??
+              ?.toString() ??
               "0",
         ) ??
-        0;
+            0;
     controller.discountMaxCost.value =
         double.tryParse(
           dashboardController.businessSettings.value?.discountMaxCost
-                  ?.toString() ??
+              ?.toString() ??
               "0",
         ) ??
-        0;
+            0;
   }
 
   @override
@@ -167,6 +167,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
   @override
   Widget build(BuildContext context) {
+    final detail = controller.giooPlotDetail.value;
+    final isSoldOut = detail?.soldStatus == 1;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
       child: Container(
@@ -201,45 +204,99 @@ class _ReserveSlotState extends State<ReserveSlot> {
                     child: _buildLegend(controller),
                   ),
                   15.h.verticalSpace,
-                  if (!_isSelectionMode)
+                  if (!_isSelectionMode && !isSoldOut)
                     Animate(
                       effects: [FadeEffect(duration: 350.ms)],
                       child: _buildPlotCountSelector(),
                     ),
-                  if (_isSelectionMode)
+                  if (_isSelectionMode && !isSoldOut)
                     Animate(
                       effects: [FadeEffect(duration: 350.ms)],
                       child: _buildSelectionHeader(),
                     ),
-
+                  if (isSoldOut)
+                    Container(
+                      padding: EdgeInsets.all(24.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.shade100),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Icon with a soft background circle
+                          Container(
+                            padding: EdgeInsets.all(16.w),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.remove_shopping_cart_outlined, // More descriptive icon
+                              size: 32.w,
+                              color: Colors.red.shade400,
+                            ),
+                          ),
+                          SizedBox(height: 20.h),
+                          Text(
+                            "Sold Out",
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                              color: Colors.blueGrey.shade900,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            "This exclusive property has found an owner. \nCheck back soon for similar listings.",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              height: 1.5, // Better readability
+                              color: Colors.blueGrey.shade400,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
                   15.h.verticalSpace,
 
                   // Plot grid with animation
-                  Animate(
-                    effects: [FadeEffect(duration: 350.ms)],
-                    child: _buildPlotGrid(controller),
-                  ),
+                  if (!isSoldOut)
+                    Animate(
+                      effects: [FadeEffect(duration: 350.ms)],
+                      child: _buildPlotGrid(controller),
+                    ),
                 ],
               ),
             ),
 
-            const Divider(height: 1, color: Colors.black12),
+            if (!isSoldOut) const Divider(height: 1, color: Colors.black12),
 
             // Sidebar with animation
-            Animate(
-              effects: [
-                FadeEffect(duration: 450.ms),
-                SlideEffect(begin: const Offset(0, 0.1), duration: 450.ms),
-              ],
-              child: _buildSidebarCard(controller),
-            ),
+            if (!isSoldOut)
+              Animate(
+                effects: [
+                  FadeEffect(duration: 450.ms),
+                  SlideEffect(begin: const Offset(0, 0.1), duration: 450.ms),
+                ],
+                child: _buildSidebarCard(controller),
+              ),
           ],
         ),
       ),
     );
   }
 
-  // STEP 1: SELECT NUMBER OF PLOTS (INCREMENTER) ----------------------------------------
   Widget _buildPlotCountSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,14 +424,14 @@ class _ReserveSlotState extends State<ReserveSlot> {
                       height: 50.w,
                       decoration: BoxDecoration(
                         color:
-                            selectedPlotCount < controller.availableCount.value
+                        selectedPlotCount < controller.availableCount.value
                             ? AppColor.orange.withOpacity(0.1)
                             : Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8.r),
                         border: Border.all(
                           color:
-                              selectedPlotCount <
-                                  controller.availableCount.value
+                          selectedPlotCount <
+                              controller.availableCount.value
                               ? AppColor.orange
                               : Colors.grey.withOpacity(0.3),
                         ),
@@ -383,8 +440,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
                         child: Icon(
                           Icons.add,
                           color:
-                              selectedPlotCount <
-                                  controller.availableCount.value
+                          selectedPlotCount <
+                              controller.availableCount.value
                               ? AppColor.orange
                               : Colors.grey,
                           size: 24.w,
@@ -634,7 +691,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
     // Mark selected units as "Selected" in controller
     for (var unitId in _tempSelectedUnits) {
       final unitIndex = controller.units.indexWhere(
-        (unit) => unit.id == unitId,
+            (unit) => unit.id == unitId,
       );
       if (unitIndex != -1) {
         controller.units[unitIndex] = controller.units[unitIndex].copyWith(
@@ -661,7 +718,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
   // LEGEND ----------------------------------------------------------------
   Widget _buildLegend(GiooPlotController controller) {
     return Obx(
-      () => Column(
+          () => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -808,16 +865,16 @@ class _ReserveSlotState extends State<ReserveSlot> {
             IconButton(
               onPressed: _currentPage > 0
                   ? () {
-                      if (mounted) {
-                        setState(() {
-                          _currentPage--;
-                        });
-                      }
-                      // Reset scroll position when changing pages
-                      if (_gridScrollController.hasClients) {
-                        _gridScrollController.jumpTo(0);
-                      }
-                    }
+                if (mounted) {
+                  setState(() {
+                    _currentPage--;
+                  });
+                }
+                // Reset scroll position when changing pages
+                if (_gridScrollController.hasClients) {
+                  _gridScrollController.jumpTo(0);
+                }
+              }
                   : null,
               icon: const Icon(Icons.chevron_left),
               color: _currentPage > 0 ? AppColor.orange : Colors.grey,
@@ -859,16 +916,16 @@ class _ReserveSlotState extends State<ReserveSlot> {
             IconButton(
               onPressed: _currentPage < totalPages - 1
                   ? () {
-                      if (mounted) {
-                        setState(() {
-                          _currentPage++;
-                        });
-                      }
-                      // Reset scroll position when changing pages
-                      if (_gridScrollController.hasClients) {
-                        _gridScrollController.jumpTo(0);
-                      }
-                    }
+                if (mounted) {
+                  setState(() {
+                    _currentPage++;
+                  });
+                }
+                // Reset scroll position when changing pages
+                if (_gridScrollController.hasClients) {
+                  _gridScrollController.jumpTo(0);
+                }
+              }
                   : null,
               icon: const Icon(Icons.chevron_right),
               color: _currentPage < totalPages - 1
@@ -941,10 +998,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _buildPlotUnitItem(
-    GiooPlotController controller,
-    PlotUnit unit,
-    int unitIndex,
-  ) {
+      GiooPlotController controller,
+      PlotUnit unit,
+      int unitIndex,
+      ) {
     final isTempSelected = _tempSelectedUnits.contains(unit.id);
     final isPermanentlySelected = controller.selectedUnits.contains(unit.id);
 
@@ -1008,20 +1065,20 @@ class _ReserveSlotState extends State<ReserveSlot> {
             color: isFirstAvailableInGrid
                 ? AppColor.orangeAccent
                 : (isPermanentlySelected || isTempSelected
-                      ? AppColor.orangeAccent
-                      : Colors.transparent),
+                ? AppColor.orangeAccent
+                : Colors.transparent),
             width: isFirstAvailableInGrid
                 ? 3.w
                 : (isPermanentlySelected || isTempSelected ? 2.w : 0),
           ),
           boxShadow: isFirstAvailableInGrid
               ? [
-                  BoxShadow(
-                    color: AppColor.orangeAccent.withOpacity(0.5),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                  ),
-                ]
+            BoxShadow(
+              color: AppColor.orangeAccent.withOpacity(0.5),
+              blurRadius: 8,
+              spreadRadius: 2,
+            ),
+          ]
               : null,
         ),
         child: Stack(
@@ -1094,7 +1151,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
             ],
           )
         else
-          // Show limited dots with current page indicator
+        // Show limited dots with current page indicator
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -1120,9 +1177,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
               // Show 5 pages around current page
               for (
-                int i = max(1, _currentPage - 2);
-                i <= min(totalPages - 2, _currentPage + 2);
-                i++
+              int i = max(1, _currentPage - 2);
+              i <= min(totalPages - 2, _currentPage + 2);
+              i++
               )
                 Container(
                   width: 6.w,
@@ -1204,7 +1261,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
   // Update the tap selection to handle edge cases
   void _handleTapSelection(int unitId) {
     final unit = controller.units.firstWhere(
-      (u) => u.id == unitId,
+          (u) => u.id == unitId,
       orElse: () => PlotUnit(id: -1, label: '', status: 'Booked', area: 0),
     );
 
@@ -1285,7 +1342,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
   Widget gioTermsCheckbox() {
     return Obx(
-      () => Column(
+          () => Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Row(
@@ -1324,7 +1381,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
                             Get.to(
-                              () => LegalPageScreen(
+                                  () => LegalPageScreen(
                                 slug: "gioo_nano_plots_booking_privacy_policy",
                                 title: "Privacy Policy",
                               ),
@@ -1342,9 +1399,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
                             Get.to(
-                              () => LegalPageScreen(
+                                  () => LegalPageScreen(
                                 slug:
-                                    "gioo_nano_plots_booking_terms_and_condition",
+                                "gioo_nano_plots_booking_terms_and_condition",
                                 title: "Terms & Conditions",
                               ),
                             );
@@ -1362,9 +1419,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _buildLocationDetail(
-    GiooPlotController controller,
-    GiooPlotDetail detail,
-  ) {
+      GiooPlotController controller,
+      GiooPlotDetail detail,
+      ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1414,9 +1471,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _buildStatusAndUnitInfo(
-    GiooPlotController controller,
-    GiooPlotDetail detail,
-  ) {
+      GiooPlotController controller,
+      GiooPlotDetail detail,
+      ) {
     final dateFormatter = DateFormat('dd MMM yyyy');
 
     /// Only DATE (no time)
@@ -1535,7 +1592,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
               child: SizedBox(
                 height: 50.h,
                 child: Obx(
-                  () => TextField(
+                      () => TextField(
                     controller: controller.couponController,
                     style: TextStyle(fontSize: 13.sp),
                     readOnly: controller.isApplied.value,
@@ -1561,7 +1618,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
             ),
             10.w.horizontalSpace,
             Obx(
-              () => SizedBox(
+                  () => SizedBox(
                 height: 45.h,
                 width: 110.w,
                 child: ElevatedButton(
@@ -1580,17 +1637,17 @@ class _ReserveSlotState extends State<ReserveSlot> {
                   ),
                   child: controller.isCouponLoading.value
                       ? SizedBox(
-                          height: 18.w,
-                          width: 18.w,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                    height: 18.w,
+                    width: 18.w,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                       : Text(
-                          controller.isApplied.value ? "Remove" : "Apply",
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: Colors.white,
-                          ),
-                        ),
+                    controller.isApplied.value ? "Remove" : "Apply",
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1790,8 +1847,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
 
           final walletUsed = controller.useWallet.value
               ? controller
-                    .actualWalletUsed
-                    .value // ✅ changed from walletUsedAmount
+              .actualWalletUsed
+              .value // ✅ changed from walletUsedAmount
               : 0.0;
 
           final savings = specialDiscount + couponDiscount + walletUsed;
@@ -1897,10 +1954,10 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _priceRow(
-    String label,
-    String value, {
-    Color valueColor = Colors.black,
-  }) {
+      String label,
+      String value, {
+        Color valueColor = Colors.black,
+      }) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
@@ -1928,7 +1985,9 @@ class _ReserveSlotState extends State<ReserveSlot> {
   }
 
   Widget _buildPayNowButton(GiooPlotController controller) {
-    final enabled = controller.selectedUnits.isNotEmpty && !_isSelectionMode;
+    final detail = controller.giooPlotDetail.value;
+    final isSoldOut = detail?.soldStatus == 1;
+    final enabled = controller.selectedUnits.isNotEmpty && !_isSelectionMode && !isSoldOut;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -1939,7 +1998,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
         ),
         10.h.verticalSpace,
         GestureDetector(
-          onTap: () {
+          onTap: enabled
+              ? () {
             FocusScope.of(context).unfocus();
             if (controller.selectedUnits.isEmpty) {
               Fluttertoast.showToast(
@@ -1961,7 +2021,8 @@ class _ReserveSlotState extends State<ReserveSlot> {
             }
 
             controller.proceedToPayment();
-          },
+          }
+              : null,
           child: Container(
             height: 55.h,
             width: double.infinity,
@@ -1984,7 +2045,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
                 ),
                 10.w.horizontalSpace,
                 Text(
-                  _isSelectionMode ? "Confirm Selection" : "Pay Now",
+                  isSoldOut ? "Sold Out" : (_isSelectionMode ? "Confirm Selection" : "Pay Now"),
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
