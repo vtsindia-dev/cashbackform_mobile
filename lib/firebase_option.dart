@@ -24,13 +24,12 @@ class DefaultFirebaseOptions {
     storageBucket: 'cashback-90cba.firebasestorage.app',
   );
 
-  // ─── ADD IOS LATER WHEN YOU HAVE IOS APP IN FIREBASE ─────────────────────
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAAd_tEChMYShy9EqldVLM-JpSldnlfmzg', // replace with iOS key
-    appId: '1:523459218953:android:d4f00cfc6ef07620fff2d8', // replace with iOS appId
+    apiKey: 'AIzaSyAAd_tEChMYShy9EqldVLM-JpSldnlfmzg',
+    appId: '1:523459218953:android:d4f00cfc6ef07620fff2d8',
     messagingSenderId: '523459218953',
     projectId: 'cashback-90cba',
     storageBucket: 'cashback-90cba.firebasestorage.app',
-    iosBundleId: 'com.cashback_farms.app', // replace with your iOS bundle ID
+    iosBundleId: 'com.cashback_farms.app',
   );
 }

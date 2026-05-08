@@ -31,7 +31,7 @@ class PropertyMain extends StatelessWidget {
     final rowCount = (properties.length / 2).ceil();
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start ,
+      crossAxisAlignment: CrossAxisAlignment.start  ,
       children: [
         Text(
           "Explore All",

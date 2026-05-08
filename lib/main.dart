@@ -20,7 +20,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("   Body: ${message.notification?.body}");
   print("   Data: ${message.data}");
 }
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -73,7 +72,8 @@ class MyApp extends StatelessWidget {
       builder: (_, child) => GetMaterialApp(
         title: 'Geo Rental Farms',
         theme: ThemeData(
-          progressIndicatorTheme: const ProgressIndicatorThemeData(
+          progressIndicatorTheme: const
+          ProgressIndicatorThemeData(
             color: AppColor.primary,
             linearTrackColor: Colors.grey,
           ),
@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
         initialRoute: AppRoutes.splash,
         getPages: AppRoutes.routes,
         debugShowCheckedModeBanner: false,
-        initialBinding: BindingsBuilder(() {
+        initialBinding:BindingsBuilder(() {
           Get.put(NetworkService(), permanent: true);
           Get.put(NotificationService(), permanent: true); // ADD THIS
         }),

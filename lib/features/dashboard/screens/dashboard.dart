@@ -18,7 +18,7 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
-  bool _isPlotExpanded = false;
+  bool _isPlotExpanded  = false;
   bool _isCartExpanded = false;
   double _animationValue = 0.0;
   double _menuAnimationValue = 0.0;

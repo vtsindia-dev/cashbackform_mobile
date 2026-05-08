@@ -176,15 +176,16 @@ class SessionManager {
           token.isNotEmpty;
 
       print('   Final result: $result');
-      print('🔍 === END LOGIN CHECK ===');
+      print('🔍 === == == === END LOGIN   === == == ===');
+
 
       return result;
+
     } catch (e) {
       print('❌ Error checking login status: $e');
       return false;
     }
   }
-  // Get authentication token
   static Future<String?> getToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -220,6 +221,7 @@ class SessionManager {
       return null;
     }
   }
+
   static Future<Map<String, dynamic>?> getUserData() async {
     try {
       final prefs = await SharedPreferences.getInstance();

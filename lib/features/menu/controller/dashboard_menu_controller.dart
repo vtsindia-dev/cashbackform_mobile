@@ -172,7 +172,7 @@ class DashboardController extends GetxController {
       print('📡 Fetching vendor requests...');
 
       final response = await ApiService.getRequest(
-        ApiUrl.vendorRequest, // Make sure this is defined in your ApiUrl
+        ApiUrl.vendorRequest,
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -215,7 +215,7 @@ class DashboardController extends GetxController {
         if (response.data['status'] == true) {
           final List<dynamic> data = response.data['data'] ?? [];
           agentRequests.assignAll(data);
-          print('✅ Agent requests loaded successfully: ${agentRequests.length} items');
+          print('✅ Agent requests loaded successfully:  ${agentRequests.length} items');
         } else {
           print('⚠️ Failed to load agent requests: ${response.data['message']}');
         }
@@ -325,9 +325,8 @@ class DashboardController extends GetxController {
     }
   }
 
-  // ===============================
-  // CONTACT FORM METHODS
-  // ===============================
+
+
   Future<void> submitContactForm() async {
     if (_isContactRequestInProgress) {
       print('⏸️ Contact request already in progress');

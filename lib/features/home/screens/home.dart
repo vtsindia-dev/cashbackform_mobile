@@ -79,18 +79,8 @@ class _HomeState extends State<Home> {
 
                 Obx(() {
                   final banners = controller.featuredBanners;
-                  final List<String> images = banners.isNotEmpty
-                      ? banners.map((banner) => banner.image).where((image) => image.isNotEmpty).toList()
-                      : ['assets/images/banner1.png', 'assets/images/banner2.png'];
-
-                  final List<String> redirectUrls = banners.isNotEmpty
-                      ? banners
-                      .map((banner) => banner.redirectUrl)
-                      .where((url) => url != null && url.isNotEmpty)
-                      .cast<String>()
-                      .toList()
-                      : [];
-
+                  final List<String> images = banners.isNotEmpty ? banners.map((banner) => banner.image).where((image) => image.isNotEmpty).toList() : ['assets/images/banner1.png', 'assets/images/banner2.png'];
+                  final List<String> redirectUrls = banners.isNotEmpty ? banners.map((banner) => banner.redirectUrl).where((url) => url != null && url.isNotEmpty).cast<String>().toList() : [];
                   return CarouselWidget(
                     images: images,
                     redirectUrls: redirectUrls.isNotEmpty ? redirectUrls : null,
@@ -100,32 +90,23 @@ class _HomeState extends State<Home> {
                     onTap: (url) {
                       if (url.isNotEmpty) {
                         print('Banner tapped with URL: $url');
-
-                        // Handle different URL patterns
                         if (url.contains('residential-property')) {
-                          // Navigate to residential property screen
                           // Get.toNamed(AppRoutes.residentialDetails);
                         } else if (url.contains('plot-marketplace')) {
-                          // Navigate to plot marketplace
                           // Get.toNamed(AppRoutes.plotMarket);
                         } else if (url.contains('syndicate-plots')) {
-                          // Navigate to syndicate plots
                           // Get.toNamed(AppRoutes.syndicateDetails);
                         } else {
-                          // Open external URL
                           _launchURL(url);
                         }
                       }
                     },
                     onError: (index, error) {
-                      // Handle image loading errors silently
                       print('Image failed to load at index $index: $error');
                     },
                   );
                 }),
-
-// Add this method in your widget
-                              const SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   PropertyMain(),
                   const SizedBox(height: 20),
                   Column(
