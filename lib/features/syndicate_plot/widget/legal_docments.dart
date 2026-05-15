@@ -1,5 +1,8 @@
 // widgets/legal_documents_screen.dart
 
+import 'package:cashback_farms/common/route/router.dart';
+import 'package:cashback_farms/features/kyc/controller/kyc_controller.dart';
+import 'package:cashback_farms/features/syndicate_plot/widget/kyc_selector_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,8 +12,19 @@ import '../../../common/colours.dart';
 import '../controller/syndicate_controller.dart';
 import '../model/syndicate_model.dart';
 
-class LegalDocumentsScreen extends StatelessWidget {
-  const LegalDocumentsScreen({super.key});
+class LegalDocumentsScreen extends StatefulWidget {
+
+   LegalDocumentsScreen({super.key});
+
+  @override
+  State<LegalDocumentsScreen> createState() => _LegalDocumentsScreenState();
+}
+
+class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
+  final KYCController kYCController = Get.put(KYCController());
+
+
+  bool isOpened = false;
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +33,10 @@ class LegalDocumentsScreen extends StatelessWidget {
         final detail = controller.syndicateDetail.value;
         final List<Document> documents = detail?.documents ?? [];
 
-        final hasBookedPlots = _hasUserBookedPlots(controller);
+        final hasBookedPlots = detail?.isDocumentVerified ?? false;
+        final propertyBooked = detail?.propertyBooked ?? false;
+        final kycVerified = detail?.kycVerified ?? false;
 
-        // If property is sold out
         if (detail?.isSoldOut == true) {
           return _buildSoldOutDocBanner();
         }
@@ -43,15 +58,12 @@ class LegalDocumentsScreen extends StatelessWidget {
             padding: EdgeInsets.all(12.w),
             child: Column(
               children: [
-                // Status banner based on booking
                 if (hasBookedPlots)
                   _buildUnlockedBanner()
                 else
                   _buildLockedBanner(),
 
                 SizedBox(height: 12.h),
-
-                // Document list
                 ListView.builder(
                   shrinkWrap: true,
                   padding: EdgeInsets.zero,
@@ -68,6 +80,85 @@ class LegalDocumentsScreen extends StatelessWidget {
                         .slideY(begin: 0.1, end: 0);
                   },
                 ),
+                if(propertyBooked)
+                  ...[
+                    SizedBox(height: 10.h),
+                    GestureDetector(
+                      onTap: () {
+                        if (kycVerified) {
+                          Get.toNamed(AppRoutes.ownedSyndicatePlotList);
+                        } else {
+                          if (!isOpened) {
+                            setState(() {
+                              isOpened = true;
+                            });
+                          }
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: kycVerified
+                              ? const Color(0xff608900)
+                              : const Color(0xfffeb821),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              kycVerified
+                                  ? Icons.verified
+                                  : Icons.pending_actions,
+                              color: kycVerified
+                                  ? Colors.white
+                                  : Colors.black,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              kycVerified
+                                  ? 'KYC Added'
+                                  : 'Proceed to KYC',
+                              style: TextStyle(
+                                color: kycVerified
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if(isOpened)
+                      ...[
+                        SizedBox(height: 10.h),
+                        Obx(
+                              () => KYCBeneficiarySelector(
+                            controller: kYCController,
+                            kycList: kYCController.kycList.toList(),
+                            onContinue: (selected) async {
+                              final response = await kYCController.kycVerification(
+                                propertyId: detail?.id.toString() ?? '',
+                                transactionId: detail?.transactionId.toString() ?? '',
+                                type: 'syndicate',
+                              );
+                              if (response['status'] == 200) {
+                                controller.fetchSyndicateDetail(detail?.id??0);
+                                setState(() {
+                                  isOpened = false;
+                                });
+                              }
+                            },
+                            onAddNew: () {
+                              Get.toNamed(AppRoutes.kycScreen);
+                            },
+                          ),
+                        )
+                      ]
+                  ]
               ],
             ),
           ),
@@ -76,13 +167,6 @@ class LegalDocumentsScreen extends StatelessWidget {
     );
   }
 
-  bool _hasUserBookedPlots(SyndicatePlotController controller) {
-
-    final bookedCount = controller.countStatus("booked");
-    return bookedCount > 0;
-  }
-
-  // Sold-out banner
   Widget _buildSoldOutDocBanner() {
     return Center(
       child: Container(
@@ -123,7 +207,6 @@ class LegalDocumentsScreen extends StatelessWidget {
     );
   }
 
-  // Unlocked banner - shown when user has booked plots
   Widget _buildUnlockedBanner() {
     return Container(
       padding: EdgeInsets.all(12.w),

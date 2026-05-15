@@ -202,6 +202,9 @@ class SyndicateDetail {
   final List<User> users;
   final String? adminBlockAmount;
   final List<NearbyLocation> nearbyLocations;
+  final bool? propertyBooked;
+  final bool? kycVerified;
+  final int? transactionId;
 
   SyndicateDetail({
     required this.id,
@@ -237,6 +240,9 @@ class SyndicateDetail {
     required this.users,
     this.adminBlockAmount,
     required this.nearbyLocations,
+    this.propertyBooked,
+    this.kycVerified,
+    this.transactionId
   });
 
   factory SyndicateDetail.fromJson(Map<String, dynamic> json) {
@@ -283,6 +289,9 @@ class SyndicateDetail {
       soldStatus: safeInt(json['sold_status']), // ✅
       aminities: safeString(json['aminities'] ?? ''),
       uldNo: safeString(json['uld_no'] ?? ''),
+      propertyBooked : json['property_booked'],
+        kycVerified : json['kyc_verified'],
+        transactionId : json['transaction_id'],
       startingPrice: safeString(json['starting_price'] ?? '0'),
       amenities: (json['amenity'] is List)
           ? (json['amenity'] as List).map((e) => Amenity.fromJson(e)).toList()

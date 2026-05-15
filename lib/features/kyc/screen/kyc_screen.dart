@@ -251,7 +251,7 @@ class KYCListScreen extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                kyc.name.isNotEmpty ? kyc.name[0].toUpperCase() : '?',
+                '${ index + 1 }',
                 style: TextStyle(
                   color: avatarColor,
                   fontWeight: FontWeight.w800,

@@ -60,7 +60,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: DynamicAppBar(
-        title: "My Syndicate Investments",
+        title: "Buyed Syndicate Plots",
         showBackButton: true,
         backgroundColor: Colors.white,
       ),

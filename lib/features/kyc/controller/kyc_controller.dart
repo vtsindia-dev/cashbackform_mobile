@@ -37,6 +37,24 @@ class KYCController extends GetxController {
   final ImagePicker _picker = ImagePicker();
 
 
+  final selectedBeneficiaries = <KYCDocument>[].obs;
+
+  final RxList<String> selectedPans = <String>[].obs;
+
+  void toggleBeneficiary(KYCDocument kyc) {
+    if (selectedPans.contains(kyc.id.toString())) {
+      selectedPans.remove(kyc.id.toString());
+    } else {
+      selectedPans.add(kyc.id.toString());
+    }
+
+    selectedBeneficiaries.assignAll(
+      kycList.where((e) => selectedPans.contains(e.id.toString())).toList(),
+    );
+
+    selectedPans.refresh();
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -201,7 +219,7 @@ class KYCController extends GetxController {
       dioClient.options.headers['Authorization'] = 'Bearer $token';
 
       final response = await dioClient.post(
-        'https://admincashback.vrikshatech.in/public/api/v2/kyc',
+        '${ApiUrl.baseUrl}/api/v2/kyc',
         data: formData,
       );
 
@@ -250,6 +268,7 @@ class KYCController extends GetxController {
       isSubmitting.value = false;
     }
   }
+
   // ──────────────────────────────────────────
   // Image Picker Helpers
   // ──────────────────────────────────────────
@@ -319,6 +338,166 @@ class KYCController extends GetxController {
       case 'aadhar': return 'Aadhar Card';
       case 'sign': return 'Signature';
       default: return 'Document';
+    }
+  }
+
+
+  Future<Map<String, dynamic>> kycVerification({
+    required String propertyId,
+    required String transactionId,
+    required String type,
+  }) async {
+    try {
+      isSubmitting.value = true;
+      errorMessage.value = '';
+
+      // Login Token
+      final token = await SessionManager.getToken();
+
+      if (token == null || token.isEmpty) {
+        errorMessage.value = 'Please login first';
+        return {
+          'status': 401,
+          'message': errorMessage.value,
+        };
+      }
+
+      // Validation
+      if (selectedBeneficiaries.isEmpty) {
+        errorMessage.value = 'Please select beneficiary';
+        SnackBarHelper.showError(errorMessage.value);
+        return {
+          'status': 400,
+          'message': errorMessage.value,
+        };
+      }
+
+      // Form Data
+      final formData = dio.FormData();
+
+      formData.fields.add(
+        MapEntry('property_id', propertyId),
+      );
+
+      formData.fields.add(
+        MapEntry('transaction_id', transactionId),
+      );
+
+      formData.fields.add(
+        MapEntry('type', type),
+      );
+
+      for (var item in selectedBeneficiaries) {
+
+        formData.fields.add(
+          MapEntry(
+            'benficiary_id[]',
+            item.id.toString(),
+          ),
+        );
+      }
+
+      // Dio
+      final dioClient = dio.Dio();
+
+      dioClient.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      // API Call
+      final response = await dioClient.post(
+        '${ApiUrl.baseUrl}/api/v2/kyc_verification',
+        data: formData,
+      );
+
+      // Response
+      if (response.statusCode == 200 ||
+          response.statusCode == 201) {
+
+        final data = response.data;
+
+        if (data['status'] == true) {
+
+          final msg =
+              data['message'] ??
+                  'KYC verification successful';
+
+          SnackBarHelper.showSuccess(msg);
+
+          return {
+            'status': 200,
+            'message': msg,
+            'data': data,
+          };
+        } else {
+
+          final msg =
+              data['message'] ??
+                  'KYC verification failed';
+
+          errorMessage.value = msg;
+
+          SnackBarHelper.showError(msg);
+
+          return {
+            'status': 400,
+            'message': msg,
+          };
+        }
+      } else {
+
+        final msg =
+            'Server error (${response.statusCode})';
+
+        errorMessage.value = msg;
+
+        return {
+          'status': response.statusCode ?? 500,
+          'message': msg,
+        };
+      }
+
+    } on dio.DioException catch (e) {
+
+      debugPrint('❌ kycVerification Dio Error: $e');
+
+      String msg;
+
+      if (e.response != null) {
+        msg =
+            e.response?.data?['message'] ??
+                'Server error';
+      } else {
+        msg = 'Network error';
+      }
+
+      errorMessage.value = msg;
+
+      SnackBarHelper.showError(msg);
+
+      return {
+        'status': 500,
+        'message': msg,
+      };
+
+    } catch (e) {
+
+      debugPrint('❌ kycVerification Error: $e');
+
+      final msg = 'Unexpected error';
+
+      errorMessage.value = msg;
+
+      SnackBarHelper.showError(msg);
+
+      return {
+        'status': 500,
+        'message': msg,
+      };
+
+    } finally {
+      isSubmitting.value = false;
     }
   }
 
