@@ -21,4 +21,6 @@ class AppColor {
   static const Color info = Color(0xFF2196F3);
   static const Color darkGrey = Color(0xFF424242);
   static const Color lightGrey = Color(0xFFEEEEEE);
+  static const Color teal = Color(0xFF008080);
+
 }

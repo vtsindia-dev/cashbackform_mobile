@@ -12,7 +12,7 @@ class NotificationsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(360, 720),
+      designSize: const Size(414, 896),
       builder: (context, child) => ChangeNotifierProvider.value(
         value: NotificationController(),
         child: const Scaffold(
@@ -163,7 +163,6 @@ class _NotificationsViewState extends State<_NotificationsView> {
     );
   }
 
-  // NEW: Swipeable Grid with delete functionality
   Widget _buildSwipeableGrid(NotificationController controller) {
     if (controller.isLoading && controller.notifications.isEmpty) {
       return SliverFillRemaining(
@@ -275,10 +274,7 @@ class _NotificationsViewState extends State<_NotificationsView> {
         );
       },
       onDismissed: (direction) async {
-        // Remove from UI immediately (optimistic update)
         controller.softDeleteNotification(notificationId);
-
-        // Show undo snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Notification deleted'),
@@ -286,7 +282,6 @@ class _NotificationsViewState extends State<_NotificationsView> {
               label: 'UNDO',
               textColor: AppColor.primary,
               onPressed: () {
-                // Reload notifications to restore if needed
                 controller.refreshNotifications();
               },
             ),

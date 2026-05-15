@@ -4,7 +4,6 @@ class ApiUrl {
   /// main baser URL
   static const String baseUrl = "https://admincashback.vrikshatech.in/public";
   static const String WebsidebaseUrl = "https://cashback.vrikshatech.in/public";
-
   static const String login = "$baseUrl/api/v2/login";
   static const String otp = "$baseUrl/api/v2/otp";
   static const String register = "$baseUrl/api/v2/register";
@@ -66,8 +65,8 @@ class ApiUrl {
   static const String commonFacilities = '$baseUrl/api/v2/common-facilities';
   static const String submitMaterialEnquiry = '$baseUrl/api/v2/material_enquriy';
   static const String submitServiceEnquiry = '$baseUrl/api/v2/services_enquriy';
-  static const String materialEnquiryList = '$baseUrl/material_enquriy';
-  static const String serviceEnquiryList = '$baseUrl/services_enquriy';
+  static const String materialEnquiryList = '$baseUrl/api/v2/my_material_list';
+  static const String serviceEnquiryList = '$baseUrl/api/v2/my_services_list';
   static const String submitReview = '$baseUrl/api/v2/shop/review';
   static const String materialUnit = '$baseUrl/api/v2/units';
   static const String servicesSubCategory = '$baseUrl/api/v2/services_sub_cat';

@@ -365,35 +365,60 @@ class DashboardController extends GetxController {
       print('📥 API Response Status: ${response.statusCode}');
       print('📥 API Response Data: ${response.data}');
 
-      if (response.statusCode == 201 && response.data != null) {
+      // Handle successful HTTP status codes (200, 201, etc.)
+      if (response.statusCode! >= 200 && response.statusCode! < 300) {
         final data = response.data;
 
-        if (data['status'] == true) {
-          SnackBarHelper.showSuccess(data['message'] ?? 'Message sent successfully!');
+        // Check if response has 'status' field
+        if (data is Map && data.containsKey('status')) {
+          if (data['status'] == true) {
+            // Success case
+            SnackBarHelper.showSuccess(
+                data['message'] ?? 'Message sent successfully!'
+            );
+            _clearContactForm();
+          } else {
+            // Business logic failure (like email already exists)
+            SnackBarHelper.showError(
+                data['message'] ?? 'Failed to send message. Please try again.'
+            );
+          }
+        } else {
+          // Response doesn't have status field, assume success
+          SnackBarHelper.showSuccess('Message sent successfully!');
           _clearContactForm();
-        } else {
-          SnackBarHelper.showError(data['message'] ?? 'Failed to send message. Please try again.');
         }
-      } else if (response.statusCode == 201) {
-        SnackBarHelper.showSuccess('Message sent successfully!');
-        _clearContactForm();
-      } else if (response.statusCode == 422) {
-        final errors = response.data['errors'];
-        if (errors != null && errors is Map) {
-          final errorMessages = <String>[];
-          errors.forEach((key, value) {
-            if (value is List) {
-              errorMessages.addAll(value.map((e) => e.toString()));
-            } else {
-              errorMessages.add(value.toString());
-            }
-          });
-          SnackBarHelper.showError(errorMessages.join('\n'));
+      }
+      // Handle validation errors (422)
+      else if (response.statusCode == 422) {
+        final data = response.data;
+        if (data is Map && data.containsKey('errors')) {
+          final errors = data['errors'];
+          if (errors != null && errors is Map) {
+            final errorMessages = <String>[];
+            errors.forEach((key, value) {
+              if (value is List) {
+                errorMessages.addAll(value.map((e) => e.toString()));
+              } else {
+                errorMessages.add(value.toString());
+              }
+            });
+            SnackBarHelper.showError(errorMessages.join('\n'));
+          } else {
+            SnackBarHelper.showError(data['message'] ?? 'Validation failed. Please check your input.');
+          }
         } else {
-          SnackBarHelper.showError('Validation failed. Please check your input.');
+          SnackBarHelper.showError(data?['message'] ?? 'Validation failed. Please check your input.');
         }
-      } else {
-        SnackBarHelper.showError('Failed to submit form. Status: ${response.statusCode}');
+      }
+      // Handle other status codes
+      else {
+        final data = response.data;
+        final errorMessage = (data is Map && data.containsKey('message'))
+            ? data['message']
+            : 'Failed to submit form. Please try again.';
+
+        SnackBarHelper.showError(errorMessage);
         print('❌ Invalid contact response: ${response.data}');
       }
     } on DioException catch (e) {
@@ -404,6 +429,14 @@ class DashboardController extends GetxController {
         errorMessage = 'Connection timeout. Please check your internet.';
       } else if (e.type == DioExceptionType.connectionError) {
         errorMessage = 'Connection error. Please check your internet.';
+      } else if (e.response != null) {
+        // Server responded with an error status code
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('message')) {
+          errorMessage = data['message'];
+        } else {
+          errorMessage = 'Server error: ${e.response?.statusCode}';
+        }
       }
 
       SnackBarHelper.showError(errorMessage);
@@ -415,31 +448,35 @@ class DashboardController extends GetxController {
       _isContactRequestInProgress = false;
     }
   }
-
   bool _validateContactForm() {
-    if (firstName.value.isEmpty) {
+    // Check name
+    if (firstName.value.trim().isEmpty) {
       SnackBarHelper.showError('Please enter your name');
       return false;
     }
 
-    if (email.value.isEmpty) {
-      SnackBarHelper.showError('Please enter your email');
+    // Check email
+    if (email.value.trim().isEmpty) {
+      SnackBarHelper.showError('Please enter your email address');
       return false;
     }
 
-    if (!GetUtils.isEmail(email.value)) {
+    // Validate email format
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email.value.trim())) {
       SnackBarHelper.showError('Please enter a valid email address');
       return false;
     }
 
-    if (requirement.value.isEmpty) {
-      SnackBarHelper.showError('Please enter requirement');
+    // Check message
+    final msg = message.value.isNotEmpty ? message.value : requirement.value;
+    if (msg.trim().isEmpty) {
+      SnackBarHelper.showError('Please enter your message');
       return false;
     }
 
     return true;
   }
-
   void _clearContactForm() {
     firstName.value = '';
     lastName.value = '';

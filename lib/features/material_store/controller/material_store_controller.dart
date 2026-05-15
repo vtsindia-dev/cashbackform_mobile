@@ -670,30 +670,6 @@ class MaterialController extends GetxController {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /////////////////////////////////////////////
-
-
-
   String _buildUrlWithParams(String baseUrl, Map<String, dynamic> params) {
     if (params.isEmpty) return baseUrl;
 
@@ -826,6 +802,7 @@ class MaterialController extends GetxController {
             } else {
               print('⚠️ No vendor data found in response');
               vendors.clear();
+
             }
           } else {
             final errorMsg = data['message'] ?? 'Failed to fetch sellers';
@@ -837,7 +814,7 @@ class MaterialController extends GetxController {
           vendors.clear();
         }
       } else {
-        print('❌ Failed to fetch     . Status: ${response.statusCode}');
+        print('❌ Failed to fetch.Status: ${response.statusCode}');
         vendors.clear();
       }
     } catch (e, stackTrace) {

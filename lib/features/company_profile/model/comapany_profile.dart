@@ -1,13 +1,15 @@
+import 'dart:convert';
+
 class VendorStoreModel {
   final int? id;
-  final int userId;
+  final int userId;  // This is causing error - API returns String
   final String name;
   final String description;
   final int? countryId;
   final int? stateId;
   final int? cityId;
-  final String city;
-  final String state;
+  final String city;  // API returns city name string, not ID
+  final String state; // API returns state name string, not ID
   final String postalCode;
   final String phone;
   final String email;
@@ -22,6 +24,10 @@ class VendorStoreModel {
   final List<String>? images;
   final String? createdAt;
   final String? updatedAt;
+  final String? fax;
+  final String? tax;
+  final String? gst;
+  final int? establishedYear;
 
   VendorStoreModel({
     this.id,
@@ -47,36 +53,86 @@ class VendorStoreModel {
     this.images,
     this.createdAt,
     this.updatedAt,
+    this.fax,
+    this.tax,
+    this.gst,
+    this.establishedYear,
   });
 
   factory VendorStoreModel.fromJson(Map<String, dynamic> json) {
     return VendorStoreModel(
-      id: json['id'],
-      userId: json['user_id'] ?? 0,
+      id: _parseInt(json['id']),
+      userId: _parseInt(json['user_id']) ?? 0,  // Convert String to int
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      countryId: json['country_id'],
-      stateId: json['state_id'],
-      cityId: json['city_id'],
-      city: json['city'] ?? '',
-      state: json['state'] ?? '',
-      postalCode: json['postal_code'] ?? '',
-      phone: json['phone'] ?? '',
-      email: json['email'] ?? '',
-      website: json['website'],
-      lat: (json['lat'] as num?)?.toDouble() ?? 0.0,
-      lang: (json['lang'] as num?)?.toDouble() ?? 0.0,
-      address: json['address'] ?? '',
-      instagram: json['instagram'],
-      facebook: json['facebook'],
-      whatsapp: json['whatsapp'],
-      thumbnail: json['thumbnail'],
-      images: json['images'] != null
-          ? List<String>.from(json['images'])
+      countryId: _parseInt(json['country']),  // If API returns country ID
+      stateId: _parseInt(json['state_id']),  // If API returns state ID
+      cityId: _parseInt(json['city_id']),    // If API returns city ID
+      city: json['city']?.toString() ?? '',   // Convert to string if it's number
+      state: json['state']?.toString() ?? '', // Convert to string if it's number
+      postalCode: json['postal_code']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      website: json['website']?.toString(),
+      lat: _parseDouble(json['lat']) ?? 0.0,
+      lang: _parseDouble(json['lang']) ?? 0.0,
+      address: json['address']?.toString() ?? '',
+      instagram: json['instagram']?.toString(),
+      facebook: json['facebook']?.toString(),
+      whatsapp: json['whatsapp']?.toString(),
+      thumbnail: json['thumbnail']?.toString(),
+      images: json['image'] != null
+          ? _parseImages(json['image'])
           : null,
-      createdAt: json['created_at'],
-      updatedAt: json['updated_at'],
+      createdAt: json['created_at']?.toString(),
+      updatedAt: json['updated_at']?.toString(),
+      fax: json['fax']?.toString(),
+      tax: json['tax_number']?.toString(),
+      gst: json['gst']?.toString(),
+      establishedYear: _parseInt(json['estimate_date']),
     );
+  }
+
+  // Helper methods for safe type conversion
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    if (value is double) return value.toInt();
+    return null;
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  static List<String>? _parseImages(dynamic images) {
+    if (images == null) return null;
+
+    // If images is a String (like JSON array string)
+    if (images is String) {
+      try {
+        // Try to parse as JSON array
+        final decoded = json.decode(images);
+        if (decoded is List) {
+          return decoded.map((e) => e.toString()).toList();
+        }
+      } catch (e) {
+        // If not JSON, treat as single image path
+        return [images];
+      }
+    }
+
+    // If images is already a List
+    if (images is List) {
+      return images.map((e) => e.toString()).toList();
+    }
+
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -102,6 +158,10 @@ class VendorStoreModel {
       'whatsapp': whatsapp,
       'thumbnail': thumbnail,
       'images': images,
+      'fax': fax,
+      'tax_number': tax,
+      'gst': gst,
+      'estimate_date': establishedYear,
     };
   }
 
@@ -122,22 +182,20 @@ class VendorStoreModel {
     return thumbnail != null && thumbnail!.isNotEmpty;
   }
 
-  // Get full image URLs with base URL if needed
   List<String> get fullImageUrls {
     if (images == null) return [];
-    // Add base URL if your API returns relative paths
-    // return images!.map((path) => 'https://your-base-url.com/$path').toList();
+    // Add base URL if needed
+    // return images!.map((path) => 'https://your-api.com/$path').toList();
     return images!;
   }
 
   String? get fullThumbnailUrl {
     if (thumbnail == null) return null;
-    // Add base URL if your API returns relative paths
-    // return 'https://your-base-url.com/$thumbnail';
+    // Add base URL if needed
+    // return 'https://your-api.com/$thumbnail';
     return thumbnail;
   }
 }
-
 // Request Model for creating store
 class CreateStoreRequest {
   final int userId;

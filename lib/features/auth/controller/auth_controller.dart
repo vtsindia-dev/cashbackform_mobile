@@ -28,6 +28,10 @@ class AuthController extends GetxController with CodeAutoFill {
   var hoveredGender = (-1).obs;
   var fcmToken = ''.obs;
 
+  // Referral code variables
+  var isReferralCodeValid = false.obs;
+  var referralCodeError = ''.obs;
+
   List<CountryModel> countries = [];
   List<StateModel> states = [];
   List<CityModel> cities = [];
@@ -46,6 +50,7 @@ class AuthController extends GetxController with CodeAutoFill {
   final TextEditingController pinCodeController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
+  final TextEditingController referralCodeController = TextEditingController(); // Add this
 
   String? appSignature;
   String? code;
@@ -220,6 +225,25 @@ class AuthController extends GetxController with CodeAutoFill {
       print("=== END SIGNATURE ===");
     } catch (e) {
       print("Error getting app signature: $e");
+    }
+  }
+
+  // ─── REFERRAL CODE VALIDATION ─────────────────────────────────────────────────
+
+  void validateReferralCode(String code) {
+    if (code.isEmpty) {
+      isReferralCodeValid.value = false;
+      referralCodeError.value = '';
+      return;
+    }
+
+    // Basic validation - adjust based on your referral code format
+    if (code.length >= 4 && code.length <= 12) {
+      isReferralCodeValid.value = true;
+      referralCodeError.value = '';
+    } else {
+      isReferralCodeValid.value = false;
+      referralCodeError.value = 'Referral code should be 4-12 characters';
     }
   }
 
@@ -424,6 +448,13 @@ class AuthController extends GetxController with CodeAutoFill {
         "fcm_token": fcmToken.value, // ✅ FCM token sent on register too
       });
 
+      // Add referral code if provided and valid
+      final referralCode = referralCodeController.text.trim().toUpperCase();
+      if (referralCode.isNotEmpty && isReferralCodeValid.value) {
+        formData.fields.add(MapEntry('code', referralCode));
+        print('📝 Adding referral code: $referralCode');
+      }
+
       if (selectedImage.value != null) {
         formData.files.add(MapEntry(
           'image',
@@ -444,7 +475,12 @@ class AuthController extends GetxController with CodeAutoFill {
       print('Registration Response Data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        SnackBarHelper.showSuccess("Registration successful!");
+        // Show success message with referral bonus if applicable
+        if (referralCode.isNotEmpty) {
+          SnackBarHelper.showSuccess("Registration successful! Welcome bonus added!");
+        } else {
+          SnackBarHelper.showSuccess("Registration successful!");
+        }
 
         final userData = response.data['data']['user'];
         final token = response.data['data']['token'];
@@ -524,6 +560,17 @@ class AuthController extends GetxController with CodeAutoFill {
       SnackBarHelper.showError("Please select city");
       return false;
     }
+
+    // Validate referral code if provided
+    final referralCode = referralCodeController.text.trim();
+    if (referralCode.isNotEmpty) {
+      validateReferralCode(referralCode);
+      if (!isReferralCodeValid.value) {
+        SnackBarHelper.showError(referralCodeError.value);
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -589,6 +636,7 @@ class AuthController extends GetxController with CodeAutoFill {
     pinCodeController.dispose();
     addressController.dispose();
     dobController.dispose();
+    referralCodeController.dispose(); // Add this
     super.onClose();
   }
 }

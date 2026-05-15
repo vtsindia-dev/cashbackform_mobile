@@ -1,12 +1,16 @@
 import 'package:cashback_farms/common/widget/toster.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
+import '../../legal_and_policies/screen.dart';
 import '../controller/auth_controller.dart';
 import '../models/location_model.dart';
+import 'package:flutter/gestures.dart';  // Add this line
 
 class Registration extends StatefulWidget {
   final String? phone;
@@ -20,8 +24,6 @@ class Registration extends StatefulWidget {
 class _RegistrationState extends State<Registration> {
   final AuthController controller = Get.put(AuthController());
   bool isTermsAccepted = false;
-
-
 
   @override
   void initState() {
@@ -110,22 +112,22 @@ class _RegistrationState extends State<Registration> {
             child: Column(
               children: [
                 Image.asset(
-                      Images.logo,
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.contain,
-                    )
+                  Images.logo,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                )
                     .animate()
                     .scale(duration: 800.ms, curve: Curves.elasticOut)
                     .fadeIn(duration: 800.ms),
                 Text(
-                      'Create Account',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColor.primary,
-                      ),
-                    )
+                  'Create Account',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.primary,
+                  ),
+                )
                     .animate()
                     .fadeIn(duration: 800.ms)
                     .slideY(begin: 0.5, end: 0, duration: 800.ms),
@@ -134,44 +136,44 @@ class _RegistrationState extends State<Registration> {
           ),
           const SizedBox(height: 10),
           Obx(
-            () => Center(
+                () => Center(
               child: GestureDetector(
                 onTap: controller.pickImage,
                 child:
-                    Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            border: Border.all(
-                              color: AppColor.primary,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: controller.selectedImage.value != null
-                              ? ClipOval(
-                                  child: Image.file(
-                                    controller.selectedImage.value!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Icon(
-                                  Icons.camera_alt,
-                                  size: 40,
-                                  color: AppColor.primary.withOpacity(0.6),
-                                ),
-                        )
-                        .animate()
-                        .scale(duration: 800.ms, delay: 200.ms)
-                        .fadeIn(duration: 800.ms, delay: 200.ms),
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(
+                      color: AppColor.primary,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: controller.selectedImage.value != null
+                      ? ClipOval(
+                    child: Image.file(
+                      controller.selectedImage.value!,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                      : Icon(
+                    Icons.camera_alt,
+                    size: 40,
+                    color: AppColor.primary.withOpacity(0.6),
+                  ),
+                )
+                    .animate()
+                    .scale(duration: 800.ms, delay: 200.ms)
+                    .fadeIn(duration: 800.ms, delay: 200.ms),
               ),
             ),
           ),
@@ -220,19 +222,19 @@ class _RegistrationState extends State<Registration> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                    'Gender',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  )
+                'Gender',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              )
                   .animate()
                   .fadeIn(duration: 700.ms, delay: 500.ms)
                   .slideX(begin: -20, end: 0, duration: 700.ms, delay: 500.ms),
               const SizedBox(height: 8),
               Obx(
-                () => Row(
+                    () => Row(
                   children: [
                     Expanded(
                       child: _buildGenderOption(
@@ -256,82 +258,18 @@ class _RegistrationState extends State<Registration> {
               ),
             ],
           ),
-          // const SizedBox(height: 15),
-          // Column(
-          //   crossAxisAlignment: CrossAxisAlignment.start,
-          //   children: [
-          //     Text(
-          //       'Account Type',
-          //       style: TextStyle(
-          //         fontSize: 14,
-          //         color: Colors.grey.shade700,
-          //         fontWeight: FontWeight.w500,
-          //       ),
-          //     )
-          //         .animate()
-          //         .fadeIn(duration: 700.ms, delay: 600.ms)
-          //         .slideX(begin: -20, end: 0, duration: 700.ms, delay: 600.ms),
-          //     const SizedBox(height: 8),
-          //     Obx(() => Animate(
-          //       effects: [
-          //         FadeEffect(duration: 800.ms, delay: 650.ms),
-          //         SlideEffect(begin: Offset(-30, 0), duration: 800.ms, delay: 650.ms),
-          //         ScaleEffect(begin: Offset(0.95, 0.95), duration: 800.ms, delay: 650.ms),
-          //       ],
-          //       child: Container(
-          //         decoration: BoxDecoration(
-          //           borderRadius: BorderRadius.circular(12),
-          //           border: Border.all(
-          //             color: Colors.grey.shade300,
-          //             width: 2,
-          //           ),
-          //           color: Colors.white,
-          //           boxShadow: [
-          //             BoxShadow(
-          //               color: Colors.black.withOpacity(0.05),
-          //               blurRadius: 10,
-          //               offset: const Offset(0, 4),
-          //             ),
-          //           ],
-          //         ),
-          //         child: DropdownButtonFormField<int>(
-          //           value: controller.selectedRole.value,
-          //           items: const [
-          //             DropdownMenuItem(value: 1, child: Text('Customer')),
-          //             DropdownMenuItem(value: 2, child: Text('Agent')),
-          //             DropdownMenuItem(value: 3, child: Text('Vendor')),
-          //             DropdownMenuItem(value: 4, child: Text('Service Provider')),
-          //           ],
-          //           onChanged: (value) => controller.selectedRole.value = value!,
-          //           decoration: InputDecoration(
-          //             border: InputBorder.none,
-          //             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          //             prefixIcon: Icon(Icons.account_circle, color: AppColor.primary),
-          //           ),
-          //           dropdownColor: Colors.white,
-          //           style: TextStyle(
-          //             fontFamily: GoogleFonts.montserrat().fontFamily,
-          //
-          //             color: Colors.grey.shade800,
-          //             fontSize: 16,
-          //           ),
-          //         ),
-          //       ),
-          //     )),
-          //   ],
-          // ),
           const SizedBox(height: 15),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                    'Date of Birth (YYYY/MM/DD)',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  )
+                'Date of Birth (YYYY/MM/DD)',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              )
                   .animate()
                   .fadeIn(duration: 700.ms, delay: 700.ms)
                   .slideX(begin: -20, end: 0, duration: 700.ms, delay: 700.ms),
@@ -440,17 +378,17 @@ class _RegistrationState extends State<Registration> {
                   child: Text(country.countryName),
                 );
               }).toList(),
-                onChanged: (value) {
-                  controller.cities.clear();
-                  setState(() {
-                    controller.selectedCountry = value;
-                    controller.selectedState = null; // reset state
-                  });
+              onChanged: (value) {
+                controller.cities.clear();
+                setState(() {
+                  controller.selectedCountry = value;
+                  controller.selectedState = null;
+                });
 
-                  if (value != null) {
-                    controller.fetchStates(value.id);
-                  }
+                if (value != null) {
+                  controller.fetchStates(value.id);
                 }
+              },
             ),
           ),
 
@@ -470,7 +408,6 @@ class _RegistrationState extends State<Registration> {
             ),
             child: GetBuilder<AuthController>(
               builder: (authcontroller) {
-
                 if (authcontroller.isstateLoading) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),
@@ -510,16 +447,14 @@ class _RegistrationState extends State<Registration> {
                       controller.selectedState = value;
                       controller.selectedCity = null;
                     });
-                    if(value != null)
-                      {
-                    controller.fetchCity(value.id);
-                      }
-                    },
+                    if (value != null) {
+                      controller.fetchCity(value.id);
+                    }
+                  },
                 );
               },
             ),
           ),
-
 
           const SizedBox(height: 20),
 
@@ -537,7 +472,6 @@ class _RegistrationState extends State<Registration> {
             ),
             child: GetBuilder<AuthController>(
               builder: (authcontroller) {
-
                 if (authcontroller.isCityoading) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),
@@ -581,96 +515,21 @@ class _RegistrationState extends State<Registration> {
               },
             ),
           ),
-          SizedBox(height: 20,),
 
+          // ==================== REFERRAL CODE SECTION ====================
+          const SizedBox(height: 20),
+          _buildReferralCodeSection(),
 
-          // Terms and Conditions
-          // Animate(
-          //   effects: [
-          //     FadeEffect(duration: 800.ms, delay: 900.ms),
-          //     SlideEffect(begin: Offset(-20, 0), duration: 800.ms, delay: 900.ms),
-          //   ],
-          //   child: Row(
-          //     crossAxisAlignment: CrossAxisAlignment.center,
-          //     children: [
-          //       GestureDetector(
-          //         onTap: () {
-          //           setState(() {
-          //             isTermsAccepted = !isTermsAccepted;
-          //           });
-          //         },
-          //         child: Container(
-          //           width: 20,
-          //           height: 20,
-          //           decoration: BoxDecoration(
-          //             border: Border.all(
-          //               color: AppColor.primary,
-          //               width: 2,
-          //             ),
-          //             borderRadius: BorderRadius.circular(5),
-          //             color: isTermsAccepted ? AppColor.primary : Colors.black,
-          //           ),
-          //           child: isTermsAccepted
-          //               ? const Align(
-          //             alignment: Alignment.center,
-          //             child: Icon(
-          //               Icons.check,
-          //               size: 16,
-          //               color: Colors.white,
-          //             ),
-          //           )
-          //               : null,
-          //         )
-          //             .animate(target: isTermsAccepted ? 1 : 0)
-          //             .scale(duration: 400.ms, curve: Curves.elasticOut),
-          //       ),
-          //       const SizedBox(width: 12),
-          //       Expanded(
-          //         child: RichText(
-          //           text: TextSpan(
-          //             text: "I agree to the ",
-          //             style: TextStyle(
-          //               color: Colors.grey.shade800,
-          //               fontSize: 14,
-          //               fontFamily: GoogleFonts.montserrat().fontFamily,
-          //             ),
-          //             children: [
-          //               TextSpan(
-          //                 text: "Terms & Conditions",
-          //                 style: TextStyle(
-          //                   color: AppColor.primary,
-          //                   fontWeight: FontWeight.bold,
-          //                   fontFamily: GoogleFonts.montserrat().fontFamily,
-          //                 ),
-          //                 recognizer: TapGestureRecognizer()
-          //                   ..onTap = () {
-          //                     // Navigate to Terms & Conditions
-          //                   },
-          //               ),
-          //               const TextSpan(text: " and "),
-          //               TextSpan(
-          //                 text: "Privacy Policy",
-          //                 style: TextStyle(
-          //                   color: AppColor.primary,
-          //                   fontWeight: FontWeight.bold,
-          //                   fontFamily: GoogleFonts.montserrat().fontFamily,
-          //                 ),
-          //                 recognizer: TapGestureRecognizer()
-          //                   ..onTap = () {
-          //                     // Navigate to Privacy Policy
-          //                   },
-          //               ),
-          //               const TextSpan(text: "."),
-          //             ],
-          //           ),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
+          const SizedBox(height: 20),
+
+          // ==================== TERMS AND CONDITIONS ====================
+          _buildTermsAndConditions(),
+
           const SizedBox(height: 15),
+
+          // ==================== REGISTER BUTTON ====================
           Obx(
-            () => Animate(
+                () => Animate(
               effects: [
                 FadeEffect(duration: 800.ms, delay: 1000.ms),
                 SlideEffect(
@@ -683,7 +542,7 @@ class _RegistrationState extends State<Registration> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: controller.isLoading.value
+                  onPressed: controller.isLoading.value || !isTermsAccepted
                       ? null
                       : controller.register,
                   style: ElevatedButton.styleFrom(
@@ -697,18 +556,236 @@ class _RegistrationState extends State<Registration> {
                   child: controller.isLoading.value
                       ? const CircularProgressIndicator(color: Colors.white)
                       : Text(
-                          'Create Account',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                    'Create Account',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 15),
+        ],
+      ),
+    );
+  }
+
+  // ==================== REFERRAL CODE WIDGET ====================
+// ==================== REFERRAL CODE WIDGET ====================
+  Widget _buildReferralCodeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Animate(
+          effects: [
+            FadeEffect(duration: 700.ms, delay: 800.ms),
+            SlideEffect(begin: Offset(-20, 0), duration: 700.ms, delay: 800.ms),
+          ],
+          child: Row(
+            children: [
+              Icon(Icons.card_giftcard_outlined,
+                  color: AppColor.primary,
+                  size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Referral Code (Optional)',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Animate(
+          effects: [
+            FadeEffect(duration: 800.ms, delay: 850.ms),
+            SlideEffect(begin: Offset(-30, 0), duration: 800.ms, delay: 850.ms),
+            ScaleEffect(begin: Offset(0.95, 0.95), duration: 800.ms, delay: 850.ms),
+          ],
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300, width: 2),
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Obx(
+                  () => TextField(
+                controller: controller.referralCodeController,
+                textCapitalization: TextCapitalization.characters,
+                style: TextStyle(color: Colors.grey.shade800, fontSize: 16),
+                decoration: InputDecoration(
+                  hintText: 'Enter referral code (if any)',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  prefixIcon: Icon(Icons.code, color: AppColor.primary),
+                  suffixIcon: controller.referralCodeController.text.isNotEmpty
+                      ? (controller.isReferralCodeValid.value
+                      ? Icon(Icons.check_circle, color: Colors.green, size: 20)
+                      : Icon(Icons.error_outline, color: Colors.orange, size: 20))
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  filled: false,
+                ),
+                onChanged: (value) {
+                  controller.validateReferralCode(value);
+                },
+              ),
+            ),
+          ),
+        ),
+        // Show error message if any
+        Obx(() {
+          if (controller.referralCodeError.value.isNotEmpty &&
+              controller.referralCodeController.text.isNotEmpty) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 8, left: 12),
+              child: Text(
+                controller.referralCodeError.value,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.orange.shade700,
+                ),
+              ),
+            );
+          }
+          return SizedBox.shrink();
+        }),
+        const SizedBox(height: 8),
+        Animate(
+          effects: [
+            FadeEffect(duration: 700.ms, delay: 900.ms),
+          ],
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 14, color: Colors.blue.shade700),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Enter a referral code to get welcome benefits! Ask your friend for their code.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.blue.shade800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  // ==================== TERMS AND CONDITIONS WIDGET ====================
+  Widget _buildTermsAndConditions() {
+    return Animate(
+      effects: [
+        FadeEffect(duration: 800.ms, delay: 950.ms),
+        SlideEffect(begin: Offset(-20, 0), duration: 800.ms, delay: 950.ms),
+      ],
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                isTermsAccepted = !isTermsAccepted;
+              });
+            },
+            child: Container(
+              width: 22,
+              height: 22,
+              margin: EdgeInsets.only(top: 2),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isTermsAccepted ? AppColor.primary : Colors.grey.shade400,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(6),
+                color: isTermsAccepted ? AppColor.primary : Colors.white,
+              ),
+              child: isTermsAccepted
+                  ? Icon(
+                Icons.check,
+                size: 16,
+                color: Colors.white,
+              )
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: Colors.grey.shade800,
+                  height: 1.4,
+                ),
+                children: [
+                  const TextSpan(text: "I agree to the "),
+                  TextSpan(
+                    text: "Terms & Conditions",
+                    style: TextStyle(
+                      color: AppColor.primary,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Get.to(
+                              () => LegalPageScreen(
+                            slug: "signup_terms_and_condition",
+                            title: "Terms & Conditions",
+                          ),
+                        );
+                      },
+                  ),
+                  const TextSpan(text: " and "),
+                  TextSpan(
+                    text: "Privacy Policy",
+                    style: TextStyle(
+                      color: AppColor.primary,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Get.to(
+                              () => LegalPageScreen(
+                            slug: "privacy_policy",
+                            title: "Privacy Policy",
+                          ),
+                        );
+                      },
+                  ),
+                  const TextSpan(text: "."),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

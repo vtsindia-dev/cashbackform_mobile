@@ -114,6 +114,7 @@ class PropertyMain extends StatelessWidget {
       onTap: () => _navigateByTitle(title),
       child: Container(
         height: 80.h,
+        width: 10,
         decoration: BoxDecoration(
           color: iconBg.withOpacity(0.2),
           borderRadius: BorderRadius.circular(14.r),

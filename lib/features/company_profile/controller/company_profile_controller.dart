@@ -25,6 +25,8 @@ class VendorStoreController extends GetxController {
   var isFetching = false.obs;
   var store = Rxn<VendorStoreModel>();
   var errorMessage = ''.obs;
+
+  // Existing controllers
   final nameController = TextEditingController();
   final descriptionController = TextEditingController();
   final cityController = TextEditingController();
@@ -41,12 +43,23 @@ class VendorStoreController extends GetxController {
   final facebookController = TextEditingController();
   final whatsappController = TextEditingController();
 
+  // 🆕 New controllers for company profile details
+  final faxController = TextEditingController();
+  final taxController = TextEditingController();
+  final gstController = TextEditingController();
+  final establishedYearController = TextEditingController();
+
   // ─── Observable mirrors for TextEditingControllers ───────────────────────
-  // These are needed because TextEditingController.text is NOT reactive in GetX.
-  // Always update these alongside their paired TextEditingController.
   var addressText = ''.obs;
   var latText = ''.obs;
   var langText = ''.obs;
+
+  // 🆕 Observable mirrors for new fields
+  var faxText = ''.obs;
+  var taxText = ''.obs;
+  var gstText = ''.obs;
+  var establishedYearText = ''.obs;
+
   // ─────────────────────────────────────────────────────────────────────────
 
   final userId = 0.obs;
@@ -98,6 +111,13 @@ class VendorStoreController extends GetxController {
     instagramController.dispose();
     facebookController.dispose();
     whatsappController.dispose();
+
+    // 🆕 Dispose new controllers
+    faxController.dispose();
+    taxController.dispose();
+    gstController.dispose();
+    establishedYearController.dispose();
+
     mapController?.dispose();
     super.onClose();
   }
@@ -110,6 +130,7 @@ class VendorStoreController extends GetxController {
       await Permission.location.request();
     }
   }
+
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
   }
@@ -174,7 +195,7 @@ class VendorStoreController extends GetxController {
           final desc = result['description'] ?? '';
           addressController.text = desc;
           searchAddressController.text = desc;
-          addressText.value = desc; // ← keep observable in sync
+          addressText.value = desc;
         }
       }
     } catch (e) {
@@ -259,13 +280,12 @@ class VendorStoreController extends GetxController {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
 
-        // Update controllers AND observables together
         final latStr = latLng.latitude.toString();
         final lngStr = latLng.longitude.toString();
         latController.text = latStr;
         langController.text = lngStr;
-        latText.value = latStr;   // ← observable mirror
-        langText.value = lngStr;  // ← observable mirror
+        latText.value = latStr;
+        langText.value = lngStr;
 
         List<String> addressParts = [];
         if (place.street?.isNotEmpty == true) addressParts.add(place.street!);
@@ -277,7 +297,7 @@ class VendorStoreController extends GetxController {
         final fullAddress = addressParts.join(', ');
         addressController.text = fullAddress;
         searchAddressController.text = fullAddress;
-        addressText.value = fullAddress; // ← observable mirror
+        addressText.value = fullAddress;
 
         if (place.postalCode?.isNotEmpty == true) {
           postalCodeController.text = place.postalCode!;
@@ -289,7 +309,6 @@ class VendorStoreController extends GetxController {
       print('❌ Update address error: $e');
     }
   }
-
   Future<void> matchLocationWithDatabase(Placemark place) async {
     if (countries.isEmpty) await fetchCountries();
     if (place.country != null) {
@@ -318,7 +337,6 @@ class VendorStoreController extends GetxController {
     }
   }
 
-  // ==================== COUNTRY METHODS ====================
 
   Future<void> fetchCountries() async {
     try {
@@ -351,7 +369,6 @@ class VendorStoreController extends GetxController {
     if (country != null) fetchStates(country.id);
   }
 
-  // ==================== STATE METHODS ====================
 
   Future<void> fetchStates(int countryId) async {
     try {
@@ -385,7 +402,6 @@ class VendorStoreController extends GetxController {
     }
   }
 
-  // ==================== CITY METHODS ====================
 
   Future<void> fetchCities(int stateId) async {
     try {
@@ -413,7 +429,6 @@ class VendorStoreController extends GetxController {
     if (city != null) cityController.text = city.cityName;
   }
 
-  // ==================== IMAGE PICKING METHODS ====================
 
   Future<void> pickStoreImages() async {
     try {
@@ -477,14 +492,12 @@ class VendorStoreController extends GetxController {
     thumbnailImage.value = null;
   }
 
-  // ==================== LOAD USER ID ====================
 
   Future<void> loadUserId() async {
     final id = await SessionManager.getUserId();
     if (id != null) userId.value = int.parse(id);
   }
 
-  // ==================== FORM VALIDATION ====================
 
   bool _validateForm() {
     if (nameController.text.trim().isEmpty) {
@@ -519,8 +532,13 @@ class VendorStoreController extends GetxController {
       SnackBarHelper.showError('Please enter email');
       return false;
     }
+
     if (!GetUtils.isEmail(emailController.text.trim())) {
       SnackBarHelper.showError('Please enter a valid email');
+      return false;
+    }
+    if (websiteController.text.trim().isEmpty) {
+      SnackBarHelper.showError('Please enter website');
       return false;
     }
     if (addressController.text.trim().isEmpty) {
@@ -539,24 +557,43 @@ class VendorStoreController extends GetxController {
       SnackBarHelper.showError('Please select at least one store image');
       return false;
     }
+
+    // 🆕 Validate new fields
+    if (gstController.text.trim().isEmpty) {
+      SnackBarHelper.showError('Please enter GST number');
+      return false;
+    }
+
+    // Validate established year format (optional but validate if provided)
+    if (establishedYearController.text.trim().isNotEmpty) {
+      final year = int.tryParse(establishedYearController.text.trim());
+      final currentYear = DateTime.now().year;
+      if (year == null || year < 1900 || year > currentYear) {
+        SnackBarHelper.showError('Please enter a valid established year (1900-$currentYear)');
+        return false;
+      }
+    }
+
     return true;
   }
 
-  // ==================== STORE CREATION ====================
 
   Future<Map<String, dynamic>> createStore() async {
     try {
       isCreating(true);
       errorMessage('');
+
       if (!_validateForm()) {
         isCreating(false);
         return {'status': 400, 'message': 'Please fill all required fields'};
       }
+
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
         isCreating(false);
         return {'status': 401, 'message': 'Please login to create store'};
       }
+
       final formData = dio.FormData.fromMap({
         'user_id': userId.value,
         'name': nameController.text.trim(),
@@ -564,8 +601,6 @@ class VendorStoreController extends GetxController {
         'country': selectedCountry.value?.id,
         'state': selectedState.value?.id,
         'city': selectedCity.value?.id,
-        // 'city': selectedCity.value?.id ?? cityController.text.trim(),
-        // 'state': selectedState.value?.stateName ?? stateController.text.trim(),
         'postal_code': postalCodeController.text.trim(),
         'phone': phoneController.text.trim(),
         'email': emailController.text.trim(),
@@ -578,8 +613,13 @@ class VendorStoreController extends GetxController {
         'whatsapp': whatsappController.text.trim().isNotEmpty
             ? whatsappController.text.trim()
             : phoneController.text.trim(),
+        'fax': faxController.text.trim(),
+        'tax_number': taxController.text.trim(),
+        'gst': gstController.text.trim(),
+        'estimate_date': establishedYearController.text.trim(),
       });
 
+      // Add images
       for (var i = 0; i < storeImages.length; i++) {
         final file = storeImages[i];
         if (await file.exists()) {
@@ -593,6 +633,7 @@ class VendorStoreController extends GetxController {
         }
       }
 
+      // Add thumbnail
       if (thumbnailImage.value != null && await thumbnailImage.value!.exists()) {
         formData.files.add(MapEntry(
           'thumbnail',
@@ -605,22 +646,49 @@ class VendorStoreController extends GetxController {
 
       final response = await ApiService.postMultipart(ApiUrl.vendorStoreUrl, formData);
 
-      if (response.statusCode == 200 || response.statusCode == true) {
+      print('📥 Store API Response Status: ${response.statusCode}');
+      print('📥 Store API Response Data: ${response.data}');
+
+      // Handle response
+      if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
         final responseData = response.data;
-        if (responseData != null && responseData['status'] == 200) {
+
+        if (responseData == null) {
+          const errorMsg = 'Invalid response from server';
+          SnackBarHelper.showError(errorMsg);
+          return {'status': 500, 'message': errorMsg};
+        }
+
+        // Check status field (fixing the typo from 'tue' to true)
+        if (responseData['status'] == true) {
           final message = responseData['message'] ?? 'Store created successfully';
+
+          // Parse store data safely
           if (responseData['data'] != null) {
-            store.value = VendorStoreModel.fromJson(responseData['data']);
+            try {
+              store.value = VendorStoreModel.fromJson(responseData['data']);
+              print('✅ Store model created successfully');
+            } catch (e) {
+              print('❌ Error parsing store model: $e');
+              // Continue even if parsing fails - the store was created
+            }
           }
+
           clearForm();
           SnackBarHelper.showSuccess(message);
-          return {'status': 200, 'message': message, 'data': responseData['data']};
+          return {
+            'status': 200,
+            'message': message,
+            'data': responseData['data']
+          };
         } else {
-          final errorMsg = responseData?['message'] ?? 'Failed to create store';
+          // Business logic failure
+          final errorMsg = responseData['message'] ?? 'Failed to create store';
           SnackBarHelper.showError(errorMsg);
           return {'status': 400, 'message': errorMsg};
         }
       } else {
+        // Handle error status codes
         final errorMsg = response.data?['message'] ??
             'Failed to create store (Status: ${response.statusCode})';
         SnackBarHelper.showError(errorMsg);
@@ -634,9 +702,6 @@ class VendorStoreController extends GetxController {
       isCreating(false);
     }
   }
-
-  // ==================== FETCH EXISTING STORE ====================
-
   Future<void> fetchStore() async {
     try {
       isFetching(true);
@@ -663,7 +728,6 @@ class VendorStoreController extends GetxController {
     }
   }
 
-  // ==================== PREFILL FORM ====================
 
   Future<void> prefillFormData() async {
     if (store.value == null) return;
@@ -678,19 +742,20 @@ class VendorStoreController extends GetxController {
     instagramController.text = s.instagram ?? '';
     facebookController.text = s.facebook ?? '';
     whatsappController.text = s.whatsapp ?? s.phone;
-
-    // Sync address observables
+    faxController.text = s.fax ?? '';
+    taxController.text = s.tax ?? '';
+    gstController.text = s.gst ?? '';
+    establishedYearController.text = s.establishedYear != null ? s.establishedYear.toString() : '';
     final addr = s.address;
     addressController.text = addr;
     searchAddressController.text = addr;
-    addressText.value = addr; // ← observable mirror
-
+    addressText.value = addr;
     final latStr = s.lat.toString();
     final lngStr = s.lang.toString();
     latController.text = latStr;
     langController.text = lngStr;
-    latText.value = latStr;   // ← observable mirror
-    langText.value = lngStr;  // ← observable mirror
+    latText.value = latStr;
+    langText.value = lngStr;
 
     if (s.lat != 0 && s.lang != 0) {
       final latLng = LatLng(s.lat, s.lang);
@@ -735,7 +800,6 @@ class VendorStoreController extends GetxController {
     }
   }
 
-  // ==================== CLEAR FORM ====================
 
   void clearForm() {
     nameController.clear();
@@ -753,12 +817,17 @@ class VendorStoreController extends GetxController {
     instagramController.clear();
     facebookController.clear();
     whatsappController.clear();
-
-    // Clear observables
+    faxController.clear();
+    taxController.clear();
+    gstController.clear();
+    establishedYearController.clear();
     addressText.value = '';
     latText.value = '';
     langText.value = '';
-
+    faxText.value = '';
+    taxText.value = '';
+    gstText.value = '';
+    establishedYearText.value = '';
     selectedCountry.value = null;
     selectedState.value = null;
     selectedCity.value = null;
@@ -778,7 +847,6 @@ class VendorStoreController extends GetxController {
     fetchCountries();
   }
 
-  // ==================== GETTERS ====================
 
   String get displayThumbnail {
     if (thumbnailImage.value != null) return thumbnailImage.value!.path;
@@ -807,7 +875,8 @@ class VendorStoreController extends GetxController {
         latController.text.isNotEmpty &&
         langController.text.isNotEmpty &&
         thumbnailImage.value != null &&
-        storeImages.isNotEmpty;
+        storeImages.isNotEmpty &&
+        gstController.text.isNotEmpty;
   }
 
   CameraPosition get initialCameraPosition {

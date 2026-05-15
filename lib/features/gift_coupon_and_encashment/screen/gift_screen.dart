@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:cashback_farms/common/api_constant.dart';
 import 'package:cashback_farms/common/colours.dart';
 import 'package:cashback_farms/common/model/logger_model.dart';
@@ -18,315 +19,232 @@ import 'package:url_launcher/url_launcher.dart';
 
 enum PaymentType { online, wallet }
 
-
-class _C {
-  static const greenPrimary  = Color(0xFF4A7C3F);
-  static const greenDark     = Color(0xFF2D5A22);
-  static const greenLight    = Color(0xFF6AAB5C);
-  static const greenSoft     = Color(0xFFE8F5E2);
-  static const greenBorder   = Color(0xFFC5E0B8);
-  static const bgPage        = Color(0xFFF5FAF3);
-  static const textDark      = Color(0xFF1A2E14);
-  static const textMid       = Color(0xFF4A5E43);
-  static const textLight     = Color(0xFF8FAA87);
-  static const red           = Color(0xFFE53935);
-  static const warningBg     = Color(0xFFFFFBE6);
-  static const warningBorder = Color(0xFFF0D060);
-  static const warningText   = Color(0xFF7A6000);
-}
-
 class GiftScreen extends StatefulWidget {
   const GiftScreen({super.key});
-
   @override
   State<GiftScreen> createState() => _GiftScreenState();
 }
 
 class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
 
-
+  // ── Controllers ─────────────────────────────────────────────────────────
   final TextEditingController _amountController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   DashboardController dashboardController = Get.put(DashboardController());
   GiftController giftController = Get.put(GiftController());
   final ProfileController profileController = Get.put(ProfileController());
-  PaymentType? selectedPaymentType;
-
   late Razorpay _razorpay;
-  final FocusNode _focusNode = FocusNode();
 
-
-  double amount             = 0.0;
-  double gstValue           = 0.0;
-  double gstAmount          = 0.0;
-  double totalAmount        = 0.0;
-  double walletAmount       = 0.0;
-  double minCouponValAmount = 0.0;
-  double maxCouponValAmount = 0.0;
-
-
+  // ── State ────────────────────────────────────────────────────────────────
+  double amount = 0, gstValue = 0, gstAmount = 0, totalAmount = 0;
+  double walletAmount = 0, minCouponValAmount = 0, maxCouponValAmount = 0;
   bool _isWalletTab = false;
-  late AnimationController _fadeCtrl;
-  late Animation<double> _fadeAnim;
+
+  // ── Animation Controllers ────────────────────────────────────────────────
+  late AnimationController _heroCtrl;   // page entrance
+  late AnimationController _floatCtrl;  // ambient float / shimmer
+  late AnimationController _pulseCtrl;  // CTA pulse
+
+  late Animation<double>   _heroFade;
+  late Animation<Offset>   _heroSlide;
+  late Animation<double>   _floatAnim;
+  late Animation<double>   _pulseAnim;
 
   final List<int> _quickAmounts = [500, 1000, 2000, 5000];
 
-
   String _fmt(double n) => '₹${NumberFormat('#,##,###').format(n.toInt())}';
-
   bool get _isInsufficient => _isWalletTab && walletAmount < amount;
-
   bool get _isValidAmount =>
-      amount >= minCouponValAmount &&
-          amount <= maxCouponValAmount &&
-          amount > 0;
+      amount >= minCouponValAmount && amount <= maxCouponValAmount && amount > 0;
 
-
+  // ── Lifecycle ────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
     _fetchGstValue();
-    _amountController.addListener(_calculateAmounts);
+    _amountController.addListener(_recalculate);
 
     _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWallet);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaySuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPayError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _onExternalWallet);
 
-    _fadeCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 380));
-    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
-    _fadeCtrl.forward();
+    // Entrance
+    _heroCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 680));
+    _heroFade = CurvedAnimation(parent: _heroCtrl, curve: Curves.easeOut);
+    _heroSlide = Tween<Offset>(begin: const Offset(0, 0.055), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _heroCtrl, curve: Curves.easeOutCubic));
+
+    // Ambient float
+    _floatCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 2800))
+      ..repeat(reverse: true);
+    _floatAnim = CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut);
+
+    // CTA pulse
+    _pulseCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))
+      ..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.035)
+        .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+
+    _heroCtrl.forward();
     giftController.resetVouchers();
   }
 
+  void _fetchGstValue() => setState(() {
+    gstValue           = dashboardController.businessSettings.value?.couponServiceCharge ?? 0;
+    minCouponValAmount = dashboardController.businessSettings.value?.minCouponVal ?? 0;
+    maxCouponValAmount = dashboardController.businessSettings.value?.maxCouponVal ?? 0;
+    walletAmount       = double.tryParse(dashboardController.profile.value?.walletBalance ?? '0') ?? 0;
+  });
 
-  void _fetchGstValue() {
-    setState(() {
-      gstValue           = dashboardController.businessSettings.value?.couponServiceCharge ?? 0;
-      minCouponValAmount = dashboardController.businessSettings.value?.minCouponVal ?? 0;
-      maxCouponValAmount = dashboardController.businessSettings.value?.maxCouponVal ?? 0;
-      walletAmount       = double.tryParse(dashboardController.profile.value?.walletBalance ?? "0",) ?? 0;
-    });
-  }
+  void _recalculate() => setState(() {
+    amount = double.tryParse(_amountController.text) ?? 0;
+    if (_isWalletTab) { gstAmount = 0; totalAmount = amount; }
+    else              { gstAmount = (amount * gstValue) / 100; totalAmount = amount + gstAmount; }
+  });
 
-  void _calculateAmounts() {
-    setState(() {
-      amount = double.tryParse(_amountController.text) ?? 0.0;
+  void _refreshWallet() => setState(() {
+    walletAmount = double.tryParse(dashboardController.profile.value?.walletBalance ?? '0') ?? 0;
+  });
 
-      if (_isWalletTab) {
-        gstAmount = 0.0;
-        totalAmount = amount;
-      } else {
-        gstAmount = (amount * gstValue) / 100;
-        totalAmount = amount + gstAmount;
-      }
-    });
-  }
-
-  Future<void> handlePaymentSuccess(PaymentSuccessResponse response) async {
+  // ── Payment handlers ─────────────────────────────────────────────────────
+  Future<void> _onPaySuccess(PaymentSuccessResponse r) async {
     try {
-      giftController.isLoading = true;
-      giftController.update();
-
-      final enteredAmount = _amountController.text.trim();
-
+      giftController.isLoading = true; giftController.update();
+      final amt = _amountController.text.trim();
       await giftController.giftVouchersBuyPostApi(
-        amount: enteredAmount,
-        transactionId: response.paymentId ?? '',
-        paymentMethod: 'razor_pay',
-        transactionDetails: response.paymentId ?? '',
-        isFromWallet: false,
+        amount: amt, transactionId: r.paymentId ?? '',
+        paymentMethod: 'razor_pay', transactionDetails: r.paymentId ?? '', isFromWallet: false,
       );
       await dashboardController.fetchDashboard();
-
-      final result = await Get.to(() => PaymentStatusScreen(
-        isSuccess: true,
-        paymentId: response.paymentId,
-        amount: enteredAmount,
-      ));
-      if (result == true) {
-        setState(() {
-          walletAmount = double.tryParse(
-              dashboardController.profile.value?.walletBalance ?? "0"
-          ) ?? 0;
-        });
-      }
-
-    } catch (e) {
-      debugPrint('Error :: $e');
-      Get.off(() => PaymentStatusScreen(
-        isSuccess: false,
-        paymentId: response.paymentId,
-      ));
-    } finally {
-      giftController.isLoading = false;
-      giftController.update();
-    }
+      final res = await Get.to(() => PaymentStatusScreen(isSuccess: true, paymentId: r.paymentId, amount: amt));
+      if (res == true) _refreshWallet();
+    } catch (_) { Get.off(() => PaymentStatusScreen(isSuccess: false, paymentId: r.paymentId)); }
+    finally { giftController.isLoading = false; giftController.update(); }
   }
 
-  void handlePaymentError(PaymentFailureResponse response) {
-    Get.to(() => PaymentStatusScreen(
-      isSuccess: false,
-      errorMessage: response.message,
-    ));
-  }
+  void _onPayError(PaymentFailureResponse r) =>
+      Get.to(() => PaymentStatusScreen(isSuccess: false, errorMessage: r.message));
 
-  void handleExternalWallet(ExternalWalletResponse response) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('External wallet used: ${response.walletName}')),
-    );
-  }
+  void _onExternalWallet(ExternalWalletResponse r) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Wallet: ${r.walletName}')));
 
-  void openCheckout(String totalAmountStr) async {
-    final userData = await SessionManager.getUserData();
-    if (userData == null) {
-      Loggers.error('User data is null - user not logged in');
-      return;
-    }
-    var options = {
-      'key': 'rzp_test_t8LKc2rPhJVv2N',
-      'amount': (double.parse(totalAmountStr) * 100).toInt(),
-      'name': "${userData['first_name']} ${userData['last_name']}",
-      'timeout': 300,
-      'prefill': {
-        'contact': userData['phone'] ?? "",
-        'email': userData['email'] ?? "",
-      },
-    };
+  void _openCheckout(String total) async {
+    final ud = await SessionManager.getUserData();
+    if (ud == null) return;
     try {
-      _razorpay.open(options);
-    } catch (e) {
-      debugPrint("Razorpay Error: $e");
-    }
+      _razorpay.open({
+        'key': 'rzp_test_t8LKc2rPhJVv2N',
+        'amount': (double.parse(total) * 100).toInt(),
+        'name': '${ud['first_name']} ${ud['last_name']}',
+        'timeout': 300,
+        'prefill': {'contact': ud['phone'] ?? '', 'email': ud['email'] ?? ''},
+      });
+    } catch (e) { debugPrint('Razorpay: $e'); }
   }
-
 
   Future<void> _onPurchase() async {
     if (!_isValidAmount) {
-      _showSnack(
-        'Amount must be between ${_fmt(minCouponValAmount)} and ${_fmt(maxCouponValAmount)}',
-        isError: true,
-      );
+      _toast('Amount must be ${_fmt(minCouponValAmount)} – ${_fmt(maxCouponValAmount)}', err: true);
       return;
     }
     if (_isInsufficient) return;
-
     if (_isWalletTab) {
       try {
-        giftController.isLoading = true;
-        giftController.update();
-
-        final enteredAmount = _amountController.text.trim();
-
+        giftController.isLoading = true; giftController.update();
+        final amt = _amountController.text.trim();
         await giftController.giftVouchersBuyPostApi(
-          amount: enteredAmount,
-          isFromWallet: true,
+          amount: amt, isFromWallet: true,
           transactionId: 'WALLET_${DateTime.now().millisecondsSinceEpoch}',
-          paymentMethod: 'wallet',
-          transactionDetails: 'wallet_payment',
+          paymentMethod: 'wallet', transactionDetails: 'wallet_payment',
         );
         await dashboardController.fetchDashboard();
-
-        final result = await Get.to(() => PaymentStatusScreen(
-          isSuccess: true,
-          paymentId: 'WALLET',
-          amount: enteredAmount,
-        ));
-
-        if (result == true) {
-
-          setState(() {
-            walletAmount = double.tryParse(
-                dashboardController.profile.value?.walletBalance ?? "0"
-            ) ?? 0;
-          });
-        }
-
-      } catch (e) {
-        debugPrint('Wallet Error :: $e');
-
-        Get.to(() => PaymentStatusScreen(
-          isSuccess: false,
-          errorMessage: "Wallet payment failed",
-        ));
-      } finally {
-        giftController.isLoading = false;
-        giftController.update();
-      }
-    }else {
-      openCheckout(totalAmount.toStringAsFixed(2));
-    }
+        final res = await Get.to(() => PaymentStatusScreen(isSuccess: true, paymentId: 'WALLET', amount: amt));
+        if (res == true) _refreshWallet();
+      } catch (_) { Get.to(() => PaymentStatusScreen(isSuccess: false, errorMessage: 'Wallet payment failed')); }
+      finally { giftController.isLoading = false; giftController.update(); }
+    } else { _openCheckout(totalAmount.toStringAsFixed(2)); }
   }
 
-  void _setQuickAmount(int amt) {
+  void _setQuick(int amt) {
     _amountController.text = amt.toString();
-    _amountController.selection = TextSelection.fromPosition(
-      TextPosition(offset: _amountController.text.length),
-    );
+    _amountController.selection = TextSelection.collapsed(offset: amt.toString().length);
   }
 
-  void _showSnack(String msg, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: isError ? _C.red : _C.greenDark,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+  void _toast(String msg, {bool err = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Row(children: [
+        Icon(err ? Icons.error_outline : Icons.check_circle_outline, color: Colors.white, size: 18),
+        const SizedBox(width: 10),
+        Expanded(child: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600))),
+      ]),
+      backgroundColor: err ? AppColor.red : AppColor.primary,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      margin: const EdgeInsets.all(16),
+    ));
   }
 
   @override
   void dispose() {
     _razorpay.clear();
-    _amountController.removeListener(_calculateAmounts);
+    _amountController.removeListener(_recalculate);
     _amountController.dispose();
     _focusNode.dispose();
-    _fadeCtrl.dispose();
+    _heroCtrl.dispose(); _floatCtrl.dispose(); _pulseCtrl.dispose();
     super.dispose();
   }
 
-
+  // ══════════════════════════════════════════════════════════════════════════
+  //  BUILD
+  // ══════════════════════════════════════════════════════════════════════════
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: FadeTransition(
-        opacity: _fadeAnim,
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: const Color(0xFFF5F2EA),
+    body: FadeTransition(
+      opacity: _heroFade,
+      child: SlideTransition(
+        position: _heroSlide,
         child: RefreshIndicator(
-          onRefresh: () async {
-            await giftController.resetVouchers();
-          },
+          color: AppColor.primary,
+          onRefresh: () async => await giftController.resetVouchers(),
           child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
             slivers: [
-              _buildAppBar(),
+              _appBar(),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+                  padding: const EdgeInsets.fromLTRB(18, 22, 18, 64),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 20),
-                      _buildTabToggle(),
+                      _paymentToggle(),
+                      const SizedBox(height: 22),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 340),
+                        curve: Curves.easeOutCubic,
+                        child: _isWalletTab
+                            ? Column(children: [
+                          _walletCard(),
+                          if (_isInsufficient) ...[const SizedBox(height: 12), _warningBanner()],
+                          const SizedBox(height: 22),
+                        ])
+                            : const SizedBox.shrink(),
+                      ),
+                      _amountSection(),
+                      const SizedBox(height: 24),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
+                        child: _isValidAmount
+                            ? Column(children: [_summaryCard(), const SizedBox(height: 24)])
+                            : const SizedBox.shrink(),
+                      ),
+                      _ctaButton(),
+                      const SizedBox(height: 40),
+                      _sectionHeader(),
                       const SizedBox(height: 18),
-                      if (_isWalletTab) _buildWalletCard(),
-                      if (_isInsufficient) _buildWarningBox(),
-                      _buildAmountInput(),
-                      const SizedBox(height: 6),
-                      _buildLimitText(),
-                      const SizedBox(height: 14),
-                      _buildQuickChips(),
-                      const SizedBox(height: 18),
-                      if (_isValidAmount) ...[
-                        _buildSummaryBox(),
-                        const SizedBox(height: 18),
-                      ],
-                      _buildCTAButton(),
-                      const SizedBox(height: 28),
-                      const Divider(color: _C.greenBorder, thickness: 1),
-                      const SizedBox(height: 20),
-                      _buildMyCouponsHeader(),
-                      const SizedBox(height: 14),
-                      _buildCouponList(),
+                      _couponList(),
                     ],
                   ),
                 ),
@@ -335,811 +253,789 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 
-  Widget _buildAppBar() {
-    return SliverAppBar(
-      expandedHeight: 130,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: _C.greenDark,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-        onPressed: () {
-          Navigator.pop(context);
-        },
+  // ── App Bar ──────────────────────────────────────────────────────────────
+  Widget _appBar() => SliverAppBar(
+    expandedHeight: 210,
+    pinned: true,
+    elevation: 0,
+    backgroundColor: AppColor.primary,
+    leading: Padding(
+      padding: const EdgeInsets.all(8),
+      child: GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.25)),
+          ),
+          child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 17),
+        ),
       ),
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration:  BoxDecoration(
+    ),
+    flexibleSpace: FlexibleSpaceBar(
+      background: AnimatedBuilder(
+        animation: _floatAnim,
+        builder: (_, __) => Container(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColor.primary, AppColor.primary],
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: [Color(0xFF506030), AppColor.primary, Color(0xFF7CA44C)],
+              stops: [0.0, 0.5, 1.0],
             ),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: -30, right: -30,
-                child: Container(
-                  width: 150, height: 150,
+          child: Stack(children: [
+            // Animated ambient orbs
+            Positioned(top: -35 + (_floatAnim.value * 10), right: -25,
+                child: _orb(200, Colors.white, 0.055)),
+            Positioned(top: 30 - (_floatAnim.value * 8), right: 45,
+                child: _orb(90, AppColor.orange, 0.20)),
+            Positioned(bottom: -15 + (_floatAnim.value * 6), left: 20,
+                child: _orb(130, AppColor.primarylite, 0.14)),
+            Positioned(bottom: 20, right: 25,
+                child: _orb(55, AppColor.orangeAccent, 0.15)),
+
+            // Content
+            Positioned(bottom: 26, left: 20, right: 90,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.06),
-                    shape: BoxShape.circle,
+                    color: AppColor.orange.withOpacity(0.22),
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(color: AppColor.orange.withOpacity(0.45)),
                   ),
+                  child: const Text('✦  GIFT VOUCHERS',
+                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800,
+                          color: Color(0xFFFFE082), letterSpacing: 2.2)),
                 ),
-              ),
-              Positioned(
-                bottom: -15, left: 70,
+                const SizedBox(height: 10),
+                const Text('Gift\nCoupons',
+                    style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900,
+                        height: 1.05, letterSpacing: -1.5)),
+                const SizedBox(height: 6),
+                Text('Buy, share & manage gift vouchers instantly',
+                    style: TextStyle(color: Colors.white.withOpacity(0.52), fontSize: 12.5)),
+              ]),
+            ),
+
+            // Floating icon (bobs up/down)
+            Positioned(
+              bottom: 26, right: 18,
+              child: AnimatedBuilder(
+                animation: _floatAnim,
+                builder: (_, child) => Transform.translate(
+                  offset: Offset(0, -5 * _floatAnim.value),
+                  child: child,
+                ),
                 child: Container(
-                  width: 70, height: 70,
+                  width: 60, height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.04),
-                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.14),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 24, offset: const Offset(0, 8))],
                   ),
+                  child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 32),
                 ),
               ),
-              Positioned(
-                bottom: 20, left: 20,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Gift Coupon',
-                      style: TextStyle(
-                        color: Colors.white, fontSize: 24,
-                        fontWeight: FontWeight.w700, letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Purchase & manage your gift vouchers',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
-                        fontSize: 13, fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ]),
         ),
       ),
-    );
-  }
+    ),
+  );
 
+  Widget _orb(double size, Color c, double o) => Container(
+    width: size, height: size,
+    decoration: BoxDecoration(color: c.withOpacity(o), shape: BoxShape.circle),
+  );
 
-  Widget _buildTabToggle() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: _C.greenSoft,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          _tabBtn(
-            label: 'Razorpay',
-            icon: Icons.credit_card_rounded,
-            isActive: !_isWalletTab,
-            onTap: () => setState(() => _isWalletTab = false),
-          ),
-          _tabBtn(
-            label: 'Wallet',
-            icon: Icons.account_balance_wallet_rounded,
-            isActive: _isWalletTab,
-              onTap: () {
-                setState(() {
-                  _isWalletTab = true;
-                });
-                _calculateAmounts();
-              }
-          ),
-        ],
-      ),
-    );
-  }
+  // ── Payment Toggle ───────────────────────────────────────────────────────
+  Widget _paymentToggle() => Container(
+    padding: const EdgeInsets.all(5),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      boxShadow: [
+        BoxShadow(color: AppColor.primary.withOpacity(0.12), blurRadius: 18, offset: const Offset(0, 5)),
+        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6),
+      ],
+    ),
+    child: Row(children: [
+      _tabBtn('Razorpay', Icons.credit_card_rounded, !_isWalletTab, () {
+        setState(() => _isWalletTab = false); _recalculate();
+      }),
+      _tabBtn('Wallet', Icons.account_balance_wallet_rounded, _isWalletTab, () {
+        setState(() => _isWalletTab = true); _recalculate();
+      }),
+    ]),
+  );
 
-  Widget _tabBtn({
-    required String label,
-    required IconData icon,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isActive ? AppColor.orange : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isActive
-                ? [BoxShadow(
-              color: AppColor.orange.withOpacity(0.28),
-              blurRadius: 16, offset: const Offset(0, 4),
-            )]
-                : [],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: isActive ? Colors.white : _C.textMid),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isActive ? Colors.white : _C.textMid,
-                  fontSize: 13, fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+  Widget _tabBtn(String label, IconData icon, bool active, VoidCallback onTap) => Expanded(
+    child: GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 280), curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(vertical: 13),
+        decoration: BoxDecoration(
+          gradient: active ? const LinearGradient(
+            colors: [Color(0xFF557035), AppColor.primary, Color(0xFF7CA44C)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+          ) : null,
+          borderRadius: BorderRadius.circular(13),
+          boxShadow: active ? [BoxShadow(color: AppColor.primary.withOpacity(0.42), blurRadius: 18, offset: const Offset(0, 5))] : [],
         ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, size: 16, color: active ? Colors.white : AppColor.grey),
+          const SizedBox(width: 7),
+          Text(label, style: TextStyle(
+            color: active ? Colors.white : AppColor.textSecondary,
+            fontSize: 13.5, fontWeight: FontWeight.w700,
+          )),
+        ]),
       ),
-    );
-  }
+    ),
+  );
 
-  Widget _buildWalletCard() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+  // ── Wallet Card ──────────────────────────────────────────────────────────
+  Widget _walletCard() => AnimatedBuilder(
+    animation: _floatAnim,
+    builder: (_, __) => Container(
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFEAF5E5), Color(0xFFD9EECD)],
+        gradient: LinearGradient(
+          colors: [
+            Color.lerp(const Color(0xFF3A5820), AppColor.primary, _floatAnim.value)!,
+            Color.lerp(const Color(0xFF5A8030), const Color(0xFF7CA44C), _floatAnim.value)!,
+          ],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _C.greenBorder, width: 1.5),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [BoxShadow(
+          color: AppColor.primary.withOpacity(0.40),
+          blurRadius: 26 + (_floatAnim.value * 8),
+          offset: Offset(0, 9 + (_floatAnim.value * 3)),
+        )],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Your Wallet Balance',
-                  style: TextStyle(fontSize: 12, color: _C.textMid, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '₹${walletAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 24, fontWeight: FontWeight.w700, color: _C.greenDark,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ],
+      child: Stack(children: [
+        Positioned(top: -22, right: -12, child: _orb(120, Colors.white, 0.06)),
+        Positioned(bottom: -25, left: 50, child: _orb(100, AppColor.orange, 0.10)),
+        Positioned(top: 8, right: 8,    child: _orb(42, AppColor.primarylite, 0.18)),
+        Row(children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.14), borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text('WALLET BALANCE',
+                  style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1.8)),
             ),
-          ),
+            const SizedBox(height: 10),
+            RichText(text: TextSpan(children: [
+              const TextSpan(text: '₹ ', style: TextStyle(fontSize: 16, color: Colors.white54)),
+              TextSpan(
+                text: NumberFormat('#,##,###.##').format(walletAmount),
+                style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: Colors.white,
+                    fontFeatures: [FontFeature.tabularFigures()]),
+              ),
+            ])),
+            const SizedBox(height: 4),
+            Text('Available to spend', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+          ])),
           Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(color: _C.greenPrimary, borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 22),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWarningBox() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      decoration: BoxDecoration(
-        color: _C.warningBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _C.warningBorder, width: 1.5),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: _C.warningText, size: 20),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Insufficient balance. Please choose another payment method.',
-              style: TextStyle(fontSize: 13, color: _C.warningText, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-  Widget _buildAmountInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Enter Coupon Amount',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.textDark),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _C.greenBorder, width: 2),
-            boxShadow: [BoxShadow(color: _C.greenPrimary.withOpacity(0.05), blurRadius: 8)],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-                decoration: const BoxDecoration(
-                  color: _C.greenSoft,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    bottomLeft: Radius.circular(10),
-                  ),
-                ),
-                child: const Text(
-                  '₹',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _C.textMid),
-                ),
-              ),
-              Container(width: 1.5, height: 52, color: _C.greenBorder),
-              Expanded(
-                child: TextField(
-                  controller: _amountController,
-                  focusNode: _focusNode,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w600, color: _C.textDark,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    hintText: '500',
-                    hintStyle: TextStyle(color: _C.textLight),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-
-  Widget _buildLimitText() {
-    return Text.rich(
-      TextSpan(
-        text: 'Limit: ',
-        style: const TextStyle(fontSize: 12, color: _C.textLight, fontWeight: FontWeight.w500),
-        children: [
-          TextSpan(
-            text: _fmt(minCouponValAmount),
-            style: const TextStyle(color: _C.greenPrimary, fontWeight: FontWeight.w600),
-          ),
-          const TextSpan(text: ' to '),
-          TextSpan(
-            text: _fmt(maxCouponValAmount),
-            style: const TextStyle(color: _C.greenPrimary, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-  Widget _buildQuickChips() {
-    final filtered = _quickAmounts
-        .where((a) => a >= minCouponValAmount && a <= maxCouponValAmount)
-        .toList();
-    if (filtered.isEmpty) return const SizedBox.shrink();
-
-    return Wrap(
-      spacing: 8, runSpacing: 8,
-      children: filtered.map((amt) {
-        final isSelected = amount.toInt() == amt;
-        return GestureDetector(
-          onTap: () => _setQuickAmount(amt),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            width: 54, height: 54,
             decoration: BoxDecoration(
-              color: isSelected ? _C.greenPrimary : _C.greenSoft,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? _C.greenPrimary : _C.greenBorder, width: 1.5,
-              ),
-              boxShadow: isSelected
-                  ? [BoxShadow(color: _C.greenPrimary.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 3))]
-                  : [],
+              color: Colors.white.withOpacity(0.14), borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withOpacity(0.26)),
             ),
-            child: Text(
-              _fmt(amt.toDouble()),
-              style: TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w700,
-                color: isSelected ? Colors.white : _C.greenPrimary,
-                fontFeatures: const [FontFeature.tabularFigures()],
+            child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 27),
+          ),
+        ]),
+      ]),
+    ),
+  );
+
+  // ── Warning ──────────────────────────────────────────────────────────────
+  Widget _warningBanner() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF8E1),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColor.orange.withOpacity(0.4), width: 1.5),
+    ),
+    child: Row(children: [
+      Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(color: AppColor.orange.withOpacity(0.14), shape: BoxShape.circle),
+        child: const Icon(Icons.warning_amber_rounded, color: AppColor.orange, size: 18),
+      ),
+      const SizedBox(width: 12),
+      const Expanded(child: Text(
+        'Insufficient balance. Please switch to Razorpay.',
+        style: TextStyle(fontSize: 12.5, color: Color(0xFF7A5000), fontWeight: FontWeight.w500),
+      )),
+    ]),
+  );
+
+  // ── Amount Section ───────────────────────────────────────────────────────
+  Widget _amountSection() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(children: [
+        Container(width: 4, height: 20,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColor.orange, AppColor.primary],
+              begin: Alignment.topCenter, end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 10),
+        const Text('Coupon Amount', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColor.textMain)),
+      ]),
+      const SizedBox(height: 12),
+
+      // Input
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFDFDCD2), width: 1.5),
+          boxShadow: [BoxShadow(color: AppColor.primary.withOpacity(0.09), blurRadius: 18, offset: const Offset(0, 6))],
+        ),
+        child: Row(children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            decoration: BoxDecoration(
+              color: AppColor.primary.withOpacity(0.07),
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(14), bottomLeft: Radius.circular(14)),
+            ),
+            child: const Text('₹', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColor.primary)),
+          ),
+          Container(width: 1.5, height: 58, color: const Color(0xFFE8E5DC)),
+          Expanded(child: TextField(
+            controller: _amountController,
+            focusNode: _focusNode,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColor.textMain,
+                fontFeatures: [FontFeature.tabularFigures()]),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+              hintText: '0',
+              hintStyle: TextStyle(color: AppColor.grey.withOpacity(0.45)),
+            ),
+          )),
+          if (amount > 0)
+            GestureDetector(
+              onTap: () => _amountController.clear(),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 14),
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: const BoxDecoration(color: AppColor.lightGrey, shape: BoxShape.circle),
+                  child: const Icon(Icons.close_rounded, size: 14, color: AppColor.grey),
+                ),
               ),
             ),
+        ]),
+      ),
+      const SizedBox(height: 10),
+
+      Padding(
+        padding: const EdgeInsets.only(left: 2),
+        child: Text(
+          'Min: ${_fmt(minCouponValAmount)}    ·    Max: ${_fmt(maxCouponValAmount)}',
+          style: const TextStyle(fontSize: 11.5, color: AppColor.grey, fontWeight: FontWeight.w500),
+        ),
+      ),
+      const SizedBox(height: 18),
+
+      _quickChips(),
+    ],
+  );
+
+  Widget _quickChips() {
+    final filtered = _quickAmounts.where((a) => a >= minCouponValAmount && a <= maxCouponValAmount).toList();
+    if (filtered.isEmpty) return const SizedBox.shrink();
+    return Wrap(spacing: 10, runSpacing: 10,
+      children: filtered.map((amt) {
+        final sel = amount.toInt() == amt;
+        return GestureDetector(
+          onTap: () => _setQuick(amt),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 210), curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: sel ? const LinearGradient(
+                colors: [AppColor.orange, AppColor.orangeAccent],
+                begin: Alignment.topLeft, end: Alignment.bottomRight,
+              ) : null,
+              color: sel ? null : Colors.white,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: sel ? AppColor.orange : const Color(0xFFD8D4C8), width: 1.5),
+              boxShadow: sel
+                  ? [BoxShadow(color: AppColor.orange.withOpacity(0.36), blurRadius: 14, offset: const Offset(0, 5))]
+                  : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))],
+            ),
+            child: Text(_fmt(amt.toDouble()), style: TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w700,
+              color: sel ? Colors.white : AppColor.textSecondary,
+            )),
           ),
         );
       }).toList(),
     );
   }
 
-  Widget _buildSummaryBox() {
-    return Container(
+  // ── Summary Card ─────────────────────────────────────────────────────────
+  Widget _summaryCard() => AnimatedBuilder(
+    animation: _floatAnim,
+    builder: (_, __) => Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _C.greenBorder, width: 1.5),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE0DCD2), width: 1.5),
+        boxShadow: [BoxShadow(
+          color: AppColor.primary.withOpacity(0.09 + _floatAnim.value * 0.04),
+          blurRadius: 20, offset: const Offset(0, 6),
+        )],
       ),
-      child: Column(
-        children: [
-          _summaryRow('Amount', _fmt(amount)),
-          if (!_isWalletTab) ...[
-            const Divider(height: 1, color: _C.greenSoft),
-            _summaryRow('GST (${gstValue.toInt()}%)', '+${_fmt(gstAmount)}', isGst: true),
-          ],
-          Container(
-            decoration: const BoxDecoration(
-              color: _C.greenSoft,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
-              ),
-            ),
-            child: _summaryRow(
-              'Total Payable',
-              _fmt(totalAmount),
-              isTotal: true,
-            ),
-          ),
+      child: Column(children: [
+        _sumRow('Coupon Value', _fmt(amount)),
+        if (!_isWalletTab) ...[
+          Divider(height: 1, thickness: 0.8, color: const Color(0xFFF2EDE4)),
+          _sumRow('GST (${gstValue.toInt()}%)', '+${_fmt(gstAmount)}', highlight: AppColor.red),
         ],
-      ),
-    );
-  }
-
-  Widget _summaryRow(String label, String value, {bool isTotal = false, bool isGst = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: isTotal ? FontWeight.w700 : FontWeight.w400,
-              color: isTotal ? _C.greenDark : _C.textMid,
+        Divider(height: 1, thickness: 1.5, color: const Color(0xFFE8E2D8)),
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFF5F0E6), Color(0xFFEDF5E6)],
+              begin: Alignment.centerLeft, end: Alignment.centerRight,
             ),
+            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isTotal ? 16 : 13.5,
-              fontWeight: FontWeight.w700,
-              color: isGst ? _C.red : _C.greenDark,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+          child: _sumRow('Total Payable', _fmt(totalAmount), isTotal: true),
+        ),
+      ]),
+    ),
+  );
 
+  Widget _sumRow(String label, String val, {bool isTotal = false, Color? highlight}) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text(label, style: TextStyle(
+            fontSize: 13.5, fontWeight: isTotal ? FontWeight.w700 : FontWeight.w400,
+            color: isTotal ? AppColor.textMain : AppColor.textSecondary,
+          )),
+          Text(val, style: TextStyle(
+            fontSize: isTotal ? 17 : 13.5, fontWeight: FontWeight.w800,
+            color: highlight ?? (isTotal ? AppColor.primary : AppColor.textMain),
+            fontFeatures: const [FontFeature.tabularFigures()],
+          )),
+        ]),
+      );
 
-  Widget _buildCTAButton() {
+  // ── CTA Button ───────────────────────────────────────────────────────────
+  Widget _ctaButton() => GetBuilder<GiftController>(builder: (ctrl) {
     final disabled = !_isValidAmount || _isInsufficient;
-    return GetBuilder<GiftController>(
-      builder: (ctrl) {
-        if (ctrl.isLoading) {
-          return Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [_C.greenPrimary, _C.greenLight]),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Center(
-              child: SizedBox(
-                width: 22, height: 22,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-              ),
-            ),
-          );
-        }
-        return GestureDetector(
-          onTap: disabled ? null : _onPurchase,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              gradient: disabled
-                  ? null
-                  : const LinearGradient(
-                colors: [_C.greenPrimary, _C.greenLight],
-                begin: Alignment.centerLeft, end: Alignment.centerRight,
-              ),
-              color: disabled ? _C.greenBorder : null,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: disabled
-                  ? []
-                  : [BoxShadow(color: _C.greenPrimary.withOpacity(0.30), blurRadius: 24, offset: const Offset(0, 6))],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
+    return AnimatedBuilder(
+      animation: _pulseAnim,
+      builder: (_, child) => Transform.scale(
+        scale: (disabled || ctrl.isLoading) ? 1.0 : _pulseAnim.value,
+        child: child,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: disabled ? null : const LinearGradient(
+            colors: [Color(0xFF506030), AppColor.primary, Color(0xFF7CA44C)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+          ),
+          color: disabled ? AppColor.lightGrey : null,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: disabled ? [] : [
+            BoxShadow(color: AppColor.primary.withOpacity(0.44), blurRadius: 26, offset: const Offset(0, 10)),
+            BoxShadow(color: AppColor.primary.withOpacity(0.15), blurRadius: 8),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: (disabled || ctrl.isLoading) ? null : _onPurchase,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              child: ctrl.isLoading
+                  ? const Center(child: SizedBox(width: 22, height: 22,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)))
+                  : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 10),
                 Text(
-                  amount > 0 ? 'Gift Coupon (${_fmt(amount)})' : 'Gift Coupon',
-                  style: const TextStyle(
-                    color: Colors.white, fontSize: 15,
-                    fontWeight: FontWeight.w700, letterSpacing: 0.2,
+                  amount > 0 ? 'Buy Gift Coupon  ·  ${_fmt(amount)}' : 'Buy Gift Coupon',
+                  style: TextStyle(
+                    color: disabled ? AppColor.grey : Colors.white,
+                    fontSize: 15.5, fontWeight: FontWeight.w800, letterSpacing: 0.2,
                   ),
                 ),
-              ],
+              ]),
             ),
           ),
-        );
-      },
-    );
-  }
-
-
-  Widget _buildMyCouponsHeader() {
-    return GetBuilder<GiftController>(
-      builder: (ctrl) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'My Coupons',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _C.greenDark),
-          ),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _C.greenPrimary, borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${ctrl.couponList.length}',
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.check_circle_outline_rounded, color: _C.greenPrimary, size: 22),
-            ],
-          ),
-        ],
+        ),
       ),
     );
-  }
+  });
 
+  // ── Section Header ───────────────────────────────────────────────────────
+  Widget _sectionHeader() => GetBuilder<GiftController>(builder: (ctrl) => Row(children: [
+    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('My Vouchers', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900,
+          color: AppColor.textMain, letterSpacing: -0.6)),
+      Text('${ctrl.couponList.length} coupons purchased',
+          style: const TextStyle(fontSize: 12, color: AppColor.grey)),
+    ])),
+    Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColor.primary.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColor.primary.withOpacity(0.25)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.confirmation_num_outlined, size: 13, color: AppColor.primary),
+        const SizedBox(width: 5),
+        Text('${ctrl.couponList.length}', style: const TextStyle(
+            color: AppColor.primary, fontSize: 13, fontWeight: FontWeight.w800)),
+      ]),
+    ),
+  ]));
 
-  Widget _buildCouponList() {
-    return GetBuilder<GiftController>(
-      builder: (ctrl) {
-        if (ctrl.isVouchersListLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: CircularProgressIndicator(color: _C.greenPrimary),
-            ),
-          );
-        }
-        if (ctrl.couponList.isEmpty) return _buildEmptyState();
-
-        return NotificationListener<ScrollNotification>(
-          onNotification: (info) {
-            if (info.metrics.pixels >= info.metrics.maxScrollExtent - 100) {
-              ctrl.loadMoreVouchers();
-            }
-            return false;
-          },
-          child: Column(
-            children: [
-              ...ctrl.couponList.asMap().entries.map(
-                    (e) => _buildCouponCard(e.value, e.key),
-              ),
-              if (ctrl.isFetchingMoreVouchers)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: CircularProgressIndicator(color: _C.greenPrimary, strokeWidth: 2),
-                ),
-            ],
-          ),
-        );
+  // ── Coupon List ──────────────────────────────────────────────────────────
+  Widget _couponList() => GetBuilder<GiftController>(builder: (ctrl) {
+    if (ctrl.isVouchersListLoading) return const Center(
+        child: Padding(padding: EdgeInsets.all(40),
+            child: CircularProgressIndicator(color: AppColor.primary)));
+    if (ctrl.couponList.isEmpty) return _emptyState();
+    return NotificationListener<ScrollNotification>(
+      onNotification: (n) {
+        if (n.metrics.pixels >= n.metrics.maxScrollExtent - 100) ctrl.loadMoreVouchers();
+        return false;
       },
+      child: Column(children: [
+        ...ctrl.couponList.asMap().entries.map((e) => _couponCard(e.value, e.key)),
+        if (ctrl.isFetchingMoreVouchers) const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: CircularProgressIndicator(color: AppColor.primary, strokeWidth: 2),
+        ),
+      ]),
     );
-  }
+  });
 
-
-  Widget _buildCouponCard(CouponList coupon, int index) {
-    final statusInfo = _getStatusInfo(coupon.status ?? 0, coupon.expiryDate,);
+  // ── Coupon Card ──────────────────────────────────────────────────────────
+  Widget _couponCard(CouponList coupon, int index) {
+    final si = _statusInfo(coupon.status ?? 0, coupon.expiryDate);
     final code = coupon.name ?? '';
     final amt  = double.tryParse(coupon.amount ?? '0') ?? 0;
+    final isActive = si['label'] == 'Active';
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 280 + (index * 50)),
-      curve: Curves.easeOut,
-      builder: (ctx, val, child) => Opacity(
-        opacity: val,
-        child: Transform.translate(offset: Offset(0, 10 * (1 - val)), child: child),
-      ),
+      duration: Duration(milliseconds: 350 + (index * 65).clamp(0, 500)),
+      curve: Curves.easeOutCubic,
+      builder: (_, v, child) => Opacity(opacity: v,
+          child: Transform.translate(offset: Offset(0, 22 * (1 - v)), child: child)),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.greenBorder, width: 1.5),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [BoxShadow(
-            color: _C.greenPrimary.withOpacity(0.07),
-            blurRadius: 10, offset: const Offset(0, 2),
+            color: isActive ? AppColor.primary.withOpacity(0.15) : Colors.black.withOpacity(0.07),
+            blurRadius: 22, offset: const Offset(0, 7),
           )],
         ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0, right: 0,
-              child: Container(
-                width: 60, height: 60,
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    colors: [_C.greenPrimary.withOpacity(0.08), Colors.transparent],
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(14),
-                    bottomLeft: Radius.circular(60),
-                  ),
-                ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Column(children: [
+
+            // ── Gradient header ──────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 22, 18, 20),
+              decoration: BoxDecoration(
+                gradient: isActive
+                    ? const LinearGradient(
+                  colors: [Color(0xFF3D5E1E), AppColor.primary, Color(0xFF7CA44C)],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                )
+                    : const LinearGradient(colors: [Color(0xFF666666), Color(0xFF888888)]),
               ),
+              child: Stack(children: [
+                Positioned(top: -22, right: -12, child: _orb(110, Colors.white, 0.06)),
+                Positioned(bottom: -28, left: 60, child: _orb(85, Colors.white, 0.04)),
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('GIFT VOUCHER', style: TextStyle(
+                      fontSize: 9, fontWeight: FontWeight.w800,
+                      color: Colors.white.withOpacity(0.52), letterSpacing: 2.2,
+                    )),
+                    const SizedBox(height: 8),
+                    RichText(text: TextSpan(children: [
+                      const TextSpan(text: '₹', style: TextStyle(fontSize: 17, color: Colors.white70)),
+                      TextSpan(
+                        text: NumberFormat('#,##,###').format(amt.toInt()),
+                        style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.white,
+                            fontFeatures: [FontFeature.tabularFigures()]),
+                      ),
+                    ])),
+                  ])),
+                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: Colors.white.withOpacity(0.28)),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Container(
+                          width: 7, height: 7,
+                          decoration: BoxDecoration(color: si['dot'] as Color, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(si['label'] as String, style: const TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 0.5,
+                        )),
+                      ]),
+                    ),
+                    const SizedBox(height: 12),
+                    const Icon(Icons.card_giftcard_rounded, color: Colors.white24, size: 40),
+                  ]),
+                ]),
+              ]),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: TextSpan(children: [
-                          const TextSpan(
-                            text: '₹',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.textMid),
-                          ),
-                          TextSpan(
-                            text: NumberFormat('#,##,###').format(amt.toInt()),
-                            style: const TextStyle(
-                              fontSize: 28, fontWeight: FontWeight.w700, color: _C.greenDark,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                            ),
-                          ),
+
+            // ── Perforated tear line ─────────────────────────────────────────
+            _TearLine(active: isActive),
+
+            // ── Body ────────────────────────────────────────────────────────
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                // Coupon code row
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColor.primary.withOpacity(0.055) : const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(
+                      color: isActive ? AppColor.primary.withOpacity(0.22) : const Color(0xFFDDDDDD),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(children: [
+                    Expanded(child: Text(code, style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 2.5,
+                      color: isActive ? AppColor.primary : AppColor.grey,
+                    ))),
+                    GestureDetector(
+                      onTap: () { Clipboard.setData(ClipboardData(text: code)); _toast('Copied: $code'); },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isActive ? AppColor.primary : AppColor.grey,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(children: [
+                          Icon(Icons.copy_rounded, size: 13, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text('COPY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800,
+                              color: Colors.white, letterSpacing: 0.8)),
                         ]),
                       ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: statusInfo['bg'] as Color,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: statusInfo['border'] as Color),
-                        ),
-                        child: Text(
-                          statusInfo['label'] as String,
-                          style: TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w700,
-                            color: statusInfo['text'] as Color, letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: 14),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _C.greenSoft,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: _C.greenPrimary, width: 1.5),
-                          ),
-                          child: Text(
-                            code,
-                            style: const TextStyle(
-                              fontFamily: 'monospace', fontSize: 15,
-                              fontWeight: FontWeight.w700, color: _C.greenPrimary, letterSpacing: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _iconBtn(Icons.copy_rounded, () {
-                        Clipboard.setData(ClipboardData(text: code));
-                        _showSnack('Code copied: $code');
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today_outlined, size: 12, color: _C.textLight),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Purchased: ${_formatDate(coupon.createdAt)}',
-                        style: const TextStyle(fontSize: 11, color: _C.textLight, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(width: 14),
-                      const Icon(Icons.schedule_rounded, size: 12, color: _C.textLight),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Expires: ${_formatDate(coupon.expiryDate)}',
-                        style: const TextStyle(fontSize: 11, color: _C.textLight, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Divider(color: _C.greenSoft, height: 1),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(child: _actionBtn(Icons.download_rounded, 'Download', () {
-                        _downloadVoucher(id: coupon.id.toString());
-                      })),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _actionBtn(Icons.share_rounded, 'Share', () {
-                          final shareText = '''
-🎁 Coupon Code: $code
-💰 Amount: ₹${amt.toInt()}
-📅 Expires on: ${_formatDate(coupon.expiryDate)}
-
-Use this coupon now!
-''';
-
-                          Share.share(shareText);
-                        }),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                // Date pills
+                Row(children: [
+                  _datePill(Icons.calendar_today_outlined, 'Issued', _fmtDate(coupon.createdAt), isActive, false),
+                  const SizedBox(width: 10),
+                  _datePill(Icons.schedule_rounded, 'Expires', _fmtDate(coupon.expiryDate), isActive, true),
+                ]),
+                const SizedBox(height: 16),
+              ]),
             ),
-          ],
+
+            // ── Footer actions ───────────────────────────────────────────────
+            Container(
+              color: const Color(0xFFF7F4ED),
+              padding: const EdgeInsets.fromLTRB(16, 11, 16, 13),
+              child: Row(children: [
+                Expanded(child: _actionBtn(Icons.download_rounded, 'Download', isActive, () {
+                  _downloadVoucher(id: coupon.id.toString());
+                })),
+                const SizedBox(width: 10),
+                Expanded(child: _actionBtn(Icons.ios_share_rounded, 'Share', isActive, () {
+                  Share.share('🎁 Gift Coupon: $code\n💰 Value: ₹${amt.toInt()}\n📅 Expires: ${_fmtDate(coupon.expiryDate)}\n\nUse this voucher now!');
+                })),
+              ]),
+            ),
+          ]),
         ),
       ),
     );
   }
 
-  void _downloadVoucher({String? id}) async {
-    String url =  '${ApiUrl.baseUrl}/api/v2/coupon-invoice-download/$id';
-    if (id != null) {
-      final Uri uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
-      } else {
-        Fluttertoast.showToast(
-          msg: "Could not open download link.",
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-        );
-      }
-    }
-  }
-
-  Widget _iconBtn(IconData icon, VoidCallback onTap) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 38, height: 38,
-      decoration: BoxDecoration(
-        color: _C.greenSoft, borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _C.greenBorder, width: 1.5),
-      ),
-      child: Icon(icon, size: 16, color: _C.greenPrimary),
-    ),
-  );
-
-  Widget _actionBtn(IconData icon, String label, VoidCallback onTap) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _C.greenBorder, width: 1.5),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 15, color: _C.greenPrimary),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _C.greenPrimary)),
-        ],
-      ),
-    ),
-  );
-
-  Widget _buildEmptyState() => const Center(
-    child: Padding(
-      padding: EdgeInsets.symmetric(vertical: 32),
-      child: Column(
-        children: [
-          Icon(Icons.card_giftcard_outlined, size: 52, color: _C.textLight),
-          SizedBox(height: 10),
-          Text(
-            'No coupons yet',
-            style: TextStyle(fontSize: 13, color: _C.textLight, fontWeight: FontWeight.w500),
+  Widget _datePill(IconData icon, String label, String val, bool active, bool accent) =>
+      Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: (accent && active) ? AppColor.orange.withOpacity(0.07) : const Color(0xFFF5F5F0),
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(
+              color: (accent && active) ? AppColor.orange.withOpacity(0.28) : const Color(0xFFE5E0D8),
+            ),
           ),
-        ],
-      ),
+          child: Row(children: [
+            Icon(icon, size: 12, color: (accent && active) ? AppColor.orange : AppColor.grey),
+            const SizedBox(width: 7),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(label, style: TextStyle(fontSize: 9, color: AppColor.grey,
+                  fontWeight: FontWeight.w600, letterSpacing: 0.4)),
+              const SizedBox(height: 1),
+              Text(val, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700,
+                  color: (accent && active) ? AppColor.orange : AppColor.textSecondary)),
+            ])),
+          ]),
+        ),
+      );
+
+  Widget _actionBtn(IconData icon, String label, bool active, VoidCallback onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: const Color(0xFFDED9CF), width: 1.5),
+          ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(icon, size: 15, color: active ? AppColor.primary : AppColor.grey),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700,
+                color: active ? AppColor.primary : AppColor.grey)),
+          ]),
+        ),
+      );
+
+  Widget _emptyState() => Center(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 50),
+      child: Column(children: [
+        Container(
+          width: 84, height: 84,
+          decoration: BoxDecoration(
+            color: AppColor.primary.withOpacity(0.08),
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColor.primary.withOpacity(0.2), width: 2),
+          ),
+          child: const Icon(Icons.card_giftcard_outlined, size: 38, color: AppColor.primary),
+        ),
+        const SizedBox(height: 16),
+        const Text('No vouchers yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColor.textSecondary)),
+        const SizedBox(height: 4),
+        const Text('Purchase your first gift coupon above', style: TextStyle(fontSize: 12, color: AppColor.grey)),
+      ]),
     ),
   );
 
-  String _formatDate(String? raw) {
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  void _downloadVoucher({String? id}) async {
+    if (id == null) return;
+    final uri = Uri.parse('${ApiUrl.baseUrl}/api/v2/coupon-invoice-download/$id');
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
+    else Fluttertoast.showToast(msg: 'Could not open download link.', gravity: ToastGravity.BOTTOM);
+  }
+
+  String _fmtDate(String? raw) {
     if (raw == null || raw.isEmpty) return '—';
-    try {
-      final dt = DateTime.parse(raw);
-      return '${dt.month}/${dt.day}/${dt.year}';
-    } catch (_) {
-      return raw;
-    }
+    try { return DateFormat('dd MMM yyyy').format(DateTime.parse(raw)); }
+    catch (_) { return raw; }
   }
 
-  Map<String, dynamic> _getStatusInfo(int status, String? expiryDate) {
-    // ✅ Check expiry first
-    if (expiryDate != null && expiryDate.isNotEmpty) {
-      try {
-        final expDate = DateTime.parse(expiryDate);
-        final now = DateTime.now();
-
-        if (expDate.isBefore(now)) {
-          return {
-            'label': 'Expired',
-            'bg': const Color(0xFFFDECEA),
-            'border': const Color(0xFFF5C6C2),
-            'text': const Color(0xFFC62828),
-          };
-        }
-      } catch (_) {}
+  Map<String, dynamic> _statusInfo(int status, String? expiry) {
+    if (expiry != null && expiry.isNotEmpty) {
+      try { if (DateTime.parse(expiry).isBefore(DateTime.now())) {
+        return {'label': 'Expired', 'dot': AppColor.red};
+      }} catch (_) {}
     }
-
-    // ✅ If not expired → fallback to status
     switch (status) {
-      case 0:
-        return {
-          'label': 'Active',
-          'bg': const Color(0xFFE6F9E6),
-          'border': const Color(0xFFA8DCA8),
-          'text': const Color(0xFF2D7A2D),
-        };
-      case 1:
-        return {
-          'label': 'Used',
-          'bg': const Color(0xFFF5F5F5),
-          'border': const Color(0xFFDDDDDD),
-          'text': const Color(0xFF888888),
-        };
-      default:
-        return {
-          'label': 'Expired',
-          'bg': const Color(0xFFFDECEA),
-          'border': const Color(0xFFF5C6C2),
-          'text': const Color(0xFFC62828),
-        };
+      case 0:  return {'label': 'Active',  'dot': const Color(0xFF81C784)};
+      case 1:  return {'label': 'Used',    'dot': AppColor.grey};
+      default: return {'label': 'Expired', 'dot': AppColor.red};
     }
   }
+}
+
+// ─── Tear Line Widget ─────────────────────────────────────────────────────────
+class _TearLine extends StatelessWidget {
+  final bool active;
+  const _TearLine({required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    final lineColor = active ? AppColor.primary : Colors.grey.shade400;
+    return Container(
+      height: 22,
+      color: Colors.white,
+      child: Stack(children: [
+        Positioned(left: -13, top: 1, bottom: 1, child: _notch()),
+        Positioned(right: -13, top: 1, bottom: 1, child: _notch()),
+        Center(child: CustomPaint(
+          size: Size(MediaQuery.of(context).size.width - 36, 1.5),
+          painter: _DashPainter(color: lineColor.withOpacity(0.3)),
+        )),
+      ]),
+    );
+  }
+
+  Widget _notch() => Container(
+    width: 26, height: 26,
+    decoration: const BoxDecoration(color: Color(0xFFF5F2EA), shape: BoxShape.circle),
+  );
+}
+
+class _DashPainter extends CustomPainter {
+  final Color color;
+  const _DashPainter({required this.color});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..color = color..strokeWidth = 1.5;
+    double x = 0;
+    while (x < size.width) { canvas.drawLine(Offset(x, 0), Offset(x + 6, 0), p); x += 11; }
+  }
+  @override
+  bool shouldRepaint(_DashPainter o) => o.color != color;
 }

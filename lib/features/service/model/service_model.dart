@@ -1,3 +1,28 @@
+// ==================== HELPER EXTENSION ====================
+extension SafeParse on dynamic {
+  int? toInt() {
+    if (this == null) return null;
+    if (this is int) return this;
+    if (this is String) return int.tryParse(this);
+    if (this is double) return this.toInt();
+    return null;
+  }
+
+  double? toDouble() {
+    if (this == null) return null;
+    if (this is double) return this;
+    if (this is int) return this.toDouble();
+    if (this is String) return double.tryParse(this);
+    return null;
+  }
+
+  String? toStringValue() {
+    if (this == null) return null;
+    return toString();
+  }
+}
+
+// ==================== VENDOR MODEL ====================
 class Vendor {
   final int id;
   final int userId;
@@ -66,54 +91,63 @@ class Vendor {
     this.reviews,
     this.vendorMaterials,
     this.vendorServices,
-    this.fax
+    this.fax,
   });
 
   factory Vendor.fromJson(Map<String, dynamic> json) {
     return Vendor(
-      id: json['id'] ?? 0,
-      userId: json['user_id'] ?? 0,
-      name: json['name'] ?? '',
-      description: json['description'] ?? '',
-      gst: json['gst'],
-      pan: json['pan'],
-      instagram: json['instagram'],
-      x: json['x'],
-      youtube: json['youtube'],
+      id: json['id']?.toInt() ?? 0,
+      userId: json['user_id']?.toInt() ?? 0,
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString(),
+      gst: json['gst']?.toString(),
+      pan: json['pan']?.toString(),
+      instagram: json['instagram']?.toString(),
+      x: json['x']?.toString(),
+      youtube: json['youtube']?.toString(),
       lat: json['lat']?.toString(),
       lang: json['lang']?.toString(),
-      address: json['address'],
+      address: json['address']?.toString(),
       image: json['image'] != null ? List<String>.from(json['image']) : [],
-      thumbnail: json['thumbnail'],
+      thumbnail: json['thumbnail']?.toString(),
       city: json['city'] != null ? City.fromJson(json['city']) : null,
       state: json['state'] != null ? State.fromJson(json['state']) : null,
-      postalCode: json['postal_code'],
-      phone: json['phone'] ?? '',
-      email: json['email'] ?? '',
-      website: json['website'],
-      catalog: json['catalog'],
-      status: json['status'] ?? 0,
-      estimateDate: json['estimate_date'],
-      taxNumber: json['tax_number'],
-      whatsapp: json['whatsapp'],
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
-      reviewsCount: json['reviews_count'] ?? 0,
+      postalCode: json['postal_code']?.toString(),
+      phone: json['phone']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      website: json['website']?.toString(),
+      catalog: json['catalog']?.toString(),
+      status: json['status']?.toInt() ?? 0,
+      estimateDate: json['estimate_date']?.toString(),
+      taxNumber: json['tax_number']?.toString(),
+      whatsapp: json['whatsapp']?.toString(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
+      reviewsCount: json['reviews_count']?.toInt() ?? 0,
       reviewsAvgRating: json['reviews_avg_rating']?.toString(),
-      fax: json['fax'],
+      fax: json['fax']?.toString(),
       reviews: json['reviews'] != null
           ? (json['reviews'] as List).map((e) => Review.fromJson(e)).toList()
           : null,
       vendorMaterials: json['vendor_materials'] != null
-          ? (json['vendor_materials'] as List).map((e) => VendorMaterial.fromJson(e)).toList()
+          ? (json['vendor_materials'] as List)
+          .map((e) => VendorMaterial.fromJson(e))
+          .toList()
           : null,
       vendorServices: json['vendor_services'] != null
-          ? (json['vendor_services'] as List).map((e) => VendorService.fromJson(e)).toList()
+          ? (json['vendor_services'] as List)
+          .map((e) => VendorService.fromJson(e))
+          .toList()
           : null,
     );
   }
 }
 
+// ==================== BRAND MODEL ====================
 class Brand {
   int? id;
   String? name;
@@ -122,12 +156,13 @@ class Brand {
   Brand({this.id, this.name, this.logo});
 
   Brand.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    name = json['name'];
-    logo = json['logo'];
+    id = json['id']?.toInt();
+    name = json['name']?.toString();
+    logo = json['logo']?.toString();
   }
 }
 
+// ==================== SERVICE CATEGORY MODEL ====================
 class ServiceCategory {
   final int id;
   final String serviceName;
@@ -161,22 +196,28 @@ class ServiceCategory {
 
   factory ServiceCategory.fromJson(Map<String, dynamic> json) {
     return ServiceCategory(
-      id: json['id'] ?? 0,
-      serviceName: json['service_name'] ?? '',
-      categoryId: json['category_id'] ?? 0,
-      subcategoryId: json['subcategory_id'],
-      subSubcategoryId: json['sub_subcategory_id'],
-      brandId: json['brand_id'],
-      description: json['description'],
+      id: json['id']?.toInt() ?? 0,
+      serviceName: json['service_name']?.toString() ?? '',
+      categoryId: json['category_id']?.toInt() ?? 0,
+      subcategoryId: json['subcategory_id']?.toInt(),
+      subSubcategoryId: json['sub_subcategory_id']?.toInt(),
+      brandId: json['brand_id']?.toInt(),
+      description: json['description']?.toString(),
       image: json['image'] != null ? List<String>.from(json['image']) : [],
-      gallery: json['gallery'],
-      status: json['status'] ?? 0,
-      featured: json['featured'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      gallery: json['gallery']?.toString(),
+      status: json['status']?.toInt() ?? 0,
+      featured: json['featured']?.toInt() ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
     );
   }
 }
+
+// ==================== REVIEW MODEL ====================
 class Review {
   final int id;
   final int vendorId;
@@ -202,18 +243,24 @@ class Review {
 
   factory Review.fromJson(Map<String, dynamic> json) {
     return Review(
-      id: json['id'] ?? 0,
-      vendorId: json['vendor_id'] ?? 0,
-      userId: json['user_id'] ?? 0,
+      id: json['id']?.toInt() ?? 0,
+      vendorId: json['vendor_id']?.toInt() ?? 0,
+      userId: json['user_id']?.toInt() ?? 0,
       rating: json['rating']?.toString() ?? '0',
-      review: json['review'] ?? '',
-      status: json['status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      review: json['review']?.toString() ?? '',
+      status: json['status']?.toInt() ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
       user: ReviewUser.fromJson(json['user'] ?? {}),
     );
   }
 }
+
+// ==================== REVIEW USER MODEL ====================
 class ReviewUser {
   final int id;
   final int? role;
@@ -249,23 +296,25 @@ class ReviewUser {
 
   factory ReviewUser.fromJson(Map<String, dynamic> json) {
     return ReviewUser(
-      id: json['id'] ?? 0,
-      role: json['role'],
-      isVendor: json['is_vendor'] ?? 0,
-      isAgent: json['is_agent'] ?? 0,
-      isServices: json['is_services'] ?? 0,
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      dob: json['dob'],
-      avatar: json['avatar'] ?? '',
-      pin: json['pin'],
-      gender: json['gender'],
-      address: json['address'],
-      phone: json['phone'] ?? '',
-      status: json['status'] ?? 0,
+      id: json['id']?.toInt() ?? 0,
+      role: json['role']?.toInt(),
+      isVendor: json['is_vendor']?.toInt() ?? 0,
+      isAgent: json['is_agent']?.toInt() ?? 0,
+      isServices: json['is_services']?.toInt() ?? 0,
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      dob: json['dob']?.toString(),
+      avatar: json['avatar']?.toString() ?? '',
+      pin: json['pin']?.toString(),
+      gender: json['gender']?.toInt(),
+      address: json['address']?.toString(),
+      phone: json['phone']?.toString() ?? '',
+      status: json['status']?.toInt() ?? 0,
     );
   }
 }
+
+// ==================== VENDOR MATERIAL MODEL ====================
 class VendorMaterial {
   final int id;
   final int userId;
@@ -285,15 +334,21 @@ class VendorMaterial {
 
   factory VendorMaterial.fromJson(Map<String, dynamic> json) {
     return VendorMaterial(
-      id: json['id'] ?? 0,
-      userId: json['user_id'] ?? 0,
-      materialId: json['material_id'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      id: json['id']?.toInt() ?? 0,
+      userId: json['user_id']?.toInt() ?? 0,
+      materialId: json['material_id']?.toInt() ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
       material: Material.fromJson(json['material'] ?? {}),
     );
   }
 }
+
+// ==================== MATERIAL MODEL ====================
 class Material {
   final int id;
   final String materialName;
@@ -305,10 +360,14 @@ class Material {
   final String? description;
   final List<String> image;
   final int status;
+  final int isDeleted;
   final int featured;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? gallery;
+  final int? countryId;
+  final int? stateId;
+  final int? cityId;
 
   Material({
     required this.id,
@@ -321,31 +380,45 @@ class Material {
     this.description,
     required this.image,
     required this.status,
+    required this.isDeleted,
     required this.featured,
     required this.createdAt,
     required this.updatedAt,
     this.gallery,
+    this.countryId,
+    this.stateId,
+    this.cityId,
   });
 
   factory Material.fromJson(Map<String, dynamic> json) {
     return Material(
-      id: json['id'] ?? 0,
-      materialName: json['material_name'] ?? '',
-      categoryId: json['category_id'] ?? 0,
-      subcatId: json['subcat_id'],
-      subsubcatId: json['subsubcat_id'],
+      id: json['id']?.toInt() ?? 0,
+      materialName: json['material_name']?.toString() ?? '',
+      categoryId: json['category_id']?.toInt() ?? 0,
+      subcatId: json['subcat_id']?.toInt(),
+      subsubcatId: json['subsubcat_id']?.toInt(),
       brandId: json['brand_id']?.toString(),
-      unitId: json['unit_id'],
-      description: json['description'],
+      unitId: json['unit_id']?.toInt(),
+      description: json['description']?.toString(),
       image: json['image'] != null ? List<String>.from(json['image']) : [],
-      status: json['status'] ?? 0,
-      featured: json['featured'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
-      gallery: json['gallery'],
+      status: json['status']?.toInt() ?? 0,
+      isDeleted: json['is_deleted']?.toInt() ?? 0,
+      featured: json['featured']?.toInt() ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
+      gallery: json['gallery']?.toString(),
+      countryId: json['country_id']?.toInt(),
+      stateId: json['state_id']?.toInt(),
+      cityId: json['city_id']?.toInt(),
     );
   }
 }
+
+// ==================== VENDOR SERVICE MODEL ====================
 class VendorService {
   final int id;
   final int userId;
@@ -365,17 +438,23 @@ class VendorService {
 
   factory VendorService.fromJson(Map<String, dynamic> json) {
     return VendorService(
-      id: json['id'] ?? 0,
-      userId: json['user_id'] ?? 0,
-      serviceId: json['service_id'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      id: json['id']?.toInt() ?? 0,
+      userId: json['user_id']?.toInt() ?? 0,
+      serviceId: json['service_id']?.toInt() ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
       service: ServiceCategory.fromJson(json['service'] ?? {}),
     );
   }
 }
+
+// ==================== MATERIAL ENQUIRY MODELS ====================
 class MaterialEnquiryResponse {
-  final bool status;
+  final int status;
   final MaterialEnquiryData data;
 
   MaterialEnquiryResponse({
@@ -385,11 +464,12 @@ class MaterialEnquiryResponse {
 
   factory MaterialEnquiryResponse.fromJson(Map<String, dynamic> json) {
     return MaterialEnquiryResponse(
-      status: json['status'] ?? false,
+      status: json['status']?.toInt() ?? 200,
       data: MaterialEnquiryData.fromJson(json['data'] ?? {}),
     );
   }
 }
+
 class MaterialEnquiryData {
   final List<MaterialEnquiry> materialEnquiry;
   final Pagination pagination;
@@ -408,94 +488,82 @@ class MaterialEnquiryData {
     );
   }
 }
+
 class MaterialEnquiry {
   final int id;
-  final int userId;
-  final int materialId;
-  final String requirement;
+  final int? materialId;
+  final int? userId;
+  final String? name;
+  final String? email;
+  final String? phone;
+  final String quote;
   final int? unitId;
   final int? quantity;
-  final String status;
+  final int? assignedVendor;
+  final int accepted;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String agentname;
+  final String shopName;
   final Material? material;
   final User? user;
 
   MaterialEnquiry({
     required this.id,
-    required this.userId,
-    required this.materialId,
-    required this.requirement,
+    this.materialId,
+    this.userId,
+    this.name,
+    this.email,
+    this.phone,
+    required this.quote,
     this.unitId,
     this.quantity,
-    required this.status,
+    this.assignedVendor,
+    required this.accepted,
     required this.createdAt,
     required this.updatedAt,
+    required this.agentname,
+    required this.shopName,
     this.material,
     this.user,
   });
 
+  String get enquiryStatus {
+    if (accepted == 1) return 'Accepted';
+    if (assignedVendor != null && assignedVendor! > 0) return 'Assigned';
+    return 'Pending';
+  }
+
   factory MaterialEnquiry.fromJson(Map<String, dynamic> json) {
     return MaterialEnquiry(
-      id: json['id'] ?? 0,
-      userId: json['user_id'] ?? 0,
-      materialId: json['material_id'] ?? 0,
-      requirement: json['requirement'] ?? '',
-      unitId: json['unit_id'],
-      quantity: json['quantity'],
-      status: json['status'] ?? 'pending',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      id: json['id']?.toInt() ?? 0,
+      materialId: json['material_id']?.toInt(),
+      userId: json['user_id']?.toInt(),
+      name: json['name']?.toString(),
+      email: json['email']?.toString(),
+      phone: json['phone']?.toString(),
+      quote: json['quote']?.toString() ?? '',
+      unitId: json['unit_id']?.toInt(),
+      quantity: json['quantity']?.toInt(),
+      assignedVendor: json['assigned_vendor']?.toInt(),
+      accepted: json['accepted']?.toInt() ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
+      agentname: json['agentname']?.toString() ?? '',
+      shopName: json['shop_name']?.toString() ?? '',
       material: json['material'] != null ? Material.fromJson(json['material']) : null,
       user: json['user'] != null ? User.fromJson(json['user']) : null,
     );
   }
 }
-class ServiceEnquiry {
-  final int id;
-  final int userId;
-  final int serviceId;
-  final String quote;
-  final String datePreference;
-  final String timePreference;
-  final String status;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final ServiceCategory? service;
-  final User? user;
 
-  ServiceEnquiry({
-    required this.id,
-    required this.userId,
-    required this.serviceId,
-    required this.quote,
-    required this.datePreference,
-    required this.timePreference,
-    required this.status,
-    required this.createdAt,
-    required this.updatedAt,
-    this.service,
-    this.user,
-  });
-
-  factory ServiceEnquiry.fromJson(Map<String, dynamic> json) {
-    return ServiceEnquiry(
-      id: json['id'] ?? 0,
-      userId: json['user_id'] ?? 0,
-      serviceId: json['service_id'] ?? 0,
-      quote: json['quote'] ?? '',
-      datePreference: json['date_preference'] ?? '',
-      timePreference: json['time_preference'] ?? '',
-      status: json['status'] ?? 'pending',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
-      service: json['service'] != null ? ServiceCategory.fromJson(json['service']) : null,
-      user: json['user'] != null ? User.fromJson(json['user']) : null,
-    );
-  }
-}
+// ==================== SERVICE ENQUIRY MODELS ====================
 class ServiceEnquiryResponse {
-  final bool status;
+  final int status;
   final ServiceEnquiryData data;
 
   ServiceEnquiryResponse({
@@ -505,11 +573,12 @@ class ServiceEnquiryResponse {
 
   factory ServiceEnquiryResponse.fromJson(Map<String, dynamic> json) {
     return ServiceEnquiryResponse(
-      status: json['status'] ?? false,
+      status: json['status']?.toInt() ?? 200,
       data: ServiceEnquiryData.fromJson(json['data'] ?? {}),
     );
   }
 }
+
 class ServiceEnquiryData {
   final List<ServiceEnquiry> serviceEnquiry;
   final Pagination pagination;
@@ -521,38 +590,192 @@ class ServiceEnquiryData {
 
   factory ServiceEnquiryData.fromJson(Map<String, dynamic> json) {
     return ServiceEnquiryData(
-      serviceEnquiry: (json['service_enquiry'] as List<dynamic>? ?? [])
+      serviceEnquiry: (json['material_enquiry'] as List<dynamic>? ?? [])
           .map((e) => ServiceEnquiry.fromJson(e))
           .toList(),
       pagination: Pagination.fromJson(json['pagination'] ?? {}),
     );
   }
 }
+
+class ServiceEnquiry {
+  final int id;
+  final int? serviceId;
+  final int? userId;
+  final String? name;
+  final String? email;
+  final String? phone;
+  final String? assignedVendor;
+  final int accepted;
+  final String quote;
+  final int? quantity;
+  final String? status;
+  final String? datePreference;
+  final String? timePreference;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String agentname;
+  final String shopName;
+  final ServiceCategory? service;
+  final User? user;
+
+  ServiceEnquiry({
+    required this.id,
+    this.serviceId,
+    this.userId,
+    this.name,
+    this.email,
+    this.phone,
+    this.assignedVendor,
+    required this.accepted,
+    required this.quote,
+    this.quantity,
+    this.status,
+    this.datePreference,
+    this.timePreference,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.agentname,
+    required this.shopName,
+    this.service,
+    this.user,
+  });
+
+  String get enquiryStatus {
+    if (accepted == 1) return 'Accepted';
+    if (assignedVendor != null && assignedVendor!.isNotEmpty && assignedVendor != "0") return 'Assigned';
+    return 'Pending';
+  }
+
+  factory ServiceEnquiry.fromJson(Map<String, dynamic> json) {
+    return ServiceEnquiry(
+      id: json['id']?.toInt() ?? 0,
+      serviceId: json['service_id']?.toInt(),
+      userId: json['user_id']?.toInt(),
+      name: json['name']?.toString(),
+      email: json['email']?.toString(),
+      phone: json['phone']?.toString(),
+      assignedVendor: json['assigned_vendor']?.toString(),
+      accepted: json['accepted']?.toInt() ?? 0,
+      quote: json['quote']?.toString() ?? '',
+      quantity: json['quantity']?.toInt(),
+      status: json['status']?.toString(),
+      datePreference: json['date_preference']?.toString(),
+      timePreference: json['time_preference']?.toString(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
+      agentname: json['agentname']?.toString() ?? '',
+      shopName: json['shop_name']?.toString() ?? '',
+      service: json['service'] != null ? ServiceCategory.fromJson(json['service']) : null,
+      user: json['user'] != null ? User.fromJson(json['user']) : null,
+    );
+  }
+}
+
+// ==================== USER MODEL ====================
 class User {
   final int id;
+  final int? role;
+  final int isVendor;
+  final int isAgent;
+  final int isServices;
   final String name;
   final String email;
-  final String phone;
+  final String? emailVerifiedAt;
+  final int? referenceId;
+  final String? code;
+  final String? dob;
   final String? avatar;
+  final String? pin;
+  final int? gender;
+  final String? address;
+  final String phone;
+  final int status;
+  final int? agentRequest;
+  final int? vendorRequest;
+  final int? serviceRequest;
+  final String? fcmToken;
+  final int isDeleted;
+  final String? walletBalance;
+  final int? countryId;
+  final int? stateId;
+  final int? cityId;
+  final String? cumulativeAmount;
+  final String? firstName;
+  final String? lastName;
 
   User({
     required this.id,
+    this.role,
+    required this.isVendor,
+    required this.isAgent,
+    required this.isServices,
     required this.name,
     required this.email,
-    required this.phone,
+    this.emailVerifiedAt,
+    this.referenceId,
+    this.code,
+    this.dob,
     this.avatar,
+    this.pin,
+    this.gender,
+    this.address,
+    required this.phone,
+    required this.status,
+    this.agentRequest,
+    this.vendorRequest,
+    this.serviceRequest,
+    this.fcmToken,
+    required this.isDeleted,
+    this.walletBalance,
+    this.countryId,
+    this.stateId,
+    this.cityId,
+    this.cumulativeAmount,
+    this.firstName,
+    this.lastName,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      avatar: json['avatar'],
+      id: json['id']?.toInt() ?? 0,
+      role: json['role']?.toInt(),
+      isVendor: json['is_vendor']?.toInt() ?? 0,
+      isAgent: json['is_agent']?.toInt() ?? 0,
+      isServices: json['is_services']?.toInt() ?? 0,
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      emailVerifiedAt: json['email_verified_at']?.toString(),
+      referenceId: json['reference_id']?.toInt(),
+      code: json['code']?.toString(),
+      dob: json['dob']?.toString(),
+      avatar: json['avatar']?.toString(),
+      pin: json['pin']?.toString(),
+      gender: json['gender']?.toInt(),
+      address: json['address']?.toString(),
+      phone: json['phone']?.toString() ?? '',
+      status: json['status']?.toInt() ?? 0,
+      agentRequest: json['agent_request']?.toInt(),
+      vendorRequest: json['vendor_request']?.toInt(),
+      serviceRequest: json['service_request']?.toInt(),
+      fcmToken: json['fcm_token']?.toString(),
+      isDeleted: json['is_deleted']?.toInt() ?? 0,
+      walletBalance: json['wallet_balance']?.toString(),
+      countryId: json['country_id']?.toInt(),
+      stateId: json['state_id']?.toInt(),
+      cityId: json['city_id']?.toInt(),
+      cumulativeAmount: json['cumulative_amount']?.toString(),
+      firstName: json['first_name']?.toString(),
+      lastName: json['last_name']?.toString(),
     );
   }
 }
+
+// ==================== CITY MODEL ====================
 class City {
   final int id;
   final int stateId;
@@ -572,16 +795,21 @@ class City {
 
   factory City.fromJson(Map<String, dynamic> json) {
     return City(
-      id: json['id'] ?? 0,
-      stateId: json['state_id'] ?? 0,
-      cityName: json['city_name'] ?? '',
-      status: json['status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      id: json['id']?.toInt() ?? 0,
+      stateId: json['state_id']?.toInt() ?? 0,
+      cityName: json['city_name']?.toString() ?? '',
+      status: json['status']?.toInt() ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
     );
   }
 }
 
+// ==================== STATE MODEL ====================
 class State {
   final int id;
   final String stateName;
@@ -599,16 +827,20 @@ class State {
 
   factory State.fromJson(Map<String, dynamic> json) {
     return State(
-      id: json['id'] ?? 0,
-      stateName: json['state_name'] ?? '',
-      status: json['status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      id: json['id']?.toInt() ?? 0,
+      stateName: json['state_name']?.toString() ?? '',
+      status: json['status']?.toInt() ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : DateTime.now(),
     );
   }
 }
 
-// lib/features/service/models/pagination_model.dart
+// ==================== PAGINATION MODEL ====================
 class Pagination {
   final int currentPage;
   final int total;
@@ -624,15 +856,15 @@ class Pagination {
 
   factory Pagination.fromJson(Map<String, dynamic> json) {
     return Pagination(
-      currentPage: json['current_page'] ?? 1,
-      total: json['total'] ?? 0,
-      perPage: json['per_page'] ?? 10,
-      lastPage: json['last_page'] ?? 1,
+      currentPage: json['current_page']?.toInt() ?? 1,
+      total: json['total']?.toInt() ?? 0,
+      perPage: json['per_page']?.toInt() ?? 10,
+      lastPage: json['last_page']?.toInt() ?? 1,
     );
   }
 }
 
-// lib/features/service/models/enquiry_payload_model.dart
+// ==================== ENQUIRY PAYLOAD MODELS ====================
 class MaterialEnquiryPayload {
   final int materialId;
   final String requirement;
@@ -685,7 +917,7 @@ class ServiceEnquiryPayload {
   }
 }
 
-// lib/features/service/models/review_payload_model.dart
+// ==================== REVIEW PAYLOAD MODEL ====================
 class ReviewPayload {
   final int vendorId;
   final String rating;

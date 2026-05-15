@@ -92,7 +92,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   _menuOption(context, asset: Images.GiooPlots, title: 'GIOO Plots', onTap: () => Get.toNamed('/gioo')),
                   _menuOption(context, asset: Images.syndicatePlots, title: 'Syndicate Plots', onTap: () => Get.toNamed('/syndicate')),
                   _menuOption(context, asset: Images.materialStore, title: 'Material Store', onTap: () => Get.toNamed('/materialStore')),
-                  _menuOption(context, asset: Images.productEnquiry, title: 'My Product Enquiry', onTap: () => Get.toNamed('/myMaterialList')),
+                  _menuOption(context, asset: Images.productEnquiry, title: 'My Material Enquiry', onTap: () => Get.toNamed('/myMaterialList')),
                   _menuOption(context, asset: Images.service, title: 'My Service Enquiry', onTap: () => Get.toNamed('/myServiceList')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'Buyed Gioo Plots', onTap: () => Get.toNamed('/ownedplotlist')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'Buyed Syndicate Plots', onTap: () => Get.toNamed('/ownedSyndicatePlotList')),

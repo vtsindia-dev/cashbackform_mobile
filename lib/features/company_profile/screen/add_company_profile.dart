@@ -120,11 +120,54 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                       hint: 'https://yourstore.com',
                       icon: Icons.language_rounded,
                       keyboardType: TextInputType.url,
+                      required: true,
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
+                  icon: Icons.business_center_rounded,
+                  iconColor: AppColor.teal,
+                  title: 'Company Profile Details',
+                  children: [
+                    _StyledTextField(
+                      controller: controller.faxController,
+                      label: 'Fax Number',
+                      hint: 'e.g. +91-22-12345678',
+                      icon: Icons.fax_rounded,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 16),
+                    _StyledTextField(
+                      controller: controller.taxController,
+                      label: 'Tax Number (PAN)',
+                      hint: 'e.g. AAAPL1234C',
+                      icon: Icons.receipt_rounded,
+                      textCapitalization: TextCapitalization.characters,
+                    ),
+                    const SizedBox(height: 16),
+                    _StyledTextField(
+                      controller: controller.gstController,
+                      label: 'GST Number',
+                      hint: 'e.g. 22AAAAA0000A1Z',
+                      icon: Icons.assignment_rounded,
+                      textCapitalization: TextCapitalization.characters,
+                      required: true,
+                    ),
+                    const SizedBox(height: 16),
+                    _StyledTextField(
+                      controller: controller.establishedYearController,
+                      label: 'Established Year',
+                      hint: 'e.g. 2020',
+                      icon: Icons.calendar_today_rounded,
+                      keyboardType: TextInputType.number,
+                      maxLength: 4,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _SectionCard(
+
                   icon: Icons.share_rounded,
                   iconColor: AppColor.accent,
                   title: 'Social Media',
@@ -362,6 +405,8 @@ class _StyledTextField extends StatelessWidget {
   final int maxLines;
   final TextInputType? keyboardType;
   final bool required;
+  final int? maxLength;  // 🆕
+  final TextCapitalization textCapitalization;  // 🆕
 
   const _StyledTextField({
     required this.controller,
@@ -371,6 +416,8 @@ class _StyledTextField extends StatelessWidget {
     this.maxLines = 1,
     this.keyboardType,
     this.required = false,
+  this.maxLength,  // 🆕
+  this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -400,6 +447,8 @@ class _StyledTextField extends StatelessWidget {
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
+          maxLength: maxLength,  // 🆕
+          textCapitalization: textCapitalization,
           style: const TextStyle(
             fontSize: 14,
             color: AppColor.textMain,

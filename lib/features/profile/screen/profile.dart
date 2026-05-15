@@ -1,5 +1,6 @@
 // profile_form.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -37,6 +38,8 @@ class ProfileForm extends StatelessWidget {
               SizedBox(height: 24.h),
               _buildFormFields(controller),
               SizedBox(height: 30.h),
+              _buildReferralCodeSection(controller),
+              SizedBox(height: 30.h),
               _buildUpdateButton(controller),
               SizedBox(height: 15.h),
             ],
@@ -50,7 +53,6 @@ class ProfileForm extends StatelessWidget {
   Widget _buildProfileImageSection(ProfileController controller) {
     return Column(
       children: [
-        // Profile Image Container
         GestureDetector(
           onTap: () => _showImagePickerOptions(controller),
           child: Container(
@@ -135,10 +137,7 @@ class ProfileForm extends StatelessWidget {
               .fade(duration: 500.ms)
               .shake(duration: 800.ms, delay: 1000.ms),
         ),
-
         SizedBox(height: 12.h),
-
-        // Profile Image Text
         Text(
           'Tap to update photo',
           style: TextStyle(
@@ -167,21 +166,18 @@ class ProfileForm extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Personal Information Header
           _buildSectionHeader(
             icon: Icons.person_outline,
             title: 'Personal Information',
           ),
           SizedBox(height: 16.h),
-
-          // Name Row
           Row(
             children: [
               Expanded(
                 child: _buildAnimatedTextField(
                   controller: controller.firstNameController,
                   label: 'First Name',
-                  hint: 'John',
+                  hint: 'Tobi',
                   isRequired: true,
                   index: 0,
                 ),
@@ -191,7 +187,7 @@ class ProfileForm extends StatelessWidget {
                 child: _buildAnimatedTextField(
                   controller: controller.lastNameController,
                   label: 'Last Name',
-                  hint: 'Doe',
+                  hint: 'Jr',
                   isRequired: true,
                   index: 1,
                 ),
@@ -204,7 +200,7 @@ class ProfileForm extends StatelessWidget {
           _buildAnimatedTextField(
             controller: controller.emailController,
             label: 'Email Address',
-            hint: 'john.doe@email.com',
+            hint: 'tobijr.@email.com',
             icon: Icons.email_outlined,
             isRequired: true,
             index: 2,
@@ -223,23 +219,16 @@ class ProfileForm extends StatelessWidget {
             index: 3,
           ),
           SizedBox(height: 20.h),
-
-          // Additional Information Header
           _buildSectionHeader(
             icon: Icons.info_outline,
             title: 'Additional Information',
           ),
           SizedBox(height: 16.h),
-
-          // Gender
           _buildGenderSelector(controller),
           SizedBox(height: 16.h),
-
-          // Date of Birth
           _buildDatePicker(controller),
           SizedBox(height: 16.h),
 
-          // Address Section
           _buildSectionHeader(
             icon: Icons.location_on_outlined,
             title: 'Address Details',
@@ -940,7 +929,247 @@ class ProfileForm extends StatelessWidget {
       );
     });
   }
-
+  Widget _buildReferralCodeSection(ProfileController controller) {
+    return Obx(() {
+      // Check if user already has a referral code
+      if (controller.profile.value?.code != null &&
+          controller.profile.value!.code!.isNotEmpty) {
+        // Show referral code display (for sharing)
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 20.h),
+            _buildSectionHeader(
+              icon: Icons.card_giftcard,
+              title: 'Referral Program',
+            ),
+            SizedBox(height: 16.h),
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColor.primarylite.withOpacity(0.1), Colors.white],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColor.primary.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.verified, color: AppColor.primary, size: 20.sp),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Your Referral Code',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.textMain,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: AppColor.primarylite),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            controller.profile.value!.code!,
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.primary,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            // Copy to clipboard
+                            // You need to add: import 'package:flutter/services.dart';
+                            Clipboard.setData(ClipboardData(text: controller.profile.value!.code!));
+                            SnackBarHelper.showSuccess('Code copied!');
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(8.r),
+                            decoration: BoxDecoration(
+                              color: AppColor.primarylite.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Icon(
+                              Icons.copy,
+                              size: 18.sp,
+                              color: AppColor.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    'Share this code with friends and earn rewards when they sign up!',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColor.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  // Wallet balance info if available
+                  if (controller.profile.value?.walletBalance != null)
+                    Container(
+                      padding: EdgeInsets.all(12.w),
+                      decoration: BoxDecoration(
+                        color: AppColor.primarylite.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.account_balance_wallet, size: 16.sp, color: AppColor.primary),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'Wallet Balance: ₹${controller.profile.value!.walletBalance}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        );
+      } else {
+        // Show referral code input field
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 20.h),
+            _buildSectionHeader(
+              icon: Icons.card_giftcard_outlined,
+              title: 'Add Referral Code',
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Have a referral code? Enter it here to get benefits!',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: AppColor.textSecondary,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: controller.referralCodeController,
+                enabled: controller.isReferralCodeEditable.value,
+                decoration: InputDecoration(
+                  hintText: 'Enter referral code',
+                  hintStyle: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColor.textSecondary.withOpacity(0.7),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.card_giftcard_outlined,
+                    color: AppColor.primary.withOpacity(0.7),
+                    size: 20.sp,
+                  ),
+                  suffixIcon: controller.isReferralCodeEditable.value
+                      ? null
+                      : Icon(
+                    Icons.lock_outline,
+                    size: 16.sp,
+                    color: AppColor.textSecondary.withOpacity(0.5),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: AppColor.primarylite,
+                      width: 1.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: AppColor.primary,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 16.h,
+                  ),
+                ),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: AppColor.textMain,
+                  fontWeight: FontWeight.w500,
+                ),
+                textCapitalization: TextCapitalization.characters,
+              ),
+            ),
+            if (controller.isReferralCodeEditable.value) ...[
+              SizedBox(height: 12.h),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: Colors.amber.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 14.sp, color: Colors.amber.shade700),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        'Note: Referral code can only be added once during profile update',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.amber.shade800,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        );
+      }
+    });
+  }
   void _showImagePickerOptions(ProfileController controller) {
     Get.bottomSheet(
       Container(

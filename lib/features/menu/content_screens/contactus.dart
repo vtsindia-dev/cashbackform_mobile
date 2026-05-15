@@ -395,8 +395,9 @@ class ContactUsScreen extends StatelessWidget {
       final settings = controller.businessSettings.value;
       final hasInstagram = settings?.instagram?.isNotEmpty == true;
       final hasYouTube = settings?.youtube?.isNotEmpty == true;
+      final hasWhatsApp = settings?.whatsapp?.isNotEmpty == true;
 
-      if (!hasInstagram && !hasYouTube) return SizedBox();
+      if (!hasInstagram && !hasYouTube && !hasWhatsApp) return const SizedBox();
 
       return Container(
         padding: EdgeInsets.all(20.w),
@@ -439,7 +440,8 @@ class ContactUsScreen extends StatelessWidget {
                     label: "Instagram",
                     onTap: () => _openInstagram(settings),
                   ),
-                if (hasYouTube && hasInstagram) SizedBox(width: 20.w),
+                if (hasInstagram && (hasYouTube || hasWhatsApp))
+                  SizedBox(width: 20.w),
                 if (hasYouTube)
                   _socialMediaButton(
                     assetPath: 'assets/images/youtube.png',
@@ -447,13 +449,22 @@ class ContactUsScreen extends StatelessWidget {
                     label: "YouTube",
                     onTap: () => _openYouTube(settings),
                   ),
+                if (hasYouTube && hasWhatsApp)
+                  SizedBox(width: 20.w),
+                if (hasWhatsApp)
+                  _socialMediaButton(
+                    assetPath: 'assets/images/whatsapp.png',
+                    color: const Color(0xFF25D366), // WhatsApp green
+                    label: "WhatsApp",
+                    onTap: () => _openWhatsApp(settings), // Fixed: now calls correct method
+                  ),
               ],
-            )          ],
+            ),
+          ],
         ),
       );
     });
   }
-
   Widget _socialMediaButton({
     required String assetPath, // Changed from IconData
     required Color color,

@@ -28,7 +28,8 @@ class ProfileController extends GetxController {
   final ImagePicker _picker = ImagePicker();
   var profileImage = Rxn<File>();
   var profileImageUrl = ''.obs;
-
+  final referralCodeController = TextEditingController();
+  var isReferralCodeEditable = true.obs;
   List<CountryModel> countries = [];
   List<StateModel> states = [];
   List<CityModel> cities = [];
@@ -54,6 +55,7 @@ class ProfileController extends GetxController {
     dobController.dispose();
     pinCodeController.dispose();
     addressController.dispose();
+    referralCodeController.dispose(); // Add this line
     super.onClose();
   }
 
@@ -259,6 +261,12 @@ class ProfileController extends GetxController {
         'state_id': selectedState?.id,
         'city_id': selectedCity?.id,
       };
+
+      // Only include referral code if it's editable (user doesn't have one yet)
+      if (isReferralCodeEditable.value && referralCodeController.text.trim().isNotEmpty) {
+        formData['code'] = referralCodeController.text.trim().toUpperCase();
+      }
+
       print('📤 Updating profile with data: $formData');
       final response = await ApiService.updateProfile(
         data: formData,
@@ -284,8 +292,7 @@ class ProfileController extends GetxController {
     } finally {
       isUpdating(false);
     }
-  }
-  Future<void> pickProfileImage() async {
+  }  Future<void> pickProfileImage() async {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -334,9 +341,16 @@ class ProfileController extends GetxController {
       pinCodeController.text = p.pinCode ?? '';
       addressController.text = p.address ?? '';
       profileImageUrl.value = p.profileImage ?? '';
+
+      // Add referral code to controller
+      referralCodeController.text = p.code ?? '';
+
+      // If user already has a referral code, make it read-only
+      if (p.code != null && p.code!.isNotEmpty) {
+        isReferralCodeEditable.value = false;
+      }
     });
   }
-
   // void _prefillFormData() {
   //   if (profile.value != null) {
   //     final p = profile.value!;
