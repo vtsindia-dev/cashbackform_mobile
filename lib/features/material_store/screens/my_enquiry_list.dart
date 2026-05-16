@@ -19,7 +19,6 @@ class _MyMaterialListState extends State<MyMaterialList>
   final ServiceController controller = Get.put(ServiceController());
   final ScrollController _scrollController = ScrollController();
 
-  // ── Design tokens ──────────────────────────────────────────────────────────
   static const _bg      = Color(0xFFF4F1EB);
   static const _card    = Color(0xFFFFFFFF);
   static const _ink     = Color(0xFF1A1A1A);
@@ -31,7 +30,6 @@ class _MyMaterialListState extends State<MyMaterialList>
   static const _greenBg = Color(0xFFEAF5EB);
   static const _h1      = Color(0xFF1A2E12);
   static const _h2      = Color(0xFF2E5020);
-
   late AnimationController _headerAnim;
   late Animation<double>   _headerFade;
   late Animation<Offset>   _headerSlide;

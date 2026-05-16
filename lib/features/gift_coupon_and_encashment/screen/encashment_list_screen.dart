@@ -26,7 +26,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
   }
 
   Future<void> _refreshProducts() async {
-    encashmentController.getMyPurchasedVouchersList();
+    await encashmentController.getMyPurchasedVouchersList();
   }
 
   @override
@@ -62,26 +62,33 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
   }
 
   Widget _buildEncashmentCard(EnCashMentModel item) {
-    int resuse = item.reuse ?? 0;
+    // Determine status based on both status and reuse/enStatus
+    int reuse = item.reuse ?? 0;
+    int enStatus = item.enStatus ?? 0;
+    int status = item.status ?? 0;
 
     Color statusColor;
     String statusText;
 
-    if (resuse == 1) {
+    // Priority: reuse=1 (Rejected) > enStatus=0 (Inactive) > status
+    if (reuse == 1) {
       statusColor = Colors.red;
       statusText = "Rejected";
-    } else if (item.status == 1) {
+    } else if (enStatus == 0) {
+      statusColor = Colors.orange;
+      statusText = "Inactive";
+    } else if (status == 1) {
       statusColor = Colors.green;
       statusText = "Success";
-    } else if (item.status == 2) {
+    } else if (status == 2) {
       statusColor = Colors.red;
       statusText = "Failed";
     } else {
       statusColor = Colors.orange;
       statusText = "Pending";
     }
-    bool isGpay = item.paymentType == 'gpay' || item.paymentType == 'upi';
 
+    bool isGpay = item.paymentType == 'gpay' || item.paymentType == 'upi';
     final bank = item.bank;
 
     return Container(
@@ -100,7 +107,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // ✅ Add this
+          mainAxisSize: MainAxisSize.min,
           children: [
             /// HEADER
             Container(
@@ -112,7 +119,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                 ),
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min, // ✅ Add this
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
@@ -144,7 +151,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                       ),
                     ],
                   ),
-                  if (resuse == 1) ...[
+                  if (reuse == 1) ...[
                     const SizedBox(height: 5),
                     const Row(
                       children: [
@@ -161,6 +168,23 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                       ],
                     ),
                   ],
+                  if (enStatus == 0 && reuse != 1) ...[
+                    const SizedBox(height: 5),
+                    const Row(
+                      children: [
+                        Icon(Icons.warning, size: 16, color: Colors.orange),
+                        SizedBox(width: 6),
+                        Text(
+                          "This request is currently inactive",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -169,7 +193,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
             Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
-                mainAxisSize: MainAxisSize.min, // ✅ Add this
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   /// REF + AMOUNT
                   Row(
@@ -204,7 +228,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                               style: TextStyle(fontSize: 12, color: Colors.grey)),
                           const SizedBox(height: 3),
                           Text(
-                            "₹${item.grandTotal}",
+                            "₹${item.grandTotal?.toStringAsFixed(2) ?? '0'}",
                             style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -226,7 +250,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min, // ✅ Add this
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Row(
                             children: [
@@ -251,7 +275,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                               ),
                               const Spacer(),
                               Text(
-                                "Total: ₹${item.totalAmount}",
+                                "Total: ₹${item.totalAmount?.toStringAsFixed(2) ?? '0'}",
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.green),
@@ -263,15 +287,33 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
 
                           /// DETAILS
                           if (isGpay) ...[
-                            _buildDetailRow(Icons.person, 'UPI ID', bank.gpayUpiId ?? ""),
-                            _buildDetailRow(Icons.phone, 'Phone', bank.gpayPhoneNumber ?? ""),
+                            if (bank.gpayUpiId != null && bank.gpayUpiId!.isNotEmpty)
+                              _buildDetailRow(Icons.person, 'UPI ID', bank.gpayUpiId!),
+                            if (bank.gpayPhoneNumber != null && bank.gpayPhoneNumber!.isNotEmpty)
+                              _buildDetailRow(Icons.phone, 'Phone', bank.gpayPhoneNumber!),
                           ] else ...[
-                            _buildDetailRow(Icons.business, 'Bank Name', bank.bankName ?? ""),
-                            _buildDetailRow(Icons.numbers, 'Account No', bank.bankAccountNumber ?? ""),
-                            _buildDetailRow(Icons.code, 'IFSC', bank.bankIfscCode ?? ""),
-                            _buildDetailRow(Icons.person, 'Beneficiary', bank.bankBeneficiaryName ?? ""),
-                            _buildDetailRow(Icons.phone, 'Phone', bank.bankPhoneNumber ?? ""),
+                            if (bank.bankName != null && bank.bankName!.isNotEmpty)
+                              _buildDetailRow(Icons.business, 'Bank Name', bank.bankName!),
+                            if (bank.bankAccountNumber != null && bank.bankAccountNumber!.isNotEmpty)
+                              _buildDetailRow(Icons.numbers, 'Account No', bank.bankAccountNumber!),
+                            if (bank.bankIfscCode != null && bank.bankIfscCode!.isNotEmpty)
+                              _buildDetailRow(Icons.code, 'IFSC', bank.bankIfscCode!),
+                            if (bank.bankBeneficiaryName != null && bank.bankBeneficiaryName!.isNotEmpty)
+                              _buildDetailRow(Icons.person, 'Beneficiary', bank.bankBeneficiaryName!),
+                            if (bank.bankPhoneNumber != null && bank.bankPhoneNumber!.isNotEmpty)
+                              _buildDetailRow(Icons.phone, 'Phone', bank.bankPhoneNumber!),
                           ],
+
+                          // Show message if no bank details available
+                          if ((isGpay && (bank.gpayUpiId == null || bank.gpayUpiId!.isEmpty)) &&
+                              (!isGpay && (bank.bankName == null || bank.bankName!.isEmpty)))
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                "No payment details available",
+                                style: TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -281,7 +323,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Service Charge: ₹${item.gst ?? 0}",
+                        "Service Charge: ₹${item.gst?.toStringAsFixed(2) ?? '0'}",
                         style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                       ),
                       if (item.cancelStatus == 1)
@@ -307,6 +349,22 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                         ),
                     ],
                   ),
+
+                  // Add coupon name if available
+                  if (item.name != null && item.name!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.local_offer, size: 12, color: Colors.grey.shade600),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Coupon: ${item.name}",
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -330,9 +388,9 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              value,
+              value.isEmpty ? "Not provided" : value,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -360,6 +418,14 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
               fontWeight: FontWeight.w500,
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            'Pull down to refresh',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade400,
+            ),
+          ),
         ],
       ),
     );
@@ -367,7 +433,7 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
 }
 
 String formatDate(String? dateStr) {
-  if (dateStr ==  null || dateStr.isEmpty) return '';
+  if (dateStr == null || dateStr.isEmpty) return '';
   try {
     DateTime parsed = DateTime.parse(dateStr).toLocal();
     return DateFormat("dd-MM-yyyy hh:mm a").format(parsed);
