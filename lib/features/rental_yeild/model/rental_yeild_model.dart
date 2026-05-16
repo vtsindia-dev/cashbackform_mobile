@@ -559,10 +559,14 @@ class RentalDetailProperty {
   final int verifyStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
-
-  // Special fields from details API
+  final int? soldStatus;
+  final bool? kycVerified;
+  final bool? booked;
+  final bool? isAnyoneBooked;
   final bool doucmentVerficaiton;
   final double amountPay;
+  final int? transactionId;
+
 
   // Get images list
   List<String> get images => files;
@@ -627,6 +631,11 @@ class RentalDetailProperty {
     required this.updatedAt,
     this.doucmentVerficaiton = false,
     this.amountPay = 0.0,
+    this.soldStatus,
+    this.kycVerified,
+    this.booked,
+    this.isAnyoneBooked,
+    this.transactionId
   });
 
   factory RentalDetailProperty.fromJson(Map<String, dynamic> json) {
@@ -753,6 +762,11 @@ class RentalDetailProperty {
       updatedAt: parseDate(json['updated_at']),
       doucmentVerficaiton: parseBool(json['doucment_verficaiton']),
       amountPay: parseDouble(json['amount_pay']) ?? 0.0,
+      soldStatus: json['sold_status'],
+      kycVerified: json['kyc_verified'],
+      booked: json['booked'],
+      isAnyoneBooked: json['is_anyone_booked'],
+        transactionId : json['transaction_id'],
     );
   }
 }

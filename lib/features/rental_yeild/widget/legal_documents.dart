@@ -1,3 +1,6 @@
+import 'package:cashback_farms/common/route/router.dart';
+import 'package:cashback_farms/features/kyc/controller/kyc_controller.dart';
+import 'package:cashback_farms/features/syndicate_plot/widget/kyc_selector_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,27 +10,42 @@ import '../../payment/controller/razorpay_controller.dart';
 import '../controller/rental_yield_controller.dart';
 import '../model/rental_yeild_model.dart';
 
-class RentalLegalDocumentsScreen extends StatelessWidget {
+class RentalLegalDocumentsScreen extends StatefulWidget {
+  final RentalDetailProperty? rentalDetailProperty;
   final int propertyId;
   final String propertyName;
   final double documentPrice;
   final List<RentalDocument> documents;
   final bool hasPaid;
+  final bool isOpened;
+  final VoidCallback? openedFunction;
 
-  const RentalLegalDocumentsScreen({
+  RentalLegalDocumentsScreen({
     super.key,
     required this.propertyId,
     required this.propertyName,
     required this.documentPrice,
     required this.documents,
     required this.hasPaid,
+    this.rentalDetailProperty,
+    required this.isOpened,
+    this.openedFunction,
   });
+
+  @override
+  State<RentalLegalDocumentsScreen> createState() =>
+      _RentalLegalDocumentsScreenState();
+}
+
+class _RentalLegalDocumentsScreenState
+    extends State<RentalLegalDocumentsScreen> {
+  final KYCController kYCController = Get.put(KYCController());
 
   @override
   Widget build(BuildContext context) {
     final rentalController = Get.put(RentalYieldController());
 
-    if (documents.isEmpty) {
+    if (widget.documents.isEmpty) {
       return Center(
         child: Text(
           'No documents available',
@@ -39,13 +57,12 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         rentalController.isTermsAccepted.value = false;
-
       },
       child: SingleChildScrollView(
         padding: EdgeInsets.all(12.w),
         child: Column(
           children: [
-            if (!hasPaid) ...[
+            if (!widget.hasPaid) ...[
               Container(
                 margin: EdgeInsets.only(bottom: 12.h),
                 padding: EdgeInsets.all(12.w),
@@ -60,7 +77,7 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                     SizedBox(width: 8.w),
                     Expanded(
                       child: Text(
-                        "Pay ₹${documentPrice.toStringAsFixed(2)} to unlock all legal documents",
+                        "Pay ₹${widget.documentPrice.toStringAsFixed(2)} to unlock all legal documents",
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
@@ -71,8 +88,6 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // ================= VERIFICATION CARD WITH BLINKING BG =================
               Container(
                 margin: EdgeInsets.only(bottom: 24.h),
                 width: double.infinity,
@@ -82,7 +97,7 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                   border: Border.all(color: Colors.green.shade100, width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -90,30 +105,43 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // BLINKING/PULSING BACKGROUND LAYER
                     Positioned.fill(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16.r),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: RadialGradient(
-                              colors: [
-                                const Color(0xFFFDB913).withOpacity(0.15),
-                                Colors.transparent,
-                              ],
-                              radius: 1.2,
-                            ),
-                          ),
-                        )
-                            .animate(onPlay: (controller) => controller.repeat(reverse: true))
-                            .tint(color: const Color(0xFFFDB913))
-                            .fadeIn(duration: 1500.ms, curve: Curves.easeInOut)
-                            .fadeOut(duration: 1500.ms, curve: Curves.easeInOut),
+                        child:
+                            Container(
+                                  decoration: BoxDecoration(
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        const Color(
+                                          0xFFFDB913,
+                                        ).withValues(alpha: 0.15),
+                                        Colors.transparent,
+                                      ],
+                                      radius: 1.2,
+                                    ),
+                                  ),
+                                )
+                                .animate(
+                                  onPlay: (controller) =>
+                                      controller.repeat(reverse: true),
+                                )
+                                .tint(color: const Color(0xFFFDB913))
+                                .fadeIn(
+                                  duration: 1500.ms,
+                                  curve: Curves.easeInOut,
+                                )
+                                .fadeOut(
+                                  duration: 1500.ms,
+                                  curve: Curves.easeInOut,
+                                ),
                       ),
                     ),
-
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 24.h,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -126,59 +154,78 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                             ),
                           ),
                           SizedBox(height: 16.h),
-                          _bulletText("Before proceeding, ensure rental documents are legally verified."),
-                          _bulletText("Verify property documents for complete peace of mind."),
-                          _bulletText("Pay ₹${documentPrice.toStringAsFixed(0)} for instant verification."),
+                          _bulletText(
+                            "Before proceeding, ensure rental documents are legally verified.",
+                          ),
+                          _bulletText(
+                            "Verify property documents for complete peace of mind.",
+                          ),
+                          _bulletText(
+                            "Pay ₹${widget.documentPrice.toStringAsFixed(0)} for instant verification.",
+                          ),
                           SizedBox(height: 20.h),
-
-// In _RentalLegalDocumentsScreen build method, update the checkbox:
                           GestureDetector(
                             onTap: () {
-                              // Toggle both controllers
                               rentalController.isTermsAccepted.toggle();
-                              // Also update RazorpayController terms
-                              final razorpayController = Get.find<RazorpayController>();
-                              razorpayController.isTermsAccepted.value = rentalController.isTermsAccepted.value;
+                              final razorpayController =
+                                  Get.find<RazorpayController>();
+                              razorpayController.isTermsAccepted.value =
+                                  rentalController.isTermsAccepted.value;
                             },
-                            child: Obx(() => Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  height: 24.h,
-                                  width: 24.w,
-                                  child: Checkbox(
-                                    activeColor: AppColor.orange,
-                                    value: rentalController.isTermsAccepted.value,
-                                    onChanged: (v) {
-                                      if (v != null) {
-                                        rentalController.isTermsAccepted.value = v;
-                                        // Also update RazorpayController terms
-                                        final razorpayController = Get.find<RazorpayController>();
-                                        razorpayController.isTermsAccepted.value = v;
-                                      }
-                                    },
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                GestureDetector(
-                                  onTap: () => _showTermsAndConditions(),
-                                  child: Text.rich(
-                                    TextSpan(
-                                      text: "I agree to the ",
-                                      style: TextStyle(fontSize: 13.sp, color: Colors.black87),
-                                      children: const [
-                                        TextSpan(
-                                          text: "Terms and Conditions",
-                                          style: TextStyle(fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
+                            child: Obx(
+                              () => Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    height: 24.h,
+                                    width: 24.w,
+                                    child: Checkbox(
+                                      activeColor: AppColor.orange,
+                                      value: rentalController
+                                          .isTermsAccepted
+                                          .value,
+                                      onChanged: (v) {
+                                        if (v != null) {
+                                          rentalController
+                                                  .isTermsAccepted
+                                                  .value =
+                                              v;
+                                          final razorpayController =
+                                              Get.find<RazorpayController>();
+                                          razorpayController
+                                                  .isTermsAccepted
+                                                  .value =
+                                              v;
+                                        }
+                                      },
                                     ),
                                   ),
-                                ),
-                              ],
-                            )),
-                          ),                          SizedBox(height: 20.h),
-
+                                  SizedBox(width: 8.w),
+                                  GestureDetector(
+                                    onTap: () => _showTermsAndConditions(),
+                                    child: Text.rich(
+                                      TextSpan(
+                                        text: "I agree to the ",
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          color: Colors.black87,
+                                        ),
+                                        children: const [
+                                          TextSpan(
+                                            text: "Terms and Conditions",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20.h),
                           SizedBox(
                             width: 220.w,
                             height: 48.h,
@@ -194,9 +241,9 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                               onPressed: () {
                                 if (rentalController.isTermsAccepted.value) {
                                   rentalController.initiateDocumentPayment(
-                                    0, // 0 for all documents
+                                    0,
                                     "ALL",
-                                    customAmount: documentPrice,
+                                    customAmount: widget.documentPrice,
                                   );
                                 } else {
                                   Get.snackbar(
@@ -210,7 +257,10 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                               },
                               child: Text(
                                 "Pay Now",
-                                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ),
@@ -221,19 +271,102 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                 ),
               ),
             ],
-
+            if (widget.rentalDetailProperty?.booked == true) ...[
+              GestureDetector(
+                onTap: () {
+                  if (widget.rentalDetailProperty?.kycVerified == true) {
+                    Get.toNamed(AppRoutes.rentalEnquiry);
+                  } else {
+                    if (!widget.isOpened) {
+                      widget.openedFunction?.call();
+                    }
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: widget.rentalDetailProperty?.kycVerified == true
+                        ? const Color(0xff608900)
+                        : const Color(0xfffeb821),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        widget.rentalDetailProperty?.kycVerified == true
+                            ? Icons.verified
+                            : Icons.pending_actions,
+                        color: widget.rentalDetailProperty?.kycVerified == true
+                            ? Colors.white
+                            : Colors.black,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.rentalDetailProperty?.kycVerified == true
+                            ? 'KYC Added'
+                            : 'Proceed to KYC',
+                        style: TextStyle(
+                          color:
+                              widget.rentalDetailProperty?.kycVerified == true
+                              ? Colors.white
+                              : Colors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (widget.isOpened) ...[
+                SizedBox(height: 10.h),
+                Obx(
+                  () => KYCBeneficiarySelector(
+                    controller: kYCController,
+                    kycList: kYCController.kycList.toList(),
+                    onContinue: (selected) async {
+                      final response = await kYCController.kycVerification(
+                        propertyId:
+                            widget.rentalDetailProperty?.id.toString() ?? '',
+                        transactionId:
+                            widget.rentalDetailProperty?.transactionId
+                                .toString() ??
+                            '',
+                        type: 'rental',
+                      );
+                      if (response['status'] == true) {
+                        rentalController.getPropertyDetails(
+                          widget.rentalDetailProperty?.id ?? 0,
+                        );
+                      }
+                    },
+                    onAddNew: () {
+                      Get.toNamed(AppRoutes.kycScreen);
+                    },
+                  ),
+                ),
+              ],
+            ],
             ListView.builder(
               shrinkWrap: true,
               padding: EdgeInsets.zero,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: documents.length,
+              itemCount: widget.documents.length,
               itemBuilder: (context, index) {
                 return _buildDocumentCard(
-                  documents[index],
-                  rentalController,
-                  hasPaid,
-                  documentPrice,
-                ).animate().fadeIn(delay: (60 * index).ms).slideY(begin: 0.1, end: 0);
+                      widget.documents[index],
+                      rentalController,
+                      widget.hasPaid,
+                      widget.documentPrice,
+                    )
+                    .animate()
+                    .fadeIn(delay: (60 * index).ms)
+                    .slideY(begin: 0.1, end: 0);
               },
             ),
           ],
@@ -244,27 +377,40 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
 
   Widget _bulletText(String text) {
     return Padding(
-        padding: EdgeInsets.only(bottom: 10.h),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(top: 6.h),
-              child: Icon(Icons.circle, size: 6.sp, color: Colors.black87),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                text,
-                style: TextStyle(fontSize: 14.sp, color: Colors.black87, height: 1.4),
+      padding: EdgeInsets.only(bottom: 10.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: 6.h),
+            child: Icon(Icons.circle, size: 6.sp, color: Colors.black87),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: Colors.black87,
+                height: 1.4,
               ),
             ),
-          ],
-        ));
-    }
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildDocumentCard(RentalDocument document, RentalYieldController controller, bool hasPaid, double documentPrice) {
-    String documentName = document.doucType ?? _getFileNameFromUrl(document.file) ?? "Property Document";
+  Widget _buildDocumentCard(
+    RentalDocument document,
+    RentalYieldController controller,
+    bool hasPaid,
+    double documentPrice,
+  ) {
+    String documentName =
+        document.doucType ??
+        _getFileNameFromUrl(document.file) ??
+        "Property Document";
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -274,7 +420,7 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -293,7 +439,10 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                   children: [
                     Text(
                       documentName,
-                      style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       "View and download this document",
@@ -333,13 +482,12 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
           else
             Row(
               children: [
-
                 Expanded(
                   child: _actionBtn(
                     "Download",
                     Icons.download,
                     AppColor.orange,
-                        () {
+                    () {
                       if (document.file.isNotEmpty) {
                         controller.downloadDocument(document.id, document.file);
                       } else {
@@ -354,7 +502,7 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
                   ),
                 ),
               ],
-            )
+            ),
         ],
       ),
     );
@@ -364,9 +512,7 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.r),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
         elevation: 0,
       ),
       onPressed: tap,
@@ -405,14 +551,17 @@ class RentalLegalDocumentsScreen extends StatelessWidget {
         fileName = fileName.replaceAll(RegExp(r'^\d+_'), '');
         fileName = fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
         fileName = fileName.replaceAll('_', ' ');
-        fileName = fileName.split(' ').map((word) {
-          if (word.isEmpty) return '';
-          return word[0].toUpperCase() + word.substring(1).toLowerCase();
-        }).join(' ');
+        fileName = fileName
+            .split(' ')
+            .map((word) {
+              if (word.isEmpty) return '';
+              return word[0].toUpperCase() + word.substring(1).toLowerCase();
+            })
+            .join(' ');
         return fileName;
       }
     } catch (e) {
-      print('❌ Error parsing filename: $e');
+      debugPrint('❌ Error parsing filename: $e');
     }
     return null;
   }

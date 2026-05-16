@@ -4,35 +4,33 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/colours.dart';
-import '../../../common/widget/carousel.dart';
 import '../../../common/widget/media_carousel_widget.dart';
 import '../controller/rental_yield_controller.dart';
 import '../model/rental_yeild_model.dart';
 
 class AboutPlot extends StatelessWidget {
-  final RentalDetailProperty property; // Updated type
-
-  const AboutPlot({super.key, required this.property});
+  final RentalDetailProperty property;
+  final VoidCallback? onEnquirySent;
+  const AboutPlot({super.key, required this.property,this.onEnquirySent});
 
   @override
   Widget build(BuildContext context) {
     final RentalYieldController controller = Get.find<RentalYieldController>();
-    final amenities = property.amenities ?? []         ;
-    final nearbyLocations = property.nearbyLocations ?? [];
+    final amenities = property.amenities         ;
+    final nearbyLocations = property.nearbyLocations;
 
     return Obx(() {
-      final propertyName = property.name ?? 'No Name';
-      final yeildamout = property.yieldAmount ?? 'No Name';
-      final location = property.address ?? 'No Address';
-      final city = property.cityName ?? '';
-      final state = property.stateName ?? '';
+      final propertyName = property.name;
+      final location = property.address;
+      final city = property.cityName;
+      final state = property.stateName;
       final fullLocation = city.isNotEmpty && state.isNotEmpty
           ? '$location, $city, $state'
           : location;
 
-      final rentAmount = '₹ ${property.rentAmount ?? '0'}';
-      final yieldAmount = '${property.yieldAmount ?? '0'}';
-      final description = property.description ?? 'No description available';
+      final rentAmount = '₹ ${property.rentAmount}';
+      final yieldAmount = property.yieldAmount;
+      final description = property.description;
 
       final images = property.images.isNotEmpty
           ? property.images
@@ -51,7 +49,7 @@ class AboutPlot extends StatelessWidget {
               borderRadius: BorderRadius.circular(20.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
+                  color: Colors.grey.withValues(alpha:0.3),
                   blurRadius: 15.r,
                   offset: const Offset(0, 4),
                 ),
@@ -100,8 +98,6 @@ class AboutPlot extends StatelessWidget {
       );
     });
   }
-
-  // Property Header Widget
   Widget _buildPropertyHeader(String address) {
     return Padding(
       padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 0),
@@ -112,7 +108,7 @@ class AboutPlot extends StatelessWidget {
             width: 45.w,
             height: 45.w,
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.1),
+              color: AppColor.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Center(
@@ -130,7 +126,7 @@ class AboutPlot extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
-                    color: AppColor.textMain.withOpacity(0.8),
+                    color: AppColor.textMain.withValues(alpha:0.8),
                   ),
                 ),
                 4.h.verticalSpace,
@@ -186,7 +182,7 @@ class AboutPlot extends StatelessWidget {
                   }
                 }
               } catch (e) {
-                print('Error launching Google Maps: $e');
+                debugPrint('Error launching Google Maps: $e');
                 Get.snackbar(
                   "Error",
                   "Unable to open Google Maps. Please install Google Maps app.",
@@ -199,7 +195,7 @@ class AboutPlot extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
               decoration: BoxDecoration(
-                color: AppColor.primary.withOpacity(0.7),
+                color: AppColor.primary.withValues(alpha:0.7),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Row(
@@ -222,7 +218,7 @@ class AboutPlot extends StatelessWidget {
               .fadeIn(duration: 600.ms)
               .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1))
               .then()
-              .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3)),
+              .shimmer(duration: 800.ms, color: Colors.white.withValues(alpha:0.3)),
         ],
       ),
     );
@@ -336,8 +332,6 @@ class AboutPlot extends StatelessWidget {
           property: property,
         ),
         SizedBox(height: 15.h),
-
-        // Description Section with See More
         _buildDescriptionWithSeeMore(description),
         SizedBox(height: 20.h),
       ],
@@ -447,7 +441,7 @@ class AboutPlot extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(5.w),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.05),
+        color: AppColor.primary.withValues(alpha:0.05),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Column(
@@ -479,7 +473,7 @@ class AboutPlot extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 8.h),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.1),
+        color: AppColor.primary.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Text(
@@ -530,7 +524,6 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  // Amenities Section
   Widget _buildAmenitiesSection(List<AmenityModel> amenities) {
     final ScrollController scrollController = ScrollController();
 
@@ -546,7 +539,7 @@ class AboutPlot extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                 decoration: BoxDecoration(
-                  color: AppColor.primary.withOpacity(0.1),
+                  color: AppColor.primary.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
@@ -566,7 +559,6 @@ class AboutPlot extends StatelessWidget {
           height: 95.h,
           child: Row(
             children: [
-              // Left arrow button
               if (amenities.length > 2)
                 _buildArrowButton(
                   scrollController: scrollController,
@@ -594,7 +586,6 @@ class AboutPlot extends StatelessWidget {
                   },
                 ),
               ),
-              // Right arrow button
               if (amenities.length > 2)
                 _buildArrowButton(
                   scrollController: scrollController,
@@ -618,7 +609,7 @@ class AboutPlot extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 8.r,
             offset: const Offset(0, 3),
           )
@@ -630,10 +621,10 @@ class AboutPlot extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.05),
+              color: AppColor.primary.withValues(alpha:0.05),
               borderRadius: BorderRadius.circular(12.r),
             ),
-            child: (amenity.image != null && amenity.image.isNotEmpty)
+            child: (amenity.image.isNotEmpty)
                 ? Image.network(
               amenity.image,
               width: 32.w,
@@ -655,7 +646,7 @@ class AboutPlot extends StatelessWidget {
           ),
           8.h.verticalSpace,
           Text(
-            amenity.title ?? 'Unknown',
+            amenity.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -670,7 +661,6 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  // Nearby Locations Section
   Widget _buildNearbyLocationsSection(List<NearbyLocationDetail> nearbyLocations) {
     final ScrollController scrollController = ScrollController();
 
@@ -686,7 +676,7 @@ class AboutPlot extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                 decoration: BoxDecoration(
-                  color: AppColor.primary.withOpacity(0.1),
+                  color: AppColor.primary.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
@@ -706,7 +696,6 @@ class AboutPlot extends StatelessWidget {
           height: 113.h,
           child: Row(
             children: [
-              // Left arrow button
               if (nearbyLocations.length > 2)
                 _buildArrowButton(
                   scrollController: scrollController,
@@ -734,7 +723,6 @@ class AboutPlot extends StatelessWidget {
                   },
                 ),
               ),
-              // Right arrow button
               if (nearbyLocations.length > 2)
                 _buildArrowButton(
                   scrollController: scrollController,
@@ -749,7 +737,7 @@ class AboutPlot extends StatelessWidget {
   }
 
   Widget _buildNearbyPlaceCard(NearbyLocationDetail location) {
-    final title = location.title ?? 'Unknown';
+    final title = location.title;
     final distance = location.distance;
     final imageUrl = location.image;
 
@@ -762,7 +750,7 @@ class AboutPlot extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 8.r,
             offset: const Offset(0, 3),
           )
@@ -774,10 +762,10 @@ class AboutPlot extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.05),
+              color: AppColor.primary.withValues(alpha:0.05),
               borderRadius: BorderRadius.circular(12.r),
             ),
-            child: (imageUrl != null && imageUrl.isNotEmpty)
+            child: (imageUrl.isNotEmpty)
                 ? Image.network(
               imageUrl,
               width: 32.w,
@@ -813,7 +801,7 @@ class AboutPlot extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Text(
@@ -860,7 +848,7 @@ class AboutPlot extends StatelessWidget {
         height: 36.w,
         margin: EdgeInsets.symmetric(horizontal: 2.w),
         decoration: BoxDecoration(
-          color: AppColor.primary.withOpacity(0.1),
+          color: AppColor.primary.withValues(alpha:0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -874,55 +862,144 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  // Simple Enquiry Button
+
   Widget _buildSimpleEnquiryButton(
       RentalYieldController controller,
       RentalDetailProperty property,
       ) {
+    final bool isSoldOut = property.soldStatus == 1;
+    final bool isBooked = property.booked == true;
+    final bool isEnquiredBySomeone = property.isAnyoneBooked == true;
+
+    String buttonText = "Send Enquiry";
+    IconData buttonIcon = Icons.send_rounded;
+    List<Color> gradientColors = [
+      AppColor.primary,
+      AppColor.primarylite,
+    ];
+
+    if (isSoldOut) {
+      buttonText = "Sold Out";
+      buttonIcon = Icons.block_rounded;
+      gradientColors = [
+        Colors.grey.shade500,
+        Colors.grey.shade700,
+      ];
+    } else if (isBooked) {
+      buttonText = "Enquired";
+      buttonIcon = Icons.check_circle_rounded;
+      gradientColors = [
+        Colors.green.shade400,
+        Colors.green.shade600,
+      ];
+    } else if (isEnquiredBySomeone) {
+      buttonText = "Enquired By Someone";
+      buttonIcon = Icons.people_alt_rounded;
+      gradientColors = [
+        Colors.orange.shade400,
+        Colors.orange.shade600,
+      ];
+    }
+
+    if(property.documents.isEmpty){
+      return SizedBox.shrink();
+    }
+
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
       child: Obx(
-            () => InkWell(
-          borderRadius: BorderRadius.circular(30.r),
-          onTap: controller.isEnquiryLoading.value
-              ? null
-              : () {
-            _sendEnquiryDirectly(controller, property);
-          },
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 14.h),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColor.primary, AppColor.primarylite],
+            () => AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(35.r),
+            boxShadow: [
+              BoxShadow(
+                color: gradientColors.last.withValues(alpha:0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
-              borderRadius: BorderRadius.circular(30.r),
-            ),
-            child: controller.isEnquiryLoading.value
-                ? Center(
-              child: SizedBox(
-                height: 20.sp,
-                width: 20.sp,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.black,
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(35.r),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(35.r),
+              onTap: controller.isEnquiryLoading.value ||
+                  buttonText != "Send Enquiry"
+                  ? null
+                  : () {
+                onEnquirySent?.call();
+              },
+              child: Ink(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  vertical: 5.h,
+                  horizontal: 18.w,
                 ),
-              ),
-            )
-                : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.message, size: 18.sp, color: Colors.black),
-                SizedBox(width: 8.w),
-                Text(
-                  "Send Enquiry",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16.sp,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: gradientColors,
                   ),
+                  borderRadius: BorderRadius.circular(35.r),
                 ),
-              ],
+                child: controller.isEnquiryLoading.value
+                    ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 20.sp,
+                      width: 20.sp,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2.1,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Text(
+                      "Processing...",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                )
+                    : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8.sp),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha:0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        buttonIcon,
+                        size: 16.sp,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Flexible(
+                      child: Text(
+                        buttonText,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.sp,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -930,11 +1007,10 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  void _sendEnquiryDirectly(
+  void sendEnquiryDirectly(
       RentalYieldController controller,
       RentalDetailProperty property,
       ) async {
-    // Create enquiry data
     final enquiryData = {
       'property_id': property.id,
       'property_type': 'rental',
@@ -944,7 +1020,6 @@ class AboutPlot extends StatelessWidget {
       'message':
       'I am interested in ${property.name}. Please contact me with more details.',
     };
-
     await controller.sendRentalEnquiry(enquiryData);
   }
 }

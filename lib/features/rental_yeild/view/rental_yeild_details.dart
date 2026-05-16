@@ -12,19 +12,19 @@ class RentalPropertyDetailsScreen extends StatefulWidget {
   final int? id;
   final String? title;
 
-  RentalPropertyDetailsScreen({
-    super.key,
-    this.id,
-    this.title,
-  });
+  RentalPropertyDetailsScreen({super.key, this.id, this.title});
 
   @override
-  State<RentalPropertyDetailsScreen> createState() => _RentalPropertyDetailsScreenState();
+  State<RentalPropertyDetailsScreen> createState() =>
+      _RentalPropertyDetailsScreenState();
 }
 
-class _RentalPropertyDetailsScreenState extends State<RentalPropertyDetailsScreen> {
+class _RentalPropertyDetailsScreenState
+    extends State<RentalPropertyDetailsScreen> {
   final RentalYieldController controller = Get.put(RentalYieldController());
   final razorpayController = Get.put(RazorpayController());
+
+  final GlobalKey _payNowSectionKey = GlobalKey();
 
   @override
   void initState() {
@@ -42,6 +42,25 @@ class _RentalPropertyDetailsScreenState extends State<RentalPropertyDetailsScree
     } catch (e) {
       print('Error in initState: $e');
     }
+  }
+
+  bool isOpened = false;
+
+  void _scrollToPayNow() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      final context = _payNowSectionKey.currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+          alignment: 0.5, // Center the widget in view
+        );
+        print("✅ Scrolling to Pay Now section");
+      } else {
+        print("❌ Pay Now section context is null");
+      }
+    });
   }
 
   @override
@@ -74,15 +93,30 @@ class _RentalPropertyDetailsScreenState extends State<RentalPropertyDetailsScree
           child: SingleChildScrollView(
             child: Column(
               children: [
-                AboutPlot(property: property),
+                AboutPlot(
+                  property: property,
+                  onEnquirySent: () {
+                    _scrollToPayNow();
+                  },
+                ),
                 if (property.documents.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  RentalLegalDocumentsScreen(
-                    propertyId: property.id,
-                    propertyName: property.name,
-                    documentPrice: property.totalDocumentPrice,
-                    documents: property.documents,
-                    hasPaid: property.hasPaidForDocuments,
+                  Container(
+                    key: _payNowSectionKey,
+                    child: RentalLegalDocumentsScreen(
+                      propertyId: property.id,
+                      propertyName: property.name,
+                      documentPrice: property.totalDocumentPrice,
+                      documents: property.documents,
+                      hasPaid: property.booked ?? false,
+                      rentalDetailProperty: property,
+                        isOpened : isOpened,
+                        openedFunction : (){
+                          setState(() {
+                            isOpened = true;
+                          });
+                        }
+                    ),
                   ),
                   const SizedBox(height: 45),
                 ],
@@ -128,10 +162,7 @@ class _RentalPropertyDetailsScreenState extends State<RentalPropertyDetailsScree
           const SizedBox(height: 8),
           const Text(
             "This rental property information is currently unavailable",
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -147,7 +178,10 @@ class _RentalPropertyDetailsScreenState extends State<RentalPropertyDetailsScree
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 12,
+                ),
               ),
               child: const Text(
                 "Try Again",
