@@ -304,7 +304,6 @@ class _EncashmentListScreenState extends State<EncashmentListScreen> {
                               _buildDetailRow(Icons.phone, 'Phone', bank.bankPhoneNumber!),
                           ],
 
-                          // Show message if no bank details available
                           if ((isGpay && (bank.gpayUpiId == null || bank.gpayUpiId!.isEmpty)) &&
                               (!isGpay && (bank.bankName == null || bank.bankName!.isEmpty)))
                             const Padding(

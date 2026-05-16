@@ -1,5 +1,10 @@
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
+
+// ======================================================
+// SAFE TYPE CAST HELPERS
+// ======================================================
+
 int safeIntCast(dynamic value) {
   if (value == null) return 0;
   if (value is int) return value;
@@ -7,6 +12,7 @@ int safeIntCast(dynamic value) {
   if (value is String) return int.tryParse(value) ?? 0;
   return 0;
 }
+
 int? safeNullableIntCast(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;
@@ -17,6 +23,7 @@ int? safeNullableIntCast(dynamic value) {
   }
   return null;
 }
+
 double safeDoubleCast(dynamic value) {
   if (value == null) return 0.0;
   if (value is double) return value;
@@ -24,6 +31,7 @@ double safeDoubleCast(dynamic value) {
   if (value is String) return double.tryParse(value) ?? 0.0;
   return 0.0;
 }
+
 double? safeNullableDoubleCast(dynamic value) {
   if (value == null) return null;
   if (value is double) return value;
@@ -43,6 +51,21 @@ bool safeBoolCast(dynamic value) {
   }
   return false;
 }
+
+// Returns the value as String only when it actually IS a String.
+// Returns null for List, Map, int, bool, or any other non-String type.
+// Needed because the API returns `"documents": []` (a List) when empty,
+// but a String path when a document exists.
+String? _safeStringFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is String) return value.isEmpty ? null : value;
+  return null;
+}
+
+// ======================================================
+// PROPERTY LIST RESPONSE
+// ======================================================
+
 class PropertyListResponse {
   final bool status;
   final PropertyListData data;
@@ -98,7 +121,7 @@ class PropertyListData {
 }
 
 // ======================================================
-// PROPERTY DETAIL MODELS
+// PROPERTY DETAIL RESPONSE
 // ======================================================
 
 class PropertyDetailResponse {
@@ -131,7 +154,8 @@ class Property {
   final String location;
   final int? city;
   final int? state;
-  final int? plot_count;
+  final int? country; // FIX: Added country field (present in API response)
+  final int? plotCount;
   final int? subCategoryId;
   final String? lat;
   final String? lng;
@@ -172,6 +196,22 @@ class Property {
   final List<AmenityItem> amenitiesAll;
   final PropertyCategory? category;
 
+  // FIX: Added sold_status and sold_amount fields from API response
+  final int soldStatus;
+  final double? soldAmount;
+
+  // FIX: Added blueprint field (API returns 'blueprint' key)
+  final String? blueprint;
+
+  // FIX: Added featured field
+  final int featured;
+
+  // FIX: Added map_set field for nearby properties on map
+  final List<MapSetItem> mapSet;
+
+  // API key: 'doucment_verficaiton' (typo in API) — true means docs verified
+  final bool documentVerification;
+
   Property({
     required this.id,
     required this.propertyName,
@@ -180,8 +220,9 @@ class Property {
     this.completionDate,
     required this.location,
     this.city,
-    this.plot_count,
+    this.plotCount,
     this.state,
+    this.country,
     this.lat,
     this.lng,
     required this.price,
@@ -202,7 +243,7 @@ class Property {
     this.roadWidth,
     required this.boundaryWall,
     this.features,
-    this.subCategoryId, // ADD THIS
+    this.subCategoryId,
     required this.aboutProperty,
     required this.landApproval,
     required this.constructionGuidelines,
@@ -221,6 +262,12 @@ class Property {
     required this.nearbyLocations,
     required this.amenitiesAll,
     this.category,
+    this.soldStatus = 0,
+    this.soldAmount,
+    this.blueprint,
+    this.featured = 0,
+    this.mapSet = const [],
+    this.documentVerification = false,
   });
 
   factory Property.fromJson(Map<String, dynamic> json) {
@@ -237,10 +284,13 @@ class Property {
       location: json['location'] as String? ?? '',
       city: safeNullableIntCast(json['city']),
       state: safeNullableIntCast(json['state']),
+      // FIX: Parse country from API response
+      country: safeNullableIntCast(json['country']),
       lat: json['lat'] as String?,
       lng: json['lng'] as String?,
       price: safeDoubleCast(json['price']),
-      plot_count: safeIntCast(json['plot_count']),
+      // FIX: was 'plot_count' key, now correctly mapped
+      plotCount: safeNullableIntCast(json['plot_count']),
       areaSqft: safeIntCast(json['area_sqft']),
       areaSqftPrice: safeNullableDoubleCast(json['area_sqft_price']),
       highlights: json['highlights'] as String?,
@@ -251,7 +301,7 @@ class Property {
           .map((e) => e.toString())
           .toList(),
       gated: safeBoolCast(json['gated']),
-      subCategoryId: safeNullableIntCast(json['sub_category_id']), // ADD THIS
+      subCategoryId: safeNullableIntCast(json['sub_category_id']),
       openSides: json['open_sides'] as String?,
       overlooking: json['overlooking'] as String?,
       categoryId: safeIntCast(json['category_id']),
@@ -275,7 +325,10 @@ class Property {
       verifyStatus: safeIntCast(json['verify_status']),
       userType: json['user_type'] as String? ?? 'customer',
       customerId: safeNullableIntCast(json['customer_id']),
-      documents: json['docuents'] as String?,
+      // API has a typo 'docuents'; also 'documents' may be a List<dynamic>
+      // when empty ([]) — never cast directly, always guard with is-check.
+      documents: _safeStringFromJson(json['docuents']) ??
+          _safeStringFromJson(json['documents']),
       isActive: safeBoolCast(json['is_active']),
       createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
       updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
@@ -291,8 +344,22 @@ class Property {
       category: json['cate'] != null
           ? PropertyCategory.fromJson(json['cate'] as Map<String, dynamic>)
           : null,
+      // FIX: Parse sold_status and sold_amount from API
+      soldStatus: safeIntCast(json['sold_status']),
+      soldAmount: safeNullableDoubleCast(json['sold_amount']),
+      // FIX: Parse blueprint — API returns relative path, not full URL
+      blueprint: json['blueprint'] as String?,
+      featured: safeIntCast(json['featured']),
+      // FIX: Parse map_set array
+      mapSet: (json['map_set'] as List<dynamic>? ?? [])
+          .map((e) => MapSetItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      // API key has a typo: 'doucment_verficaiton'
+      documentVerification: safeBoolCast(json['doucment_verficaiton']),
     );
   }
+
+  // ---- Computed getters ----
 
   String get formattedPrice {
     if (price >= 10000000) {
@@ -317,13 +384,43 @@ class Property {
   bool get isAdminPosted => userType == 'admin';
   bool get isCustomerPosted => userType == 'customer';
 
-  // Get facilities as map for easy access - FIXED VERSION
+  /// FIX: isSoldOut based on sold_status from API (1 = sold out)
+  bool get isSoldOut => soldStatus == 1;
+
+  /// FIX: Country label for list page location indicator
+  /// country 3 = Dubai (based on API), else India
+  /// Adjust the country IDs to match your backend's actual values
+  String get countryLabel {
+    switch (country) {
+      case 1:
+        return '🇮🇳 India';
+      case 3:
+        return '🇦🇪 Dubai';
+      default:
+        return '🇮🇳 India';
+    }
+  }
+
+  /// Returns true if this property is in Dubai
+  bool get isDubai => country == 3;
+
+  /// FIX: Full blueprint URL helper
+  /// API returns relative path like 'storage/plots/filename.jpeg'
+  /// Pass your base URL when building the widget, or use this helper
+  String blueprintUrl(String baseUrl) {
+    if (blueprint == null || blueprint!.isEmpty) return '';
+    if (blueprint!.startsWith('http')) return blueprint!;
+    // Remove trailing slash from base, add leading slash to path if missing
+    final base = baseUrl.endsWith('/') ? baseUrl : '$baseUrl/';
+    final path = blueprint!.startsWith('/') ? blueprint!.substring(1) : blueprint!;
+    return '$base$path';
+  }
+
+  // Get facilities as map for easy access
   Map<String, String> get facilitiesMap {
     final map = <String, String>{};
-    // facilities is List<FacilityValue>, not a String
     for (final facility in facilities) {
       if (facility.value != null && facility.value!.isNotEmpty) {
-        // Use the facility name from the fac list
         final facilityName = facility.fac.isNotEmpty
             ? facility.fac.first.name
             : facility.name ?? 'Unknown';
@@ -378,10 +475,60 @@ class Property {
 }
 
 // ======================================================
+// MAP SET ITEM — for nearby properties on map
+// ======================================================
+
+class MapSetItem {
+  final int id;
+  final String? propertyName;
+  final String? lat;
+  final String? lng;
+  final double price;
+  final int areaSqft;
+  final String? thumbnail;
+  final int soldStatus;
+
+  MapSetItem({
+    required this.id,
+    this.propertyName,
+    this.lat,
+    this.lng,
+    required this.price,
+    required this.areaSqft,
+    this.thumbnail,
+    this.soldStatus = 0,
+  });
+
+  factory MapSetItem.fromJson(Map<String, dynamic> json) {
+    return MapSetItem(
+      id: safeIntCast(json['id']),
+      propertyName: json['property_name'] as String?,
+      lat: json['lat'] as String?,
+      lng: json['lng'] as String?,
+      price: safeDoubleCast(json['price']),
+      areaSqft: safeIntCast(json['area_sqft']),
+      thumbnail: json['thumbnail'] as String?,
+      soldStatus: safeIntCast(json['sold_status']),
+    );
+  }
+
+  bool get isSoldOut => soldStatus == 1;
+
+  String get formattedPrice {
+    if (price >= 10000000) {
+      return '₹${(price / 10000000).toStringAsFixed(2)} Cr';
+    } else if (price >= 100000) {
+      return '₹${(price / 100000).toStringAsFixed(2)} L';
+    } else {
+      return '₹${price.toStringAsFixed(2)}';
+    }
+  }
+}
+
+// ======================================================
 // SUPPORTING MODELS
 // ======================================================
 
-// UPDATED: Added subCategories field
 class PropertyCategory {
   final int id;
   final String categoryName;
@@ -392,7 +539,7 @@ class PropertyCategory {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
-  final List<PropertySubCategory>? subCategories; // NEW FIELD
+  final List<PropertySubCategory>? subCategories;
 
   PropertyCategory({
     required this.id,
@@ -404,14 +551,15 @@ class PropertyCategory {
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
-    this.subCategories, // NEW FIELD
+    this.subCategories,
   });
 
   factory PropertyCategory.fromJson(Map<String, dynamic> json) {
     List<PropertySubCategory>? subCategories;
     if (json['sub_categories'] != null && json['sub_categories'] is List) {
       subCategories = (json['sub_categories'] as List)
-          .map((item) => PropertySubCategory.fromJson(item as Map<String, dynamic>))
+          .map((item) =>
+          PropertySubCategory.fromJson(item as Map<String, dynamic>))
           .toList();
     }
 
@@ -422,12 +570,14 @@ class PropertyCategory {
       facilities: json['facilities'] as String?,
       documents: json['documents'] as String?,
       status: safeIntCast(json['status']),
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt:
+      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt:
+      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
       deletedAt: json['deleted_at'] != null
           ? DateTime.parse(json['deleted_at'].toString())
           : null,
-      subCategories: subCategories, // NEW FIELD
+      subCategories: subCategories,
     );
   }
 
@@ -452,7 +602,6 @@ class PropertyCategory {
   bool get isActive => status == 1;
 }
 
-// NEW MODEL: Property SubCategory
 class PropertySubCategory {
   final int id;
   final String name;
@@ -496,8 +645,10 @@ class StateList {
       id: safeIntCast(json['id']),
       stateName: json['state_name'] as String? ?? '',
       status: safeIntCast(json['status']),
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt:
+      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt:
+      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
     );
   }
 
@@ -558,7 +709,6 @@ class Pagination {
   int get totalPages => lastPage;
 }
 
-
 class FacilityValue {
   final int id;
   final String? value;
@@ -588,8 +738,10 @@ class FacilityValue {
       value: json['value'] as String?,
       facilityId: safeIntCast(json['facility_id']),
       plotId: safeIntCast(json['plot_id']),
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt:
+      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt:
+      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
       images: json['images'] as String? ?? '',
       name: json['name'] as String?,
       fac: (json['fac'] as List<dynamic>? ?? [])
@@ -602,7 +754,6 @@ class FacilityValue {
   String? get facilityImage => fac.isNotEmpty ? fac.first.image : images;
 }
 
-// UPDATED: Added options field for dropdown/radio
 class Facility {
   final int id;
   final String name;
@@ -613,7 +764,7 @@ class Facility {
   final String? file;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final List<FacilityOption>? options; // NEW FIELD
+  final List<FacilityOption>? options;
 
   Facility({
     required this.id,
@@ -625,22 +776,25 @@ class Facility {
     this.file,
     required this.createdAt,
     required this.updatedAt,
-    this.options, // NEW FIELD
+    this.options,
   });
 
   factory Facility.fromJson(Map<String, dynamic> json) {
     List<FacilityOption>? options;
 
-    // Parse options from facility_options if available
     if (json['facility_options'] != null && json['facility_options'] is List) {
       options = (json['facility_options'] as List)
-          .map((item) => FacilityOption.fromJson(item as Map<String, dynamic>))
+          .map((item) =>
+          FacilityOption.fromJson(item as Map<String, dynamic>))
           .toList();
-    }
-    // Otherwise parse from value field for dropdown/radio
-    else if (json['value'] != null && (json['type'] == 'dropdown' || json['type'] == 'radio')) {
+    } else if (json['value'] != null &&
+        (json['type'] == 'dropdown' || json['type'] == 'radio')) {
       final valueStr = json['value'].toString();
-      final values = valueStr.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      final values = valueStr
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
       options = values.asMap().entries.map((entry) {
         return FacilityOption(
           id: entry.key,
@@ -658,9 +812,11 @@ class Facility {
       value: json['value'] as String?,
       image: json['image'] as String?,
       file: json['file'] as String?,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
-      options: options, // NEW FIELD
+      createdAt:
+      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt:
+      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      options: options,
     );
   }
 
@@ -669,12 +825,14 @@ class Facility {
       return options!.map((opt) => opt.label).toList();
     }
     if (value == null || value!.isEmpty) return [];
-    return value!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    return value!
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
   }
 
-  List<FacilityOption> get radioOptions {
-    return options ?? [];
-  }
+  List<FacilityOption> get radioOptions => options ?? [];
 
   bool get isDropdown => type == 'dropdown';
   bool get isText => type == 'text';
@@ -684,7 +842,6 @@ class Facility {
   bool get isDate => type == 'date';
 }
 
-// NEW MODEL: Facility Option for dropdown/radio
 class FacilityOption {
   final int id;
   final String value;
@@ -727,8 +884,10 @@ class NearbyLocation {
       id: safeIntCast(json['id']),
       title: json['title'] as String? ?? '',
       image: json['image'] as String? ?? '',
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt:
+      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt:
+      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
       pivot: json['pivot'] != null
           ? LocationPivot.fromJson(json['pivot'] as Map<String, dynamic>)
           : null,
@@ -739,7 +898,8 @@ class NearbyLocation {
 class LocationPivot {
   final int plotId;
   final int nearbyLocationId;
-  final int distance;
+  // FIX: distance comes as String "2.0" in API, not int
+  final double distance;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -755,9 +915,12 @@ class LocationPivot {
     return LocationPivot(
       plotId: safeIntCast(json['plot_id']),
       nearbyLocationId: safeIntCast(json['nearby_location_id']),
-      distance: safeIntCast(json['distance']),
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      // FIX: was safeIntCast — API returns "2.0" string, use double
+      distance: safeDoubleCast(json['distance']),
+      createdAt:
+      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt:
+      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
     );
   }
 }
@@ -766,7 +929,7 @@ class AmenityItem {
   final int id;
   final String title;
   final String image;
-  final String? type; // Add type field
+  final String? type;
   final DateTime createdAt;
   final DateTime updatedAt;
   final AmenityPivot? pivot;
@@ -786,17 +949,22 @@ class AmenityItem {
       id: safeIntCast(json['id']),
       title: json['title'] as String? ?? '',
       image: json['image'] as String? ?? '',
-      type: json['type'] as String?, // Parse type
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      type: json['type'] as String?,
+      createdAt:
+      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt:
+      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
       pivot: json['pivot'] != null
           ? AmenityPivot.fromJson(json['pivot'] as Map<String, dynamic>)
           : null,
     );
   }
 
-  bool get isDocument => (type?.toLowerCase() == 'file' || type?.toLowerCase() == 'document');
-}class AmenityPivot {
+  bool get isDocument =>
+      (type?.toLowerCase() == 'file' || type?.toLowerCase() == 'document');
+}
+
+class AmenityPivot {
   final int plotId;
   final int amenityId;
   final DateTime createdAt;
@@ -813,8 +981,10 @@ class AmenityItem {
     return AmenityPivot(
       plotId: safeIntCast(json['plot_id']),
       amenityId: safeIntCast(json['amenity_id']),
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
+      createdAt:
+      DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
+      updatedAt:
+      DateTime.parse(json['updated_at']?.toString() ?? '1970-01-01'),
     );
   }
 }
@@ -843,7 +1013,6 @@ class CityModel {
   }
 }
 
-// UPDATED: Added more fields for document validation
 class Document {
   final int id;
   final String name;
@@ -885,14 +1054,16 @@ class Document {
       description: json['description'],
       helpText: json['help_text'],
       allowedFormats: json['allowed_formats'] != null
-          ? (json['allowed_formats'] as String).split(',').map((e) => e.trim()).toList()
+          ? (json['allowed_formats'] as String)
+          .split(',')
+          .map((e) => e.trim())
+          .toList()
           : ['pdf', 'jpg', 'png', 'jpeg', 'doc', 'docx'],
       maxSize: json['max_size'] ?? 2048,
       isRequired: json['is_required'] ?? 1,
     );
   }
 }
-
 
 class Place {
   final Coordinates coordinates;
@@ -935,7 +1106,8 @@ class Place {
     if (placemark.locality != null && placemark.locality!.isNotEmpty) {
       parts.add(placemark.locality!);
     }
-    if (placemark.administrativeArea != null && placemark.administrativeArea!.isNotEmpty) {
+    if (placemark.administrativeArea != null &&
+        placemark.administrativeArea!.isNotEmpty) {
       parts.add(placemark.administrativeArea!);
     }
     if (placemark.postalCode != null && placemark.postalCode!.isNotEmpty) {
@@ -974,7 +1146,8 @@ class CategoryResponse {
     return CategoryResponse(
       status: safeBoolCast(json['status']),
       data: (json['data'] as List<dynamic>? ?? [])
-          .map((item) => PropertyCategory.fromJson(item as Map<String, dynamic>))
+          .map((item) =>
+          PropertyCategory.fromJson(item as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -1025,7 +1198,7 @@ class DocumentsResponse {
 }
 
 class AmenitiesResponse {
-  final int status; // Changed from bool to int
+  final int status;
   final List<AmenityItem> data;
 
   AmenitiesResponse({
@@ -1036,12 +1209,13 @@ class AmenitiesResponse {
   factory AmenitiesResponse.fromJson(Map<String, dynamic> json) {
     return AmenitiesResponse(
       status: safeIntCast(json['status']),
-      data: (json['data']['amenities'] as List<dynamic>? ?? []) // Access 'amenities' array
+      data: (json['data']['amenities'] as List<dynamic>? ?? [])
           .map((item) => AmenityItem.fromJson(item as Map<String, dynamic>))
           .toList(),
     );
   }
 }
+
 class StatesResponse {
   final bool status;
   final List<StateList> data;
@@ -1155,7 +1329,9 @@ class PropertyFormData {
 
     if (state != null && state! > 0) data['state'] = state;
     if (city != null && city! > 0) data['city'] = city;
-    if (subCategoryId != null && subCategoryId! > 0) data['sub_category_id'] = subCategoryId;
+    if (subCategoryId != null && subCategoryId! > 0) {
+      data['sub_category_id'] = subCategoryId;
+    }
 
     if (amenities.isNotEmpty) {
       data['amenities'] = amenities.join(',');

@@ -28,8 +28,8 @@ class ResidentialPropertyList extends StatelessWidget {
       return NotificationListener<ScrollNotification>(
         onNotification: (scroll) {
           if (!controller.hasMoreData.value) return false;
-
-          if (scroll.metrics.pixels >= scroll.metrics.maxScrollExtent * 0.9) {
+          if (scroll.metrics.pixels >=
+              scroll.metrics.maxScrollExtent * 0.9) {
             controller.loadMoreProperties();
           }
           return false;
@@ -38,11 +38,13 @@ class ResidentialPropertyList extends StatelessWidget {
           padding: EdgeInsets.all(16.r),
           itemCount: rowCount + 1,
           itemBuilder: (context, index) {
+            // Load-more indicator at the bottom
             if (index == rowCount) {
               return controller.isLoadMore.value
                   ? const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(child: CircularProgressIndicator()),
+                child:
+                Center(child: CircularProgressIndicator()),
               )
                   : const SizedBox.shrink();
             }
@@ -51,11 +53,15 @@ class ResidentialPropertyList extends StatelessWidget {
             final rightIndex = leftIndex + 1;
 
             final leftProperty = properties[leftIndex];
-            final rightProperty = rightIndex < properties.length ? properties[rightIndex] : null;
+            final rightProperty = rightIndex < properties.length
+                ? properties[rightIndex]
+                : null;
 
             return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _buildPropertyCard(leftProperty)),
+                Expanded(
+                    child: _buildPropertyCard(leftProperty)),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: rightProperty != null
@@ -71,21 +77,100 @@ class ResidentialPropertyList extends StatelessWidget {
   }
 
   Widget _buildPropertyCard(Property property) {
-    return PropertyCard(
-      imageUrl: property.thumbnail.isNotEmpty
-          ? property.thumbnail
-          : (property.galleryImages.isNotEmpty ? property.galleryImages[0] : ''),
-      title: property.propertyName,
-      price: property.formattedPrice,
-      area: property.formattedArea,
-      location: property.location,
-      description: property.aboutProperty.isNotEmpty
-          ? property.aboutProperty.substring(0, property.aboutProperty.length > 50 ? 50 : property.aboutProperty.length)
-          : '',
-      onTap: () {
-        print("View Property: ${property.propertyName}");
-        Get.toNamed('residentialDetails', arguments: {"id": property.id, "title": property.propertyName});
-      },
+    return Stack(
+      children: [
+        // Existing property card — untouched
+        PropertyCard(
+          imageUrl: property.galleryImages.isNotEmpty
+              ? property.galleryImages[0]
+              : (property.thumbnail.isNotEmpty
+              ? property.thumbnail
+              : ''),
+          title: property.propertyName,
+          price: property.formattedPrice,
+          area: property.formattedArea,
+          location: property.location,
+          description: property.aboutProperty.isNotEmpty
+              ? property.aboutProperty.substring(
+              0,
+              property.aboutProperty.length > 50
+                  ? 50
+                  : property.aboutProperty.length)
+              : '',
+          onTap: () {
+            print("View Property: ${property.propertyName}");
+            Get.toNamed('residentialDetails',
+                arguments: {
+                  "id": property.id,
+                  "title": property.propertyName
+                });
+          },
+        ),
+
+        // India / Dubai badge — top-left corner over the card
+        Positioned(
+          top: 8,
+          left: 8,
+          child: _LocationBadge(property: property),
+        ),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Location badge widget
+// -----------------------------------------------------------------------------
+
+class _LocationBadge extends StatelessWidget {
+  final Property property;
+  const _LocationBadge({required this.property});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDubai = property.isDubai;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: isDubai
+            ? const Color(0xFFFFF3E0)   // warm amber for Dubai
+            : const Color(0xFFE8F5E9),  // soft green for India
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: isDubai
+              ? const Color(0xFFFF9800).withOpacity(0.6)
+              : const Color(0xFF4CAF50).withOpacity(0.6),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            isDubai ? '🇦🇪' : '🇮🇳',
+            style: TextStyle(fontSize: 10.sp),
+          ),
+          SizedBox(width: 3.w),
+          Text(
+            isDubai ? 'Dubai' : 'India',
+            style: TextStyle(
+              fontSize: 9.sp,
+              fontWeight: FontWeight.w700,
+              color: isDubai
+                  ? const Color(0xFFE65100)
+                  : const Color(0xFF2E7D32),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

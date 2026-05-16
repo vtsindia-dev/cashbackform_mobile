@@ -14,10 +14,12 @@ import '../../../common/colours.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../legal_and_policies/screen.dart';
 import '../../menu/controller/dashboard_menu_controller.dart';
 import '../../payment/controller/razorpay_controller.dart';
 import '../model/residential_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 
 class ResidentialPropertyFormController extends GetxController {
   var properties = <Property>[].obs;
@@ -1329,36 +1331,55 @@ class ResidentialPropertyFormController extends GetxController {
 
                 SizedBox(height: 12.h),
 
-                // Terms Row
-                Obx(() => InkWell(
-                  onTap: () => razorpayController.toggleTerms(),
-                  child: Row(
-                    children: [
-                      Checkbox(
+                // Terms & Conditions with Checkbox
+                Obx(() => Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 40.w,
+                      child: Checkbox(
                         value: razorpayController.isTermsAccepted.value,
-                        onChanged: (v) => razorpayController.toggleTerms(),
+                        onChanged: (_) => razorpayController.toggleTerms(),
                         activeColor: AppColor.primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
                       ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => _showTermsDialog(),
-                          child: Text.rich(
-                            TextSpan(
-                              text: "I agree to the ",
-                              style: TextStyle(fontSize: 11.sp, color: Colors.grey[600]),
-                              children: [
-                                TextSpan(
-                                  text: "Terms & Conditions",
-                                  style: TextStyle(color: AppColor.primary, fontWeight: FontWeight.bold),
-                                ),
-                              ],
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 5.h),
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.grey.shade700,
+                              height: 1.4,
                             ),
+                            children: [
+                              const TextSpan(text: "I agree to the "),
+                              TextSpan(
+                                text: "Terms & Conditions",
+                                style: TextStyle(
+                                  color: AppColor.primary,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Get.to(
+                                          () => LegalPageScreen(
+                                        slug: "flatsvillas_payment_verification_terms_and_condition",
+                                        title: "Terms & Conditions",
+                                      ),
+                                    );
+                                  },
+                              ),
+                              const TextSpan(text: "."),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 )),
               ],
             ),
@@ -1382,8 +1403,13 @@ class ResidentialPropertyFormController extends GetxController {
                   child: ElevatedButton(
                     onPressed: () {
                       if (!razorpayController.isTermsAccepted.value) {
-                        Get.snackbar("Action Required", "Please accept the terms to proceed.",
-                            backgroundColor: Colors.redAccent, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+                        Get.snackbar(
+                          "Action Required",
+                          "Please accept the terms to proceed.",
+                          backgroundColor: Colors.redAccent,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
                         return;
                       }
                       if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
@@ -1410,48 +1436,25 @@ class ResidentialPropertyFormController extends GetxController {
     }
   }
 
+// Helper method to build benefit items
   Widget _buildBenefitItem(String text) {
     return Padding(
-        padding: EdgeInsets.symmetric(vertical: 4.h),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.check_circle, size: 16.sp, color: Colors.green),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Text(
-                text,
-                style: TextStyle(fontSize: 12.sp),
-              ),
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: AppColor.primary, size: 16.sp),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
             ),
-          ],
-        )
-    );
-  }
-
-  void _showTermsDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: Text("Terms and Conditions"),
-        content: SingleChildScrollView(
-          child: Text(
-            "1. Verification fee is non-refundable.\n"
-                "2. Verification process takes 2-3 business days.\n"
-                "3. We verify property details, documents, and ownership.\n"
-                "4. Verified status can be revoked if false information is provided.\n"
-                "5. All documents must be authentic and valid.",
-            style: TextStyle(fontSize: 12.sp),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text("Close"),
           ),
         ],
       ),
     );
   }
+
 
   @override
   void onClose() {

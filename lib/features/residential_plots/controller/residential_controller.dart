@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
@@ -35,6 +34,7 @@ class ResidentialPropertyController extends GetxController {
   var selectedStateId = 0.obs;
   var selectedCityId = 0.obs;
   var selectedCategoryId = 0.obs;
+  var selectedCountryId = 0.obs; // ← NEW: country filter
   var selectedMinPrice = ''.obs;
   var selectedMaxPrice = ''.obs;
   var selectedMinArea = ''.obs;
@@ -56,6 +56,12 @@ class ResidentialPropertyController extends GetxController {
   final amenitiesScrollOffset = 0.0.obs;
   final TextEditingController searchController = TextEditingController();
 
+  // ← NEW: live search autocomplete suggestions
+  var searchSuggestions = <String>[].obs;
+
+  // ← NEW: full unfiltered cache so local search can restore without a network call
+  final List<Property> _allProperties = [];
+
   @override
   void onInit() {
     super.onInit();
@@ -64,7 +70,6 @@ class ResidentialPropertyController extends GetxController {
   }
 
   void toggleExpansion() => isExpanded.toggle();
-
   void toggleDescription() => isDescriptionExpanded.toggle();
 
   void scrollAmenitiesLeft() {
@@ -83,31 +88,69 @@ class ResidentialPropertyController extends GetxController {
     );
   }
 
-  Future<void> fetchProperties({bool loadMore = false, bool refresh = false}) async {
+  // ← NEW: instant local filter — called on every keystroke, no network call
+  void filterSuggestionsLocally(String query) {
+    if (query.trim().isEmpty) {
+      if (_allProperties.isNotEmpty) {
+        properties.assignAll(_allProperties);
+      }
+      searchSuggestions.clear();
+      return;
+    }
+
+    final lower = query.toLowerCase();
+
+    // Build up to 8 unique suggestions from names + locations already in memory
+    final Set<String> seen = {};
+    final List<String> suggestions = [];
+
+    for (final p in _allProperties) {
+      if (p.propertyName.toLowerCase().contains(lower) &&
+          seen.add(p.propertyName)) {
+        suggestions.add(p.propertyName);
+      }
+      if (p.location.toLowerCase().contains(lower) &&
+          seen.add(p.location)) {
+        suggestions.add(p.location);
+      }
+      if (suggestions.length >= 8) break;
+    }
+
+    searchSuggestions.assignAll(suggestions);
+
+    // Instantly filter the visible list in-place
+    properties.assignAll(
+      _allProperties
+          .where((p) =>
+      p.propertyName.toLowerCase().contains(lower) ||
+          p.location.toLowerCase().contains(lower))
+          .toList(),
+    );
+  }
+
+  Future<void> fetchProperties(
+      {bool loadMore = false, bool refresh = false}) async {
     try {
       if (refresh) {
         properties.clear();
         currentPage.value = 1;
         hasMoreData.value = true;
-        isLoadMore(false); // Ensure load more is reset
+        isLoadMore(false);
       }
 
-      if (loadMore && (!hasMoreData.value || isLoadMore.value)) {
-        return;
-      }
+      if (loadMore && (!hasMoreData.value || isLoadMore.value)) return;
 
       if (loadMore) {
         isLoadMore(true);
         currentPage.value++;
       } else {
         isLoading(true);
-        if (!refresh) {
-          currentPage.value = 1;
-        }
+        if (!refresh) currentPage.value = 1;
       }
 
       errorMessage('');
-      final url = '${ApiUrl.baseUrl}/api/v2/plots?${_buildQueryParams()}';
+      final url =
+          '${ApiUrl.baseUrl}/api/v2/plots?${_buildQueryParams()}';
       print('🌐 Fetching Properties URL: $url');
       print('📄 Current Page: $currentPage');
 
@@ -116,75 +159,83 @@ class ResidentialPropertyController extends GetxController {
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == true) {
-          final propertyList = _parseProperties(responseData['data']['plots'] ?? []);
+          final propertyList =
+          _parseProperties(responseData['data']['plots'] ?? []);
 
-          // Check for duplicates before adding
           if (loadMore) {
-            // Filter out any properties that already exist in the list
-            final newProperties = propertyList.where((newProp) =>
-            !properties.any((existingProp) => existingProp.id == newProp.id)
-            ).toList();
-
+            final newProperties = propertyList
+                .where((newProp) => !properties
+                .any((existing) => existing.id == newProp.id))
+                .toList();
             if (newProperties.isNotEmpty) {
               properties.addAll(newProperties);
-              print('➕ Added ${newProperties.length} new properties (filtered duplicates)');
+              print(
+                  '➕ Added ${newProperties.length} new properties (filtered duplicates)');
             } else {
               print('⚠️ No new properties to add (all were duplicates)');
             }
           } else {
             properties.assignAll(propertyList);
-            print('🔄 Replaced properties list with ${properties.length} items');
+            // ← NEW: refresh local cache every time the full list is replaced
+            _allProperties
+              ..clear()
+              ..addAll(propertyList);
+            print(
+                '🔄 Replaced properties list with ${properties.length} items');
           }
 
-          // Handle other data (categories, states, etc.)
           if (responseData['data']['property_category'] != null) {
-            propertyCategories.assignAll(
-                _parsePropertyCategories(responseData['data']['property_category'])
-            );
+            propertyCategories.assignAll(_parsePropertyCategories(
+                responseData['data']['property_category']));
           }
 
           if (responseData['data']['state_list'] != null) {
             statesList.assignAll(
-                _parseStateList(responseData['data']['state_list'])
-            );
+                _parseStateList(responseData['data']['state_list']));
           }
 
-          if (responseData['data']['price_min'] != null && responseData['data']['price_max'] != null) {
-            priceMin.value = double.tryParse(responseData['data']['price_min'].toString()) ?? 0.0;
-            priceMax.value = double.tryParse(responseData['data']['price_max'].toString()) ?? 10000000.0;
+          if (responseData['data']['price_min'] != null &&
+              responseData['data']['price_max'] != null) {
+            priceMin.value = double.tryParse(
+                responseData['data']['price_min'].toString()) ??
+                0.0;
+            priceMax.value = double.tryParse(
+                responseData['data']['price_max'].toString()) ??
+                10000000.0;
           }
 
-          if (responseData['data']['sqft_min'] != null && responseData['data']['sqft_max'] != null) {
+          if (responseData['data']['sqft_min'] != null &&
+              responseData['data']['sqft_max'] != null) {
             sqftMin.value = responseData['data']['sqft_min'] ?? 0;
             sqftMax.value = responseData['data']['sqft_max'] ?? 10000;
           }
 
-          // Update pagination info
           if (responseData['data']['pagination'] != null) {
             final pagination = responseData['data']['pagination'];
             final int apiCurrentPage = pagination['current_page'] ?? 1;
             final int apiLastPage = pagination['last_page'] ?? 1;
             final int apiTotal = pagination['total'] ?? 0;
 
-            // Ensure our current page matches API's current page
             if (apiCurrentPage != currentPage.value) {
-              print('⚠️ Page mismatch: Local=$currentPage, API=$apiCurrentPage');
+              print(
+                  '⚠️ Page mismatch: Local=$currentPage, API=$apiCurrentPage');
               currentPage.value = apiCurrentPage;
             }
 
             totalPages.value = apiLastPage;
             totalItems.value = apiTotal;
             perPage.value = pagination['per_page'] ?? 10;
-
-            // Update hasMoreData based on API response
             hasMoreData.value = apiCurrentPage < apiLastPage;
 
-            print('📊 Pagination: Page $apiCurrentPage of $apiLastPage, Total: $apiTotal');
+            print(
+                '📊 Pagination: Page $apiCurrentPage of $apiLastPage, Total: $apiTotal');
           }
 
-          print('✅ Fetched ${propertyList.length} properties, Total in list: ${properties.length}');
+          print(
+              '✅ Fetched ${propertyList.length} properties, Total in list: ${properties.length}');
         } else {
-          errorMessage(responseData['message'] ?? 'Failed to fetch properties');
+          errorMessage(
+              responseData['message'] ?? 'Failed to fetch properties');
           SnackBarHelper.showError(errorMessage.value);
         }
       } else {
@@ -195,23 +246,20 @@ class ResidentialPropertyController extends GetxController {
       errorMessage('Network error: $e');
       SnackBarHelper.showError('Network error occurred');
       print('❌ Error fetching properties: $e');
-
-      // If loadMore fails, decrement the page counter
-      if (loadMore) {
-        currentPage.value--;
-      }
+      if (loadMore) currentPage.value--;
     } finally {
       isLoading(false);
       isLoadMore(false);
     }
   }
+
   Future<void> loadMoreProperties() async {
-    // Prevent multiple simultaneous loadMore calls
     if (hasMoreData.value && !isLoadMore.value && !isLoading.value) {
       print('⬇️ Loading more properties...');
       await fetchProperties(loadMore: true);
     }
   }
+
   Future<void> refreshProperties() async {
     await fetchProperties(refresh: true);
   }
@@ -220,7 +268,8 @@ class ResidentialPropertyController extends GetxController {
     try {
       isLoadingDetail(true);
       detailErrorMessage('');
-      final url = '${ApiUrl.baseUrl}/api/v2/plot_details/$propertyId';
+      final url =
+          '${ApiUrl.baseUrl}/api/v2/plot_details/$propertyId';
       print('🌐 Fetching Property Detail URL: $url');
 
       final response = await ApiService.getRequest(url);
@@ -228,18 +277,23 @@ class ResidentialPropertyController extends GetxController {
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == true) {
-          propertyDetail.value = Property.fromJson(responseData['data']);
-          print('✅ Fetched property detail: ${propertyDetail.value?.propertyName}');
+          propertyDetail.value =
+              Property.fromJson(responseData['data']);
+          print(
+              '✅ Fetched property detail: ${propertyDetail.value?.propertyName}');
         } else {
-          detailErrorMessage(responseData['message'] ?? 'Failed to fetch property details');
+          detailErrorMessage(responseData['message'] ??
+              'Failed to fetch property details');
           SnackBarHelper.showError(detailErrorMessage.value);
         }
       } else if (response.statusCode == 404) {
         detailErrorMessage('Property not found');
         SnackBarHelper.showError('Property not found');
       } else {
-        detailErrorMessage('Server error: ${response.statusCode}');
-        SnackBarHelper.showError('Failed to fetch property details');
+        detailErrorMessage(
+            'Server error: ${response.statusCode}');
+        SnackBarHelper.showError(
+            'Failed to fetch property details');
       }
     } catch (e) {
       detailErrorMessage('Network error: $e');
@@ -275,11 +329,13 @@ class ResidentialPropertyController extends GetxController {
     try {
       final url = '${ApiUrl.baseUrl}/api/v2/city/$stateId';
       final response = await ApiService.getRequest(url);
-      if (response.statusCode == 200 && response.data['status'] == 200) {
-        citiesList.assignAll(
-            (response.data['data'] as List).map((item) => CityModel.fromJson(item)).toList()
-        );
-        print('✅ Loaded ${citiesList.length} cities for state $stateId');
+      if (response.statusCode == 200 &&
+          response.data['status'] == 200) {
+        citiesList.assignAll((response.data['data'] as List)
+            .map((item) => CityModel.fromJson(item))
+            .toList());
+        print(
+            '✅ Loaded ${citiesList.length} cities for state $stateId');
       }
     } catch (e) {
       print('❌ Error fetching cities: $e');
@@ -292,9 +348,7 @@ class ResidentialPropertyController extends GetxController {
     citiesList.clear();
     currentPage.value = 1;
     await fetchProperties();
-    if (stateId > 0) {
-      await fetchCitiesByState(stateId);
-    }
+    if (stateId > 0) await fetchCitiesByState(stateId);
   }
 
   Future<void> filterByCity(int cityId) async {
@@ -309,35 +363,32 @@ class ResidentialPropertyController extends GetxController {
     await fetchProperties();
   }
 
+  // kept for backward compat — not used by the new search bar
   void onSearchChanged(String query) {
     searchQuery.value = query;
-
     if (_searchDebounce?.isActive ?? false) _searchDebounce?.cancel();
-
     _searchDebounce = Timer(const Duration(milliseconds: 10000000), () {
-      // Only search if query has at least 5 characters
       if (query.trim().length >= 15) {
         currentPage.value = 1;
         fetchProperties();
-      }
-      // Clear search if query is empty and we previously had a search query
-      else if (query.isEmpty && searchQuery.value.isNotEmpty) {
+      } else if (query.isEmpty && searchQuery.value.isNotEmpty) {
         searchQuery.value = '';
         currentPage.value = 1;
         fetchProperties();
       }
-      // If query is between 1-4 characters, do nothing (wait for more input)
-      else if (query.trim().isNotEmpty && query.trim().length < 5) {
-        // Optionally: You could show a hint message here
-        // like "Type at least 5 characters to search"
-      }
     });
   }
+
   void clearSearch() {
     searchQuery.value = '';
     searchController.clear();
-    currentPage.value = 1;
-    fetchProperties();
+    searchSuggestions.clear(); // ← NEW
+    if (_allProperties.isNotEmpty) {
+      properties.assignAll(_allProperties); // ← NEW: restore without network call
+    } else {
+      currentPage.value = 1;
+      fetchProperties();
+    }
   }
 
   void onSearchSubmitted(String value) {
@@ -348,7 +399,8 @@ class ResidentialPropertyController extends GetxController {
     }
   }
 
-  Future<void> sortProperties(String field, {String order = 'desc'}) async {
+  Future<void> sortProperties(String field,
+      {String order = 'desc'}) async {
     sortBy.value = field;
     sortOrder.value = order;
     currentPage.value = 1;
@@ -359,6 +411,7 @@ class ResidentialPropertyController extends GetxController {
     selectedStateId.value = 0;
     selectedCityId.value = 0;
     selectedCategoryId.value = 0;
+    selectedCountryId.value = 0; // ← NEW
     selectedMinPrice.value = '';
     selectedMaxPrice.value = '';
     selectedMinArea.value = '';
@@ -367,6 +420,7 @@ class ResidentialPropertyController extends GetxController {
     selectedTransactionType.value = '';
     selectedPostedBy.value = '';
     searchQuery.value = '';
+    searchSuggestions.clear(); // ← NEW
     sortBy.value = 'created_at';
     sortOrder.value = 'desc';
     citiesList.clear();
@@ -375,8 +429,8 @@ class ResidentialPropertyController extends GetxController {
   }
 
   void toggleFilters() => showFilters.value = !showFilters.value;
-
-  void toggleAdvancedFilters() => showAdvancedFilters.value = !showAdvancedFilters.value;
+  void toggleAdvancedFilters() =>
+      showAdvancedFilters.value = !showAdvancedFilters.value;
 
   Future<void> applyFilters() async {
     showFilters.value = false;
@@ -402,7 +456,6 @@ class ResidentialPropertyController extends GetxController {
         SnackBarHelper.showError('Property details not loaded');
         return;
       }
-
       if (isEnquiryLoading.value) return;
       isEnquiryLoading.value = true;
 
@@ -414,7 +467,6 @@ class ResidentialPropertyController extends GetxController {
         SnackBarHelper.showError('User information not found');
         return;
       }
-
       if (token == null || token.isEmpty) {
         isEnquiryLoading.value = false;
         SnackBarHelper.showError('Please login to send enquiry');
@@ -442,21 +494,18 @@ class ResidentialPropertyController extends GetxController {
         if (responseData['status'] == true) {
           enquirySent.value = true;
           SnackBarHelper.showSuccess(
-            responseData['message'] ?? 'Enquiry sent successfully!',
-          );
+              responseData['message'] ?? 'Enquiry sent successfully!');
           Future.delayed(const Duration(milliseconds: 500), () {
             isEnquiryLoading.value = false;
           });
         } else {
           SnackBarHelper.showError(
-            responseData['message'] ?? 'Failed to send enquiry',
-          );
+              responseData['message'] ?? 'Failed to send enquiry');
           isEnquiryLoading.value = false;
         }
       } else {
         SnackBarHelper.showError(
-          'Failed to send enquiry. Status: ${response.statusCode}',
-        );
+            'Failed to send enquiry. Status: ${response.statusCode}');
         isEnquiryLoading.value = false;
       }
     } catch (e) {
@@ -466,17 +515,15 @@ class ResidentialPropertyController extends GetxController {
     }
   }
 
-  List<Property> _parseProperties(List<dynamic> data) {
-    return data.map((item) => Property.fromJson(item)).toList();
-  }
+  List<Property> _parseProperties(List<dynamic> data) =>
+      data.map((item) => Property.fromJson(item)).toList();
 
-  List<PropertyCategory> _parsePropertyCategories(List<dynamic> data) {
-    return data.map((item) => PropertyCategory.fromJson(item)).toList();
-  }
+  List<PropertyCategory> _parsePropertyCategories(
+      List<dynamic> data) =>
+      data.map((item) => PropertyCategory.fromJson(item)).toList();
 
-  List<StateList> _parseStateList(List<dynamic> data) {
-    return data.map((item) => StateList.fromJson(item)).toList();
-  }
+  List<StateList> _parseStateList(List<dynamic> data) =>
+      data.map((item) => StateList.fromJson(item)).toList();
 
   String _buildQueryParams() {
     final params = <String>[
@@ -495,6 +542,10 @@ class ResidentialPropertyController extends GetxController {
     }
     if (selectedCategoryId.value > 0) {
       params.add('category_id=${selectedCategoryId.value}');
+    }
+    if (selectedCountryId.value > 0) {
+      // ← NEW
+      params.add('country_id=${selectedCountryId.value}');
     }
     if (selectedMinPrice.value.isNotEmpty) {
       params.add('min_price=${selectedMinPrice.value}');
@@ -523,11 +574,13 @@ class ResidentialPropertyController extends GetxController {
     return params.join('&');
   }
 
-  // Helper getters
+  // ─── Helper getters ───────────────────────────────────────────────────────
+
   bool get hasFiltersApplied {
     return selectedStateId.value > 0 ||
         selectedCityId.value > 0 ||
         selectedCategoryId.value > 0 ||
+        selectedCountryId.value > 0 || // ← NEW
         selectedMinPrice.value.isNotEmpty ||
         selectedMaxPrice.value.isNotEmpty ||
         selectedMinArea.value.isNotEmpty ||
@@ -543,8 +596,11 @@ class ResidentialPropertyController extends GetxController {
     if (selectedStateId.value > 0) count++;
     if (selectedCityId.value > 0) count++;
     if (selectedCategoryId.value > 0) count++;
-    if (selectedMinPrice.value.isNotEmpty || selectedMaxPrice.value.isNotEmpty) count++;
-    if (selectedMinArea.value.isNotEmpty || selectedMaxArea.value.isNotEmpty) count++;
+    if (selectedCountryId.value > 0) count++; // ← NEW
+    if (selectedMinPrice.value.isNotEmpty ||
+        selectedMaxPrice.value.isNotEmpty) count++;
+    if (selectedMinArea.value.isNotEmpty ||
+        selectedMaxArea.value.isNotEmpty) count++;
     if (selectedAmenities.isNotEmpty) count++;
     if (selectedTransactionType.value.isNotEmpty) count++;
     if (selectedPostedBy.value.isNotEmpty) count++;
@@ -552,27 +608,21 @@ class ResidentialPropertyController extends GetxController {
     return count;
   }
 
-  Property? getPropertyById(int id) {
-    return properties.firstWhereOrNull((p) => p.id == id);
-  }
+  Property? getPropertyById(int id) =>
+      properties.firstWhereOrNull((p) => p.id == id);
 
-  List<Property> getPropertiesByCategory(int categoryId) {
-    return properties.where((p) => p.categoryId == categoryId).toList();
-  }
+  List<Property> getPropertiesByCategory(int categoryId) =>
+      properties.where((p) => p.categoryId == categoryId).toList();
 
-  List<Property> get verifiedProperties {
-    return properties.where((p) => p.isVerified).toList();
-  }
+  List<Property> get verifiedProperties =>
+      properties.where((p) => p.isVerified).toList();
 
-  List<Property> get featuredProperties {
-    return properties.take(5).toList();
-  }
+  List<Property> get featuredProperties => properties.take(5).toList();
 
-  List<Property> get recentlyAddedProperties {
-    return properties
-        .where((p) => p.createdAt.isAfter(DateTime.now().subtract(const Duration(days: 30))))
-        .toList();
-  }
+  List<Property> get recentlyAddedProperties => properties
+      .where((p) => p.createdAt
+      .isAfter(DateTime.now().subtract(const Duration(days: 30))))
+      .toList();
 
   List<AmenityItem> get availableAmenities {
     final amenityMap = <int, AmenityItem>{};
@@ -585,8 +635,6 @@ class ResidentialPropertyController extends GetxController {
     }
     return amenityMap.values.toList();
   }
-// Add these methods to your ResidentialPropertyFormController class
-
 
   @override
   void onClose() {

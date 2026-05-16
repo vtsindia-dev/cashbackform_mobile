@@ -532,13 +532,18 @@ class VendorStoreController extends GetxController {
       SnackBarHelper.showError('Please enter email');
       return false;
     }
-
     if (!GetUtils.isEmail(emailController.text.trim())) {
       SnackBarHelper.showError('Please enter a valid email');
       return false;
     }
     if (websiteController.text.trim().isEmpty) {
       SnackBarHelper.showError('Please enter website');
+      return false;
+    }
+
+    final websiteUrl = websiteController.text.trim();
+    if (!_isValidWebsiteUrl(websiteUrl)) {
+      SnackBarHelper.showError('Please enter a valid website URL (e.g., https://example.com or www.example.com)');
       return false;
     }
     if (addressController.text.trim().isEmpty) {
@@ -558,7 +563,7 @@ class VendorStoreController extends GetxController {
       return false;
     }
 
-    // 🆕 Validate new fields
+    // Validate GST
     if (gstController.text.trim().isEmpty) {
       SnackBarHelper.showError('Please enter GST number');
       return false;
@@ -577,6 +582,33 @@ class VendorStoreController extends GetxController {
     return true;
   }
 
+  bool _isValidWebsiteUrl(String url) {
+    url = url.trim();
+    if (url.isEmpty) return false;
+    final urlPattern = r'^(https?:\/\/)?'
+        r'((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|'
+        r'((\d{1,3}\.){3}\d{1,3}))'
+        r'(:\d+)?(\/[-a-z\d%_.~+]*)*'
+        r'(\?[;&a-z\d%_.~+=-]*)?'
+        r'(\#[-a-z\d_]*)?$';
+    final regex = RegExp(urlPattern, caseSensitive: false);
+    if (!regex.hasMatch(url)) {
+      return false;
+    }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      final parts = url.split('.');
+      if (parts.length < 2) return false;
+      final tld = parts.last;
+      const validTlds = [
+        'com', 'org', 'net', 'edu', 'gov', 'io', 'co', 'in', 'uk', 'us',
+        'au', 'ca', 'de', 'fr', 'jp', 'br', 'mx', 'it', 'es', 'nl',
+        'ru', 'za', 'com.au', 'co.uk', 'co.in', 'app', 'dev', 'tech'
+      ];
+      return true;
+    }
+
+    return true;
+  }
 
   Future<Map<String, dynamic>> createStore() async {
     try {
