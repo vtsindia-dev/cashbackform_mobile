@@ -85,5 +85,4 @@ class ApiUrl {
   static const String enhancePostApi = '$baseUrl/api/v2/enhancement';
   static String enhancementListApi = '$baseUrl/api/v2/enhancement_list';
 
-
 }

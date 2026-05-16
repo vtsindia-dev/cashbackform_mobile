@@ -50,70 +50,70 @@ class ProfileDashboardResponse {
 }
 
 class Profile {
-  final int id;
+  final int? id;
   final Role? role;
-  final int isVendor;
-  final int isAgent;
-  final int isServices;
-  final String name;
-  final String email;
+  final int? isVendor;
+  final int? isAgent;
+  final int? isServices;
+  final String? name;
+  final String? email;
   final String? emailVerifiedAt;
   final int? referenceId;
   final String? code;
-  final String dob;
-  final String avatar;
-  final String pin;
-  final int gender;
-  final String address;
-  final String phone;
-  final int status;
-  final int agentRequest;
-  final int vendorRequest;
-  final int serviceRequest;
-  final String firstName;
-  final String lastName;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String? dob;
+  final String? avatar;
+  final String? pin;
+  final int? gender;
+  final String? address;
+  final String? phone;
+  final int? status;
+  final int? agentRequest;
+  final int? vendorRequest;
+  final int? serviceRequest;
+  final String? firstName;
+  final String? lastName;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final String? fcmToken;
-  final int isDeleted;
-  final String walletBalance;
-  final int countryId;
-  final int stateId;
-  final int cityId;
-  final String cumulativeAmount;
+  final int? isDeleted;
+  final String? walletBalance;
+  final int? countryId;
+  final int? stateId;
+  final int? cityId;
+  final String? cumulativeAmount;
 
   Profile({
-    required this.id,
+    this.id,
     this.role,
-    required this.isVendor,
-    required this.isAgent,
-    required this.isServices,
-    required this.name,
-    required this.email,
+    this.isVendor,
+    this.isAgent,
+    this.isServices,
+    this.name,
+    this.email,
     this.emailVerifiedAt,
     this.referenceId,
     this.code,
-    required this.dob,
-    required this.avatar,
-    required this.pin,
-    required this.gender,
-    required this.address,
-    required this.phone,
-    required this.status,
-    required this.agentRequest,
-    required this.vendorRequest,
-    required this.serviceRequest,
-    required this.firstName,
-    required this.lastName,
-    required this.createdAt,
-    required this.updatedAt,
+    this.dob,
+    this.avatar,
+    this.pin,
+    this.gender,
+    this.address,
+    this.phone,
+    this.status,
+    this.agentRequest,
+    this.vendorRequest,
+    this.serviceRequest,
+    this.firstName,
+    this.lastName,
+    this.createdAt,
+    this.updatedAt,
     this.fcmToken,
-    required this.isDeleted,
-    required this.walletBalance,
-    required this.countryId,
-    required this.stateId,
-    required this.cityId,
-    required this.cumulativeAmount,
+    this.isDeleted,
+    this.walletBalance,
+    this.countryId,
+    this.stateId,
+    this.cityId,
+    this.cumulativeAmount,
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {

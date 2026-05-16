@@ -152,7 +152,7 @@ class _DashboardState extends State<Dashboard> {
               bottom: 40,
               left: 0,
               right: 0,
-              child: Container(
+              child: SizedBox(
                 height: 120,
                 child: Stack(
                   children: [
@@ -256,7 +256,7 @@ class _DashboardState extends State<Dashboard> {
         curve: Curves.easeInOut,
         child: FloatingActionButton(
           onPressed: _onFabTapped,
-          backgroundColor: _isPlotExpanded ? AppColor.primary.withOpacity(0.8) : AppColor.primary,
+          backgroundColor: _isPlotExpanded ? AppColor.primary.withValues(alpha: 0.8) : AppColor.primary,
           elevation: _isPlotExpanded ? 12 : 4,
           child: Stack(
             alignment: Alignment.center,
@@ -328,7 +328,7 @@ class _DashboardState extends State<Dashboard> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
+                    color: Colors.black.withValues(alpha:0.25),
                     blurRadius: 8,
                     spreadRadius: 2,
                     offset: const Offset(0, 4),
@@ -351,7 +351,7 @@ class _DashboardState extends State<Dashboard> {
                 borderRadius: BorderRadius.circular(6),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha:0.1),
                     blurRadius: 3,
                     offset: const Offset(0, 1),
                   ),
@@ -413,12 +413,12 @@ class _MenuLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final linePaint = Paint()
-      ..color = AppColor.primary.withOpacity(0.3 * menuAnimationValue)
+      ..color = AppColor.primary.withValues(alpha:0.3 * menuAnimationValue)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
     final dotPaint = Paint()
-      ..color = AppColor.primary.withOpacity(menuAnimationValue)
+      ..color = AppColor.primary.withValues(alpha:menuAnimationValue)
       ..style = PaintingStyle.fill;
     final fabX = size.width / 2;
     final fabY = size.height;
@@ -483,7 +483,7 @@ class _MenuLinePainter extends CustomPainter {
         if (tangent != null) {
           canvas.drawCircle(tangent.position, 4, dotPaint);
           final glowPaint = Paint()
-            ..color = AppColor.primary.withOpacity((0.5 - (segmentProgress * 0.3)) * menuAnimationValue)
+            ..color = AppColor.primary.withValues(alpha:(0.5 - (segmentProgress * 0.3)) * menuAnimationValue)
             ..style = PaintingStyle.fill;
           canvas.drawCircle(tangent.position, 6, glowPaint);
 
@@ -492,7 +492,7 @@ class _MenuLinePainter extends CustomPainter {
             final leadTangent = pathMetric.getTangentForOffset(pathMetric.length * leadProgress);
             if (leadTangent != null) {
               final leadPaint = Paint()
-                ..color = AppColor.primary.withOpacity(0.3 * menuAnimationValue)
+                ..color = AppColor.primary.withValues(alpha:0.3 * menuAnimationValue)
                 ..style = PaintingStyle.fill;
               canvas.drawCircle(leadTangent.position, 2, leadPaint);
             }

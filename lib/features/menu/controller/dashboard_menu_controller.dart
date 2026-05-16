@@ -1,4 +1,6 @@
 import 'package:cashback_farms/common/model/logger_model.dart';
+import 'package:cashback_farms/features/profile/controller/profile_controller.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dio/dio.dart';
@@ -8,6 +10,7 @@ import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../model/dashboard_model.dart';
+import '../screens/menu.dart';
 extension StringExtension on String {
   String toTitleCase() {
     if (isEmpty) return this;
@@ -81,7 +84,6 @@ class DashboardController extends GetxController {
     super.onInit();
     _setupControllerListeners();
     fetchBusinessSettings();
-    _fetchInitialRoleBasedData();
   }
 
   @override
@@ -94,13 +96,39 @@ class DashboardController extends GetxController {
     messageController.dispose();
     super.onClose();
   }
-  Future<void> _fetchInitialRoleBasedData() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (profile.value != null) {
-      final role = profile.value?.role?.role ?? 'User';
-      await fetchDataForRole(role);
+
+
+  final ProfileController controller = Get.put(ProfileController());
+  final RxMap<RoleType, bool> roleLoadingMap = <RoleType, bool>{
+    RoleType.agent:   false,
+    RoleType.vendor:  false,
+    RoleType.service: false,
+  }.obs;
+
+  final ProfileController profileController = Get.put(ProfileController());
+
+
+  Future<void> applyForRole(RoleType roleType) async {
+    roleLoadingMap[roleType] = true;
+    switch (roleType) {
+      case RoleType.agent:
+        await fetchAgentRequests();
+        break;
+      case RoleType.vendor:
+        await fetchVendorRequests();
+        break;
+      case RoleType.service:
+        await fetchServiceRequests();
+        break;
     }
+    await fetchDashboard();
+    roleLoadingMap[roleType] = false;
   }
+
+
+
+
+
   void _setupControllerListeners() {
     firstNameController.addListener(() => firstName.value = firstNameController.text);
     lastNameController.addListener(() => lastName.value = lastNameController.text);
@@ -109,22 +137,8 @@ class DashboardController extends GetxController {
     requirementController.addListener(() => requirement.value = requirementController.text);
     messageController.addListener(() => message.value = messageController.text);
   }
-  Future<void> fetchDataForRole(String role) async {
-    currentRole.value = role;
-    switch(role.toLowerCase()) {
-      case 'agent':
-        await fetchAgentRequests();
-        break;
-      case 'vendor':
-        await fetchVendorRequests();
-        break;
-      case 'service':
-      case 'user':
-      default:
-        await fetchServiceRequests();
-        break;
-    }
-  }
+
+
 
   Future<void> fetchServiceRequests() async {
     if (_isServiceRequestInProgress) {
@@ -141,9 +155,12 @@ class DashboardController extends GetxController {
         headers: {'Authorization': 'Bearer $token'},
       );
       if (response.statusCode == 200 && response.data != null) {
-        if (response.data['status'] == true) {
+        if (response.data['status'] == 200) {
           final List<dynamic> data = response.data['data'] ?? [];
           serviceRequests.assignAll(data);
+          SnackBarHelper.showSuccess(
+            response.data['message'] ?? 'Your Service request has been submitted.',
+          );
           print('✅ Service requests loaded successfully: ${serviceRequests.length} items');
         } else {
           print('⚠️ Failed to load service requests: ${response.data['message']}');
@@ -180,6 +197,9 @@ class DashboardController extends GetxController {
         if (response.data['status'] == true) {
           final List<dynamic> data = response.data['data'] ?? [];
           vendorRequests.assignAll(data);
+          SnackBarHelper.showSuccess(
+            response.data['message'] ?? 'Your Vendor request has been submitted.',
+          );
           print('✅ Vendor requests loaded successfully: ${vendorRequests.length} items');
         } else {
           print('⚠️ Failed to load vendor requests: ${response.data['message']}');
@@ -211,11 +231,14 @@ class DashboardController extends GetxController {
         headers: {'Authorization': 'Bearer $token'},
       );
 
+
       if (response.statusCode == 200 && response.data != null) {
         if (response.data['status'] == true) {
           final List<dynamic> data = response.data['data'] ?? [];
           agentRequests.assignAll(data);
-          print('✅ Agent requests loaded successfully:  ${agentRequests.length} items');
+          SnackBarHelper.showSuccess(
+            response.data['message'] ?? 'Your Agent request has been submitted.',
+          );
         } else {
           print('⚠️ Failed to load agent requests: ${response.data['message']}');
         }
@@ -289,8 +312,6 @@ class DashboardController extends GetxController {
 
         if (data['profile'] != null) {
           profile.value = Profile.fromJson(data['profile']);
-          final role = profile.value?.role?.role ?? 'User';
-          fetchDataForRole(role);
         }
 
         myProperties.value = data['myproperties'] ?? 0;
@@ -830,13 +851,9 @@ class DashboardController extends GetxController {
     fetchBusinessSettings();
   }
 
-  void refreshRoleBasedData() {
-    fetchDataForRole(currentRole.value);
-  }
 
   void refreshAll() {
     fetchDashboard();
     fetchBusinessSettings();
-    refreshRoleBasedData();
   }
 }

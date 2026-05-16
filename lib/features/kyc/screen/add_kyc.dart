@@ -1,5 +1,3 @@
-// widgets/kyc_document_form.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,8 +7,13 @@ import '../controller/kyc_controller.dart';
 
 class KYCDocumentForm extends StatelessWidget {
   final KYCController controller;
+  final bool isEditMode;
 
-  const KYCDocumentForm({Key? key, required this.controller}) : super(key: key);
+  const KYCDocumentForm({
+    Key? key,
+    required this.controller,
+    this.isEditMode = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -43,21 +46,35 @@ class KYCDocumentForm extends StatelessWidget {
                   _buildAadharField(),
                   SizedBox(height: 24),
                   _buildSectionLabel('Upload Documents'),
+                  if (isEditMode) ...[
+                    SizedBox(height: 6),
+                    _buildEditDocHint(),
+                  ],
                   SizedBox(height: 12),
                   _buildDocumentUpload(
                     label: 'PAN Card',
-                    hint: 'Front side of your PAN card',
+                    hint: isEditMode
+                        ? 'Upload new PAN card to replace existing'
+                        : 'Front side of your PAN card',
                     icon: Icons.badge_rounded,
                     docType: 'pan',
                     file: controller.panDoc,
+                    existingUrl: isEditMode
+                        ? controller.editingKYC.value?.panDoc
+                        : null,
                   ),
                   SizedBox(height: 12),
                   _buildDocumentUpload(
                     label: 'Aadhar Card',
-                    hint: 'Front side of Aadhar card',
+                    hint: isEditMode
+                        ? 'Upload new Aadhar card to replace existing'
+                        : 'Front side of Aadhar card',
                     icon: Icons.credit_card_rounded,
                     docType: 'aadhar',
                     file: controller.aadharDoc,
+                    existingUrl: isEditMode
+                        ? controller.editingKYC.value?.aadharDoc
+                        : null,
                   ),
                   SizedBox(height: 12),
                   _buildSignatureSection(),
@@ -73,7 +90,7 @@ class KYCDocumentForm extends StatelessWidget {
       ),
     );
   }
-
+  
   Widget _buildHandle() {
     return Padding(
       padding: EdgeInsets.only(top: 12, bottom: 4),
@@ -81,7 +98,7 @@ class KYCDocumentForm extends StatelessWidget {
         width: 40,
         height: 4,
         decoration: BoxDecoration(
-          color: AppColor.grey.withOpacity(0.35),
+          color: AppColor.grey.withValues(alpha:0.35),
           borderRadius: BorderRadius.circular(10),
         ),
       ),
@@ -96,10 +113,16 @@ class KYCDocumentForm extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.12),
+              color: isEditMode
+                  ? AppColor.primary.withValues(alpha:0.12)
+                  : AppColor.primary.withValues(alpha:0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.shield_rounded, color: AppColor.primary, size: 22),
+            child: Icon(
+              isEditMode ? Icons.edit_rounded : Icons.shield_rounded,
+              color: isEditMode ? AppColor.primary : AppColor.primary,
+              size: 22,
+            ),
           ),
           SizedBox(width: 12),
           Expanded(
@@ -107,7 +130,7 @@ class KYCDocumentForm extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Add KYC Document',
+                  isEditMode ? 'Edit KYC Document' : 'Add KYC Document',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -115,8 +138,11 @@ class KYCDocumentForm extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Fill all details to complete verification',
-                  style: TextStyle(fontSize: 12, color: AppColor.textSecondary),
+                  isEditMode
+                      ? 'Update your KYC details below'
+                      : 'Fill all details to complete verification',
+                  style:
+                  TextStyle(fontSize: 12, color: AppColor.textSecondary),
                 ),
               ],
             ),
@@ -124,7 +150,11 @@ class KYCDocumentForm extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.close_rounded, color: AppColor.textSecondary),
             onPressed: () {
-              controller.clearForm();
+              if (isEditMode) {
+                controller.cancelEdit();
+              } else {
+                controller.clearForm();
+              }
               Get.back();
             },
           ),
@@ -132,21 +162,25 @@ class KYCDocumentForm extends StatelessWidget {
       ),
     );
   }
-
+  
   Widget _buildSectionLabel(String label) {
     return Row(
       children: [
-        Container(width: 3, height: 16, decoration: BoxDecoration(
-          color: AppColor.primary,
-          borderRadius: BorderRadius.circular(4),
-        )),
+        Container(
+          width: 3,
+          height: 16,
+          decoration: BoxDecoration(
+            color: isEditMode ? AppColor.primary : AppColor.primary,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
         SizedBox(width: 8),
         Text(
           label.toUpperCase(),
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: AppColor.primary,
+            color: isEditMode ? AppColor.primary : AppColor.primary,
             letterSpacing: 1.2,
           ),
         ),
@@ -154,12 +188,40 @@ class KYCDocumentForm extends StatelessWidget {
     );
   }
 
+ 
+  Widget _buildEditDocHint() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColor.primary.withValues(alpha:0.07),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColor.primary.withValues(alpha:0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded,
+              size: 15, color: AppColor.primary),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Leave documents unchanged to keep existing files.',
+              style: TextStyle(
+                  fontSize: 12, color: AppColor.primary, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+
   Widget _buildNameField() {
     return _KYCTextField(
       label: 'Full Name',
       hint: 'As per official ID',
       icon: Icons.person_outline_rounded,
       initialValue: controller.name.value,
+      accentColor: isEditMode ? AppColor.primary : AppColor.primary,
       onChanged: (v) {
         controller.name.value = v;
         controller.errorMessage.value = '';
@@ -167,7 +229,9 @@ class KYCDocumentForm extends StatelessWidget {
       validator: (v) {
         if (v.isEmpty) return 'Name is required';
         if (v.trim().length < 3) return 'Enter a valid full name';
-        if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(v)) return 'Only alphabets allowed';
+        if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(v)) {
+          return 'Only alphabets allowed';
+        }
         return null;
       },
       inputFormatters: [
@@ -184,13 +248,15 @@ class KYCDocumentForm extends StatelessWidget {
       initialValue: controller.panNo.value,
       maxLength: 10,
       textCapitalization: TextCapitalization.characters,
+      accentColor: isEditMode ? AppColor.primary : AppColor.primary,
       onChanged: (v) {
         controller.panNo.value = v.toUpperCase();
         controller.errorMessage.value = '';
       },
       validator: (v) {
         if (v.isEmpty) return 'PAN Number is required';
-        if (!RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(v.toUpperCase())) {
+        if (!RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$')
+            .hasMatch(v.toUpperCase())) {
           return 'Invalid PAN format (e.g. ABCDE1234F)';
         }
         return null;
@@ -210,6 +276,7 @@ class KYCDocumentForm extends StatelessWidget {
       initialValue: controller.aadharNo.value,
       maxLength: 12,
       keyboardType: TextInputType.number,
+      accentColor: isEditMode ? AppColor.primary : AppColor.primary,
       onChanged: (v) {
         controller.aadharNo.value = v;
         controller.errorMessage.value = '';
@@ -225,6 +292,7 @@ class KYCDocumentForm extends StatelessWidget {
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
     );
   }
+  
 
   Widget _buildDocumentUpload({
     required String label,
@@ -232,24 +300,45 @@ class KYCDocumentForm extends StatelessWidget {
     required IconData icon,
     required String docType,
     required Rx<File?> file,
+    String? existingUrl, 
   }) {
     return Obx(() {
-      final hasFile = file.value != null;
+      final hasNewFile = file.value != null;
+      final hasExisting =
+          existingUrl != null && existingUrl.isNotEmpty && !hasNewFile;
+
+      Color borderColor = AppColor.lightGrey;
+      Color bgColor = AppColor.white;
+
+      if (hasNewFile) {
+        borderColor = AppColor.primary.withValues(alpha:0.4);
+        bgColor = AppColor.primary.withValues(alpha:0.05);
+      } else if (hasExisting) {
+        borderColor = AppColor.success.withValues(alpha:0.4);
+        bgColor = AppColor.success.withValues(alpha:0.04);
+      }
+
       return AnimatedContainer(
         duration: Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: hasFile ? AppColor.primary.withOpacity(0.05) : AppColor.white,
+          color: bgColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: hasFile ? AppColor.primary.withOpacity(0.4) : AppColor.lightGrey,
-            width: hasFile ? 1.5 : 1,
+            color: borderColor,
+            width: (hasNewFile || hasExisting) ? 1.5 : 1,
           ),
         ),
-        child: hasFile
+        child: hasNewFile
             ? _buildFilledDocRow(
           label: label,
           icon: icon,
           file: file.value!,
+          docType: docType,
+        )
+            : hasExisting
+            ? _buildExistingDocRow(
+          label: label,
+          icon: icon,
           docType: docType,
         )
             : _buildEmptyDocRow(
@@ -260,6 +349,75 @@ class KYCDocumentForm extends StatelessWidget {
         ),
       );
     });
+  }
+  
+  Widget _buildExistingDocRow({
+    required String label,
+    required IconData icon,
+    required String docType,
+  }) {
+    return Padding(
+      padding: EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColor.success.withValues(alpha:0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: AppColor.success),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded,
+                        size: 14, color: AppColor.success),
+                    SizedBox(width: 4),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: AppColor.textMain,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Existing file on server — tap to replace',
+                  style: TextStyle(color: AppColor.grey, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => controller.showImagePickerDialog(docType),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColor.primary.withValues(alpha:0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColor.primary.withValues(alpha:0.3)),
+              ),
+              child: Text(
+                'Replace',
+                style: TextStyle(
+                  color: AppColor.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyDocRow({
@@ -288,11 +446,14 @@ class KYCDocumentForm extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label,
-                      style: TextStyle(
-                          color: AppColor.textMain,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14)),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: AppColor.textMain,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
                   SizedBox(height: 2),
                   Text(hint,
                       style: TextStyle(color: AppColor.grey, fontSize: 12)),
@@ -308,9 +469,10 @@ class KYCDocumentForm extends StatelessWidget {
               child: Text(
                 'Upload',
                 style: TextStyle(
-                    color: AppColor.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600),
+                  color: AppColor.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -331,7 +493,8 @@ class KYCDocumentForm extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.file(file, width: 56, height: 56, fit: BoxFit.cover),
+            child:
+            Image.file(file, width: 56, height: 56, fit: BoxFit.cover),
           ),
           SizedBox(width: 12),
           Expanded(
@@ -343,11 +506,14 @@ class KYCDocumentForm extends StatelessWidget {
                     Icon(Icons.check_circle_rounded,
                         size: 14, color: AppColor.success),
                     SizedBox(width: 4),
-                    Text(label,
-                        style: TextStyle(
-                            color: AppColor.textMain,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: AppColor.textMain,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 4),
@@ -361,91 +527,122 @@ class KYCDocumentForm extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.delete_outline_rounded, color: AppColor.error),
+            icon:
+            Icon(Icons.delete_outline_rounded, color: AppColor.error),
             onPressed: () => controller.removeDocument(docType),
           ),
         ],
       ),
     );
   }
+  
 
   Widget _buildSignatureSection() {
     return Obx(() {
-      final hasSign = controller.signDoc.value != null;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AnimatedContainer(
-            duration: Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: hasSign ? AppColor.accent.withOpacity(0.05) : AppColor.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: hasSign ? AppColor.accent.withOpacity(0.4) : AppColor.lightGrey,
-                width: hasSign ? 1.5 : 1,
-              ),
-            ),
-            child: hasSign
-                ? _buildFilledDocRow(
-              label: 'Signature',
-              icon: Icons.draw_rounded,
-              file: controller.signDoc.value!,
-              docType: 'sign',
-            )
-                : InkWell(
-              onTap: controller.showSignatureOptions,
-              borderRadius: BorderRadius.circular(14),
-              child: Padding(
-                padding: EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColor.accent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(Icons.draw_rounded,
-                          size: 20, color: AppColor.accent),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Signature',
-                              style: TextStyle(
-                                  color: AppColor.textMain,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14)),
-                          SizedBox(height: 2),
-                          Text('Draw or upload your signature',
-                              style: TextStyle(
-                                  color: AppColor.grey, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColor.accent,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'Add',
-                        style: TextStyle(
-                            color: AppColor.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
+      final hasSign = controller.signDoc.value != null ||
+          controller.capturedSignature.value != null;
+      final existingSignUrl =
+      isEditMode ? controller.editingKYC.value?.signDoc : null;
+      final hasExistingSign = existingSignUrl != null &&
+          existingSignUrl.isNotEmpty &&
+          !hasSign;
+
+      Color borderColor = AppColor.lightGrey;
+      Color bgColor = AppColor.white;
+      if (hasSign) {
+        borderColor = AppColor.primary.withValues(alpha:0.4);
+        bgColor = AppColor.primary.withValues(alpha:0.05);
+      } else if (hasExistingSign) {
+        borderColor = AppColor.success.withValues(alpha:0.4);
+        bgColor = AppColor.success.withValues(alpha:0.04);
+      }
+
+      final signFile =
+          controller.signDoc.value ?? controller.capturedSignature.value;
+
+      return AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: borderColor,
+            width: (hasSign || hasExistingSign) ? 1.5 : 1,
+          ),
+        ),
+        child: hasSign && signFile != null
+            ? _buildFilledDocRow(
+          label: 'Signature',
+          icon: Icons.draw_rounded,
+          file: signFile,
+          docType: 'sign',
+        )
+            : hasExistingSign
+            ? _buildExistingDocRow(
+          label: 'Signature',
+          icon: Icons.draw_rounded,
+          docType: 'sign',
+        )
+            : InkWell(
+          onTap: controller.showSignatureOptions,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColor.primary.withValues(alpha:0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.draw_rounded,
+                      size: 20, color: AppColor.primary),
                 ),
-              ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Signature',
+                        style: TextStyle(
+                          color: AppColor.textMain,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        isEditMode
+                            ? 'Draw or upload to replace signature'
+                            : 'Draw or upload your signature',
+                        style: TextStyle(
+                            color: AppColor.grey, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColor.primary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    isEditMode ? 'Replace' : 'Add',
+                    style: TextStyle(
+                      color: AppColor.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       );
     });
   }
@@ -457,41 +654,48 @@ class KYCDocumentForm extends StatelessWidget {
         margin: EdgeInsets.only(bottom: 16),
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColor.error.withOpacity(0.08),
+          color: AppColor.error.withValues(alpha:0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColor.error.withOpacity(0.25)),
+          border: Border.all(color: AppColor.error.withValues(alpha:0.25)),
         ),
         child: Row(
           children: [
-            Icon(Icons.error_outline_rounded, color: AppColor.error, size: 18),
+            Icon(Icons.error_outline_rounded,
+                color: AppColor.error, size: 18),
             SizedBox(width: 10),
             Expanded(
               child: Text(
                 controller.errorMessage.value,
-                style: TextStyle(color: AppColor.error, fontSize: 13, height: 1.4),
+                style: TextStyle(
+                    color: AppColor.error, fontSize: 13, height: 1.4),
               ),
             ),
             GestureDetector(
               onTap: () => controller.errorMessage.value = '',
-              child: Icon(Icons.close_rounded, color: AppColor.error, size: 16),
+              child: Icon(Icons.close_rounded,
+                  color: AppColor.error, size: 16),
             ),
           ],
         ),
       );
     });
   }
+  
 
   Widget _buildSubmitButton() {
     return Obx(() => SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: controller.isSubmitting.value ? null : _onSubmit,
+        onPressed:
+        controller.isSubmitting.value ? null : _onSubmit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColor.primary,
-
+          backgroundColor:
+          isEditMode ? AppColor.primary : AppColor.primary,
           foregroundColor: AppColor.white,
-          disabledBackgroundColor: AppColor.primary.withOpacity(0.5),
+          disabledBackgroundColor: isEditMode
+              ? AppColor.primary.withValues(alpha:0.5)
+              : AppColor.primary.withValues(alpha:0.5),
           elevation: 0,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14)),
@@ -507,23 +711,37 @@ class KYCDocumentForm extends StatelessWidget {
                   strokeWidth: 2, color: AppColor.white),
             ),
             SizedBox(width: 10),
-            Text('Submitting...',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 15)),
+            Text(
+              isEditMode ? 'Updating...' : 'Submitting...',
+              style: TextStyle(
+                  fontWeight: FontWeight.w600, fontSize: 15),
+            ),
           ],
         )
-            : Text(
-          'Submit KYC',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            : Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isEditMode
+                  ? Icons.save_rounded
+                  : Icons.shield_rounded,
+              size: 18,
+            ),
+            SizedBox(width: 8),
+            Text(
+              isEditMode ? 'Update KYC' : 'Submit KYC',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+          ],
         ),
       ),
     ));
   }
+  
 
   Future<void> _onSubmit() async {
-    // Run inline validation before calling controller
     final nameErr = _validateName(controller.name.value);
-
     final panErr = _validatePAN(controller.panNo.value);
     final aadharErr = _validateAadhar(controller.aadharNo.value);
 
@@ -540,22 +758,29 @@ class KYCDocumentForm extends StatelessWidget {
       return;
     }
 
-    final result = await controller.submitKYC();
+    final result = isEditMode
+        ? await controller.updateKYC()
+        : await controller.submitKYC();
+
     if (result['status'] == 200) {
       Get.back();
     }
   }
+  
 
   String? _validateName(String v) {
     if (v.trim().isEmpty) return 'Full name is required';
     if (v.trim().length < 3) return 'Name must be at least 3 characters';
-    if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(v)) return 'Only alphabets are allowed in name';
+    if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(v)) {
+      return 'Only alphabets are allowed in name';
+    }
     return null;
   }
 
   String? _validatePAN(String v) {
     if (v.isEmpty) return 'PAN number is required';
-    if (!RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(v.toUpperCase())) {
+    if (!RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$')
+        .hasMatch(v.toUpperCase())) {
       return 'Invalid PAN — format must be ABCDE1234F';
     }
     return null;
@@ -571,14 +796,11 @@ class KYCDocumentForm extends StatelessWidget {
   }
 
   String _shortPath(String path) {
-    final parts = path.split('/');
-    return parts.last;
+    return path.split('/').last;
   }
 }
 
-// ────────────────────────────────────────────
-// Reusable KYC Text Field with live validation
-// ────────────────────────────────────────────
+
 class _KYCTextField extends StatefulWidget {
   final String label;
   final String hint;
@@ -590,6 +812,8 @@ class _KYCTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
   final List<TextInputFormatter>? inputFormatters;
+  
+  final Color accentColor;
 
   const _KYCTextField({
     required this.label,
@@ -597,6 +821,7 @@ class _KYCTextField extends StatefulWidget {
     required this.icon,
     required this.initialValue,
     required this.onChanged,
+    required this.accentColor,
     this.validator,
     this.maxLength,
     this.keyboardType,
@@ -617,6 +842,9 @@ class _KYCTextFieldState extends State<_KYCTextField> {
   void initState() {
     super.initState();
     _ctrl = TextEditingController(text: widget.initialValue);
+    if (widget.initialValue.isNotEmpty) {
+      _touched = true;
+    }
   }
 
   @override
@@ -657,9 +885,10 @@ class _KYCTextFieldState extends State<_KYCTextField> {
             textCapitalization: widget.textCapitalization,
             inputFormatters: widget.inputFormatters,
             style: TextStyle(
-                color: AppColor.textMain,
-                fontSize: 14,
-                fontWeight: FontWeight.w500),
+              color: AppColor.textMain,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
             decoration: InputDecoration(
               labelText: widget.label,
               hintText: widget.hint,
@@ -670,7 +899,7 @@ class _KYCTextFieldState extends State<_KYCTextField> {
               ),
               prefixIcon: Icon(
                 widget.icon,
-                color: hasError ? AppColor.error : AppColor.primary,
+                color: hasError ? AppColor.error : widget.accentColor,
                 size: 20,
               ),
               suffixIcon: _ctrl.text.isNotEmpty && !hasError && _touched
@@ -692,7 +921,8 @@ class _KYCTextFieldState extends State<_KYCTextField> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppColor.primary, width: 1.5),
+                borderSide:
+                BorderSide(color: widget.accentColor, width: 1.5),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -725,9 +955,7 @@ class _KYCTextFieldState extends State<_KYCTextField> {
   }
 }
 
-// ────────────────────────────────────────────
-// Text formatter for uppercase PAN
-// ────────────────────────────────────────────
+
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

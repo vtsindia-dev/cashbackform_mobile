@@ -1,19 +1,19 @@
-// screens/kyc_list_screen.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
 import '../../../common/colours.dart';
 import '../controller/kyc_controller.dart';
 import '../model/kyc_model.dart';
 import 'add_kyc.dart';
+import 'package:http/http.dart' as http;
 
 class KYCListScreen extends StatelessWidget {
   final KYCController controller = Get.put(KYCController());
+
+  KYCListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,7 @@ class KYCListScreen extends StatelessWidget {
           Obx(() => Text(
             '${controller.kycList.length} record${controller.kycList.length == 1 ? '' : 's'}',
             style: TextStyle(
-              color: AppColor.white.withOpacity(0.75),
+              color: AppColor.white.withValues(alpha: 0.75),
               fontSize: 12,
               fontWeight: FontWeight.w400,
             ),
@@ -88,13 +88,14 @@ class KYCListScreen extends StatelessWidget {
     if (controller.isLoading.value) {
       return _buildLoadingState();
     }
-    if (controller.errorMessage.value.isNotEmpty) {
+    if (controller.errorMessage.value.isNotEmpty &&
+        controller.kycList.isEmpty) {
       return _buildErrorState();
     }
     if (controller.kycList.isEmpty) {
       return _buildEmptyState(context);
     }
-    return _buildKYCList();
+    return _buildKYCList(context);
   }
 
   Widget _buildLoadingState() {
@@ -126,10 +127,11 @@ class KYCListScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColor.error.withOpacity(0.1),
+                color: AppColor.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.wifi_off_rounded, size: 48, color: AppColor.error),
+              child:
+              Icon(Icons.wifi_off_rounded, size: 48, color: AppColor.error),
             ),
             SizedBox(height: 20),
             Text(
@@ -144,7 +146,8 @@ class KYCListScreen extends StatelessWidget {
             Text(
               controller.errorMessage.value,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColor.textSecondary, fontSize: 14, height: 1.5),
+              style: TextStyle(
+                  color: AppColor.textSecondary, fontSize: 14, height: 1.5),
             ),
             SizedBox(height: 24),
             ElevatedButton.icon(
@@ -155,7 +158,8 @@ class KYCListScreen extends StatelessWidget {
                 backgroundColor: AppColor.primary,
                 foregroundColor: AppColor.white,
                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
               ),
             ),
           ],
@@ -172,7 +176,7 @@ class KYCListScreen extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.08),
+              color: AppColor.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.shield_outlined, size: 56, color: AppColor.primary),
@@ -190,7 +194,8 @@ class KYCListScreen extends StatelessWidget {
           Text(
             'Add your first KYC document\nto get started',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColor.textSecondary, fontSize: 14, height: 1.6),
+            style: TextStyle(
+                color: AppColor.textSecondary, fontSize: 14, height: 1.6),
           ),
           SizedBox(height: 28),
           ElevatedButton.icon(
@@ -201,7 +206,8 @@ class KYCListScreen extends StatelessWidget {
               backgroundColor: AppColor.primary,
               foregroundColor: AppColor.white,
               padding: EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
               elevation: 0,
             ),
           ),
@@ -210,17 +216,17 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildKYCList() {
+  Widget _buildKYCList(BuildContext context) {
     return ListView.builder(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
       itemCount: controller.kycList.length,
       itemBuilder: (context, index) {
-        return _buildKYCCard(controller.kycList[index], index);
+        return _buildKYCCard(context, controller.kycList[index], index);
       },
     );
   }
 
-  Widget _buildKYCCard(KYCDocument kyc, int index) {
+  Widget _buildKYCCard(BuildContext context, KYCDocument kyc, int index) {
     final colors = [AppColor.primary, AppColor.accent, AppColor.orange];
     final avatarColor = colors[index % colors.length];
 
@@ -231,7 +237,7 @@ class KYCListScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColor.black.withOpacity(0.06),
+            color: AppColor.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -246,12 +252,12 @@ class KYCListScreen extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: avatarColor.withOpacity(0.15),
+              color: avatarColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
               child: Text(
-                '${ index + 1 }',
+                '${index + 1}',
                 style: TextStyle(
                   color: avatarColor,
                   fontWeight: FontWeight.w800,
@@ -272,7 +278,8 @@ class KYCListScreen extends StatelessWidget {
             padding: EdgeInsets.only(top: 2),
             child: Row(
               children: [
-                Icon(Icons.credit_card_rounded, size: 12, color: AppColor.textSecondary),
+                Icon(Icons.credit_card_rounded,
+                    size: 12, color: AppColor.textSecondary),
                 SizedBox(width: 4),
                 Text(
                   kyc.panNo,
@@ -289,25 +296,41 @@ class KYCListScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: Icon(Icons.share_rounded, size: 20, color: AppColor.primary),
+                icon: Icon(Icons.share_rounded,
+                    size: 20, color: AppColor.primary),
                 onPressed: () => _shareSingleKYC(kyc),
                 tooltip: 'Share KYC details',
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColor.success.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Verified',
-                  style: TextStyle(
-                    color: AppColor.success,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              IconButton(
+                icon: Icon(Icons.edit_rounded,
+                    size: 20, color: AppColor.accent),
+                onPressed: () => _showEditKYCDialog(context, kyc),
+                tooltip: 'Edit KYC',
               ),
+              Obx(() {
+                final isDeleting = controller.deletingIds.contains(kyc.id);
+                return isDeleting
+                    ? SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColor.error),
+                      ),
+                    ),
+                  ),
+                )
+                    : IconButton(
+                  icon: Icon(Icons.delete_outline_rounded,
+                      size: 20, color: AppColor.error),
+                  onPressed: () => controller.showDeleteConfirmDialog(kyc),
+                  tooltip: 'Delete KYC',
+                );
+              })
             ],
           ),
           children: [
@@ -317,9 +340,11 @@ class KYCListScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildInfoChip(Icons.fingerprint_rounded, 'Aadhar', kyc.aadharNo),
+                  _buildInfoChip(
+                      Icons.fingerprint_rounded, 'Aadhar', kyc.aadharNo),
                   SizedBox(height: 10),
-                  _buildInfoChip(Icons.calendar_today_rounded, 'Submitted', _formatDate(kyc.createdAt)),
+                  _buildInfoChip(Icons.calendar_today_rounded, 'Submitted',
+                      _formatDate(kyc.createdAt)),
                   SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -334,7 +359,8 @@ class KYCListScreen extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.share_rounded, size: 18, color: AppColor.grey),
+                        icon: Icon(Icons.share_rounded,
+                            size: 18, color: AppColor.grey),
                         onPressed: () => _shareKYCWithDocuments(kyc),
                         tooltip: 'Share all documents',
                       ),
@@ -343,11 +369,73 @@ class KYCListScreen extends StatelessWidget {
                   SizedBox(height: 10),
                   Row(
                     children: [
-                      _buildDocumentChip('PAN', Icons.badge_rounded, kyc.panDoc, kyc),
+                      _buildDocumentChip(
+                          'PAN', Icons.badge_rounded, kyc.panDoc, kyc),
                       SizedBox(width: 8),
-                      _buildDocumentChip('Aadhar', Icons.credit_card_rounded, kyc.aadharDoc, kyc),
+                      _buildDocumentChip('Aadhar', Icons.credit_card_rounded,
+                          kyc.aadharDoc, kyc),
                       SizedBox(width: 8),
-                      _buildDocumentChip('Sign', Icons.draw_rounded, kyc.signDoc, kyc),
+                      _buildDocumentChip(
+                          'Sign', Icons.draw_rounded, kyc.signDoc, kyc),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showEditKYCDialog(context, kyc),
+                          icon: Icon(Icons.edit_rounded, size: 16),
+                          label: Text('Edit'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColor.accent,
+                            side: BorderSide(color: AppColor.accent),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Obx(() {
+                          final isDeleting = controller.deletingIds.contains(kyc.id);
+                          return isDeleting
+                              ? OutlinedButton(
+                            onPressed: null,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColor.error,
+                              side: BorderSide(color: AppColor.error.withOpacity(0.4)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            child: SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColor.error),
+                              ),
+                            ),
+                          )
+                              : OutlinedButton.icon(
+                            onPressed: () => controller.showDeleteConfirmDialog(kyc),
+                            icon: Icon(Icons.delete_outline_rounded, size: 16),
+                            label: Text('Delete'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColor.error,
+                              side: BorderSide(color: AppColor.error),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          );
+                        })
+                      ),
                     ],
                   ),
                 ],
@@ -364,7 +452,8 @@ class KYCListScreen extends StatelessWidget {
       children: [
         Icon(icon, size: 15, color: AppColor.primary),
         SizedBox(width: 8),
-        Text('$label: ', style: TextStyle(color: AppColor.textSecondary, fontSize: 13)),
+        Text('$label: ',
+            style: TextStyle(color: AppColor.textSecondary, fontSize: 13)),
         Expanded(
           child: Text(
             value,
@@ -380,7 +469,8 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDocumentChip(String label, IconData icon, String url, KYCDocument kyc) {
+  Widget _buildDocumentChip(
+      String label, IconData icon, String url, KYCDocument kyc) {
     final hasDoc = url.isNotEmpty;
     return Expanded(
       child: GestureDetector(
@@ -398,17 +488,19 @@ class KYCListScreen extends StatelessWidget {
           }
         },
         onLongPress: () {
-          if (hasDoc) {
-            _shareDocument(url, label);
-          }
+          if (hasDoc) _shareDocument(url, label);
         },
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: hasDoc ? AppColor.primary.withOpacity(0.08) : AppColor.lightGrey,
+            color: hasDoc
+                ? AppColor.primary.withValues(alpha: 0.08)
+                : AppColor.lightGrey,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: hasDoc ? AppColor.primary.withOpacity(0.25) : AppColor.lightGrey,
+              color: hasDoc
+                  ? AppColor.primary.withValues(alpha: 0.25)
+                  : AppColor.lightGrey,
             ),
           ),
           child: Column(
@@ -430,10 +522,7 @@ class KYCListScreen extends StatelessWidget {
               if (hasDoc)
                 Text(
                   'Long press to share',
-                  style: TextStyle(
-                    fontSize: 8,
-                    color: AppColor.grey,
-                  ),
+                  style: TextStyle(fontSize: 8, color: AppColor.grey),
                 ),
             ],
           ),
@@ -443,11 +532,15 @@ class KYCListScreen extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   void _showAddKYCDialog(BuildContext context) {
+    controller.clearForm();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -457,9 +550,22 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-  // ==================== SHARE FUNCTIONALITY ====================
 
-  // Share all KYC records
+  void _showEditKYCDialog(BuildContext context, KYCDocument kyc) {
+    controller.startEdit(kyc);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      builder: (context) => KYCDocumentForm(
+        controller: controller,
+        isEditMode: true,
+      ),
+    );
+  }
+
+
   Future<void> _shareAllKYC() async {
     if (controller.kycList.isEmpty) {
       Get.snackbar(
@@ -496,7 +602,6 @@ class KYCListScreen extends StatelessWidget {
     await Share.share(shareText, subject: 'KYC Documents Summary');
   }
 
-  // Share single KYC details
   Future<void> _shareSingleKYC(KYCDocument kyc) async {
     String shareText = "🏢 KYC DOCUMENT DETAILS\n";
     shareText += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
@@ -509,7 +614,8 @@ class KYCListScreen extends StatelessWidget {
     shareText += "📄 DOCUMENTS INCLUDED:\n";
     shareText += "────────────────────────────────────────\n";
     if (kyc.panDoc.isNotEmpty) shareText += "✓ PAN Card Image: Available\n";
-    if (kyc.aadharDoc.isNotEmpty) shareText += "✓ Aadhar Card Image: Available\n";
+    if (kyc.aadharDoc.isNotEmpty)
+      shareText += "✓ Aadhar Card Image: Available\n";
     if (kyc.signDoc.isNotEmpty) shareText += "✓ Signature Image: Available\n";
 
     shareText += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
@@ -519,7 +625,6 @@ class KYCListScreen extends StatelessWidget {
     await Share.share(shareText, subject: 'KYC Details - ${kyc.name}');
   }
 
-  // Share KYC with all documents
   Future<void> _shareKYCWithDocuments(KYCDocument kyc) async {
     showModalBottomSheet(
       context: Get.context!,
@@ -544,7 +649,8 @@ class KYCListScreen extends StatelessWidget {
               SizedBox(height: 8),
               Text(
                 'Choose what to share',
-                style: TextStyle(color: AppColor.textSecondary, fontSize: 14),
+                style:
+                TextStyle(color: AppColor.textSecondary, fontSize: 14),
               ),
               SizedBox(height: 20),
               _buildShareOption(
@@ -632,7 +738,7 @@ class KYCListScreen extends StatelessWidget {
       leading: Container(
         padding: EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: enabled ? color : AppColor.grey),
@@ -644,17 +750,15 @@ class KYCListScreen extends StatelessWidget {
           color: enabled ? AppColor.textMain : AppColor.grey,
         ),
       ),
-      subtitle: Text(subtitle, style: TextStyle(color: AppColor.textSecondary, fontSize: 12)),
+      subtitle: Text(subtitle,
+          style: TextStyle(color: AppColor.textSecondary, fontSize: 12)),
       enabled: enabled,
       onTap: onTap,
     );
   }
 
-  // Share a single document
-// Share a single document
   Future<void> _shareDocument(String imageUrl, String documentType) async {
     try {
-      // Show loading
       Get.dialog(
         Center(
           child: Container(
@@ -667,13 +771,12 @@ class KYCListScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
+                  valueColor:
+                  AlwaysStoppedAnimation<Color>(AppColor.primary),
                 ),
                 SizedBox(height: 16),
-                Text(
-                  'Preparing $documentType...',
-                  style: TextStyle(color: AppColor.textMain),
-                ),
+                Text('Preparing $documentType...',
+                    style: TextStyle(color: AppColor.textMain)),
               ],
             ),
           ),
@@ -681,27 +784,24 @@ class KYCListScreen extends StatelessWidget {
         barrierDismissible: false,
       );
 
-      // Download image to temporary file
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
         final directory = await getTemporaryDirectory();
-        // Fixed: Use string interpolation correctly
-        final fileName = '${documentType.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final fileName =
+            '${documentType.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
         final filePath = '${directory.path}/$fileName';
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
 
-        // Close loading dialog
         Get.back();
 
-        // Share the file
         await Share.shareXFiles(
           [XFile(filePath)],
-          text: '📄 $documentType for KYC verification\nShared via KYC Management App',
+          text:
+          '📄 $documentType for KYC verification\nShared via KYC Management App',
           subject: '$documentType Document',
         );
 
-        // Clean up temp file after sharing
         await file.delete();
       } else {
         Get.back();
@@ -712,6 +812,7 @@ class KYCListScreen extends StatelessWidget {
       _showError('Error sharing $documentType: $e');
     }
   }
+
   void _showNoDocumentError(String documentType) {
     Get.snackbar(
       'No Document',
@@ -739,7 +840,8 @@ class KYCListScreen extends StatelessWidget {
 // ────────────────────────────────────────────
 class DocumentPreviewScreen extends StatelessWidget {
   final String imageUrl;
-  const DocumentPreviewScreen({Key? key, required this.imageUrl}) : super(key: key);
+  const DocumentPreviewScreen({Key? key, required this.imageUrl})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -748,7 +850,8 @@ class DocumentPreviewScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        title: Text('Document Preview', style: TextStyle(color: AppColor.white)),
+        title:
+        Text('Document Preview', style: TextStyle(color: AppColor.white)),
         iconTheme: IconThemeData(color: AppColor.white),
         actions: [
           IconButton(
@@ -777,13 +880,16 @@ class DocumentPreviewScreen extends StatelessWidget {
             errorWidget: (_, __, ___) => Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.broken_image_rounded, size: 64, color: AppColor.grey),
+                Icon(Icons.broken_image_rounded,
+                    size: 64, color: AppColor.grey),
                 SizedBox(height: 12),
-                Text('Failed to load document', style: TextStyle(color: AppColor.grey)),
+                Text('Failed to load document',
+                    style: TextStyle(color: AppColor.grey)),
                 SizedBox(height: 16),
                 TextButton(
                   onPressed: () => Get.back(),
-                  child: Text('Go Back', style: TextStyle(color: AppColor.primarylite)),
+                  child: Text('Go Back',
+                      style: TextStyle(color: AppColor.primarylite)),
                 ),
               ],
             ),
@@ -807,13 +913,12 @@ class DocumentPreviewScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
+                  valueColor:
+                  AlwaysStoppedAnimation<Color>(AppColor.primary),
                 ),
                 SizedBox(height: 16),
-                Text(
-                  'Preparing document...',
-                  style: TextStyle(color: AppColor.textMain),
-                ),
+                Text('Preparing document...',
+                    style: TextStyle(color: AppColor.textMain)),
               ],
             ),
           ),
@@ -821,25 +926,22 @@ class DocumentPreviewScreen extends StatelessWidget {
         barrierDismissible: false,
       );
 
-      // Download image to temporary file
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
         final directory = await getTemporaryDirectory();
-        final filePath = '${directory.path}/document_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final filePath =
+            '${directory.path}/document_${DateTime.now().millisecondsSinceEpoch}.jpg';
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
 
-        // Close loading dialog
         Get.back();
 
-        // Share the file
         await Share.shareXFiles(
           [XFile(filePath)],
           text: '📄 KYC Document\nShared via KYC Management App',
           subject: 'KYC Document',
         );
 
-        // Clean up temp file after sharing
         await file.delete();
       } else {
         Get.back();
@@ -853,7 +955,6 @@ class DocumentPreviewScreen extends StatelessWidget {
 
   Future<void> _downloadDocument() async {
     try {
-      // Show loading
       Get.dialog(
         Center(
           child: Container(
@@ -866,13 +967,12 @@ class DocumentPreviewScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
+                  valueColor:
+                  AlwaysStoppedAnimation<Color>(AppColor.primary),
                 ),
                 SizedBox(height: 16),
-                Text(
-                  'Downloading...',
-                  style: TextStyle(color: AppColor.textMain),
-                ),
+                Text('Downloading...',
+                    style: TextStyle(color: AppColor.textMain)),
               ],
             ),
           ),
@@ -882,8 +982,10 @@ class DocumentPreviewScreen extends StatelessWidget {
 
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
-        final directory = await getDownloadsDirectory() ?? await getTemporaryDirectory();
-        final filePath = '${directory.path}/KYC_Document_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final directory =
+            await getDownloadsDirectory() ?? await getTemporaryDirectory();
+        final filePath =
+            '${directory.path}/KYC_Document_${DateTime.now().millisecondsSinceEpoch}.jpg';
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
 

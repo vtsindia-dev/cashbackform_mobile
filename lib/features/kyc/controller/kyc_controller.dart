@@ -1,5 +1,3 @@
-// controller/kyc_controller.dart
-
 import 'package:get/get.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -15,20 +13,13 @@ import '../model/kyc_model.dart';
 import '../widget/signature_pad.dart';
 
 class KYCController extends GetxController {
-  // ──────────────────────────────────────────
-  // State
-  // ──────────────────────────────────────────
   final RxList<KYCDocument> kycList = <KYCDocument>[].obs;
   final RxBool isLoading = false.obs;
   final RxBool isSubmitting = false.obs;
   final RxString errorMessage = ''.obs;
-
-  // Form fields
   final RxString name = ''.obs;
   final RxString panNo = ''.obs;
   final RxString aadharNo = ''.obs;
-
-  // Document files
   final Rx<File?> panDoc = Rx<File?>(null);
   final Rx<File?> aadharDoc = Rx<File?>(null);
   final Rx<File?> signDoc = Rx<File?>(null);
@@ -36,10 +27,11 @@ class KYCController extends GetxController {
   final RxBool showSignaturePad = false.obs;
   final ImagePicker _picker = ImagePicker();
 
-
   final selectedBeneficiaries = <KYCDocument>[].obs;
-
   final RxList<String> selectedPans = <String>[].obs;
+
+  final Rx<KYCDocument?> editingKYC = Rx<KYCDocument?>(null);
+  final RxBool isEditMode = false.obs;
 
   void toggleBeneficiary(KYCDocument kyc) {
     if (selectedPans.contains(kyc.id.toString())) {
@@ -61,7 +53,24 @@ class KYCController extends GetxController {
     fetchKYCList();
   }
 
+  void startEdit(KYCDocument kyc) {
+    editingKYC.value = kyc;
+    isEditMode.value = true;
+    name.value = kyc.name;
+    panNo.value = kyc.panNo;
+    aadharNo.value = kyc.aadharNo;
+    panDoc.value = null;
+    aadharDoc.value = null;
+    signDoc.value = null;
+    capturedSignature.value = null;
+    errorMessage.value = '';
+  }
 
+  void cancelEdit() {
+    isEditMode.value = false;
+    editingKYC.value = null;
+    clearForm();
+  }
 
   String? validateName(String value) {
     final v = value.trim();
@@ -73,7 +82,6 @@ class KYCController extends GetxController {
     return null;
   }
 
-  /// PAN format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F)
   String? validatePAN(String value) {
     final v = value.trim().toUpperCase();
     if (v.isEmpty) return 'PAN number is required';
@@ -95,20 +103,26 @@ class KYCController extends GetxController {
 
   bool _validateForm() {
     final nameErr = validateName(name.value);
-    if (nameErr != null) { errorMessage.value = nameErr; return false; }
+    if (nameErr != null) {
+      errorMessage.value = nameErr;
+      return false;
+    }
 
     final panErr = validatePAN(panNo.value);
-    if (panErr != null) { errorMessage.value = panErr; return false; }
+    if (panErr != null) {
+      errorMessage.value = panErr;
+      return false;
+    }
 
     final aadharErr = validateAadhar(aadharNo.value);
-    if (aadharErr != null) { errorMessage.value = aadharErr; return false; }
+    if (aadharErr != null) {
+      errorMessage.value = aadharErr;
+      return false;
+    }
 
     return true;
   }
 
-  // ──────────────────────────────────────────
-  // API — Fetch KYC List
-  // ──────────────────────────────────────────
   Future<Map<String, dynamic>> fetchKYCList() async {
     try {
       isLoading.value = true;
@@ -136,43 +150,40 @@ class KYCController extends GetxController {
         }
       } else {
         errorMessage.value = 'Server error (${response.statusCode})';
-        return {'status': response.statusCode ?? 500, 'message': errorMessage.value};
+        return {
+          'status': response.statusCode ?? 500,
+          'message': errorMessage.value,
+        };
       }
     } catch (e) {
       debugPrint('❌ fetchKYCList error: $e');
       errorMessage.value = 'Network error. Please check your connection.';
       return {'status': 500, 'message': errorMessage.value};
     } finally {
-
       isLoading.value = false;
     }
   }
-
 
   Future<Map<String, dynamic>> submitKYC() async {
     try {
       isSubmitting.value = true;
       errorMessage.value = '';
 
-      // 1. Basic Validation (Ensure name, PAN, and Aadhar are filled)
       if (!_validateForm()) {
         return {'status': 400, 'message': errorMessage.value};
       }
 
-      // 2. Authentication Check
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
         errorMessage.value = 'Please login to submit KYC';
         return {'status': 401, 'message': errorMessage.value};
       }
 
-      // 3. Prepare Form Data
       final formData = dio.FormData.fromMap({});
       formData.fields.add(MapEntry('name[]', name.value.trim()));
-      formData.fields.add(MapEntry('pan_no[]', panNo.value.trim().toUpperCase()));
+      formData.fields.add(
+          MapEntry('pan_no[]', panNo.value.trim().toUpperCase()));
       formData.fields.add(MapEntry('aadhar_no[]', aadharNo.value.trim()));
-
-      // PAN document — Required
       if (panDoc.value != null && await panDoc.value!.exists()) {
         formData.files.add(MapEntry(
           'pan_doc[]',
@@ -185,8 +196,6 @@ class KYCController extends GetxController {
         errorMessage.value = 'Please upload your PAN card document';
         return {'status': 400, 'message': errorMessage.value};
       }
-
-      // Aadhar document — Required
       if (aadharDoc.value != null && await aadharDoc.value!.exists()) {
         formData.files.add(MapEntry(
           'aadhar_doc[]',
@@ -199,9 +208,6 @@ class KYCController extends GetxController {
         errorMessage.value = 'Please upload your Aadhar card document';
         return {'status': 400, 'message': errorMessage.value};
       }
-
-      // Signature — OPTIONAL
-      // If signFile is null or doesn't exist, we just don't add it to formData
       final signFile = signDoc.value ?? capturedSignature.value;
       if (signFile != null && await signFile.exists()) {
         final ext = signDoc.value != null ? 'jpg' : 'png';
@@ -214,7 +220,6 @@ class KYCController extends GetxController {
         ));
       }
 
-      // 4. API Request Setup
       final dioClient = dio.Dio();
       dioClient.options.headers['Authorization'] = 'Bearer $token';
 
@@ -223,12 +228,12 @@ class KYCController extends GetxController {
         data: formData,
       );
 
-      // 5. Handle Response
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
         if (data['status'] == true) {
           await fetchKYCList();
           clearForm();
+          Get.back();
           final msg = data['message'] ?? 'KYC submitted successfully';
           SnackBarHelper.showSuccess(msg);
           return {'status': 200, 'message': msg, 'data': data['data']};
@@ -238,16 +243,17 @@ class KYCController extends GetxController {
           return {'status': 400, 'message': msg};
         }
       } else {
-        final msg = response.data?['message'] ?? 'Server error (${response.statusCode})';
+        final msg =
+            response.data?['message'] ?? 'Server error (${response.statusCode})';
         errorMessage.value = msg;
         return {'status': response.statusCode ?? 500, 'message': msg};
       }
-
     } on dio.DioException catch (e) {
       debugPrint('❌ submitKYC DioException: $e');
       String msg;
       if (e.response != null) {
-        msg = e.response?.data?['message'] ?? 'Server error (${e.response?.statusCode})';
+        msg = e.response?.data?['message'] ??
+            'Server error (${e.response?.statusCode})';
       } else if (e.type == dio.DioExceptionType.connectionTimeout) {
         msg = 'Connection timed out. Check your internet.';
       } else if (e.type == dio.DioExceptionType.receiveTimeout) {
@@ -257,21 +263,205 @@ class KYCController extends GetxController {
       }
       errorMessage.value = msg;
       return {'status': 500, 'message': msg};
-
     } catch (e) {
       debugPrint('❌ submitKYC error: $e');
       final msg = 'Unexpected error: ${e.toString()}';
       errorMessage.value = msg;
       return {'status': 500, 'message': msg};
-
     } finally {
       isSubmitting.value = false;
     }
   }
 
-  // ──────────────────────────────────────────
-  // Image Picker Helpers
-  // ──────────────────────────────────────────
+  Future<Map<String, dynamic>> updateKYC() async {
+    try {
+      isSubmitting.value = true;
+      errorMessage.value = '';
+
+      if (editingKYC.value == null) {
+        errorMessage.value = 'No KYC record selected for update';
+        return {'status': 400, 'message': errorMessage.value};
+      }
+
+      if (!_validateForm()) {
+        return {'status': 400, 'message': errorMessage.value};
+      }
+
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) {
+        errorMessage.value = 'Please login to update KYC';
+        return {'status': 401, 'message': errorMessage.value};
+      }
+
+      final kycId = editingKYC.value!.id;
+      final formData = dio.FormData.fromMap({});
+
+      formData.fields.add(MapEntry('name', name.value.trim()));
+      formData.fields
+          .add(MapEntry('pan_no', panNo.value.trim().toUpperCase()));
+      formData.fields.add(MapEntry('aadhar_no', aadharNo.value.trim()));
+
+      if (panDoc.value != null && await panDoc.value!.exists()) {
+        formData.files.add(MapEntry(
+          'pan_doc',
+          await dio.MultipartFile.fromFile(
+            panDoc.value!.path,
+            filename: 'pan_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          ),
+        ));
+      }
+
+      if (aadharDoc.value != null && await aadharDoc.value!.exists()) {
+        formData.files.add(MapEntry(
+          'aadhar_doc',
+          await dio.MultipartFile.fromFile(
+            aadharDoc.value!.path,
+            filename: 'aadhar_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          ),
+        ));
+      }
+
+      final signFile = signDoc.value ?? capturedSignature.value;
+      if (signFile != null && await signFile.exists()) {
+        final ext = signDoc.value != null ? 'jpg' : 'png';
+        formData.files.add(MapEntry(
+          'sign_doc',
+          await dio.MultipartFile.fromFile(
+            signFile.path,
+            filename: 'sign_${DateTime.now().millisecondsSinceEpoch}.$ext',
+          ),
+        ));
+      }
+
+      final dioClient = dio.Dio();
+      dioClient.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      final response = await dioClient.post(
+        '${ApiUrl.baseUrl}/api/v2/kyc-update/$kycId',
+        data: formData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data['status'] == true) {
+          await fetchKYCList();
+          cancelEdit();
+          Get.back();
+          final msg = data['message'] ?? 'KYC updated successfully';
+          SnackBarHelper.showSuccess(msg);
+          return {'status': 200, 'message': msg, 'data': data['data']};
+        } else {
+          final msg = data['message'] ?? 'Failed to update KYC';
+          errorMessage.value = msg;
+          SnackBarHelper.showError(msg);
+          return {'status': 400, 'message': msg};
+        }
+      } else {
+        final msg = response.data?['message'] ??
+            'Server error (${response.statusCode})';
+        errorMessage.value = msg;
+        return {'status': response.statusCode ?? 500, 'message': msg};
+      }
+    } on dio.DioException catch (e) {
+      debugPrint('❌ updateKYC DioException: $e');
+      String msg;
+      if (e.response != null) {
+        msg = e.response?.data?['message'] ??
+            'Server error (${e.response?.statusCode})';
+      } else if (e.type == dio.DioExceptionType.connectionTimeout) {
+        msg = 'Connection timed out. Check your internet.';
+      } else if (e.type == dio.DioExceptionType.receiveTimeout) {
+        msg = 'Server took too long to respond.';
+      } else {
+        msg = 'Network error. Please check your connection.';
+      }
+      errorMessage.value = msg;
+      SnackBarHelper.showError(msg);
+      return {'status': 500, 'message': msg};
+    } catch (e) {
+      debugPrint('❌ updateKYC error: $e');
+      final msg = 'Unexpected error: ${e.toString()}';
+      errorMessage.value = msg;
+      SnackBarHelper.showError(msg);
+      return {'status': 500, 'message': msg};
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
+
+  final RxSet<int> deletingIds = <int>{}.obs;
+  bool isDeletingCard(int kycId) => deletingIds.contains(kycId);
+
+  Future<Map<String, dynamic>> deleteKYC(int kycId) async {
+    try {
+      deletingIds.add(kycId);
+      errorMessage.value = '';
+
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) {
+        errorMessage.value = 'Please login to delete KYC';
+        return {'status': 401, 'message': errorMessage.value};
+      }
+
+      final dioClient = dio.Dio();
+      dioClient.options.headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+
+      final response = await dioClient.post(
+        '${ApiUrl.baseUrl}/api/v2/kyc-delete/$kycId',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data['status'] == true) {
+          kycList.removeWhere((k) => k.id == kycId);
+          final msg = data['message'] ?? 'KYC deleted successfully';
+          SnackBarHelper.showSuccess(msg);
+          return {'status': 200, 'message': msg};
+        } else {
+          final msg = data['message'] ?? 'Failed to delete KYC';
+          errorMessage.value = msg;
+          SnackBarHelper.showError(msg);
+          return {'status': 400, 'message': msg};
+        }
+      } else {
+        final msg = response.data?['message'] ??
+            'Server error (${response.statusCode})';
+        errorMessage.value = msg;
+        return {'status': response.statusCode ?? 500, 'message': msg};
+      }
+    } on dio.DioException catch (e) {
+      debugPrint('❌ deleteKYC DioException: $e');
+      String msg;
+      if (e.response != null) {
+        msg = e.response?.data?['message'] ??
+            'Server error (${e.response?.statusCode})';
+      } else if (e.type == dio.DioExceptionType.connectionTimeout) {
+        msg = 'Connection timed out. Check your internet.';
+      } else {
+        msg = 'Network error. Please check your connection.';
+      }
+      errorMessage.value = msg;
+      SnackBarHelper.showError(msg);
+      return {'status': 500, 'message': msg};
+    } catch (e) {
+      debugPrint('❌ deleteKYC error: $e');
+      final msg = 'Unexpected error: ${e.toString()}';
+      errorMessage.value = msg;
+      SnackBarHelper.showError(msg);
+      return {'status': 500, 'message': msg};
+    } finally {
+      deletingIds.remove(kycId);
+    }
+  }
+
+
   Future<void> pickImage(String type) async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -334,13 +524,16 @@ class KYCController extends GetxController {
 
   String _docLabel(String type) {
     switch (type) {
-      case 'pan': return 'PAN Card';
-      case 'aadhar': return 'Aadhar Card';
-      case 'sign': return 'Signature';
-      default: return 'Document';
+      case 'pan':
+        return 'PAN Card';
+      case 'aadhar':
+        return 'Aadhar Card';
+      case 'sign':
+        return 'Signature';
+      default:
+        return 'Document';
     }
   }
-
 
   Future<Map<String, dynamic>> kycVerification({
     required String propertyId,
@@ -351,159 +544,78 @@ class KYCController extends GetxController {
       isSubmitting.value = true;
       errorMessage.value = '';
 
-      // Login Token
       final token = await SessionManager.getToken();
 
       if (token == null || token.isEmpty) {
         errorMessage.value = 'Please login first';
-        return {
-          'status': 401,
-          'message': errorMessage.value,
-        };
+        return {'status': 401, 'message': errorMessage.value};
       }
 
-      // Validation
       if (selectedBeneficiaries.isEmpty) {
         errorMessage.value = 'Please select beneficiary';
         SnackBarHelper.showError(errorMessage.value);
-        return {
-          'status': 400,
-          'message': errorMessage.value,
-        };
+        return {'status': 400, 'message': errorMessage.value};
       }
 
-      // Form Data
       final formData = dio.FormData();
-
-      formData.fields.add(
-        MapEntry('property_id', propertyId),
-      );
-
-      formData.fields.add(
-        MapEntry('transaction_id', transactionId),
-      );
-
-      formData.fields.add(
-        MapEntry('type', type),
-      );
+      formData.fields.add(MapEntry('property_id', propertyId));
+      formData.fields.add(MapEntry('transaction_id', transactionId));
+      formData.fields.add(MapEntry('type', type));
 
       for (var item in selectedBeneficiaries) {
-
-        formData.fields.add(
-          MapEntry(
-            'benficiary_id[]',
-            item.id.toString(),
-          ),
-        );
+        formData.fields.add(MapEntry('benficiary_id[]', item.id.toString()));
       }
 
-      // Dio
       final dioClient = dio.Dio();
-
       dioClient.options.headers = {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       };
 
-      // API Call
       final response = await dioClient.post(
         '${ApiUrl.baseUrl}/api/v2/kyc_verification',
         data: formData,
       );
 
-      // Response
-      if (response.statusCode == 200 ||
-          response.statusCode == 201) {
-
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
-
         if (data['status'] == true) {
-
-          final msg =
-              data['message'] ??
-                  'KYC verification successful';
-
+          final msg = data['message'] ?? 'KYC verification successful';
           SnackBarHelper.showSuccess(msg);
-
-          return {
-            'status': 200,
-            'message': msg,
-            'data': data,
-          };
+          return {'status': 200, 'message': msg, 'data': data};
         } else {
-
-          final msg =
-              data['message'] ??
-                  'KYC verification failed';
-
+          final msg = data['message'] ?? 'KYC verification failed';
           errorMessage.value = msg;
-
           SnackBarHelper.showError(msg);
-
-          return {
-            'status': 400,
-            'message': msg,
-          };
+          return {'status': 400, 'message': msg};
         }
       } else {
-
-        final msg =
-            'Server error (${response.statusCode})';
-
+        final msg = 'Server error (${response.statusCode})';
         errorMessage.value = msg;
-
-        return {
-          'status': response.statusCode ?? 500,
-          'message': msg,
-        };
+        return {'status': response.statusCode ?? 500, 'message': msg};
       }
-
     } on dio.DioException catch (e) {
-
       debugPrint('❌ kycVerification Dio Error: $e');
-
       String msg;
-
       if (e.response != null) {
-        msg =
-            e.response?.data?['message'] ??
-                'Server error';
+        msg = e.response?.data?['message'] ?? 'Server error';
       } else {
         msg = 'Network error';
       }
-
       errorMessage.value = msg;
-
       SnackBarHelper.showError(msg);
-
-      return {
-        'status': 500,
-        'message': msg,
-      };
-
+      return {'status': 500, 'message': msg};
     } catch (e) {
-
       debugPrint('❌ kycVerification Error: $e');
-
-      final msg = 'Unexpected error';
-
+      const msg = 'Unexpected error';
       errorMessage.value = msg;
-
       SnackBarHelper.showError(msg);
-
-      return {
-        'status': 500,
-        'message': msg,
-      };
-
+      return {'status': 500, 'message': msg};
     } finally {
       isSubmitting.value = false;
     }
   }
 
-  // ──────────────────────────────────────────
-  // Dialogs
-  // ──────────────────────────────────────────
   void showImagePickerDialog(String type) {
     Get.bottomSheet(
       Container(
@@ -540,13 +652,19 @@ class KYCController extends GetxController {
                   icon: Icons.camera_alt_rounded,
                   label: 'Camera',
                   color: AppColor.primary,
-                  onTap: () { Get.back(); captureImage(type); },
+                  onTap: () {
+                    Get.back();
+                    captureImage(type);
+                  },
                 ),
                 _pickerOption(
                   icon: Icons.photo_library_rounded,
                   label: 'Gallery',
                   color: AppColor.accent,
-                  onTap: () { Get.back(); pickImage(type); },
+                  onTap: () {
+                    Get.back();
+                    pickImage(type);
+                  },
                 ),
               ],
             ),
@@ -592,13 +710,19 @@ class KYCController extends GetxController {
                   icon: Icons.draw_rounded,
                   label: 'Draw',
                   color: AppColor.accent,
-                  onTap: () { Get.back(); showSignaturePadDialog(); },
+                  onTap: () {
+                    Get.back();
+                    showSignaturePadDialog();
+                  },
                 ),
                 _pickerOption(
                   icon: Icons.upload_rounded,
                   label: 'Upload',
                   color: AppColor.orange,
-                  onTap: () { Get.back(); showImagePickerDialog('sign'); },
+                  onTap: () {
+                    Get.back();
+                    showImagePickerDialog('sign');
+                  },
                 ),
               ],
             ),
@@ -648,9 +772,60 @@ class KYCController extends GetxController {
     );
   }
 
-  // ──────────────────────────────────────────
-  // Clear Form
-  // ──────────────────────────────────────────
+  void showDeleteConfirmDialog(KYCDocument kyc) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColor.error, size: 24),
+            SizedBox(width: 8),
+            Text(
+              'Delete KYC',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColor.textMain,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete KYC record for "${kyc.name}"?\n\nThis action cannot be undone.',
+          style: TextStyle(
+            color: AppColor.textSecondary,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColor.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              deleteKYC(kyc.id);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColor.error,
+              foregroundColor: AppColor.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   void clearForm() {
     name.value = '';
     panNo.value = '';
@@ -660,5 +835,7 @@ class KYCController extends GetxController {
     signDoc.value = null;
     capturedSignature.value = null;
     errorMessage.value = '';
+    isEditMode.value = false;
+    editingKYC.value = null;
   }
 }

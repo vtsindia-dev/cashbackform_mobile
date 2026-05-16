@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
@@ -12,7 +11,6 @@ import '../../../common/route/router.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
-import '../../../common/widget/loader.dart';
 import '../../gift_coupon_and_encashment/screen/encashment_screen.dart';
 import '../../gift_coupon_and_encashment/screen/gift_screen.dart';
 import '../../menu/screens/about_us.dart';
@@ -103,121 +101,251 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     );
   }
 
-  // ─── ROLE CHIPS (display only — no list content switching) ───────────────
-
   Widget _buildRoleChips() {
     final profile = dashboardController.profile.value;
     if (profile == null) return const SizedBox.shrink();
 
-    final bool isAgent = profile.isAgent == 1;
-    final bool isVendor = profile.isVendor == 1;
-    final bool isServices = profile.isServices == 1;
+    final bool isAgent   = profile.isAgent    == 1;
+    final bool isVendor  = profile.isVendor   == 1;
+    final bool isService = profile.isServices == 1;
 
-    // If user has only the base role, no chips needed
-    if (!isAgent && !isVendor && !isServices) return const SizedBox.shrink();
+    final int agentRequest   = profile.agentRequest   ?? 0;
+    final int vendorRequest  = profile.vendorRequest  ?? 0;
+    final int serviceRequest = profile.serviceRequest ?? 0;
 
-    final List<_RoleChipData> chips = [];
-
-    // Always include User chip
-    chips.add(_RoleChipData(
-      label: "User",
-      icon: Icons.person_rounded,
-      color: AppColor.primary,
-    ));
-
-    if (isAgent) {
-      chips.add(_RoleChipData(
-        label: "Agent",
-        icon: Icons.support_agent_rounded,
-        color: const Color(0xFF2563EB),
-      ));
+    _RoleChipData resolveChip({
+      required bool isApproved,
+      required int requestStatus,
+      required String roleName,
+      required String icon,
+      required RoleType roleType,
+    }) {
+      if (isApproved) {
+        return _RoleChipData(
+          label: "YOU'RE A\n$roleName",
+          icon: icon,
+          color: const Color(0xFF16A34A),
+          status: RoleStatus.approved,
+          roleType: roleType,
+          isTappable: false,
+        );
+      } else if (requestStatus == 1) {
+        return _RoleChipData(
+          label: "$roleName REQUEST\nPENDING",
+          icon: icon,
+          color: const Color(0xFFD97706),
+          status: RoleStatus.pending,
+          roleType: roleType,
+          isTappable: false,
+        );
+      } else if (requestStatus == 2) {
+        return _RoleChipData(
+          // label: "RE-APPLY AS\n$roleName",
+          label: "JOIN AS\n$roleName",
+          icon: icon,
+          color: const Color(0xFFDC2626),
+          status: RoleStatus.rejected,
+          roleType: roleType,
+          isTappable: true,
+        );
+      } else {
+        return _RoleChipData(
+          label: "JOIN AS\n$roleName",
+          icon: icon,
+          color: AppColor.primary,
+          status: RoleStatus.joinNow,
+          roleType: roleType,
+          isTappable: true,
+        );
+      }
     }
 
-    if (isVendor) {
-      chips.add(_RoleChipData(
-        label: "Vendor",
-        icon: Icons.storefront_rounded,
-        color: AppColor.orange,
-      ));
-    }
-
-    if (isServices) {
-      chips.add(_RoleChipData(
-        label: "Service",
-        icon: Icons.build_circle_rounded,
-        color: const Color(0xFF7C3AED),
-      ));
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(18.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+    final List<_RoleChipData> chips = [
+      resolveChip(
+        isApproved:    isAgent,
+        requestStatus: agentRequest,
+        roleName:      "AGENT",
+        icon:          "assets/images/join_agent.png",
+        roleType:      RoleType.agent,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Your Roles",
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: AppColor.textSecondary,
-              fontWeight: FontWeight.w500,
+      resolveChip(
+        isApproved:    isVendor,
+        requestStatus: vendorRequest,
+        roleName:      "VENDOR",
+        icon:          "assets/images/join_vendor.png",
+        roleType:      RoleType.vendor,
+      ),
+      resolveChip(
+        isApproved:    isService,
+        requestStatus: serviceRequest,
+        roleName:      "SERVICE",
+        icon:          "assets/images/service_provider.png",
+        roleType:      RoleType.service,
+      ),
+    ];
+
+    return Row(
+      children: chips
+          .map((chip) => Expanded(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4.w),
+          child: _buildRoleCard(chip),
+        ),
+      ))
+          .toList(),
+    );
+  }
+
+  Widget _buildRoleCard(_RoleChipData chip) {
+    return Obx(() {
+      final isLoading = dashboardController.roleLoadingMap[chip.roleType] == true;
+
+      return GestureDetector(
+        onTap: chip.isTappable && !isLoading
+            ? () => _handleRoleRequest(chip)
+            : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 80.h,
+          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: chip.color.withValues(alpha: chip.isTappable ? 0.35 : 0.18),
+              width: 1,
             ),
           ),
-          SizedBox(height: 10.h),
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
-            children: chips.map((chip) => _buildSingleRoleChip(chip)).toList(),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              isLoading
+                  ? Padding(
+                padding: EdgeInsets.all(8.w),
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.8,
+                  color: chip.color,
+                ),
+              )
+                  : Image.asset(chip.icon,height: 22,),
+
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      chip.label,
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        color: chip.color,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                        height: 1.4,
+                      ),
+                    ),
+                    if (chip.isTappable) ...[
+                      SizedBox(height: 4.h),
+                      Row(
+                        children: [
+                          Text(
+                            // chip.status == RoleStatus.rejected
+                            //     ? "Tap to re-apply"
+                            //     : "Tap to apply",
+                            "Tap to apply",
+                            style: TextStyle(
+                              fontSize:6.sp,
+                              color: chip.color.withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: 2.w),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 7.sp,
+                            color: chip.color.withValues(alpha: 0.7),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  void _handleRoleRequest(_RoleChipData chip) {
+    final title = chip.status == RoleStatus.rejected
+        ? "Re-apply as ${chip.roleType.name.toUpperCase()}"
+        : "Join as ${chip.roleType.name.toUpperCase()}";
+
+    final message = chip.status == RoleStatus.rejected
+        ? "Your previous request was rejected. Would you like to re-apply?"
+        : "Would you like to send a request to join as ${chip.roleType.name}?";
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        title: Text(
+          title,
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          message,
+          style: TextStyle(fontSize: 11.sp, color: AppColor.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: AppColor.textSecondary, fontSize: 12.sp),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: chip.color,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            ),
+            onPressed: () {
+              Get.back();
+              _submitRoleRequest(chip);
+            },
+            child: Text(
+              chip.status == RoleStatus.rejected ? "Re-Apply" : "Apply",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSingleRoleChip(_RoleChipData chip) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
-      decoration: BoxDecoration(
-        color: chip.color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: chip.color.withOpacity(0.35), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 22.w,
-            height: 22.w,
-            decoration: BoxDecoration(
-              color: chip.color.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(chip.icon, size: 12.sp, color: chip.color),
-          ),
-          SizedBox(width: 6.w),
-          Text(
-            chip.label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: chip.color,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
+  void _submitRoleRequest(_RoleChipData chip) {
+    switch (chip.roleType) {
+      case RoleType.agent:
+        dashboardController.applyForRole(RoleType.agent);
+        break;
+      case RoleType.vendor:
+        dashboardController.applyForRole(RoleType.vendor);
+        break;
+      case RoleType.service:
+        dashboardController.applyForRole(RoleType.service);
+        break;
+    }
   }
-
   // ─── REFERRAL CODE CARD ─────────────────────────────────────────────────────
   //
   // Rules (from spec):
@@ -259,17 +387,17 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColor.primary.withOpacity(0.13),
-            AppColor.primarylite.withOpacity(0.08),
+            AppColor.primary.withValues(alpha:0.13),
+            AppColor.primarylite.withValues(alpha:0.08),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: AppColor.primary.withOpacity(0.25), width: 1),
+        border: Border.all(color: AppColor.primary.withValues(alpha:0.25), width: 1),
         boxShadow: [
           BoxShadow(
-            color: AppColor.primary.withOpacity(0.07),
+            color: AppColor.primary.withValues(alpha:0.07),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -278,13 +406,12 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header
           Row(
             children: [
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: AppColor.primary.withOpacity(0.15),
+                  color: AppColor.primary.withValues(alpha:0.15),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(Icons.card_giftcard_rounded,
@@ -305,15 +432,13 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
             ],
           ),
           SizedBox(height: 12.h),
-
-          // ── Code box
           Container(
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14.r),
               border: Border.all(
-                  color: AppColor.primary.withOpacity(0.18), width: 1),
+                  color: AppColor.primary.withValues(alpha:0.18), width: 1),
             ),
             child: Row(
               children: [
@@ -330,7 +455,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                         ),
                       ),
                       SizedBox(height: 6.h),
-                      // Letter-by-letter boxes
                       Wrap(
                         spacing: 4.w,
                         children: profile.code!.split('').map((char) {
@@ -338,10 +462,10 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                             width: 24.w,
                             height: 30.h,
                             decoration: BoxDecoration(
-                              color: AppColor.primary.withOpacity(0.07),
+                              color: AppColor.primary.withValues(alpha:0.07),
                               borderRadius: BorderRadius.circular(6.r),
                               border: Border.all(
-                                color: AppColor.primary.withOpacity(0.22),
+                                color: AppColor.primary.withValues(alpha:0.22),
                                 width: 1,
                               ),
                             ),
@@ -376,25 +500,13 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     );
   }
 
-  /// Core referral visibility logic
   bool _shouldShowReferralCode({
     required bool isAgent,
     required bool isVendor,
     required bool isServices,
   }) {
-    // Pure User → NO
     if (!isAgent && !isVendor && !isServices) return false;
-
-    // Service only → NO
     if (!isAgent && !isVendor && isServices) return false;
-
-    // All remaining combos → YES
-    // Agent only          → YES
-    // Vendor only         → YES
-    // Service + Agent     → YES
-    // Agent + Vendor      → YES
-    // Vendor + Service    → YES
-    // Agent+Vendor+Service→ YES
     return true;
   }
 
@@ -436,10 +548,10 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
         decoration: BoxDecoration(
-          color: AppColor.primary.withOpacity(0.1),
+          color: AppColor.primary.withValues(alpha:0.1),
           borderRadius: BorderRadius.circular(10.r),
           border:
-          Border.all(color: AppColor.primary.withOpacity(0.2), width: 1),
+          Border.all(color: AppColor.primary.withValues(alpha:0.2), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -494,8 +606,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     return "Join me on Cashback Farms! Use my referral code: $code to get started as a $role and earn exciting rewards! 🚀\n\nDownload the app now!";
   }
 
-  // ─── HEADER ────────────────────────────────────────────────────────────────
-
   Widget _buildHeader() {
     final profile = dashboardController.profile.value;
     return Container(
@@ -512,7 +622,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         borderRadius: BorderRadius.circular(22.r),
         boxShadow: [
           BoxShadow(
-            color: AppColor.primary.withOpacity(0.32),
+            color: AppColor.primary.withValues(alpha:0.32),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -525,17 +635,20 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border:
-              Border.all(color: Colors.white.withOpacity(0.55), width: 2),
+              Border.all(color: Colors.white.withValues(alpha:0.55), width: 2),
             ),
             child: CircleAvatar(
               radius: 32.r,
               backgroundColor: Colors.white24,
-              backgroundImage:
-              (profile?.avatar != null && profile!.avatar.isNotEmpty)
-                  ? NetworkImage(profile.avatar)
+              backgroundImage: (profile?.avatar?.isNotEmpty ?? false)
+                  ? NetworkImage(profile!.avatar!)
                   : null,
-              child: (profile?.avatar == null || profile!.avatar.isEmpty)
-                  ? Icon(Icons.person_rounded, size: 28.sp, color: Colors.white)
+              child: !(profile?.avatar?.isNotEmpty ?? false)
+                  ? Icon(
+                Icons.person_rounded,
+                size: 28.sp,
+                color: Colors.white,
+              )
                   : null,
             ),
           ),
@@ -560,7 +673,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                   padding:
                   EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha:0.2),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
@@ -578,7 +691,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha:0.15),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(Icons.verified_user_rounded,
@@ -588,9 +701,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       ),
     );
   }
-
-  // ─── WALLET CARD ────────────────────────────────────────────────────────────
-
+  
   Widget _buildWalletCard() {
     final walletBalance = double.tryParse(
         dashboardController.profile.value?.walletBalance ?? "0") ??
@@ -603,7 +714,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: AppColor.primary.withOpacity(0.08),
+            color: AppColor.primary.withValues(alpha:0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -615,7 +726,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
             width: 54.w,
             height: 54.w,
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.1),
+              color: AppColor.primary.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(16.r),
             ),
             child: Icon(Icons.account_balance_wallet_rounded,
@@ -649,7 +760,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.1),
+              color: AppColor.primary.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Text(
@@ -665,9 +776,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       ),
     );
   }
-
-  // ─── CUMULATIVE DASHBOARD CARD ──────────────────────────────────────────────
-
+  
   Widget _buildCumulativeDashboardCard() {
     final settings = dashboardController.businessSettings.value;
     final cumulativeAmount = double.tryParse(
@@ -698,7 +807,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         borderRadius: BorderRadius.circular(22.r),
         boxShadow: [
           BoxShadow(
-            color: AppColor.primary.withOpacity(0.08),
+            color: AppColor.primary.withValues(alpha:0.08),
             blurRadius: 18,
             offset: const Offset(0, 5),
           ),
@@ -722,7 +831,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                         painter: _SmoothRingPainter(
                           progress: animated,
                           activeColor: AppColor.primary,
-                          trackColor: AppColor.primarylite.withOpacity(0.4),
+                          trackColor: AppColor.primarylite.withValues(alpha:0.4),
                         ),
                         child: Center(
                           child: Column(
@@ -776,14 +885,14 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                           _statChip(
                             "$completedMilestones",
                             "Milestones",
-                            AppColor.primary.withOpacity(0.1),
+                            AppColor.primary.withValues(alpha:0.1),
                             AppColor.primary,
                           ),
                           SizedBox(width: 8.w),
                           _statChip(
                             "₹${totalEarned.toStringAsFixed(0)}",
                             "Earned",
-                            AppColor.orange.withOpacity(0.12),
+                            AppColor.orange.withValues(alpha:0.12),
                             AppColor.orange,
                           ),
                         ],
@@ -827,7 +936,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                         value: _progressController.value * progress,
                         minHeight: 11.h,
                         backgroundColor:
-                        AppColor.primarylite.withOpacity(0.35),
+                        AppColor.primarylite.withValues(alpha:0.35),
                         valueColor: const AlwaysStoppedAnimation<Color>(
                             AppColor.primary),
                       ),
@@ -1010,7 +1119,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: item.color.withOpacity(0.1),
+              color: item.color.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Icon(item.icon, color: item.color, size: 16.sp),
@@ -1045,8 +1154,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     );
   }
 
-  // ─── HELPERS ────────────────────────────────────────────────────────────────
-
+ 
   Widget _buildSectionLabel(String title) {
     return Text(
       title,
@@ -1059,7 +1167,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     );
   }
 
-  // ─── MENU LIST ──────────────────────────────────────────────────────────────
 
   Widget _buildMenuList() {
     return Column(
@@ -1113,7 +1220,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha:0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -1125,7 +1232,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
               width: 40.w,
               height: 40.w,
               decoration: BoxDecoration(
-                color: tileColor.withOpacity(0.1),
+                color: tileColor.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(icon, color: tileColor, size: 18.sp),
@@ -1150,20 +1257,28 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
   }
 }
 
-// ─── ROLE CHIP DATA MODEL ────────────────────────────────────────────────────
+
+
+enum RoleStatus { joinNow, pending, approved, rejected }
+enum RoleType   { agent, vendor, service }
 
 class _RoleChipData {
-  final String label;
-  final IconData icon;
-  final Color color;
-  const _RoleChipData({
+  final String    label;
+  final String  icon;
+  final Color     color;
+  final RoleStatus status;
+  final RoleType  roleType;
+  final bool      isTappable;
+
+  _RoleChipData({
     required this.label,
     required this.icon,
     required this.color,
+    required this.status,
+    required this.roleType,
+    required this.isTappable,
   });
 }
-
-// ─── DESC ITEM MODEL ─────────────────────────────────────────────────────────
 
 class _DescItem {
   final IconData icon;
@@ -1178,7 +1293,6 @@ class _DescItem {
   });
 }
 
-// ─── LOGOUT DIALOG ───────────────────────────────────────────────────────────
 
 void _showLogoutConfirmation(BuildContext context) {
   showDialog(
@@ -1196,7 +1310,7 @@ void _showLogoutConfirmation(BuildContext context) {
               height: 80,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColor.primary.withOpacity(0.1),
+                color: AppColor.primary.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(40),
               ),
               child: Image.asset(Images.logout, fit: BoxFit.contain),
@@ -1279,7 +1393,6 @@ Future<void> _performLogout() async {
   }
 }
 
-// ─── DASHED RING PAINTER ─────────────────────────────────────────────────────
 
 class DashedRingPainter extends CustomPainter {
   final double percent;
@@ -1327,7 +1440,6 @@ class DashedRingPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// ─── SMOOTH RING PAINTER ─────────────────────────────────────────────────────
 
 class _SmoothRingPainter extends CustomPainter {
   final double progress;
@@ -1374,7 +1486,6 @@ class _SmoothRingPainter extends CustomPainter {
       old.progress != progress;
 }
 
-// ─── String extension ────────────────────────────────────────────────────────
 
 extension StringExtension on String {
   String get capitalizeFirst {
