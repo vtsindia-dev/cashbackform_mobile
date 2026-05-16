@@ -601,8 +601,7 @@ class ContactUsScreen extends StatelessWidget {
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
-              )
-                  : Text(
+              ) : Text(
                 "Submit Message",
                 style: TextStyle(
                   fontSize: 16.sp,

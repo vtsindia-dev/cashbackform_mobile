@@ -131,6 +131,7 @@ class Property {
   final String location;
   final int? city;
   final int? state;
+  final int? plot_count;
   final int? subCategoryId;
   final String? lat;
   final String? lng;
@@ -179,6 +180,7 @@ class Property {
     this.completionDate,
     required this.location,
     this.city,
+    this.plot_count,
     this.state,
     this.lat,
     this.lng,
@@ -238,6 +240,7 @@ class Property {
       lat: json['lat'] as String?,
       lng: json['lng'] as String?,
       price: safeDoubleCast(json['price']),
+      plot_count: safeIntCast(json['plot_count']),
       areaSqft: safeIntCast(json['area_sqft']),
       areaSqftPrice: safeNullableDoubleCast(json['area_sqft_price']),
       highlights: json['highlights'] as String?,

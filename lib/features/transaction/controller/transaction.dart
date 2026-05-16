@@ -76,7 +76,7 @@ class TransactionController extends GetxController {
       isLoadingGioo(true); giooError('');
       final token = await _getToken();
       final response = await ApiService.getRequest(
-        '${ApiUrl.baseUrl}/api/v2/my-gioo-transactions?page=$page',
+        '${ApiUrl.baseUrl}/api/v2/        ?page=$page',
         headers: {'Authorization': 'Bearer $token'},
       );
       if (response.statusCode == 200 && response.data != null) {

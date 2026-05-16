@@ -35,7 +35,7 @@ class _MyPlotsScreenState extends State<MyPlotsScreen> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.h),
         child: DynamicAppBar(
-          title: "My Residential Plots",
+          title: "My Flat/Villas",
           showBackButton: true,
         ),
       ),

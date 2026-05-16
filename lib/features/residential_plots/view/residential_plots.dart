@@ -26,7 +26,7 @@ class _ResidentialPropertiesScreenState extends State<ResidentialPropertiesScree
         return Scaffold(
           backgroundColor: const Color(0xFFF4F7F2),
           appBar: const DynamicAppBar(
-            title: "Residential Plot",
+            title: "Flat/Villas",
             showBackButton: true,
           ),
           body: Obx(() => controller.isLoading.value
