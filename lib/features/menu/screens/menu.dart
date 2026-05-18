@@ -1158,15 +1158,21 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildCompanyDropdown() {
-
     final profile = dashboardController.profile.value;
 
     final bool isAgent = profile?.isAgent == 1;
     final bool isVendor = profile?.isVendor == 1;
     final bool isService = profile?.isServices == 1;
 
-    /// Show company profile if Vendor OR Service approved
+    final bool shouldHideCompanySection =
+        isAgent && !isVendor && !isService;
+
     final bool showCompanyProfile = isVendor || isService;
+
+    if (shouldHideCompanySection) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
       decoration: BoxDecoration(
@@ -1190,7 +1196,9 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
             },
             child: Padding(
               padding: EdgeInsets.symmetric(
-                  vertical: 14.h, horizontal: 16.w),
+                vertical: 14.h,
+                horizontal: 16.w,
+              ),
               child: Row(
                 children: [
                   Container(
@@ -1207,6 +1215,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   SizedBox(width: 14.w),
+
                   Expanded(
                     child: Text(
                       "Company Profile",
@@ -1231,12 +1240,17 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
               ),
             ),
           ),
+
           if (isCompanyExpanded)
             Padding(
               padding: EdgeInsets.only(
-                  left: 20.w, right: 10.w, bottom: 10.h),
+                left: 20.w,
+                right: 10.w,
+                bottom: 10.h,
+              ),
               child: Column(
                 children: [
+                  /// Vendor OR Service
                   if (showCompanyProfile)
                     _subMenuTile(
                       Icons.apartment_rounded,
@@ -1244,20 +1258,24 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                           () => Get.to(() => const VendorStoreView()),
                       "assets/images/company-vision.png",
                     ),
+
+                  /// Service only
                   if (isService)
-                  _subMenuTile(
-                    Icons.miscellaneous_services_rounded,
-                    "My Service",
+                    _subMenuTile(
+                      Icons.miscellaneous_services_rounded,
+                      "My Service",
                           () => Get.to(() => const AddServiceScreen()),
-                      "assets/images/support1.png"
-                  ),
+                      "assets/images/support1.png",
+                    ),
+
+                  /// Vendor only
                   if (isVendor)
-                  _subMenuTile(
-                    Icons.settings_input_component_rounded,
-                    "My Material",
+                    _subMenuTile(
+                      Icons.settings_input_component_rounded,
+                      "My Material",
                           () => Get.to(() => const AddMaterialsScreen()),
-                      "assets/images/technical-support.png"
-                  ),
+                      "assets/images/technical-support.png",
+                    ),
                 ],
               ),
             ),
