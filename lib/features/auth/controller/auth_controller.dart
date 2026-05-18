@@ -452,7 +452,7 @@ class AuthController extends GetxController with CodeAutoFill {
       // Add referral code if provided and valid
       final referralCode = referralCodeController.text.trim().toUpperCase();
       if (referralCode.isNotEmpty && isReferralCodeValid.value) {
-        formData.fields.add(MapEntry('code', referralCode));
+        formData.fields.add(MapEntry('referral_code', referralCode));
         print('📝 Adding referral code: $referralCode');
       }
 

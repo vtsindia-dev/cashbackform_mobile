@@ -262,11 +262,9 @@ class ProfileController extends GetxController {
         'city_id': selectedCity?.id,
       };
 
-      // Only include referral code if it's editable (user doesn't have one yet)
       if (isReferralCodeEditable.value && referralCodeController.text.trim().isNotEmpty) {
-        formData['code'] = referralCodeController.text.trim().toUpperCase();
+        formData['reference_id'] = referralCodeController.text.trim().toUpperCase();
       }
-
       print('📤 Updating profile with data: $formData');
       final response = await ApiService.updateProfile(
         data: formData,
@@ -328,7 +326,6 @@ class ProfileController extends GetxController {
   }
   void _prefillFormData() {
     if (profile.value == null) return;
-
     final p = profile.value!;
 
     Future.microtask(() {
@@ -342,16 +339,16 @@ class ProfileController extends GetxController {
       addressController.text = p.address ?? '';
       profileImageUrl.value = p.profileImage ?? '';
 
-      // Add referral code to controller
-      referralCodeController.text = p.code ?? '';
+      referralCodeController.text = ''; // always blank — user types fresh
 
-      // If user already has a referral code, make it read-only
-      if (p.code != null && p.code!.isNotEmpty) {
-        isReferralCodeEditable.value = false;
-      }
+      // Editable only when not referred by a real user
+      final refId = p.referenceId;
+      final referId = p.refer?.id;
+      final isNotReferred =
+          (refId == null || refId == 1) && (referId == null || referId == 1);
+      isReferralCodeEditable.value = isNotReferred;
     });
-  }
-  // void _prefillFormData() {
+  }  // void _prefillFormData() {
   //   if (profile.value != null) {
   //     final p = profile.value!;
   //     firstNameController.text = p.firstName;

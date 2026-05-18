@@ -16,7 +16,7 @@ class Login extends StatefulWidget {
 }
 class _LoginState extends State<Login> {
   final AuthController authController = Get.put(AuthController());
-  bool isTermsAccepted = false;
+  bool isTermsAccepted = true;
   @override
   void initState() {
     super.initState();
@@ -185,83 +185,83 @@ class _LoginState extends State<Login> {
         ),
 
         SizedBox(height: 20),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  isTermsAccepted = !isTermsAccepted;
-                });
-              },
-              child: Container(
-                width: 15,
-                height: 15,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: AppColor.primary,
-                    width: 2,
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                  color: isTermsAccepted ? AppColor.primary : Colors.white,
-                ),
-                child: isTermsAccepted
-                    ? Align(
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.check,
-                    size: 10,
-                    color: Colors.white,
-                  ),
-                )
-                    : null,
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: RichText(
-                  text: TextSpan(
-                    text: "By continuing, you agree to our ",
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 13,
-                      fontFamily: GoogleFonts.montserrat().fontFamily,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: "Terms & Conditions",
-                        style: TextStyle(
-                          color: AppColor.primary,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: GoogleFonts.montserrat().fontFamily,
-                        ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                          },
-                      ),
-                      TextSpan(text: " and "),
-                      TextSpan(
-                        text: "Privacy Policy",
-                        style: TextStyle(
-                          color: AppColor.primary,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: GoogleFonts.montserrat().fontFamily,
-                        ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                          },
-                      ),
-                      TextSpan(text: "."),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 30),
+        // Row(
+        //   crossAxisAlignment: CrossAxisAlignment.center,
+        //   children: [
+        //     GestureDetector(
+        //       onTap: () {
+        //         setState(() {
+        //           isTermsAccepted = !isTermsAccepted;
+        //         });
+        //       },
+        //       child: Container(
+        //         width: 15,
+        //         height: 15,
+        //         decoration: BoxDecoration(
+        //           border: Border.all(
+        //             color: AppColor.primary,
+        //             width: 2,
+        //           ),
+        //           borderRadius: BorderRadius.circular(4),
+        //           color: isTermsAccepted ? AppColor.primary : Colors.white,
+        //         ),
+        //         child: isTermsAccepted
+        //             ? Align(
+        //           alignment: Alignment.center,
+        //           child: Icon(
+        //             Icons.check,
+        //             size: 10,
+        //             color: Colors.white,
+        //           ),
+        //         )
+        //             : null,
+        //       ),
+        //     ),
+        //     SizedBox(width: 10),
+        //     Expanded(
+        //       child: Align(
+        //         alignment: Alignment.centerLeft,
+        //         child: RichText(
+        //           text: TextSpan(
+        //             text: "By continuing, you agree to our ",
+        //             style: TextStyle(
+        //               color: Colors.black87,
+        //               fontSize: 13,
+        //               fontFamily: GoogleFonts.montserrat().fontFamily,
+        //             ),
+        //             children: [
+        //               TextSpan(
+        //                 text: "Terms & Conditions",
+        //                 style: TextStyle(
+        //                   color: AppColor.primary,
+        //                   fontWeight: FontWeight.bold,
+        //                   fontFamily: GoogleFonts.montserrat().fontFamily,
+        //                 ),
+        //                 recognizer: TapGestureRecognizer()
+        //                   ..onTap = () {
+        //                   },
+        //               ),
+        //               TextSpan(text: " and "),
+        //               TextSpan(
+        //                 text: "Privacy Policy",
+        //                 style: TextStyle(
+        //                   color: AppColor.primary,
+        //                   fontWeight: FontWeight.bold,
+        //                   fontFamily: GoogleFonts.montserrat().fontFamily,
+        //                 ),
+        //                 recognizer: TapGestureRecognizer()
+        //                   ..onTap = () {
+        //                   },
+        //               ),
+        //               TextSpan(text: "."),
+        //             ],
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ],
+        // ),
+        // SizedBox(height: 30),
         SizedBox(
           width: double.infinity,
           height: 50,

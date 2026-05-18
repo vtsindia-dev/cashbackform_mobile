@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
@@ -19,1231 +20,1058 @@ class ProfileForm extends StatelessWidget {
     final ProfileController controller = Get.put(ProfileController());
 
     return Scaffold(
-      appBar: DynamicAppBar(
-        title: "My Profile",
-        showBackButton: true,
-      ),
+      backgroundColor: const Color(0xFFF0F4FF),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(
-            child: GifLoader(message: "Loading...", size: 100),
-          );
+          return const Center(child: GifLoader(message: "Loading profile...", size: 100));
         }
-
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(height: 10.h),
-              _buildProfileImageSection(controller),
-              SizedBox(height: 24.h),
-              _buildFormFields(controller),
-              SizedBox(height: 30.h),
-              _buildReferralCodeSection(controller),
-              SizedBox(height: 30.h),
-              _buildUpdateButton(controller),
-              SizedBox(height: 15.h),
-            ],
-          ),
+        return CustomScrollView(
+          slivers: [
+            _buildSliverHeader(controller),
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  SizedBox(height: 16.h),
+                  _buildAvatarCard(controller),
+                  SizedBox(height: 16.h),
+                  _buildPersonalSection(controller),
+                  SizedBox(height: 16.h),
+                  _buildAdditionalSection(controller),
+                  SizedBox(height: 16.h),
+                  _buildAddressSection(controller),
+                  SizedBox(height: 16.h),
+                  _buildReferralSection(controller),
+                  SizedBox(height: 16.h),
+                  _buildUpdateButton(controller),
+                  SizedBox(height: 40.h),
+                ],
+              ),
+            ),
+          ],
         );
       }),
     );
   }
 
+  // ── Compact Sliver Header ───────────────────────────────────────────────────
 
-  Widget _buildProfileImageSection(ProfileController controller) {
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: () => _showImagePickerOptions(controller),
-          child: Container(
-            width: 120.w,
-            height: 120.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColor.primary,
-                width: 3.w,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColor.primary.withOpacity(0.2),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                // Profile Image
-                Obx(() {
-                  return Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColor.backgroundLight,
-                      image: controller.profileImage.value != null
-                          ? DecorationImage(
-                        image: FileImage(controller.profileImage.value!),
-                        fit: BoxFit.cover,
-                      )
-                          : (controller.profileImageUrl.value.isNotEmpty
-                          ? DecorationImage(
-                        image: NetworkImage(controller.profileImageUrl.value),
-                        fit: BoxFit.cover,
-                      )
-                          : null),
-                    ),
-                    child: controller.profileImage.value == null &&
-                        controller.profileImageUrl.value.isEmpty
-                        ? Center(
-                      child: Icon(
-                        Icons.person,
-                        size: 50.sp,
-                        color: AppColor.primary.withOpacity(0.5),
-                      ),
-                    )
-                        : null,
-                  );
-                }),
-
-                // Edit Icon Overlay
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 36.w,
-                    height: 36.w,
-                    decoration: BoxDecoration(
-                      color: AppColor.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 3.w,
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.edit,
-                        size: 18.sp,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )
-              .animate()
-              .scale(begin: Offset(0.8, 0.8), duration: 500.ms)
-              .fade(duration: 500.ms)
-              .shake(duration: 800.ms, delay: 1000.ms),
+  Widget _buildSliverHeader(ProfileController controller) {
+    return SliverAppBar(
+      pinned: true,
+      elevation: 0,
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back_ios_new_rounded,
+            size: 18.sp, color: const Color(0xFF1A1D2E)),
+        onPressed: () => Get.back(),
+      ),
+      title: Text(
+        'My Profile',
+        style: TextStyle(
+          color: const Color(0xFF1A1D2E),
+          fontSize: 17.sp,
+          fontWeight: FontWeight.w700,
         ),
-        SizedBox(height: 12.h),
-        Text(
-          'Tap to update photo',
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: AppColor.textSecondary,
-            fontWeight: FontWeight.w500,
-          ),
-        ).animate().fade(duration: 300.ms),
-      ],
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Divider(height: 1, color: Colors.grey.shade100),
+      ),
+      // Compact avatar row inside the appbar bottom area
+      flexibleSpace: FlexibleSpaceBar(
+        expandedTitleScale: 1,
+        background: Container(color: Colors.white),
+      ),
     );
   }
 
-  Widget _buildFormFields(ProfileController controller) {
+  // ── Avatar card shown just below appbar ─────────────────────────────────────
+
+  Widget _buildAvatarCard(ProfileController controller) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: Offset(0, 10),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          GestureDetector(
+            onTap: () => _showImagePickerOptions(controller),
+            child: Obx(() => Stack(
+              children: [
+                Container(
+                  width: 64.w,
+                  height: 64.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: AppColor.primary.withOpacity(0.3), width: 2.w),
+                  ),
+                  child: ClipOval(
+                    child: controller.profileImage.value != null
+                        ? Image.file(controller.profileImage.value!,
+                        fit: BoxFit.cover)
+                        : controller.profileImageUrl.value.isNotEmpty
+                        ? CachedNetworkImage(
+                      imageUrl: controller.profileImageUrl.value,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                        color: AppColor.primary.withOpacity(0.08),
+                        child: Icon(Icons.person,
+                            size: 28.sp,
+                            color: AppColor.primary.withOpacity(0.4)),
+                      ),
+                      errorWidget: (_, __, ___) => Container(
+                        color: AppColor.primary.withOpacity(0.08),
+                        child: Icon(Icons.person,
+                            size: 28.sp,
+                            color: AppColor.primary.withOpacity(0.4)),
+                      ),
+                    )
+                        : Container(
+                      color: AppColor.primary.withOpacity(0.08),
+                      child: Icon(Icons.person,
+                          size: 28.sp,
+                          color: AppColor.primary.withOpacity(0.4)),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 22.w,
+                    height: 22.w,
+                    decoration: BoxDecoration(
+                      color: AppColor.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Icon(Icons.camera_alt_rounded,
+                        size: 11.sp, color: Colors.white),
+                  ),
+                ),
+              ],
+            )),
+          ),
+          SizedBox(width: 14.w),
+          // Name + email
+          Expanded(
+            child: Obx(() {
+              final p = controller.profile.value;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p?.fullName.isNotEmpty == true ? p!.fullName : 'Your Name',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1A1D2E),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    p?.email ?? '',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: const Color(0xFF6B7280),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      if (p?.isEmailVerifiedBool == true)
+                        _verifiedChip('Email'),
+                      if (p?.isPhoneVerifiedBool == true) ...[
+                        SizedBox(width: 6.w),
+                        _verifiedChip('Phone'),
+                      ],
+                    ],
+                  ),
+                ],
+              );
+            }),
+          ),
+        ],
+      ),
+    )
+        .animate()
+        .fade(duration: 350.ms)
+        .slideY(begin: 0.06, end: 0, duration: 350.ms);
+  }
+
+  Widget _verifiedChip(String label) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.verified_rounded,
+              size: 10.sp, color: const Color(0xFF10B981)),
+          SizedBox(width: 3.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9.sp,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF10B981),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Section Card wrapper ────────────────────────────────────────────────────
+
+  Widget _sectionCard({
+    required IconData icon,
+    required String title,
+    required Color iconColor,
+    required List<Widget> children,
+    int animDelay = 0,
+  }) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader(
-            icon: Icons.person_outline,
-            title: 'Personal Information',
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              Expanded(
-                child: _buildAnimatedTextField(
-                  controller: controller.firstNameController,
-                  label: 'First Name',
-                  hint: 'Tobi',
-                  isRequired: true,
-                  index: 0,
+          // Section header
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+            child: Row(
+              children: [
+                Container(
+                  width: 36.w,
+                  height: 36.w,
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(icon, size: 18.sp, color: iconColor),
                 ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _buildAnimatedTextField(
-                  controller: controller.lastNameController,
-                  label: 'Last Name',
-                  hint: 'Jr',
-                  isRequired: true,
-                  index: 1,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-
-          // Email
-          _buildAnimatedTextField(
-            controller: controller.emailController,
-            label: 'Email Address',
-            hint: 'tobijr.@email.com',
-            icon: Icons.email_outlined,
-            isRequired: true,
-            index: 2,
-          ),
-          SizedBox(height: 16.h),
-
-          // Phone
-          _buildAnimatedTextField(
-            controller: controller.phoneController,
-            label: 'Phone Number',
-            hint: '+1 234 567 8900',
-            isPhoneNumber: true,
-            icon: Icons.phone_outlined,
-            keyboardType: TextInputType.phone,
-            isRequired: true,
-            index: 3,
-          ),
-          SizedBox(height: 20.h),
-          _buildSectionHeader(
-            icon: Icons.info_outline,
-            title: 'Additional Information',
-          ),
-          SizedBox(height: 16.h),
-          _buildGenderSelector(controller),
-          SizedBox(height: 16.h),
-          _buildDatePicker(controller),
-          SizedBox(height: 16.h),
-
-          _buildSectionHeader(
-            icon: Icons.location_on_outlined,
-            title: 'Address Details',
-          ),
-          SizedBox(height: 16.h),
-
-          // PIN Code
-          _buildAnimatedTextField(
-            controller: controller.pinCodeController,
-            label: 'PIN Code',
-            hint: '123456',
-            icon: Icons.pin_outlined,
-            keyboardType: TextInputType.number,
-            index: 4,
-          ),
-          SizedBox(height: 16.h),
-
-          // Address
-          _buildAddressField(controller),
-          SizedBox(height: 16.h),
-
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text("Country"),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColor.primarylite,
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColor.primary.withOpacity(0.2),
-                  blurRadius: 15,
-                  spreadRadius: 2,
+                SizedBox(width: 10.w),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1D2E),
+                  ),
                 ),
               ],
-              color: Colors.white,
-            ),
-            child: DropdownButtonFormField<CountryModel>(
-              value: controller.selectedCountry,
-              items: controller.countries.map((country) {
-                return DropdownMenuItem(
-                  value: country,
-                  child: Text(country.countryName),
-                );
-              }).toList(),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                hintText: "Select Country",
-              ),
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
-              onChanged: (value) {
-                controller.selectedCountry = value;
-                controller.selectedState = null;
-                controller.selectedCity = null;
-
-                if (value != null) {
-                  controller.fetchStates(value.id);
-                }
-
-                controller.update();
-              },
             ),
           ),
-
-          const SizedBox(height: 20),
-
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text("State"),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColor.primarylite,
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColor.primary.withOpacity(0.2),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                ),
-              ],
-              color: Colors.white,
-            ),
-            child: GetBuilder<ProfileController>(
-              builder: (profilecontrollr) {
-
-                if (profilecontrollr.isstateLoading) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    child: LinearProgressIndicator(
-                      color: AppColor.primary,
-                    ),
-                  );
-                }
-
-                return DropdownButtonFormField<StateModel>(
-                  value: profilecontrollr.states.contains(controller.selectedState)
-                      ? controller.selectedState
-                      : null,
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: "Select State",
-                  ),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  items: profilecontrollr.states.map((state) {
-                    return DropdownMenuItem<StateModel>(
-                      value: state, // ✅ FIXED
-                      child: Text(state.stateName),
-                    );
-                  }).toList(),
-                  onTap: () {
-                    if (profilecontrollr.states.isEmpty) {
-                      SnackBarHelper.showError("Please select country first");
-                    }
-                  },
-                  onChanged: (value) {
-
-                    controller.selectedState = value;
-                    controller.selectedCity = null;
-
-                    if (value != null) {
-                      controller.fetchCity(value.id);
-                    }
-
-                    controller.update(); // important for GetBuilder
-                  },
-                );
-              },
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
             ),
           ),
-
-
-          const SizedBox(height: 20),
-
-          Align(
-            alignment: Alignment.centerLeft,
-            child: const Text("City"),
-          ),
-          const SizedBox(height: 10),
-
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColor.primarylite,
-                width: 1.5,
-              ),
-              color: Colors.white,
-            ),
-            child: GetBuilder<ProfileController>(
-              builder: (profilecontrollr) {
-
-                if (profilecontrollr.isCityoading) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    child: LinearProgressIndicator(
-                      color: AppColor.primary,
-                    ),
-                  );
-                }
-
-                return DropdownButtonFormField<CityModel>(
-                  value: profilecontrollr.cities.contains(controller.selectedCity)
-                      ? controller.selectedCity
-                      : null,
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: "Select City",
-                  ),
-                  items: profilecontrollr.cities.map((city) {
-                    return DropdownMenuItem<CityModel>(
-                      value: city, // ✅ FIXED
-                      child: Text(city.cityName),
-                    );
-                  }).toList(),
-                  onTap: () {
-                    if (profilecontrollr.cities.isEmpty) {
-                      SnackBarHelper.showError("Please select state first");
-                    }
-                  },
-                  onChanged: (value) {
-                    controller.selectedCity = value;
-                    controller.update();
-                  },
-                );
-              },
-            ),
-          ),
-          SizedBox(height: 20,),
         ],
       ),
-    );
+    )
+        .animate()
+        .fade(duration: 400.ms, delay: Duration(milliseconds: animDelay))
+        .slideY(begin: 0.08, end: 0, duration: 400.ms, delay: Duration(milliseconds: animDelay));
   }
 
-  Widget _buildSectionHeader({required IconData icon, required String title}) {
-    return Row(
-      children: [
-        Container(
-          padding: EdgeInsets.all(8.r),
-          decoration: BoxDecoration(
-            color: AppColor.primarylite.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Icon(
-            icon,
-            size: 18.sp,
-            color: AppColor.primary,
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-            color: AppColor.textMain,
-          ),
-        ),
-      ],
-    ).animate().fade(duration: 300.ms).slide(begin: Offset(-0.1, 0));
-  }
+  // ── Personal Section ────────────────────────────────────────────────────────
 
-  Widget _buildAnimatedTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    IconData? icon,
-    TextInputType keyboardType = TextInputType.text,
-    bool isRequired = false,
-    bool enabled = true,
-    required int index,
-    bool isPhoneNumber = false, // Add this parameter
-  }) {
-    bool isFieldEnabled = enabled && !isPhoneNumber; // Phone number is always read-only
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildPersonalSection(ProfileController controller) {
+    return _sectionCard(
+      icon: Icons.person_outline_rounded,
+      title: 'Personal Information',
+      iconColor: AppColor.primary,
+      animDelay: 0,
       children: [
         Row(
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColor.textMain,
+            Expanded(
+              child: _field(
+                label: 'First Name',
+                controller: controller.firstNameController,
+                hint: 'First name',
+                required: true,
               ),
             ),
-            if (isRequired)
-              Text(
-                ' *',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-          ],
-        ),
-        SizedBox(height: 6.h),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: controller,
-            enabled: isFieldEnabled,
-            readOnly: isPhoneNumber, // Set read-only for phone number
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(
-                fontSize: 13.sp,
-                color: AppColor.textSecondary.withOpacity(0.7),
-              ),
-              prefixIcon: icon != null
-                  ? Icon(
-                icon,
-                color: AppColor.primary.withOpacity(0.7),
-                size: 20.sp,
-              )
-                  : null,
-              filled: true,
-              fillColor: isFieldEnabled ? Colors.white : AppColor.backgroundLight,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: BorderSide(
-                  color: AppColor.primarylite,
-                  width: 1.5,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: BorderSide(
-                  color: AppColor.primary,
-                  width: 2,
-                ),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 16.h,
-              ),
-              suffixIcon: !isFieldEnabled
-                  ? Icon(
-                Icons.lock_outline,
-                size: 16.sp,
-                color: AppColor.textSecondary.withOpacity(0.5),
-              )
-                  : null,
-            ),
-            keyboardType: keyboardType,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: isFieldEnabled ? AppColor.textMain : AppColor.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ]
-          .animate()
-          .fade(duration: 300.ms)
-          .slide(begin: Offset(0, 0.1))
-          .then(delay: (index * 50).ms),
-    );
-  }
-  Widget _buildGenderSelector(ProfileController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'Gender',
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColor.textMain,
-              ),
-            ),
-            Text(
-              ' *',
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
+            SizedBox(width: 12.w),
+            Expanded(
+              child: _field(
+                label: 'Last Name',
+                controller: controller.lastNameController,
+                hint: 'Last name',
+                required: true,
               ),
             ),
           ],
         ),
-        SizedBox(height: 8.h),
-        Obx(() {
-          return Row(
-            children: [
-              Expanded(
-                child: _buildGenderOption(
-                  controller: controller,
-                  icon: Icons.male,
-                  label: 'Male',
-                  value: 1,
-                  isSelected: controller.selectedGender.value == 1,
-                  color: Colors.blue.shade100,
-                  iconColor: Colors.blue,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _buildGenderOption(
-                  controller: controller,
-                  icon: Icons.female,
-                  label: 'Female',
-                  value: 2,
-                  isSelected: controller.selectedGender.value == 2,
-                  color: Colors.pink.shade100,
-                  iconColor: Colors.pink,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _buildGenderOption(
-                  controller: controller,
-                  icon: Icons.transgender,
-                  label: 'Other',
-                  value: 3,
-                  isSelected: controller.selectedGender.value == 3,
-                  color: Colors.purple.shade100,
-                  iconColor: Colors.purple,
-                ),
-              ),
-            ].animate(interval: 50.ms).fade(duration: 300.ms).slide(begin: Offset(0, 0.1)),
-          );
-        }),
+        SizedBox(height: 14.h),
+        _field(
+          label: 'Email Address',
+          controller: controller.emailController,
+          hint: 'you@email.com',
+          icon: Icons.email_outlined,
+          required: true,
+          keyboardType: TextInputType.emailAddress,
+        ),
+        SizedBox(height: 14.h),
+        _field(
+          label: 'Phone Number',
+          controller: controller.phoneController,
+          hint: '+91 00000 00000',
+          icon: Icons.phone_outlined,
+          required: true,
+          readOnly: true,
+        ),
       ],
     );
   }
 
-  Widget _buildGenderOption({
-    required ProfileController controller,
-    required IconData icon,
-    required String label,
-    required int value,
-    required bool isSelected,
-    required Color color,
-    required Color iconColor,
-  }) {
-    return GestureDetector(
-      onTap: () => controller.selectedGender.value = value,
-      child: AnimatedContainer(
-        duration: 300.ms,
-        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 8.w),
-        decoration: BoxDecoration(
-          color: isSelected ? color : AppColor.backgroundLight,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: isSelected ? iconColor : Colors.grey.shade300,
-            width: isSelected ? 2 : 1.5,
-          ),
-          boxShadow: isSelected
-              ? [
-            BoxShadow(
-              color: iconColor.withOpacity(0.2),
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ]
-              : null,
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 22.sp,
-              color: isSelected ? iconColor : Colors.grey.shade600,
-            ),
-            SizedBox(height: 6.h),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: isSelected ? iconColor : Colors.grey.shade700,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // ── Additional Section ──────────────────────────────────────────────────────
 
-  Widget _buildDatePicker(ProfileController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildAdditionalSection(ProfileController controller) {
+    return _sectionCard(
+      icon: Icons.info_outline_rounded,
+      title: 'Additional Info',
+      iconColor: const Color(0xFF0EA5E9),
+      animDelay: 80,
       children: [
-        Text(
-          'Date of Birth',
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColor.textMain,
-          ),
-        ),
-        SizedBox(height: 6.h),
-        GestureDetector(
-          onTap: () => _selectDate(controller),
-          child: AbsorbPointer(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: controller.dobController,
-                decoration: InputDecoration(
-                  hintText: 'Select your date of birth',
-                  hintStyle: TextStyle(
-                    fontSize: 13.sp,
-                    color: AppColor.textSecondary.withOpacity(0.7),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.calendar_today_outlined,
-                    color: AppColor.primary.withOpacity(0.7),
-                    size: 20.sp,
-                  ),
-                  suffixIcon: Icon(
-                    Icons.arrow_drop_down,
-                    color: AppColor.primary,
-                    size: 24.sp,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(
-                      color: AppColor.primarylite,
-                      width: 1.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(
-                      color: AppColor.primary,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 16.h,
-                  ),
-                ),
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppColor.textMain,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ].animate().fade(duration: 300.ms).slide(begin: Offset(0, 0.1)),
+        _genderSelector(controller),
+        SizedBox(height: 14.h),
+        _datePicker(controller),
+      ],
     );
   }
 
-  Widget _buildAddressField(ProfileController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  // ── Address Section ─────────────────────────────────────────────────────────
+
+  Widget _buildAddressSection(ProfileController controller) {
+    return _sectionCard(
+      icon: Icons.location_on_outlined,
+      title: 'Address Details',
+      iconColor: const Color(0xFF10B981),
+      animDelay: 160,
       children: [
-        Text(
-          'Full Address',
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColor.textMain,
-          ),
+        _field(
+          label: 'PIN Code',
+          controller: controller.pinCodeController,
+          hint: '600001',
+          icon: Icons.pin_outlined,
+          keyboardType: TextInputType.number,
         ),
+        SizedBox(height: 14.h),
+        _multilineField(
+          label: 'Full Address',
+          controller: controller.addressController,
+          hint: 'Enter your complete address...',
+        ),
+        SizedBox(height: 14.h),
+        _dropdownLabel('Country'),
         SizedBox(height: 6.h),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: controller.addressController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Enter your complete address',
-              hintStyle: TextStyle(
-                fontSize: 13.sp,
-                color: AppColor.textSecondary.withOpacity(0.7),
-              ),
-              prefixIcon: Padding(
-                padding: EdgeInsets.only(bottom: 30.h),
-                child: Icon(
-                  Icons.home_outlined,
-                  color: AppColor.primary.withOpacity(0.7),
-                  size: 20.sp,
-                ),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: BorderSide(
-                  color: AppColor.primarylite,
-                  width: 1.5,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: BorderSide(
-                  color: AppColor.primary,
-                  width: 2,
-                ),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 16.h,
-              ),
-            ),
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColor.textMain,
-              fontWeight: FontWeight.w500,
-            ),
+        GetBuilder<ProfileController>(
+          builder: (c) => _styledDropdown<CountryModel>(
+            value: c.selectedCountry,
+            hint: 'Select Country',
+            items: c.countries
+                .map((e) => DropdownMenuItem(value: e, child: Text(e.countryName)))
+                .toList(),
+            onChanged: (v) {
+              c.selectedCountry = v;
+              c.selectedState = null;
+              c.selectedCity = null;
+              if (v != null) c.fetchStates(v.id);
+              c.update();
+            },
           ),
         ),
-      ].animate().fade(duration: 300.ms).slide(begin: Offset(0, 0.1)),
+        SizedBox(height: 14.h),
+        _dropdownLabel('State'),
+        SizedBox(height: 6.h),
+        GetBuilder<ProfileController>(
+          builder: (c) => c.isstateLoading
+              ? _loadingBar()
+              : _styledDropdown<StateModel>(
+            value: c.states.contains(c.selectedState) ? c.selectedState : null,
+            hint: 'Select State',
+            items: c.states
+                .map((e) => DropdownMenuItem(value: e, child: Text(e.stateName)))
+                .toList(),
+            onChanged: (v) {
+              c.selectedState = v;
+              c.selectedCity = null;
+              if (v != null) c.fetchCity(v.id);
+              c.update();
+            },
+          ),
+        ),
+        SizedBox(height: 14.h),
+        _dropdownLabel('City'),
+        SizedBox(height: 6.h),
+        GetBuilder<ProfileController>(
+          builder: (c) => c.isCityoading
+              ? _loadingBar()
+              : _styledDropdown<CityModel>(
+            value: c.cities.contains(c.selectedCity) ? c.selectedCity : null,
+            hint: 'Select City',
+            items: c.cities
+                .map((e) => DropdownMenuItem(value: e, child: Text(e.cityName)))
+                .toList(),
+            onChanged: (v) {
+              c.selectedCity = v;
+              c.update();
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildUpdateButton(ProfileController controller) {
+  // ── Referral Section ────────────────────────────────────────────────────────
+
+  Widget _buildReferralSection(ProfileController controller) {
     return Obx(() {
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15.r),
-            boxShadow: [
-              BoxShadow(
-                color: AppColor.primary.withOpacity(0.3),
-                blurRadius: 15,
-                spreadRadius: 2,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ElevatedButton(
-            onPressed: controller.isUpdating.value ? null : () => _updateProfile(controller),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primary,
-              foregroundColor: Colors.white,
-              minimumSize: Size(double.infinity, 54.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.r),
-              ),
-              disabledBackgroundColor: AppColor.primary.withOpacity(0.5),
-              elevation: 0,
-              padding: EdgeInsets.symmetric(horizontal: 40.w),
-            ),
-            child: controller.isUpdating.value
-                ? SizedBox(
-              width: 24.w,
-              height: 24.w,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Colors.white,
-              ),
-            )
-                : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle_outline, size: 20.sp),
-                SizedBox(width: 12.w),
-                Text(
-                  'Update Profile',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ).animate().fade(duration: 400.ms).scale(begin: Offset(0.9, 0.9)),
-      );
-    });
-  }
-  Widget _buildReferralCodeSection(ProfileController controller) {
-    return Obx(() {
-      // Check if user already has a referral code
-      if (controller.profile.value?.code != null &&
-          controller.profile.value!.code!.isNotEmpty) {
-        // Show referral code display (for sharing)
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20.h),
-            _buildSectionHeader(
-              icon: Icons.card_giftcard,
-              title: 'Referral Program',
-            ),
-            SizedBox(height: 16.h),
+      final profile = controller.profile.value;
+      // refer.id == 1 = admin default, not a real referral
+      final hasRefer = profile?.refer != null && profile!.refer!.id != 1;
+      final hasOwnCode = profile?.code != null && profile!.code!.isNotEmpty;
+
+      // reference_id == null or 1 means referred by admin/no one — allow input
+      final refId = profile?.referenceId;
+      final isNotReferred = refId == null || refId == 1;
+      final showInput = isNotReferred && !hasRefer;
+
+      return _sectionCard(
+        icon: Icons.card_giftcard_rounded,
+        title: 'Referral',
+        iconColor: const Color(0xFFF59E0B),
+        animDelay: 240,
+        children: [
+          // ── Referred by someone ────────────────────────────────────────
+          if (hasRefer) ...[
             Container(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColor.primarylite.withOpacity(0.1), Colors.white],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: const Color(0xFFFFFBEB),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColor.primary.withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFFFDE68A)),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.verified, color: AppColor.primary, size: 20.sp),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'Your Referral Code',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.textMain,
-                        ),
+                  ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: profile!.refer!.profileImage ?? '',
+                      width: 44.w,
+                      height: 44.w,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => Container(
+                        width: 44.w,
+                        height: 44.w,
+                        color: const Color(0xFFFDE68A),
+                        child: Icon(Icons.person,
+                            size: 22.sp, color: const Color(0xFFF59E0B)),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 12.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: AppColor.primarylite),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            controller.profile.value!.code!,
+                        Text(
+                          'Referred by',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: const Color(0xFF92400E),
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          profile.refer!.fullName,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF78350F),
+                          ),
+                        ),
+                        if (profile.refer!.code != null &&
+                            profile.refer!.code!.isNotEmpty)
+                          Text(
+                            profile.refer!.code!,
                             style: TextStyle(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColor.primary,
-                              letterSpacing: 1.5,
+                              fontSize: 11.sp,
+                              color: const Color(0xFFF59E0B),
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.8,
                             ),
                           ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Copy to clipboard
-                            // You need to add: import 'package:flutter/services.dart';
-                            Clipboard.setData(ClipboardData(text: controller.profile.value!.code!));
-                            SnackBarHelper.showSuccess('Code copied!');
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(8.r),
-                            decoration: BoxDecoration(
-                              color: AppColor.primarylite.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Icon(
-                              Icons.copy,
-                              size: 18.sp,
-                              color: AppColor.primary,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    'Share this code with friends and earn rewards when they sign up!',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColor.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  // Wallet balance info if available
-                  if (controller.profile.value?.walletBalance != null)
-                    Container(
-                      padding: EdgeInsets.all(12.w),
-                      decoration: BoxDecoration(
-                        color: AppColor.primarylite.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.account_balance_wallet, size: 16.sp, color: AppColor.primary),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'Wallet Balance: ₹${controller.profile.value!.walletBalance}',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColor.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  Icon(Icons.verified_rounded,
+                      size: 20.sp, color: const Color(0xFFF59E0B)),
                 ],
               ),
             ),
           ],
-        );
-      } else {
-        // Show referral code input field
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20.h),
-            _buildSectionHeader(
-              icon: Icons.card_giftcard_outlined,
-              title: 'Add Referral Code',
-            ),
-            SizedBox(height: 8.h),
+
+          // ── User's own referral code ───────────────────────────────────
+          if (hasOwnCode) ...[
+            if (hasRefer) SizedBox(height: 14.h),
             Text(
-              'Have a referral code? Enter it here to get benefits!',
+              'Your Referral Code',
               style: TextStyle(
                 fontSize: 12.sp,
-                color: AppColor.textSecondary,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF6B7280),
               ),
             ),
-            SizedBox(height: 12.h),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: controller.referralCodeController,
-                enabled: controller.isReferralCodeEditable.value,
-                decoration: InputDecoration(
-                  hintText: 'Enter referral code',
-                  hintStyle: TextStyle(
-                    fontSize: 13.sp,
-                    color: AppColor.textSecondary.withOpacity(0.7),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.card_giftcard_outlined,
-                    color: AppColor.primary.withOpacity(0.7),
-                    size: 20.sp,
-                  ),
-                  suffixIcon: controller.isReferralCodeEditable.value
-                      ? null
-                      : Icon(
-                    Icons.lock_outline,
-                    size: 16.sp,
-                    color: AppColor.textSecondary.withOpacity(0.5),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(
-                      color: AppColor.primarylite,
-                      width: 1.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(
-                      color: AppColor.primary,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 16.h,
-                  ),
-                ),
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppColor.textMain,
-                  fontWeight: FontWeight.w500,
-                ),
-                textCapitalization: TextCapitalization.characters,
-              ),
-            ),
-            if (controller.isReferralCodeEditable.value) ...[
-              SizedBox(height: 12.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            SizedBox(height: 8.h),
+            GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: profile!.code!));
+                SnackBarHelper.showSuccess('Code copied!');
+              },
+              child: Container(
+                padding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: Colors.amber.shade200),
+                  color: AppColor.primary.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border:
+                  Border.all(color: AppColor.primary.withOpacity(0.25)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, size: 14.sp, color: Colors.amber.shade700),
-                    SizedBox(width: 8.w),
+                    Icon(Icons.qr_code_rounded,
+                        size: 20.sp, color: AppColor.primary),
+                    SizedBox(width: 12.w),
                     Expanded(
                       child: Text(
-                        'Note: Referral code can only be added once during profile update',
+                        profile!.code!,
                         style: TextStyle(
-                          fontSize: 11.sp,
-                          color: Colors.amber.shade800,
-                          fontStyle: FontStyle.italic,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColor.primary,
+                          letterSpacing: 2,
                         ),
                       ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.all(8.r),
+                      decoration: BoxDecoration(
+                        color: AppColor.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Icon(Icons.copy_rounded,
+                          size: 15.sp, color: AppColor.primary),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Tap to copy · Share and earn rewards',
+              style: TextStyle(
+                  fontSize: 11.sp, color: const Color(0xFF9CA3AF)),
+            ),
           ],
-        );
-      }
+
+          // ── No referral at all — show input ───────────────────────────
+          if (showInput) ...[
+            Text(
+              'Have a referral code? Enter it to unlock benefits.',
+              style: TextStyle(
+                  fontSize: 12.sp,
+                  color: const Color(0xFF6B7280),
+                  height: 1.4),
+            ),
+            SizedBox(height: 12.h),
+            _field(
+              label: 'Referral Code',
+              controller: controller.referralCodeController,
+              hint: 'e.g. BALA0403179',
+              icon: Icons.card_giftcard_outlined,
+              textCapitalization: TextCapitalization.characters,
+            ),
+            SizedBox(height: 10.h),
+            Container(
+              padding:
+              EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: Colors.amber.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      size: 13.sp, color: Colors.amber.shade700),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      'Can only be added once during profile update',
+                      style: TextStyle(
+                          fontSize: 11.sp, color: Colors.amber.shade800),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      );
     });
   }
+
+  // ── Update Button ───────────────────────────────────────────────────────────
+
+  Widget _buildUpdateButton(ProfileController controller) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Obx(() => ElevatedButton(
+        onPressed: controller.isUpdating.value
+            ? null
+            : () async {
+          final result = await controller.updateProfile();
+          if (result['status'] == 200) {
+            SnackBarHelper.showSuccess(
+                result['message'] ?? 'Profile updated!');
+          } else {
+            SnackBarHelper.showError(
+                result['message'] ?? 'Failed to update profile');
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColor.primary,
+          foregroundColor: Colors.white,
+          minimumSize: Size(double.infinity, 52.h),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14.r)),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          disabledBackgroundColor: AppColor.primary.withOpacity(0.5),
+        ),
+        child: controller.isUpdating.value
+            ? SizedBox(
+          width: 22.w,
+          height: 22.w,
+          child: const CircularProgressIndicator(
+              strokeWidth: 2.5, color: Colors.white),
+        )
+            : Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle_outline_rounded, size: 18.sp),
+            SizedBox(width: 10.w),
+            Text(
+              'Update Profile',
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+      ))
+          .animate()
+          .fade(duration: 400.ms, delay: 320.ms)
+          .slideY(begin: 0.1, end: 0, duration: 400.ms, delay: 320.ms),
+    );
+  }
+
+  // ── Shared field widgets ────────────────────────────────────────────────────
+
+  Widget _field({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    IconData? icon,
+    TextInputType keyboardType = TextInputType.text,
+    bool required = false,
+    bool readOnly = false,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151),
+              ),
+            ),
+            if (required)
+              Text(' *',
+                  style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold)),
+          ],
+        ),
+        SizedBox(height: 6.h),
+        TextField(
+          controller: controller,
+          readOnly: readOnly,
+          keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: readOnly
+                ? const Color(0xFF9CA3AF)
+                : const Color(0xFF1A1D2E),
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+                fontSize: 13.sp, color: const Color(0xFFD1D5DB)),
+            prefixIcon: icon != null
+                ? Icon(icon, size: 18.sp, color: AppColor.primary.withOpacity(0.6))
+                : null,
+            suffixIcon: readOnly
+                ? Icon(Icons.lock_outline_rounded,
+                size: 15.sp, color: const Color(0xFFD1D5DB))
+                : null,
+            filled: true,
+            fillColor: readOnly
+                ? const Color(0xFFF9FAFB)
+                : Colors.white,
+            contentPadding:
+            EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: BorderSide(color: AppColor.primary, width: 1.8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _multilineField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151))),
+        SizedBox(height: 6.h),
+        TextField(
+          controller: controller,
+          maxLines: 3,
+          style: TextStyle(
+              fontSize: 13.sp,
+              color: const Color(0xFF1A1D2E),
+              fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle:
+            TextStyle(fontSize: 13.sp, color: const Color(0xFFD1D5DB)),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+            EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: BorderSide(color: AppColor.primary, width: 1.8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _dropdownLabel(String label) {
+    return Text(
+      label,
+      style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF374151)),
+    );
+  }
+
+  Widget _styledDropdown<T>({
+    required T? value,
+    required String hint,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.5),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF9CA3AF)),
+          hint: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: Text(hint,
+                style: TextStyle(
+                    fontSize: 13.sp, color: const Color(0xFFD1D5DB))),
+          ),
+          items: items,
+          onChanged: onChanged,
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
+          style: TextStyle(
+              fontSize: 13.sp,
+              color: const Color(0xFF1A1D2E),
+              fontWeight: FontWeight.w500),
+        ),
+      ),
+    );
+  }
+
+  Widget _loadingBar() {
+    return Container(
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: const Center(
+        child: LinearProgressIndicator(color: AppColor.primary),
+      ),
+    );
+  }
+
+  Widget _genderSelector(ProfileController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('Gender',
+                style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF374151))),
+            Text(' *',
+                style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        Obx(() => Row(
+          children: [
+            _genderChip(controller, 'Male', Icons.male_rounded, 1,
+                const Color(0xFF3B82F6)),
+            SizedBox(width: 10.w),
+            _genderChip(controller, 'Female', Icons.female_rounded, 2,
+                const Color(0xFFEC4899)),
+            SizedBox(width: 10.w),
+            _genderChip(controller, 'Other', Icons.transgender_rounded, 3,
+                const Color(0xFF8B5CF6)),
+          ],
+        )),
+      ],
+    );
+  }
+
+  Widget _genderChip(ProfileController controller, String label,
+      IconData icon, int value, Color color) {
+    final isSelected = controller.selectedGender.value == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => controller.selectedGender.value = value,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withOpacity(0.1) : const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color: isSelected ? color : const Color(0xFFE5E7EB),
+              width: isSelected ? 1.8 : 1.2,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(icon,
+                  size: 20.sp,
+                  color: isSelected ? color : const Color(0xFF9CA3AF)),
+              SizedBox(height: 4.h),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? color : const Color(0xFF9CA3AF),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _datePicker(ProfileController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Date of Birth',
+            style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151))),
+        SizedBox(height: 6.h),
+        GestureDetector(
+          onTap: () => _selectDate(controller),
+          child: AbsorbPointer(
+            child: TextField(
+              controller: controller.dobController,
+              style: TextStyle(
+                  fontSize: 13.sp,
+                  color: const Color(0xFF1A1D2E),
+                  fontWeight: FontWeight.w500),
+              decoration: InputDecoration(
+                hintText: 'YYYY-MM-DD',
+                hintStyle:
+                TextStyle(fontSize: 13.sp, color: const Color(0xFFD1D5DB)),
+                prefixIcon: Icon(Icons.calendar_today_outlined,
+                    size: 18.sp, color: AppColor.primary.withOpacity(0.6)),
+                suffixIcon: Icon(Icons.keyboard_arrow_down_rounded,
+                    color: AppColor.primary),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding:
+                EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide:
+                  const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: BorderSide(color: AppColor.primary, width: 1.8),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
   void _showImagePickerOptions(ProfileController controller) {
     Get.bottomSheet(
       Container(
-        padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20.r),
-            topRight: Radius.circular(20.r),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
+        padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 28.h),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40.w,
+              width: 36.w,
               height: 4.h,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
-            SizedBox(height: 20.h),
-            Text(
-              'Update Profile Photo',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColor.textMain,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            _buildImageOption(
-              icon: Icons.photo_library,
+            SizedBox(height: 16.h),
+            Text('Update Photo',
+                style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1D2E))),
+            SizedBox(height: 16.h),
+            _imageOption(
+              icon: Icons.photo_library_rounded,
               title: 'Choose from Gallery',
               color: Colors.blue,
-              onTap: () {
-                Get.back();
-                controller.pickProfileImage();
-              },
+              onTap: () { Get.back(); controller.pickProfileImage(); },
             ),
-            SizedBox(height: 12.h),
-            _buildImageOption(
-              icon: Icons.camera_alt,
-              title: 'Take Photo',
+            SizedBox(height: 10.h),
+            _imageOption(
+              icon: Icons.camera_alt_rounded,
+              title: 'Take a Photo',
               color: Colors.green,
-              onTap: () {
-                Get.back();
-                controller.takeProfilePhoto();
-              },
+              onTap: () { Get.back(); controller.takeProfilePhoto(); },
             ),
-            SizedBox(height: 12.h),
-            // if (controller.profileImage.value != null ||
-            //     controller.profileImageUrl.value.isNotEmpty)
-            //   _buildImageOption(
-            //     icon: Icons.delete_outline,
-            //     title: 'Remove Photo',
-            //     color: Colors.red,
-            //     onTap: () async {
-            //       Get.back();
-            //       await controller.removeProfileImage();
-            //     },
-            //   ),
-            // SizedBox(height: 16.h),
+            SizedBox(height: 10.h),
             TextButton(
               onPressed: () => Get.back(),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppColor.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              child: Text('Cancel',
+                  style: TextStyle(
+                      fontSize: 14.sp, color: const Color(0xFF9CA3AF))),
             ),
           ],
         ),
@@ -1251,101 +1079,69 @@ class ProfileForm extends StatelessWidget {
     );
   }
 
-  Widget _buildImageOption({
+  Widget _imageOption({
     required IconData icon,
     required String title,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: color.withOpacity(0.2), width: 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(10.r),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 20.sp),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36.w,
+              height: 36.w,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                shape: BoxShape.circle,
               ),
-              SizedBox(width: 16.w),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  color: AppColor.textMain,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Spacer(),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16.sp,
-                color: AppColor.textSecondary.withOpacity(0.5),
-              ),
-            ],
-          ),
+              child: Icon(icon, size: 18.sp, color: color),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Text(title,
+                  style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1A1D2E))),
+            ),
+            Icon(Icons.chevron_right_rounded,
+                size: 18.sp, color: const Color(0xFF9CA3AF)),
+          ],
         ),
       ),
     );
   }
 
   Future<void> _selectDate(ProfileController controller) async {
-    final DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: Get.context!,
-      initialDate: DateTime.now(),
+      initialDate: DateTime(2000),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       initialDatePickerMode: DatePickerMode.year,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColor.primary,
-              onPrimary: Colors.white,
-              onSurface: AppColor.textMain,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: AppColor.primary,
-              ),
-            ),
-            dialogBackgroundColor: Colors.white,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: AppColor.primary,
+            onPrimary: Colors.white,
+            onSurface: const Color(0xFF1A1D2E),
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
-
     if (picked != null) {
-      final formattedDate =
-          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-      controller.dobController.text = formattedDate;
+      controller.dobController.text =
+      '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
     }
   }
-  Future<void> _updateProfile(ProfileController controller) async {
-    final result = await controller.updateProfile();
-
-    if (result['status'] == 200) {
-      SnackBarHelper.showSuccess(
-        result['message'] ?? 'Profile updated successfully!',
-        duration: const Duration(seconds: 2),
-      );
-    } else {
-      SnackBarHelper.showError(
-        result['message'] ?? 'Failed to update profile',
-        duration: const Duration(seconds: 3),
-      );
-    }
-  }}
+}
