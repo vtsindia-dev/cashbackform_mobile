@@ -424,15 +424,17 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                     children: [
                       Wrap(
                         spacing: 4.w,
-                        children: profile.code!.split('').map((char) {
+                        children: (profile.code ?? '')
+                            .split('')
+                            .map((char) {
                           return Container(
                             width: 24.w,
                             height: 30.h,
                             decoration: BoxDecoration(
-                              color: AppColor.primary.withValues(alpha:0.07),
+                              color: AppColor.primary.withValues(alpha: 0.07),
                               borderRadius: BorderRadius.circular(6.r),
                               border: Border.all(
-                                color: AppColor.primary.withValues(alpha:0.22),
+                                color: AppColor.primary.withValues(alpha: 0.22),
                                 width: 1,
                               ),
                             ),
@@ -447,16 +449,15 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                             ),
                           );
                         }).toList(),
-                      ),
-                    ],
+                      ),                    ],
                   ),
                 ),
                 SizedBox(width: 10.w),
                 Column(
                   children: [
-                    _buildCopyButton(profile.code!),
+                    _buildCopyButton(profile.code ?? ''),
                     SizedBox(height: 6.h),
-                    _buildShareButton(profile.code!),
+                    _buildShareButton(profile.code ?? ''),
                   ],
                 ),
               ],

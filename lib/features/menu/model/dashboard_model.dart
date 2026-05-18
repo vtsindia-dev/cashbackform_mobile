@@ -786,7 +786,9 @@ class BusinessSettings {
       'plot_booking_amount': plotBookingAmount,
       'syndicate_document_amount': syndicateDocumentAmount,
       'rental_document_amount': rentalDocumentAmount,
-      'residential_document_amount': residentialDocumentAmount,
+      ''
+          ''
+          '': residentialDocumentAmount,
       'market_plot_verify_amount': marketPlotVerifyAmount,
       'market_plot_amount': marketPlotAmount,
       'gioo_max_duration': giooMaxDuration,
