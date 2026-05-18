@@ -1169,16 +1169,11 @@ class ResidentialPropertyFormController extends GetxController {
 
   double getVerificationAmount() {
     try {
-      // Get DashboardController to access business settings
       final dashboardController = Get.put(DashboardController());
-
-      // Check if business settings are loaded
       if (dashboardController.businessSettings.value?.residentialDocumentAmount != null &&
           dashboardController.businessSettings.value!.residentialDocumentAmount! > 0) {
         return dashboardController.businessSettings.value!.residentialDocumentAmount!;
       }
-
-      // Default fallback
       return 499.0;
     } catch (e) {
       print('❌ Error getting verification amount: $e');
@@ -1189,7 +1184,6 @@ class ResidentialPropertyFormController extends GetxController {
   Future<void> initiateVerificationPayment(Property property) async {
     try {
       final razorpayController = Get.put(RazorpayController());
-
       if (property.isVerified) {
         Get.snackbar(
           "Already Verified",
@@ -1200,15 +1194,12 @@ class ResidentialPropertyFormController extends GetxController {
         );
         return;
       }
-
       double amountToCharge = getVerificationAmount();
-
       razorpayController.setupResidentialVerificationPayment(
         residentialPlotId: property.id,
         amount: amountToCharge,
         propertyName: property.propertyName,
       );
-
       Get.dialog(
         AlertDialog(
           backgroundColor: Colors.white,

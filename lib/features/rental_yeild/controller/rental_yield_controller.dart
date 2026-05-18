@@ -1,4 +1,3 @@
-// rental_yield_controller.dart - UPDATED
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,7 +10,6 @@ import '../../payment/controller/razorpay_controller.dart';
 import '../model/rental_yeild_model.dart';
 
 class RentalYieldController extends GetxController {
-  // Loading state
   RxBool isLoading = false.obs;
   RxList<RentalEnquiry> rentalEnquiries = <RentalEnquiry>[].obs;
   RxInt enquiryCurrentPage = 1.obs;
@@ -26,7 +24,6 @@ class RentalYieldController extends GetxController {
     receiveTimeout: const Duration(seconds: 30),
   ));
 
-  // Search
   TextEditingController searchController = TextEditingController();
   RxString searchQuery = ''.obs;
   Timer? _searchTimer;

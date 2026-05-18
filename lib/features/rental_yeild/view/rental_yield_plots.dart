@@ -24,11 +24,11 @@ class _RentalYieldScreenState extends State<RentalYieldScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F2),
       appBar: const DynamicAppBar(
-        title: "Rental Yield Properties",
+        title: "Gio Rental Yield",
         showBackButton: true,
       ),
       body: Obx(() => controller.isLoading.value
-          ? const Center(child: GifLoader(message: "Finding best rental yields...", size: 100))
+          ? const Center(child: GifLoader(message: "Finding Gio best rental yields...", size: 100))
           : Column(
         children: [
           _CompactFilterSection(controller: controller),

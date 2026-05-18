@@ -54,7 +54,7 @@ class _RentalPropertyDetailsScreenState
           context,
           duration: const Duration(milliseconds: 600),
           curve: Curves.easeInOut,
-          alignment: 0.5, // Center the widget in view
+          alignment: 0.5,
         );
         print("✅ Scrolling to Pay Now section");
       } else {
