@@ -18,58 +18,83 @@ class KYCListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.backgroundLight,
-      appBar: _buildAppBar(context),
-      body: Obx(() => _buildBody(context)),
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(context),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            sliver: Obx(() => _buildSliverBody(context)),
+          ),
+        ],
+      ),
       floatingActionButton: _buildFAB(context),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: AppColor.primary,
+  // ── Sliver App Bar ──────────────────────────────────────────────────────────
+
+  Widget _buildSliverAppBar(BuildContext context) {
+    return SliverAppBar(
+      expandedHeight: 130,
+      floating: false,
+      pinned: true,
       elevation: 0,
-      iconTheme: IconThemeData(color: AppColor.white),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'KYC Documents',
-            style: TextStyle(
-              color: AppColor.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              letterSpacing: 0.4,
+      backgroundColor: AppColor.primary,
+      iconTheme: const IconThemeData(color: Colors.white),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColor.primary,
+                AppColor.primary.withOpacity(0.85),
+              ],
             ),
           ),
-          Obx(() => Text(
-            '${controller.kycList.length} record${controller.kycList.length == 1 ? '' : 's'}',
-            style: TextStyle(
-              color: AppColor.white.withValues(alpha: 0.75),
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Text(
+                    'KYC Documents',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Obx(() => Text(
+                    '${controller.kycList.length} verification record${controller.kycList.length == 1 ? '' : 's'}',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.75),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  )),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
-          )),
-        ],
+          ),
+        ),
+        collapseMode: CollapseMode.parallax,
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.share_rounded),
-          onPressed: () => _shareAllKYC(),
+          icon: const Icon(Icons.share_rounded, color: Colors.white),
+          onPressed: _shareAllKYC,
           tooltip: 'Share all KYC',
         ),
+        const SizedBox(width: 4),
       ],
-      bottom: PreferredSize(
-        preferredSize: Size.fromHeight(4),
-        child: Container(
-          height: 4,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColor.primary, AppColor.primarylite],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -77,40 +102,62 @@ class KYCListScreen extends StatelessWidget {
     return FloatingActionButton.extended(
       onPressed: () => _showAddKYCDialog(context),
       backgroundColor: AppColor.primary,
-      foregroundColor: AppColor.white,
-      elevation: 6,
-      icon: Icon(Icons.add_rounded),
-      label: Text('Add KYC', style: TextStyle(fontWeight: FontWeight.w600)),
+      foregroundColor: Colors.white,
+      elevation: 4,
+      icon: const Icon(Icons.add_rounded),
+      label: const Text('Add KYC', style: TextStyle(fontWeight: FontWeight.w700)),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  // ── Sliver Body ─────────────────────────────────────────────────────────────
+
+  Widget _buildSliverBody(BuildContext context) {
     if (controller.isLoading.value) {
-      return _buildLoadingState();
+      return SliverFillRemaining(child: _buildLoadingState());
     }
-    if (controller.errorMessage.value.isNotEmpty &&
-        controller.kycList.isEmpty) {
-      return _buildErrorState();
+    if (controller.errorMessage.value.isNotEmpty && controller.kycList.isEmpty) {
+      return SliverFillRemaining(child: _buildErrorState());
     }
     if (controller.kycList.isEmpty) {
-      return _buildEmptyState(context);
+      return SliverFillRemaining(child: _buildEmptyState(context));
     }
-    return _buildKYCList(context);
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+            (context, index) => _buildKYCCard(context, controller.kycList[index], index),
+        childCount: controller.kycList.length,
+      ),
+    );
   }
+
+  // ── States ──────────────────────────────────────────────────────────────────
 
   Widget _buildLoadingState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
-            strokeWidth: 3,
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppColor.primary.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
+                strokeWidth: 3,
+              ),
+            ),
           ),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 20),
+          const Text(
             'Fetching KYC records...',
-            style: TextStyle(color: AppColor.textSecondary, fontSize: 14),
+            style: TextStyle(
+              color: Color(0xFF6B7280),
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -120,46 +167,44 @@ class KYCListScreen extends StatelessWidget {
   Widget _buildErrorState() {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(32),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColor.error.withValues(alpha: 0.1),
+                color: AppColor.error.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
-              child:
-              Icon(Icons.wifi_off_rounded, size: 48, color: AppColor.error),
+              child: Icon(Icons.wifi_off_rounded, size: 48, color: AppColor.error),
             ),
-            SizedBox(height: 20),
-            Text(
+            const SizedBox(height: 20),
+            const Text(
               'Something went wrong',
               style: TextStyle(
-                color: AppColor.textMain,
-                fontSize: 18,
+                color: Color(0xFF1A1D2E),
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               controller.errorMessage.value,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: AppColor.textSecondary, fontSize: 14, height: 1.5),
+              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 14, height: 1.5),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 28),
             ElevatedButton.icon(
               onPressed: controller.fetchKYCList,
-              icon: Icon(Icons.refresh_rounded),
-              label: Text('Try Again'),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try Again'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.primary,
-                foregroundColor: AppColor.white,
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30)),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                elevation: 0,
               ),
             ),
           ],
@@ -170,275 +215,45 @@ class KYCListScreen extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: AppColor.primary.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.shield_outlined, size: 56, color: AppColor.primary),
-          ),
-          SizedBox(height: 20),
-          Text(
-            'No KYC Records Yet',
-            style: TextStyle(
-              color: AppColor.textMain,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Add your first KYC document\nto get started',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                color: AppColor.textSecondary, fontSize: 14, height: 1.6),
-          ),
-          SizedBox(height: 28),
-          ElevatedButton.icon(
-            onPressed: () => _showAddKYCDialog(context),
-            icon: Icon(Icons.add_rounded),
-            label: Text('Add KYC Document'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primary,
-              foregroundColor: AppColor.white,
-              padding: EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30)),
-              elevation: 0,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKYCList(BuildContext context) {
-    return ListView.builder(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
-      itemCount: controller.kycList.length,
-      itemBuilder: (context, index) {
-        return _buildKYCCard(context, controller.kycList[index], index);
-      },
-    );
-  }
-
-  Widget _buildKYCCard(BuildContext context, KYCDocument kyc, int index) {
-    final colors = [AppColor.primary, AppColor.accent, AppColor.orange];
-    final avatarColor = colors[index % colors.length];
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColor.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Theme(
-        data: ThemeData().copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          childrenPadding: EdgeInsets.zero,
-          leading: Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: avatarColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(
-                '${index + 1}',
-                style: TextStyle(
-                  color: avatarColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                ),
-              ),
-            ),
-          ),
-          title: Text(
-            kyc.name,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: AppColor.textMain,
-              fontSize: 15,
-            ),
-          ),
-          subtitle: Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Row(
-              children: [
-                Icon(Icons.credit_card_rounded,
-                    size: 12, color: AppColor.textSecondary),
-                SizedBox(width: 4),
-                Text(
-                  kyc.panNo,
-                  style: TextStyle(
-                    color: AppColor.textSecondary,
-                    fontSize: 12,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.share_rounded,
-                    size: 20, color: AppColor.primary),
-                onPressed: () => _shareSingleKYC(kyc),
-                tooltip: 'Share KYC details',
-              ),
-              IconButton(
-                icon: Icon(Icons.edit_rounded,
-                    size: 20, color: AppColor.accent),
-                onPressed: () => _showEditKYCDialog(context, kyc),
-                tooltip: 'Edit KYC',
-              ),
-              Obx(() {
-                final isDeleting = controller.deletingIds.contains(kyc.id);
-                return isDeleting
-                    ? SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColor.error),
-                      ),
-                    ),
-                  ),
-                )
-                    : IconButton(
-                  icon: Icon(Icons.delete_outline_rounded,
-                      size: 20, color: AppColor.error),
-                  onPressed: () => controller.showDeleteConfirmDialog(kyc),
-                  tooltip: 'Delete KYC',
-                );
-              })
-            ],
-          ),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Divider(height: 1, color: AppColor.lightGrey),
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoChip(
-                      Icons.fingerprint_rounded, 'Aadhar', kyc.aadharNo),
-                  SizedBox(height: 10),
-                  _buildInfoChip(Icons.calendar_today_rounded, 'Submitted',
-                      _formatDate(kyc.createdAt)),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'DOCUMENTS',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColor.grey,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.share_rounded,
-                            size: 18, color: AppColor.grey),
-                        onPressed: () => _shareKYCWithDocuments(kyc),
-                        tooltip: 'Share all documents',
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      _buildDocumentChip(
-                          'PAN', Icons.badge_rounded, kyc.panDoc, kyc),
-                      SizedBox(width: 8),
-                      _buildDocumentChip('Aadhar', Icons.credit_card_rounded,
-                          kyc.aadharDoc, kyc),
-                      SizedBox(width: 8),
-                      _buildDocumentChip(
-                          'Sign', Icons.draw_rounded, kyc.signDoc, kyc),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showEditKYCDialog(context, kyc),
-                          icon: Icon(Icons.edit_rounded, size: 16),
-                          label: Text('Edit'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColor.accent,
-                            side: BorderSide(color: AppColor.accent),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 10),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Obx(() {
-                          final isDeleting = controller.deletingIds.contains(kyc.id);
-                          return isDeleting
-                              ? OutlinedButton(
-                            onPressed: null,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColor.error,
-                              side: BorderSide(color: AppColor.error.withOpacity(0.4)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 10),
-                            ),
-                            child: SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(AppColor.error),
-                              ),
-                            ),
-                          )
-                              : OutlinedButton.icon(
-                            onPressed: () => controller.showDeleteConfirmDialog(kyc),
-                            icon: Icon(Icons.delete_outline_rounded, size: 16),
-                            label: Text('Delete'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColor.error,
-                              side: BorderSide(color: AppColor.error),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 10),
-                            ),
-                          );
-                        })
-                      ),
-                    ],
-                  ),
-                ],
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: AppColor.primary.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.shield_outlined, size: 56, color: AppColor.primary),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'No KYC Records Yet',
+              style: TextStyle(
+                color: Color(0xFF1A1D2E),
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Add your first KYC document\nto get started',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF6B7280), fontSize: 14, height: 1.6),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () => _showAddKYCDialog(context),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add KYC Document'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                elevation: 0,
               ),
             ),
           ],
@@ -447,18 +262,396 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String label, String value) {
+  // ── KYC Card ────────────────────────────────────────────────────────────────
+
+  Widget _buildKYCCard(BuildContext context, KYCDocument kyc, int index) {
+    final List<Color> accentColors = [
+      const Color(0xFF6366F1),
+      const Color(0xFF0EA5E9),
+      const Color(0xFF10B981),
+      const Color(0xFFF59E0B),
+      const Color(0xFFEF4444),
+    ];
+    final accentColor = accentColors[index % accentColors.length];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: [
+            // ── Card Header ─────────────────────────────────────────────────
+            _buildCardHeader(context, kyc, index, accentColor),
+            // ── Expandable Content ──────────────────────────────────────────
+            _buildExpandableContent(context, kyc, accentColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardHeader(
+      BuildContext context, KYCDocument kyc, int index, Color accentColor) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Center(
+              child: Text(
+                kyc.name.isNotEmpty ? kyc.name[0].toUpperCase() : '?',
+                style: TextStyle(
+                  color: accentColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Name & PAN
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  kyc.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1D2E),
+                    fontSize: 15,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Icon(Icons.credit_card_rounded,
+                        size: 12, color: accentColor.withOpacity(0.7)),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        kyc.panNo,
+                        style: TextStyle(
+                          color: accentColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.8,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Action buttons
+          _buildActionButtons(context, kyc),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context, KYCDocument kyc) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildIconBtn(
+          icon: Icons.share_rounded,
+          color: AppColor.primary,
+          onTap: () => _shareSingleKYC(kyc),
+        ),
+        const SizedBox(width: 4),
+        _buildIconBtn(
+          icon: Icons.edit_rounded,
+          color: const Color(0xFF0EA5E9),
+          onTap: () => _showEditKYCDialog(context, kyc),
+        ),
+        const SizedBox(width: 4),
+        Obx(() {
+          final isDeleting = controller.deletingIds.contains(kyc.id);
+          return isDeleting
+              ? Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColor.error.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.error),
+                ),
+              ),
+            ),
+          )
+              : _buildIconBtn(
+            icon: Icons.delete_outline_rounded,
+            color: AppColor.error,
+            onTap: () => controller.showDeleteConfirmDialog(kyc),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildIconBtn({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 17, color: color),
+      ),
+    );
+  }
+
+  Widget _buildExpandableContent(
+      BuildContext context, KYCDocument kyc, Color accentColor) {
+    return Theme(
+      data: ThemeData().copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        childrenPadding: EdgeInsets.zero,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: accentColor.withOpacity(0.2)),
+              ),
+              child: Text(
+                'View Details',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: accentColor,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+        trailing: Icon(Icons.keyboard_arrow_down_rounded,
+            color: const Color(0xFF9CA3AF)),
+        children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFF0F0F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Info chips
+                _buildInfoRow(Icons.fingerprint_rounded, 'Aadhar', kyc.aadharNo),
+                const SizedBox(height: 10),
+                _buildInfoRow(
+                    Icons.calendar_today_rounded, 'Submitted', _formatDate(kyc.createdAt)),
+                const SizedBox(height: 16),
+
+                // Documents label + share
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'DOCUMENTS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF9CA3AF),
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _shareKYCWithDocuments(kyc),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColor.primary.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.share_rounded,
+                                size: 12, color: AppColor.primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Share All',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColor.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Document chips — IntrinsicHeight prevents overflow
+                IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildDocumentTile(
+                          'PAN Card',
+                          Icons.badge_rounded,
+                          kyc.panDoc,
+                          const Color(0xFFF59E0B),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildDocumentTile(
+                          'Aadhar',
+                          Icons.credit_card_rounded,
+                          kyc.aadharDoc,
+                          const Color(0xFF10B981),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildDocumentTile(
+                          'Signature',
+                          Icons.draw_rounded,
+                          kyc.signDoc ?? '',
+                          const Color(0xFF6366F1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Edit / Delete row
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showEditKYCDialog(context, kyc),
+                        icon: const Icon(Icons.edit_rounded, size: 15),
+                        label: const Text('Edit'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF0EA5E9),
+                          side: const BorderSide(color: Color(0xFF0EA5E9)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          textStyle: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Obx(() {
+                        final isDeleting = controller.deletingIds.contains(kyc.id);
+                        return isDeleting
+                            ? OutlinedButton(
+                          onPressed: null,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColor.error,
+                            side: BorderSide(
+                                color: AppColor.error.withOpacity(0.4)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                          ),
+                          child: SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                              AlwaysStoppedAnimation<Color>(AppColor.error),
+                            ),
+                          ),
+                        )
+                            : OutlinedButton.icon(
+                          onPressed: () =>
+                              controller.showDeleteConfirmDialog(kyc),
+                          icon: const Icon(Icons.delete_outline_rounded,
+                              size: 15),
+                          label: const Text('Delete'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColor.error,
+                            side: BorderSide(color: AppColor.error),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            textStyle: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
         Icon(icon, size: 15, color: AppColor.primary),
-        SizedBox(width: 8),
-        Text('$label: ',
-            style: TextStyle(color: AppColor.textSecondary, fontSize: 13)),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+        ),
         Expanded(
           child: Text(
             value,
-            style: TextStyle(
-              color: AppColor.textMain,
+            style: const TextStyle(
+              color: Color(0xFF1A1D2E),
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -469,75 +662,80 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDocumentChip(
-      String label, IconData icon, String url, KYCDocument kyc) {
+  Widget _buildDocumentTile(
+      String label, IconData icon, String url, Color color) {
     final hasDoc = url.isNotEmpty;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          if (hasDoc) {
-            Get.to(() => DocumentPreviewScreen(imageUrl: url));
-          } else {
-            Get.snackbar(
-              'Unavailable',
-              'No $label document on record',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: AppColor.warning,
-              colorText: AppColor.white,
-            );
-          }
-        },
-        onLongPress: () {
-          if (hasDoc) _shareDocument(url, label);
-        },
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: hasDoc
-                ? AppColor.primary.withValues(alpha: 0.08)
-                : AppColor.lightGrey,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: hasDoc
-                  ? AppColor.primary.withValues(alpha: 0.25)
-                  : AppColor.lightGrey,
-            ),
+    return GestureDetector(
+      onTap: () {
+        if (hasDoc) {
+          Get.to(() => DocumentPreviewScreen(imageUrl: url));
+        } else {
+          Get.snackbar(
+            'Unavailable',
+            'No $label document on record',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+          );
+        }
+      },
+      onLongPress: () {
+        if (hasDoc) _shareDocument(url, label);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: hasDoc ? color.withOpacity(0.07) : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasDoc ? color.withOpacity(0.25) : const Color(0xFFE5E7EB),
           ),
-          child: Column(
-            children: [
-              Icon(
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: hasDoc ? color.withOpacity(0.12) : const Color(0xFFE5E7EB),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
                 hasDoc ? icon : Icons.cloud_off_rounded,
-                size: 18,
-                color: hasDoc ? AppColor.primary : AppColor.grey,
+                size: 17,
+                color: hasDoc ? color : const Color(0xFF9CA3AF),
               ),
-              SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: hasDoc ? AppColor.primary : AppColor.grey,
-                ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: hasDoc ? color : const Color(0xFF9CA3AF),
               ),
-              if (hasDoc)
-                Text(
-                  'Long press to share',
-                  style: TextStyle(fontSize: 8, color: AppColor.grey),
-                ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              hasDoc ? 'Tap to view' : 'Not added',
+              style: TextStyle(
+                fontSize: 8,
+                color: hasDoc ? color.withOpacity(0.7) : const Color(0xFFD1D5DB),
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
+  // ── Dialogs ─────────────────────────────────────────────────────────────────
 
   void _showAddKYCDialog(BuildContext context) {
     controller.clearForm();
@@ -550,7 +748,6 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-
   void _showEditKYCDialog(BuildContext context, KYCDocument kyc) {
     controller.startEdit(kyc);
     showModalBottomSheet(
@@ -558,200 +755,171 @@ class KYCListScreen extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black54,
-      builder: (context) => KYCDocumentForm(
-        controller: controller,
-        isEditMode: true,
-      ),
+      builder: (context) => KYCDocumentForm(controller: controller, isEditMode: true),
     );
   }
 
+  // ── Share Helpers ───────────────────────────────────────────────────────────
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
 
   Future<void> _shareAllKYC() async {
     if (controller.kycList.isEmpty) {
-      Get.snackbar(
-        'No Data',
-        'No KYC records to share',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColor.warning,
-        colorText: AppColor.white,
-      );
+      Get.snackbar('No Data', 'No KYC records to share',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white);
       return;
     }
-
-    String shareText = "🏢 KYC DOCUMENTS SUMMARY\n";
-    shareText += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    shareText += "Total Records: ${controller.kycList.length}\n";
-    shareText += "Generated: ${_formatDate(DateTime.now())}\n\n";
-    shareText += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-
+    String text = "🏢 KYC DOCUMENTS SUMMARY\n━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    text += "Total: ${controller.kycList.length} record(s)\n";
+    text += "Date: ${_formatDate(DateTime.now())}\n\n";
     for (int i = 0; i < controller.kycList.length; i++) {
       final kyc = controller.kycList[i];
-      shareText += "📄 RECORD ${i + 1}\n";
-      shareText += "────────────────────────────────────────\n";
-      shareText += "👤 Name: ${kyc.name}\n";
-      shareText += "🪪 PAN: ${kyc.panNo}\n";
-      shareText += "🆔 Aadhar: ${kyc.aadharNo}\n";
-      shareText += "📅 Submitted: ${_formatDate(kyc.createdAt)}\n";
-      shareText += "✅ Status: Verified\n\n";
+      text += "📄 #${i + 1} ${kyc.name}\n";
+      text += "PAN: ${kyc.panNo} | Aadhar: ${kyc.aadharNo}\n\n";
     }
-
-    shareText += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    shareText += "🔒 This is an official KYC document summary.\n";
-    shareText += "📱 Generated via KYC Management App\n";
-
-    await Share.share(shareText, subject: 'KYC Documents Summary');
+    await Share.share(text, subject: 'KYC Summary');
   }
 
   Future<void> _shareSingleKYC(KYCDocument kyc) async {
-    String shareText = "🏢 KYC DOCUMENT DETAILS\n";
-    shareText += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    shareText += "👤 Full Name: ${kyc.name}\n";
-    shareText += "🪪 PAN Number: ${kyc.panNo}\n";
-    shareText += "🆔 Aadhar Number: ${kyc.aadharNo}\n";
-    shareText += "📅 Submitted Date: ${_formatDate(kyc.createdAt)}\n";
-    shareText += "✅ Verification Status: Verified\n\n";
-
-    shareText += "📄 DOCUMENTS INCLUDED:\n";
-    shareText += "────────────────────────────────────────\n";
-    if (kyc.panDoc.isNotEmpty) shareText += "✓ PAN Card Image: Available\n";
-    if (kyc.aadharDoc.isNotEmpty)
-      shareText += "✓ Aadhar Card Image: Available\n";
-    if (kyc.signDoc.isNotEmpty) shareText += "✓ Signature Image: Available\n";
-
-    shareText += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    shareText += "🔒 Official KYC Record\n";
-    shareText += "📱 Generated via KYC Management App\n";
-
-    await Share.share(shareText, subject: 'KYC Details - ${kyc.name}');
+    String text = "🏢 KYC DETAILS\n━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    text += "👤 Name: ${kyc.name}\n";
+    text += "🪪 PAN: ${kyc.panNo}\n";
+    text += "🆔 Aadhar: ${kyc.aadharNo}\n";
+    text += "📅 Submitted: ${_formatDate(kyc.createdAt)}\n\n";
+    if (kyc.panDoc.isNotEmpty) text += "✓ PAN Card: Available\n";
+    if (kyc.aadharDoc.isNotEmpty) text += "✓ Aadhar Card: Available\n";
+    if (kyc.signDoc != null && kyc.signDoc!.isNotEmpty)
+      text += "✓ Signature: Available\n";
+    await Share.share(text, subject: 'KYC - ${kyc.name}');
   }
 
   Future<void> _shareKYCWithDocuments(KYCDocument kyc) async {
     showModalBottomSheet(
       context: Get.context!,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Share ${kyc.name}\'s KYC',
-                style: TextStyle(
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Share ${kyc.name}\'s KYC',
+              style: const TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.textMain,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Choose what to share',
-                style:
-                TextStyle(color: AppColor.textSecondary, fontSize: 14),
-              ),
-              SizedBox(height: 20),
-              _buildShareOption(
-                icon: Icons.text_snippet_rounded,
-                title: 'Share as Text',
-                subtitle: 'Share KYC details as text message',
-                onTap: () {
-                  Get.back();
-                  _shareSingleKYC(kyc);
-                },
-                color: AppColor.primary,
-              ),
-              Divider(height: 1, color: AppColor.lightGrey),
-              _buildShareOption(
-                icon: Icons.image_rounded,
-                title: 'Share PAN Card',
-                subtitle: 'Share PAN document image',
-                onTap: () {
-                  Get.back();
-                  if (kyc.panDoc.isNotEmpty) {
-                    _shareDocument(kyc.panDoc, 'PAN Card');
-                  } else {
-                    _showNoDocumentError('PAN Card');
-                  }
-                },
-                color: Colors.orange,
-                enabled: kyc.panDoc.isNotEmpty,
-              ),
-              Divider(height: 1, color: AppColor.lightGrey),
-              _buildShareOption(
-                icon: Icons.credit_card_rounded,
-                title: 'Share Aadhar Card',
-                subtitle: 'Share Aadhar document image',
-                onTap: () {
-                  Get.back();
-                  if (kyc.aadharDoc.isNotEmpty) {
-                    _shareDocument(kyc.aadharDoc, 'Aadhar Card');
-                  } else {
-                    _showNoDocumentError('Aadhar Card');
-                  }
-                },
-                color: Colors.green,
-                enabled: kyc.aadharDoc.isNotEmpty,
-              ),
-              Divider(height: 1, color: AppColor.lightGrey),
-              _buildShareOption(
-                icon: Icons.draw_rounded,
-                title: 'Share Signature',
-                subtitle: 'Share signature image',
-                onTap: () {
-                  Get.back();
-                  if (kyc.signDoc.isNotEmpty) {
-                    _shareDocument(kyc.signDoc, 'Signature');
-                  } else {
-                    _showNoDocumentError('Signature');
-                  }
-                },
-                color: Colors.purple,
-                enabled: kyc.signDoc.isNotEmpty,
-              ),
-              SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text('Cancel'),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A1D2E)),
+            ),
+            const SizedBox(height: 4),
+            const Text('Choose what to share',
+                style: TextStyle(color: Color(0xFF6B7280), fontSize: 13)),
+            const SizedBox(height: 16),
+            _shareOptionTile(
+              icon: Icons.text_snippet_rounded,
+              title: 'Share as Text',
+              subtitle: 'KYC info as text message',
+              color: AppColor.primary,
+              enabled: true,
+              onTap: () { Get.back(); _shareSingleKYC(kyc); },
+            ),
+            _shareOptionTile(
+              icon: Icons.badge_rounded,
+              title: 'Share PAN Card',
+              subtitle: 'PAN document image',
+              color: const Color(0xFFF59E0B),
+              enabled: kyc.panDoc.isNotEmpty,
+              onTap: () {
+                Get.back();
+                kyc.panDoc.isNotEmpty
+                    ? _shareDocument(kyc.panDoc, 'PAN Card')
+                    : _showNoDocError('PAN Card');
+              },
+            ),
+            _shareOptionTile(
+              icon: Icons.credit_card_rounded,
+              title: 'Share Aadhar Card',
+              subtitle: 'Aadhar document image',
+              color: const Color(0xFF10B981),
+              enabled: kyc.aadharDoc.isNotEmpty,
+              onTap: () {
+                Get.back();
+                kyc.aadharDoc.isNotEmpty
+                    ? _shareDocument(kyc.aadharDoc, 'Aadhar Card')
+                    : _showNoDocError('Aadhar Card');
+              },
+            ),
+            _shareOptionTile(
+              icon: Icons.draw_rounded,
+              title: 'Share Signature',
+              subtitle: 'Signature image',
+              color: const Color(0xFF6366F1),
+              enabled: kyc.signDoc != null && kyc.signDoc!.isNotEmpty,
+              onTap: () {
+                Get.back();
+                (kyc.signDoc != null && kyc.signDoc!.isNotEmpty)
+                    ? _shareDocument(kyc.signDoc!, 'Signature')
+                    : _showNoDocError('Signature');
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildShareOption({
+  Widget _shareOptionTile({
     required IconData icon,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
     required Color color,
-    bool enabled = true,
+    required bool enabled,
+    required VoidCallback onTap,
   }) {
     return ListTile(
+      contentPadding: EdgeInsets.zero,
       leading: Container(
-        padding: EdgeInsets.all(10),
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
+          color: enabled ? color.withOpacity(0.1) : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: enabled ? color : AppColor.grey),
+        child: Icon(icon,
+            size: 20, color: enabled ? color : const Color(0xFF9CA3AF)),
       ),
       title: Text(
         title,
         style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: enabled ? AppColor.textMain : AppColor.grey,
+          fontSize: 14,
+          color: enabled ? const Color(0xFF1A1D2E) : const Color(0xFF9CA3AF),
         ),
       ),
       subtitle: Text(subtitle,
-          style: TextStyle(color: AppColor.textSecondary, fontSize: 12)),
+          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
       enabled: enabled,
       onTap: onTap,
     );
@@ -762,46 +930,39 @@ class KYCListScreen extends StatelessWidget {
       Get.dialog(
         Center(
           child: Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
+            margin: const EdgeInsets.symmetric(horizontal: 40),
             decoration: BoxDecoration(
-              color: AppColor.white,
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor:
-                  AlwaysStoppedAnimation<Color>(AppColor.primary),
-                ),
-                SizedBox(height: 16),
+                    valueColor:
+                    AlwaysStoppedAnimation<Color>(AppColor.primary)),
+                const SizedBox(height: 16),
                 Text('Preparing $documentType...',
-                    style: TextStyle(color: AppColor.textMain)),
+                    style: const TextStyle(
+                        color: Color(0xFF1A1D2E), fontWeight: FontWeight.w500)),
               ],
             ),
           ),
         ),
         barrierDismissible: false,
       );
-
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
         final directory = await getTemporaryDirectory();
         final fileName =
             '${documentType.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final filePath = '${directory.path}/$fileName';
-        final file = File(filePath);
+        final file = File('${directory.path}/$fileName');
         await file.writeAsBytes(response.bodyBytes);
-
         Get.back();
-
-        await Share.shareXFiles(
-          [XFile(filePath)],
-          text:
-          '📄 $documentType for KYC verification\nShared via KYC Management App',
-          subject: '$documentType Document',
-        );
-
+        await Share.shareXFiles([XFile(file.path)],
+            text: '📄 $documentType — KYC Verification',
+            subject: '$documentType Document');
         await file.delete();
       } else {
         Get.back();
@@ -813,31 +974,26 @@ class KYCListScreen extends StatelessWidget {
     }
   }
 
-  void _showNoDocumentError(String documentType) {
-    Get.snackbar(
-      'No Document',
-      '$documentType not available for this KYC',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColor.warning,
-      colorText: AppColor.white,
-    );
+  void _showNoDocError(String documentType) {
+    Get.snackbar('Not Available', '$documentType not uploaded for this KYC',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white);
   }
 
   void _showError(String message) {
-    Get.snackbar(
-      'Share Error',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColor.error,
-      colorText: AppColor.white,
-      duration: Duration(seconds: 3),
-    );
+    Get.snackbar('Error', message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColor.error,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3));
   }
 }
 
-// ────────────────────────────────────────────
-// Document Preview Screen with Share Option
-// ────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
+// Document Preview Screen
+// ────────────────────────────────────────────────────────────────────────────
+
 class DocumentPreviewScreen extends StatelessWidget {
   final String imageUrl;
   const DocumentPreviewScreen({Key? key, required this.imageUrl})
@@ -850,19 +1006,17 @@ class DocumentPreviewScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        title:
-        Text('Document Preview', style: TextStyle(color: AppColor.white)),
-        iconTheme: IconThemeData(color: AppColor.white),
+        title: const Text('Document Preview',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: Icon(Icons.share_rounded, color: AppColor.white),
+            icon: const Icon(Icons.share_rounded, color: Colors.white),
             onPressed: () => _shareCurrentDocument(context),
-            tooltip: 'Share document',
           ),
           IconButton(
-            icon: Icon(Icons.download_rounded, color: AppColor.white),
-            onPressed: () => _downloadDocument(),
-            tooltip: 'Download document',
+            icon: const Icon(Icons.download_rounded, color: Colors.white),
+            onPressed: _downloadDocument,
           ),
         ],
       ),
@@ -872,24 +1026,22 @@ class DocumentPreviewScreen extends StatelessWidget {
           maxScale: 5.0,
           child: CachedNetworkImage(
             imageUrl: imageUrl,
-            placeholder: (_, __) => Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
-              ),
+            placeholder: (_, __) => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
             ),
             errorWidget: (_, __, ___) => Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.broken_image_rounded,
-                    size: 64, color: AppColor.grey),
-                SizedBox(height: 12),
-                Text('Failed to load document',
-                    style: TextStyle(color: AppColor.grey)),
-                SizedBox(height: 16),
+                const Icon(Icons.broken_image_rounded,
+                    size: 64, color: Colors.grey),
+                const SizedBox(height: 12),
+                const Text('Failed to load document',
+                    style: TextStyle(color: Colors.grey)),
+                const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => Get.back(),
-                  child: Text('Go Back',
-                      style: TextStyle(color: AppColor.primarylite)),
+                  child: const Text('Go Back',
+                      style: TextStyle(color: Colors.white70)),
                 ),
               ],
             ),
@@ -904,52 +1056,37 @@ class DocumentPreviewScreen extends StatelessWidget {
       Get.dialog(
         Center(
           child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColor.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
+            padding: const EdgeInsets.all(24),
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            decoration:
+            BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+            child: const Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(
-                  valueColor:
-                  AlwaysStoppedAnimation<Color>(AppColor.primary),
-                ),
+                CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('Preparing document...',
-                    style: TextStyle(color: AppColor.textMain)),
+                Text('Preparing document...'),
               ],
             ),
           ),
         ),
         barrierDismissible: false,
       );
-
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
         final directory = await getTemporaryDirectory();
-        final filePath =
-            '${directory.path}/document_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final file = File(filePath);
+        final file = File(
+            '${directory.path}/document_${DateTime.now().millisecondsSinceEpoch}.jpg');
         await file.writeAsBytes(response.bodyBytes);
-
         Get.back();
-
-        await Share.shareXFiles(
-          [XFile(filePath)],
-          text: '📄 KYC Document\nShared via KYC Management App',
-          subject: 'KYC Document',
-        );
-
+        await Share.shareXFiles([XFile(file.path)],
+            text: '📄 KYC Document', subject: 'KYC Document');
         await file.delete();
       } else {
         Get.back();
-        _showError('Failed to download document');
       }
     } catch (e) {
       Get.back();
-      _showError('Error sharing document: $e');
     }
   }
 
@@ -958,64 +1095,40 @@ class DocumentPreviewScreen extends StatelessWidget {
       Get.dialog(
         Center(
           child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColor.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
+            padding: const EdgeInsets.all(24),
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            decoration:
+            BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+            child: const Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(
-                  valueColor:
-                  AlwaysStoppedAnimation<Color>(AppColor.primary),
-                ),
+                CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('Downloading...',
-                    style: TextStyle(color: AppColor.textMain)),
+                Text('Downloading...'),
               ],
             ),
           ),
         ),
         barrierDismissible: false,
       );
-
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
         final directory =
             await getDownloadsDirectory() ?? await getTemporaryDirectory();
-        final filePath =
-            '${directory.path}/KYC_Document_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final file = File(filePath);
+        final file = File(
+            '${directory.path}/KYC_${DateTime.now().millisecondsSinceEpoch}.jpg');
         await file.writeAsBytes(response.bodyBytes);
-
         Get.back();
-
-        Get.snackbar(
-          'Download Complete',
-          'Document saved to ${file.path}',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColor.success,
-          colorText: AppColor.white,
-          duration: Duration(seconds: 4),
-        );
+        Get.snackbar('Downloaded', 'Saved to ${file.path}',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 4));
       } else {
         Get.back();
-        _showError('Failed to download document');
       }
     } catch (e) {
       Get.back();
-      _showError('Error downloading document: $e');
     }
-  }
-
-  void _showError(String message) {
-    Get.snackbar(
-      'Error',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColor.error,
-      colorText: AppColor.white,
-    );
   }
 }

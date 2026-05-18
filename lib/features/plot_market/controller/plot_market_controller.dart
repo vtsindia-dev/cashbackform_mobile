@@ -686,7 +686,7 @@ class PlotMarketController extends GetxController {
       // ── Add plot image (blueprint) ──
       if (bluePrint != null) {
         formDataToSend.files.add(MapEntry(
-          'plot_image',
+          'document',
           await dio.MultipartFile.fromFile(
             bluePrint.path,
             filename: 'plot_image.${bluePrint.path.split('.').last}',

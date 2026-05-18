@@ -553,7 +553,7 @@ class _KYCDetailSheet extends StatelessWidget {
                     _DocChip(
                       label: 'Signature',
                       icon: Icons.draw_rounded,
-                      hasDoc: kyc.signDoc.isNotEmpty,
+                      hasDoc: kyc.signDoc?.isNotEmpty ?? false,
                     ),
                   ],
                 ),

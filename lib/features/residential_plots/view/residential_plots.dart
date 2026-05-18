@@ -485,8 +485,8 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
 
   // country options — id must match your API's country field values
   static const List<_CountryOption> _countryOptions = [
-    _CountryOption(id: 1, label: 'India', flag: '🇮🇳'),
-    _CountryOption(id: 3, label: 'Dubai', flag: '🇦🇪'),
+    _CountryOption(id: 3, label: 'India', flag: '🇮🇳'),
+    _CountryOption(id: 1, label: 'Dubai', flag: '🇦🇪'),
   ];
 
   @override

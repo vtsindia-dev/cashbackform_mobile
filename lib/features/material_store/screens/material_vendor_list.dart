@@ -910,6 +910,7 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
                                 arguments: {
                                   "id": v.userId.toString(),
                                   "title": v.name,
+                                  "userId": v.userId.toString(),
                                 },
                               );
                             },
