@@ -1,6 +1,8 @@
 import 'package:cashback_farms/features/auth/models/location_model.dart';
+import 'package:cashback_farms/features/service/model/added_service_list_model.dart' as added_service_list_model;
 import 'package:cashback_farms/features/service/model/categories_model.dart';
 import 'package:cashback_farms/features/service/model/material_unit_model.dart';
+import 'package:cashback_farms/features/service/model/service_type_list_model.dart' as service_type_list_model;
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
@@ -9,7 +11,7 @@ import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../model/service_model.dart';
-
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 
 class ServiceController extends GetxController {
@@ -40,7 +42,7 @@ class ServiceController extends GetxController {
   var dateError = RxString('');
   var timeError = RxString('');
   var materialId = 0.obs;
-  var serviceId = 0.obs;
+
   var vendorId = 0.obs;
 
 
@@ -639,11 +641,239 @@ class ServiceController extends GetxController {
 
 
 
+  List<added_service_list_model.AddedServiceListModel>
+  addedServiceListModel = [];
+
+  bool isAddedServiceLoading = false;
+
+  Future<void> fetchAddedServiceList() async {
+    try {
+      isAddedServiceLoading = true;
+      update();
+
+      final String? token = await SessionManager.getToken();
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+      final response = await ApiService.getRequest(
+        ApiUrl.vendorServicesListApi,
+        headers: headers,
+      );
+      debugPrint("API RESPONSE : ${response.data}");
+      final data = response.data;
+      if (data != null && data['status'] == 200) {
+        addedServiceListModel = (data['data'] as List? ?? [])
+            .map(
+              (e) =>
+                  added_service_list_model.AddedServiceListModel.fromJson(
+                e,
+              ),
+        )
+            .toList();
+        debugPrint("services Count : ${addedServiceListModel.length}");
+      } else {
+        debugPrint("API Error : ${data?['message']}");
+      }
+    } catch (e) {
+      debugPrint('Something went wrong: $e');
+    } finally {
+      isAddedServiceLoading = false;
+      update();
+    }
+  }
+
+
+  List<service_type_list_model.ServiceTypeListModel> serviceTypeListModel = [];
+  bool isServiceTypeLoading = false;
+
+  String? serviceId;
+
+  void setServiceId(String value) {
+    serviceId = value;
+    update();
+  }
+
+  void clearServiceSelection() {
+    serviceId = null;
+    update();
+  }
+
+  Future<void> fetchServiceTypeList() async {
+    try {
+      isServiceTypeLoading = true;
+      update();
+
+      final response = await ApiService.getRequest(ApiUrl.serviceTypeApi);
+
+      final data = response.data;
+
+      if (response.statusCode == 200) {
+        if (data != null && data['status'] == 200) {
+          final List services = data['data']['services'] ?? [];
+
+          serviceTypeListModel = services
+              .map(
+                (e) =>
+                    service_type_list_model.ServiceTypeListModel.fromJson(
+                  e,
+                ),
+          )
+              .toList();
+        }
+      } else {
+        debugPrint("API Error : ${data?['message']}");
+      }
+    } catch (e) {
+      debugPrint('Something went wrong $e');
+    } finally {
+      isServiceTypeLoading = false;
+      update();
+    }
+  }
 
 
 
+  bool isServiceRequestLoading = false;
+
+  Future<bool> vendorServiceRequest() async {
+
+    try {
+
+      isServiceRequestLoading = true;
+      update();
+
+      final String? token = await SessionManager.getToken();
+
+      Map<String, dynamic> mapData = {
+        "service_id": serviceId,
+      };
+
+      dio.FormData formData = dio.FormData.fromMap(mapData);
+
+      final response = await ApiService.postMultipartWithToken(
+        ApiUrl.vendorServicesRequestApi,
+        formData,
+        token: token ?? '',
+      );
+
+      final resData = response.data;
+
+      debugPrint('vendorServicesRequest : $resData');
+
+      if (response.statusCode == 200) {
+
+        if (resData != null &&
+            (resData['status'] == 200 ||
+                resData['status'] == true)) {
+
+          SnackBarHelper.showSuccess(
+            resData['message'] ??
+                'Vendor Service request submitted successfully',
+          );
+
+          await fetchAddedServiceList();
+
+          return true;
+
+        } else {
+
+          SnackBarHelper.showError(
+            resData?['message'] ?? 'Failed',
+          );
+
+          return false;
+        }
+
+      } else if (response.statusCode == 409) {
+
+        SnackBarHelper.showError(
+          resData?['message'] ?? 'Already submitted',
+        );
+
+        return false;
+
+      } else if (response.statusCode == 400) {
+
+        SnackBarHelper.showError(
+          resData?['message'] ?? 'Bad Request',
+        );
+
+        return false;
+
+      } else {
+
+        SnackBarHelper.showError(
+          'Something went wrong',
+        );
+
+        return false;
+      }
+    } catch (e) {
+      debugPrint('vendorServiceRequest error : $e');
+      SnackBarHelper.showError(
+        'Something went wrong',
+      );
+      return false;
+    } finally {
+      isServiceRequestLoading = false;
+      update();
+    }
+  }
 
 
+  bool isDeleteServiceLoading = false;
+  String? deletingServiceId;
+
+  Future<bool> deleteVendorService(String id) async {
+    try {
+      deletingServiceId = id;
+      isDeleteServiceLoading = true;
+      update();
+
+      final String? token = await SessionManager.getToken();
+
+      final response = await ApiService.postRequestWithToken(
+        '${ApiUrl.vendorServiceDelete}/$id',
+        token: token ?? '', data: {},
+      );
+
+      final resData = response.data;
+
+      debugPrint('deleteVendorService : $resData');
+
+      if (response.statusCode == 200) {
+        if (resData['status'] == true ||
+            resData['status'] == 200) {
+
+          SnackBarHelper.showSuccess(
+            resData['message'] ?? 'Deleted successfully',
+          );
+
+          await fetchAddedServiceList();
+
+          return true;
+        } else {
+          SnackBarHelper.showError(
+            resData['message'] ?? 'Delete failed',
+          );
+          return false;
+        }
+      } else {
+        SnackBarHelper.showError('Something went wrong');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('deleteVendorService error : $e');
+
+      SnackBarHelper.showError('Something went wrong');
+      return false;
+    } finally {
+      isDeleteServiceLoading = false;
+      deletingServiceId = null;
+      update();
+    }
+  }
 
 
 
@@ -958,10 +1188,10 @@ class ServiceController extends GetxController {
     _clearMaterialEnquiryForm();
   }
 
-  void setServiceId(int id) {
-    serviceId.value = id;
-    _clearServiceEnquiryForm();
-  }
+  // void setServiceId(int id) {
+  //   //serviceId.value = id;
+  //   _clearServiceEnquiryForm();
+  // }
 
   void setVendorId(int id) {
     vendorId.value = id;
@@ -1066,10 +1296,10 @@ class ServiceController extends GetxController {
       isValid = false;
     }
 
-    if (serviceId.value == 0) {
-      errorMessage.value = 'Invalid service selection';
-      isValid = false;
-    }
+    // if (serviceId.value == 0) {
+    //   errorMessage.value = 'Invalid service selection';
+    //   isValid = false;
+    // }
 
     return isValid;
   }

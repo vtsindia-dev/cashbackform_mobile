@@ -88,4 +88,8 @@ class ApiUrl {
   static const String vendorMaterialsListApi = '$baseUrl/api/v2/vendor_materials_list';
   static const String vendorMaterialsRequestApi = '$baseUrl/api/v2/vendor_materials_request';
   static const String vendorMaterialDelete = '$baseUrl/api/v2/vendor-material/delete';
+  static const String vendorServicesListApi = '$baseUrl/api/v2/vendor_services_list';
+  static const String serviceTypeApi = '$baseUrl/api/v2/services_all';
+  static const String vendorServicesRequestApi = '$baseUrl/api/v2/vendor_services_request';
+  static const String vendorServiceDelete = '$baseUrl/api/v2/vendor-service/delete';
 }

@@ -1,23 +1,22 @@
 import 'package:cashback_farms/common/widget/appbar.dart';
+import 'package:cashback_farms/common/widget/toster.dart';
 import 'package:cashback_farms/features/company_profile/controller/company_profile_controller.dart';
 import 'package:cashback_farms/features/company_profile/screen/add_company_profile.dart';
-import 'package:cashback_farms/features/material_store/controller/material_store_controller.dart';
-import 'package:cashback_farms/features/material_store/model/added_materials_list_model.dart'
-as added_materials_list_model;
-import 'package:cashback_farms/features/material_store/model/materials_type_list_model.dart'
-as materials_type_list_model;
+import 'package:cashback_farms/features/service/model/added_service_list_model.dart' as added_service_list_model;
+import 'package:cashback_farms/features/service/model/service_type_list_model.dart' as service_type_list_model;
+import 'package:cashback_farms/features/service/controller/service_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class AddMaterialsScreen extends StatefulWidget {
-  const AddMaterialsScreen({super.key});
+class AddServiceScreen extends StatefulWidget {
+  const AddServiceScreen({super.key});
 
   @override
-  State<AddMaterialsScreen> createState() => _AddMaterialsScreenState();
+  State<AddServiceScreen> createState() => _AddServiceScreenState();
 }
 
-class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
-  final MaterialController controller = Get.put(MaterialController());
+class _AddServiceScreenState extends State<AddServiceScreen> {
+  final ServiceController controller = Get.put(ServiceController());
 
   late final VendorStoreController vendorStoreController;
 
@@ -27,16 +26,15 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
     vendorStoreController = Get.put(VendorStoreController());
     vendorStoreController.fetchStore();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchAddedMaterialsList();
+      controller.fetchAddedServiceList();
     });
   }
 
 
-  void _openAddMaterialSheet() {
-    controller.fetchMaterialsTypeList();
+  void _openAddServiceSheet() {
+    controller.fetchServiceTypeList();
 
-    materials_type_list_model.MaterialsTypeListModel? selectedMaterial;
-    List<materials_type_list_model.Brand> selectedBrands = [];
+    service_type_list_model.ServiceTypeListModel? selectedService;
 
     showModalBottomSheet(
       context: context,
@@ -45,7 +43,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
-            return GetBuilder<MaterialController>(
+            return GetBuilder<ServiceController>(
               builder: (ctrl) {
                 return Container(
                   decoration: const BoxDecoration(
@@ -79,7 +77,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'Add Material',
+                              'Add Service',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -102,9 +100,9 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        GetBuilder<MaterialController>(
+                        GetBuilder<ServiceController>(
                           builder: (ctrl) {
-                            if (ctrl.isMaterialsTypeLoading) {
+                            if (ctrl.isServiceTypeLoading) {
                               return Container(
                                 height: 52,
                                 decoration: BoxDecoration(
@@ -125,129 +123,40 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                               );
                             }
                             return _buildDropdown<
-                                materials_type_list_model
-                                    .MaterialsTypeListModel>(
+                                service_type_list_model
+                                    .ServiceTypeListModel>(
                               hint: 'Select Material',
-                              value: selectedMaterial,
-                              items: ctrl.materialsTypeListModel,
+                              value: selectedService,
+                              items: ctrl.serviceTypeListModel,
                               itemLabel: (item) =>
-                              item.materialName ?? '',
+                              item.serviceName ?? '',
                               onChanged: (val) {
                                 setSheetState(() {
-                                  selectedMaterial = val;
-                                  selectedBrands.clear();
+                                  selectedService = val;
                                 });
                               },
                             );
                           },
                         ),
                         const SizedBox(height: 16),
-                        if (selectedMaterial != null)
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Select Brands',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                if ((selectedMaterial?.brand ?? [])
-                                    .isEmpty)
-                                  Text(
-                                    'No brands available',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                  ),
-                                ...(selectedMaterial?.brand ?? [])
-                                    .map((brand) {
-                                  final isSelected =
-                                  selectedBrands.any(
-                                          (e) => e.id == brand.id);
-                                  return CheckboxListTile(
-                                    dense: true,
-                                    contentPadding: EdgeInsets.zero,
-                                    controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                    activeColor:
-                                    const Color(0xFF6B8E23),
-                                    value: isSelected,
-                                    title: Text(
-                                      brand.name ?? '',
-                                      style: const TextStyle(
-                                          fontSize: 14),
-                                    ),
-                                    onChanged: (value) {
-                                      setSheetState(() {
-                                        if (value == true) {
-                                          final alreadyExists =
-                                          selectedBrands.any(
-                                                  (e) =>
-                                              e.id ==
-                                                  brand.id);
-                                          if (!alreadyExists) {
-                                            selectedBrands
-                                                .add(brand);
-                                          }
-                                        } else {
-                                          selectedBrands
-                                              .removeWhere((e) =>
-                                          e.id == brand.id);
-                                        }
-                                      });
-                                    },
-                                  );
-                                }).toList(),
-                              ],
-                            ),
-                          ),
-                        const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
                             onPressed:
-                            ctrl.isVendorMaterialsRequestLoading ==
+                            ctrl.isServiceRequestLoading ==
                                 true
                                 ? null
                                 : () async {
-                              if (selectedMaterial == null) {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Please select a material'),
-                                    backgroundColor:
-                                    Colors.red,
-                                  ),
+                              if (selectedService == null) {
+                                SnackBarHelper.showError(
+                                  'Please select a service',
                                 );
                                 return;
                               }
-                              ctrl.clearMaterialSelection();
-                              ctrl.setMaterialId(
-                                  selectedMaterial!.id
-                                      ?.toString() ??
-                                      '');
-                              ctrl.setBrandIds(
-                                selectedBrands
-                                    .map((e) =>
-                                    e.id.toString())
-                                    .toList(),
-                              );
-                              final success = await ctrl
-                                  .vendorMaterialsRequest();
+                              ctrl.clearServiceSelection();
+                              ctrl.setServiceId(selectedService!.id?.toString() ?? '');
+                              final success = await ctrl.vendorServiceRequest();
                               if (success) {
                                 Navigator.pop(ctx);
                               }
@@ -263,7 +172,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                               elevation: 0,
                             ),
                             child:
-                            ctrl.isVendorMaterialsRequestLoading ==
+                            ctrl.isServiceRequestLoading ==
                                 true
                                 ? const SizedBox(
                               width: 22,
@@ -294,12 +203,10 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
     );
   }
 
-  void _showMaterialDetailSheet(
-      added_materials_list_model.AddedMaterialsListModel material,
-      MaterialController ctrl,
+  void _showServiceDetailSheet(
+      added_service_list_model.AddedServiceListModel service,
+      ServiceController ctrl,
       ) {
-    final brands = material.material?.brand ?? [];
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -340,7 +247,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        material.material?.materialName ?? '-',
+                        service.service?.serviceName ?? '-',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -364,9 +271,9 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Center(child: _buildDetailImage(material)),
+                Center(child: _buildDetailImage(service)),
                 const SizedBox(height: 24),
-                _sectionLabel('Material Info'),
+                _sectionLabel('Service Info'),
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
@@ -381,114 +288,35 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                     children: [
                       _detailRow(
                         icon: Icons.tag_rounded,
-                        label: 'Material ID',
-                        value: '#000${material.id ?? '-'}',
+                        label: 'Service ID',
+                        value: '#000${service.id ?? '-'}',
                       ),
                       _detailDivider(),
                       _detailRow(
                         icon: Icons.category_outlined,
-                        label: 'Material Name',
-                        value: material
-                            .material?.materialName ??
+                        label: 'Service Name',
+                        value: service
+                            .service?.serviceName ??
                             '-',
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    _sectionLabel('All Brands'),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${brands.length}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 12),
-                brands.isEmpty
-                    ? Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius:
-                    BorderRadius.circular(10),
-                    border: Border.all(
-                        color: Colors.grey.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          size: 16,
-                          color: Colors.grey.shade400),
-                      const SizedBox(width: 8),
-                      Text(
-                        'No brands available',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade500,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-                    : Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: brands.map((b) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6B8E23)
-                            .withValues(alpha: 0.10),
-                        borderRadius:
-                        BorderRadius.circular(20),
-                        border: Border.all(
-                          color: const Color(0xFF6B8E23)
-                              .withValues(alpha: 0.30),
-                        ),
-                      ),
-                      child: Text(
-                        b.name ?? '',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF4A6315),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 28),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: OutlinedButton.icon(
                     onPressed: () {
                       Navigator.pop(ctx);
-                      _showDeleteDialog(material, ctrl, 0);
+                      _showDeleteDialog(service, ctrl, 0);
                     },
                     icon: const Icon(
                         Icons.delete_outline_rounded,
                         color: Colors.red,
                         size: 18),
                     label: const Text(
-                      'Remove this material',
+                      'Remove this service',
                       style: TextStyle(
                         color: Colors.red,
                         fontWeight: FontWeight.w500,
@@ -590,8 +418,8 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
 
 
   Widget _buildDetailImage(
-      added_materials_list_model.AddedMaterialsListModel material) {
-    final images = (material.material?.image ?? [])
+      added_service_list_model.AddedServiceListModel service) {
+    final images = (service.service?.image ?? [])
         .where((e) =>
     e.toString().toLowerCase().endsWith('.jpg') ||
         e.toString().toLowerCase().endsWith('.jpeg') ||
@@ -678,8 +506,8 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
 
 
   void _showDeleteDialog(
-      added_materials_list_model.AddedMaterialsListModel material,
-      MaterialController ctrl,
+      added_service_list_model.AddedServiceListModel service,
+      ServiceController ctrl,
       int index,
       ) {
     showDialog(
@@ -695,7 +523,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                 color: Colors.amber, size: 24),
             SizedBox(width: 8),
             Text(
-              'Delete Material',
+              'Delete Service',
               style: TextStyle(
                   fontWeight: FontWeight.w700, fontSize: 18),
             ),
@@ -703,7 +531,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
         ),
         content: Text(
           'Are you sure you want to remove '
-              '"${material.material?.materialName}"?',
+              '"${service.service?.serviceName}"?',
           style: TextStyle(
               fontSize: 14,
               color: Colors.grey.shade700,
@@ -735,8 +563,8 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     Navigator.pop(ctx);
-                    await ctrl.deleteVendorMaterial(
-                        material.id.toString());
+                    await ctrl.deleteVendorService(
+                        service.id.toString());
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade600,
@@ -777,18 +605,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
           Expanded(
             flex: 4,
             child: Text(
-              'Material Name',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.black54,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              'Brand',
+              'Service Name',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -826,16 +643,12 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
   }
 
   Widget _buildTableRow(
-      added_materials_list_model.AddedMaterialsListModel material,
-      MaterialController ctrl,
+      added_service_list_model.AddedServiceListModel service,
+      ServiceController ctrl,
       int index,
       ) {
-    final brands = material.material?.brand ?? [];
-    final visibleBrands = brands.take(2).toList();
-    final remainingCount = brands.length - visibleBrands.length;
-
     return InkWell(
-      onTap: () => _showMaterialDetailSheet(material, ctrl),
+      onTap: () => _showServiceDetailSheet(service, ctrl),
       borderRadius: BorderRadius.circular(0),
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -849,7 +662,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    material.material?.materialName ?? '-',
+                    service.service?.serviceName ?? '-',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -869,75 +682,6 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                 ],
               ),
             ),
-            Expanded(
-              flex: 3,
-              child: brands.isEmpty
-                  ? Text(
-                'No brand',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade400,
-                  fontStyle: FontStyle.italic,
-                ),
-              )
-                  : Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: [
-                  ...visibleBrands.map(
-                        (b) => Container(
-                      padding:
-                      const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6B8E23)
-                            .withValues(alpha: 0.10),
-                        borderRadius:
-                        BorderRadius.circular(20),
-                        border: Border.all(
-                          color:
-                          const Color(0xFF6B8E23)
-                              .withValues(
-                              alpha: 0.25),
-                        ),
-                      ),
-                      child: Text(
-                        b.name ?? '',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF4A6315),
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (remainingCount > 0)
-                    Container(
-                      padding:
-                      const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius:
-                        BorderRadius.circular(20),
-                        border: Border.all(
-                            color:
-                            Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        '+$remainingCount',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
             SizedBox(
               width: 50,
               child: Padding(
@@ -945,7 +689,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                 child: Center(
                   child: (() {
                     final images =
-                    (material.material?.image ?? [])
+                    (service.service?.image ?? [])
                         .where((e) =>
                     e
                         .toString()
@@ -989,12 +733,12 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                 padding: const EdgeInsets.only(top: 2),
                 child: Center(
                   child: InkWell(
-                    onTap: ctrl.isDeleteMaterialLoading &&
-                        ctrl.deletingMaterialId ==
-                            material.id.toString()
+                    onTap: ctrl.isDeleteServiceLoading &&
+                        ctrl.deletingServiceId ==
+                            service.id.toString()
                         ? null
                         : () => _showDeleteDialog(
-                        material, ctrl, index),
+                        service, ctrl, index),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       width: 34,
@@ -1005,9 +749,9 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                         borderRadius:
                         BorderRadius.circular(8),
                       ),
-                      child: ctrl.isDeleteMaterialLoading &&
-                          ctrl.deletingMaterialId ==
-                              material.id.toString()
+                      child: ctrl.isDeleteServiceLoading &&
+                          ctrl.deletingServiceId ==
+                              service.id.toString()
                           ? const Padding(
                         padding: EdgeInsets.all(8),
                         child: CircularProgressIndicator(
@@ -1053,7 +797,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
       return Scaffold(
         backgroundColor: const Color(0xFFF9FAFB),
         appBar: DynamicAppBar(
-          title: 'Add Material List',
+          title: 'Add Service List',
           showBackButton: true,
         ),
         floatingActionButtonLocation:
@@ -1066,7 +810,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: _openAddMaterialSheet,
+              onPressed: _openAddServiceSheet,
               icon: const Icon(Icons.add, size: 18),
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -1081,7 +825,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                     .withValues(alpha: 0.3),
               ),
               label: const Text(
-                'Add Material',
+                'Add Service',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -1132,7 +876,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                     const SizedBox(height: 10),
 
                     Text(
-                      'Please add your company/store details before adding materials.',
+                      'Please add your company/store details before adding services.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -1175,10 +919,10 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
               ),
             );
           }
-          return GetBuilder<MaterialController>(
+          return GetBuilder<ServiceController>(
             builder: (ctrl) {
 
-              if (ctrl.isAddedMaterialsLoading) {
+              if (ctrl.isAddedServiceLoading) {
                 return const Center(
                   child: CircularProgressIndicator(
                     color: Color(0xFF6B8E23),
@@ -1187,7 +931,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                 );
               }
 
-              if (ctrl.addedMaterialsListModel.isEmpty) {
+              if (ctrl.addedServiceListModel.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment:
@@ -1203,7 +947,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                       const SizedBox(height: 16),
 
                       Text(
-                        'No materials added yet.',
+                        'No services added yet.',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey.shade600,
@@ -1214,7 +958,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                       const SizedBox(height: 8),
 
                       Text(
-                        'Tap "Add Material" to get started.',
+                        'Tap "Add Service" to get started.',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade400,
@@ -1228,7 +972,7 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
               return RefreshIndicator(
                 color: const Color(0xFF6B8E23),
                 onRefresh: () async {
-                  await ctrl.fetchAddedMaterialsList();
+                  await ctrl.fetchAddedServiceList();
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -1258,25 +1002,25 @@ class _AddMaterialsScreenState extends State<AddMaterialsScreen> {
                       ),
                       child: Column(
                         children: [
-                
+
                           _buildTableHeader(),
-                
+
                           ListView.separated(
                             shrinkWrap: true,
                             physics:
                             const NeverScrollableScrollPhysics(),
                             itemCount:
-                            ctrl.addedMaterialsListModel.length,
+                            ctrl.addedServiceListModel.length,
                             separatorBuilder: (_, __) =>
                                 Divider(
                                   height: 1,
                                   color: Colors.grey.shade100,
                                 ),
                             itemBuilder: (context, index) {
-                
+
                               final material =
-                              ctrl.addedMaterialsListModel[index];
-                
+                              ctrl.addedServiceListModel[index];
+
                               return _buildTableRow(
                                 material,
                                 ctrl,

@@ -21,8 +21,12 @@ class _VendorStoreViewState extends State<VendorStoreView> {
   @override
   void initState() {
     super.initState();
+
     controller = Get.put(VendorStoreController());
-    controller.fetchStore();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchStore();
+    });
   }
 
   @override
