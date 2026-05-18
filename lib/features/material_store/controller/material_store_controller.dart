@@ -767,7 +767,7 @@ class MaterialController extends GetxController {
       };
 
       for (int i = 0; i < brandId.length; i++) {
-        mapData["brand_id[]"] = brandId[i];
+        mapData["brand_id[$i]"] = brandId[i];
       }
 
       dio.FormData formData = dio.FormData.fromMap(mapData);

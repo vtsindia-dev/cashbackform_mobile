@@ -77,10 +77,13 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
               _buildRoleChips()
                   .animate()
                   .fade(duration: 420.ms, delay: 20.ms),
-              SizedBox(height: 12.h),
-              _buildReferralCodeCard()
-                  .animate()
-                  .fade(duration: 430.ms, delay: 30.ms),
+              if (_shouldShowReferralCard())
+               ...[
+                 SizedBox(height: 12.h),
+                 _buildReferralCodeCard()
+                     .animate()
+                     .fade(duration: 430.ms, delay: 30.ms),
+               ],
               SizedBox(height: 12.h),
               _buildWalletCard()
                   .animate()
@@ -348,41 +351,12 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         break;
     }
   }
-  // ─── REFERRAL CODE CARD ─────────────────────────────────────────────────────
-  //
-  // Rules (from spec):
-  // user only                                              → NO
-  // user + Agent                                           → YES
-  // user + Vendor (Company/Material profile)               → YES
-  // user + Service only                                    → NO
-  // user + Service + Agent                                 → YES
-  // user + Agent + Vendor                                  → YES
-  // user + Vendor + Service                                → YES
-  // user + Agent + Vendor + Service                        → YES
+
 
   Widget _buildReferralCodeCard() {
     final profile = dashboardController.profile.value;
     if (profile == null) return const SizedBox.shrink();
 
-    final bool isAgent    = profile.isAgent == 1;
-    final bool isVendor   = profile.isVendor == 1;
-    final bool isServices = profile.isServices == 1;
-
-    final bool shouldShow = _shouldShowReferralCode(
-      isAgent: isAgent,
-      isVendor: isVendor,
-      isServices: isServices,
-    );
-
-    if (!shouldShow || profile.code == null || profile.code!.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final String message = _getReferralMessage(
-      isAgent: isAgent,
-      isVendor: isVendor,
-      isServices: isServices,
-    );
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -422,7 +396,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
               SizedBox(width: 10.w),
               Expanded(
                 child: Text(
-                  message,
+                  'Your Referral Code',
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
@@ -448,15 +422,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "Your Referral Code",
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: AppColor.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
                       Wrap(
                         spacing: 4.w,
                         children: profile.code!.split('').map((char) {
@@ -502,42 +467,25 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     );
   }
 
-  bool _shouldShowReferralCode({
-    required bool isAgent,
-    required bool isVendor,
-    required bool isServices,
-  }) {
-    if (!isAgent && !isVendor && !isServices) return false;
-    if (!isAgent && !isVendor && isServices) return false;
+  bool _shouldShowReferralCard() {
+    final profile = dashboardController.profile.value;
+
+    if (profile == null) return false;
+
+    final bool isAgent = profile.isAgent == 1;
+    final bool isVendor = profile.isVendor == 1;
+    final bool isService = profile.isServices == 1;
+
+    if (!isAgent && !isVendor && !isService) {
+      return false;
+    }
+
+    if (isService && !isAgent && !isVendor) {
+      return false;
+    }
+
     return true;
   }
-
-  String _getReferralMessage({
-    required bool isAgent,
-    required bool isVendor,
-    required bool isServices,
-  }) {
-    if (isAgent && !isVendor && !isServices) {
-      return "Share your code & earn rewards when others join as Agents!";
-    }
-    if (!isAgent && isVendor && !isServices) {
-      return "Share your code with other vendors and earn rewards!";
-    }
-    if (isAgent && !isVendor && isServices) {
-      return "Share your code to grow your Agent & Service network!";
-    }
-    if (isAgent && isVendor && !isServices) {
-      return "Share your code to expand your Agent & Vendor network!";
-    }
-    if (!isAgent && isVendor && isServices) {
-      return "Share your code to grow your Vendor & Service network!";
-    }
-    if (isAgent && isVendor && isServices) {
-      return "Share your code to expand your multi-role network!";
-    }
-    return "Share your referral code and earn exciting rewards!";
-  }
-
   Widget _buildCopyButton(String code) {
     return GestureDetector(
       onTap: () {
@@ -1210,6 +1158,15 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildCompanyDropdown() {
+
+    final profile = dashboardController.profile.value;
+
+    final bool isAgent = profile?.isAgent == 1;
+    final bool isVendor = profile?.isVendor == 1;
+    final bool isService = profile?.isServices == 1;
+
+    /// Show company profile if Vendor OR Service approved
+    final bool showCompanyProfile = isVendor || isService;
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
       decoration: BoxDecoration(
@@ -1280,19 +1237,21 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                   left: 20.w, right: 10.w, bottom: 10.h),
               child: Column(
                 children: [
-                  _subMenuTile(
-                    Icons.apartment_rounded,
-                    "My Company Profile",
-                        () => Get.to(() => const VendorStoreView()),
-                      "assets/images/company-vision.png"
-                  ),
-
+                  if (showCompanyProfile)
+                    _subMenuTile(
+                      Icons.apartment_rounded,
+                      "My Company Profile",
+                          () => Get.to(() => const VendorStoreView()),
+                      "assets/images/company-vision.png",
+                    ),
+                  if (isService)
                   _subMenuTile(
                     Icons.miscellaneous_services_rounded,
                     "My Service",
                           () => Get.to(() => const AddServiceScreen()),
                       "assets/images/support1.png"
                   ),
+                  if (isVendor)
                   _subMenuTile(
                     Icons.settings_input_component_rounded,
                     "My Material",

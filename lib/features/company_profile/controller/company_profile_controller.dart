@@ -785,8 +785,7 @@ class VendorStoreController extends GetxController {
     if (s.state?.countryId != null) {
       await fetchCountries();
 
-      final country =
-      countries.firstWhereOrNull((c) => c.id == s.state?.countryId);
+      final country = countries.firstWhereOrNull((c) => c.id == s.state?.countryId);
 
       if (country != null) {
         selectedCountry.value = country;

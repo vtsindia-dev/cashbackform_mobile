@@ -821,7 +821,7 @@ class _CountryStateCity extends StatelessWidget {
           )
         else
           DropdownButtonFormField<T>(
-            initialValue: items.any((item) => item == value) ? value : null,
+            value: items.contains(value) ? value : null,
             isExpanded: true,
             icon: const Icon(Icons.keyboard_arrow_down_rounded,
                 color: AppColor.grey),
