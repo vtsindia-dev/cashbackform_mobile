@@ -1,10 +1,11 @@
 
+import 'package:cashback_farms/common/route/router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../common/colours.dart';
 import '../controller/company_profile_controller.dart';
-import '../model/comapany_profile.dart';
+import '../model/comapany_profile.dart' as company_profile;
 import 'address_map.dart';
 
 class VendorStoreView extends StatefulWidget {
@@ -21,6 +22,7 @@ class _VendorStoreViewState extends State<VendorStoreView> {
   void initState() {
     super.initState();
     controller = Get.put(VendorStoreController());
+    controller.fetchStore();
   }
 
   @override
@@ -48,6 +50,8 @@ class _VendorStoreViewState extends State<VendorStoreView> {
               children: [
                 const SizedBox(height: 20),
                 _SectionCard(
+                  isShowButton : true,
+                  vendorStoreController : controller,
                   icon: Icons.storefront_rounded,
                   iconColor: AppColor.primary,
                   title: 'Store Details',
@@ -72,6 +76,7 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
+                  vendorStoreController : controller,
                   icon: Icons.location_on_rounded,
                   iconColor: AppColor.secondary,
                   title: 'Location',
@@ -92,6 +97,7 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
+                  vendorStoreController : controller,
                   icon: Icons.contact_phone_rounded,
                   iconColor: AppColor.orange,
                   title: 'Contact Info',
@@ -126,6 +132,7 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
+                  vendorStoreController : controller,
                   icon: Icons.business_center_rounded,
                   iconColor: AppColor.teal,
                   title: 'Company Profile Details',
@@ -167,7 +174,7 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
-
+                  vendorStoreController : controller,
                   icon: Icons.share_rounded,
                   iconColor: AppColor.accent,
                   title: 'Social Media',
@@ -198,6 +205,7 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
+                  vendorStoreController : controller,
                   icon: Icons.image_rounded,
                   iconColor: AppColor.info,
                   title: 'Store Images',
@@ -218,6 +226,8 @@ class _VendorStoreViewState extends State<VendorStoreView> {
   }
 
   SliverAppBar _buildSliverAppBar() {
+    final isEdit = controller.store.value != null;
+
     return SliverAppBar(
       expandedHeight: 130,
       floating: false,
@@ -229,18 +239,24 @@ class _VendorStoreViewState extends State<VendorStoreView> {
         icon: Container(
           padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.arrow_back_rounded, size: 20, color: Colors.white),
+          child: const Icon(
+            Icons.arrow_back_rounded,
+            size: 20,
+            color: Colors.white,
+          ),
         ),
         onPressed: () => Get.back(),
       ),
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-        title: const Text(
-          'Create Vendor Store',
-          style: TextStyle(
+        title: Text(
+          isEdit
+              ? 'Update Vendor Store'
+              : 'Create Vendor Store',
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w700,
             fontSize: 18,
@@ -260,7 +276,6 @@ class _VendorStoreViewState extends State<VendorStoreView> {
           ),
           child: Stack(
             children: [
-              // Decorative circles
               Positioned(
                 right: -30,
                 top: -20,
@@ -269,7 +284,7 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                   height: 130,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
               ),
@@ -281,7 +296,7 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                   height: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.06),
+                    color: Colors.white.withValues(alpha: 0.06),
                   ),
                 ),
               ),
@@ -290,10 +305,12 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 44),
                   child: Text(
-                    'Fill in your store details below',
+                    isEdit
+                        ? 'Update your store information'
+                        : 'Fill in your store details below',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -307,15 +324,15 @@ class _VendorStoreViewState extends State<VendorStoreView> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Section Card
-// ─────────────────────────────────────────────────────────────
+
 class _SectionCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String title;
   final String? subtitle;
   final List<Widget> children;
+  final bool? isShowButton;
+  final VendorStoreController vendorStoreController;
 
   const _SectionCard({
     required this.icon,
@@ -323,6 +340,8 @@ class _SectionCard extends StatelessWidget {
     required this.title,
     this.subtitle,
     required this.children,
+    this.isShowButton,
+    required this.vendorStoreController
   });
 
   @override
@@ -333,7 +352,7 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -345,42 +364,93 @@ class _SectionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 18),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColor.textMain,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColor.lightGrey,
-                      borderRadius: BorderRadius.circular(20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: iconColor.withValues(alpha:0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(icon, color: iconColor, size: 18),
                     ),
-                    child: Text(
-                      subtitle!,
+                    const SizedBox(width: 10),
+                    Text(
+                      title,
                       style: const TextStyle(
-                        fontSize: 10,
-                        color: AppColor.grey,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColor.textMain,
                       ),
                     ),
-                  ),
-                ],
+                    if (subtitle != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColor.lightGrey,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          subtitle!,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColor.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (isShowButton == true)
+                  Obx(() {
+                    final isEdit = vendorStoreController.store.value != null;
+                    if (!isEdit) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          final store = vendorStoreController.store.value;
+
+                          if (store == null) return;
+
+                          Get.toNamed(
+                            AppRoutes.vendorDetailScreen,
+                            arguments: {
+                              "id": store.userId.toString(),
+                              "title": store.name,
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.storefront_rounded, size: 18),
+                        label: const Text(
+                          "View My Shop",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColor.primary,
+                          side: BorderSide(
+                            color: AppColor.primary.withValues(alpha: 0.4),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
               ],
             ),
             const SizedBox(height: 16),
@@ -394,9 +464,7 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Styled Text Field
-// ─────────────────────────────────────────────────────────────
+
 class _StyledTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -405,8 +473,8 @@ class _StyledTextField extends StatelessWidget {
   final int maxLines;
   final TextInputType? keyboardType;
   final bool required;
-  final int? maxLength;  // 🆕
-  final TextCapitalization textCapitalization;  // 🆕
+  final int? maxLength;
+  final TextCapitalization textCapitalization;
 
   const _StyledTextField({
     required this.controller,
@@ -416,7 +484,7 @@ class _StyledTextField extends StatelessWidget {
     this.maxLines = 1,
     this.keyboardType,
     this.required = false,
-  this.maxLength,  // 🆕
+  this.maxLength,
   this.textCapitalization = TextCapitalization.none,
   });
 
@@ -481,10 +549,7 @@ class _StyledTextField extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Map Picker Tile — uses controller.addressText (observable)
-// instead of controller.addressController.text (NOT observable)
-// ─────────────────────────────────────────────────────────────
+
 class _MapPickerTile extends StatelessWidget {
   final VendorStoreController controller;
   const _MapPickerTile({required this.controller});
@@ -511,8 +576,6 @@ class _MapPickerTile extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-
-        // ✅ Uses controller.addressText (RxString) — fully reactive
         Obx(() {
           final address = controller.addressText.value;
           final hasAddress = address.isNotEmpty;
@@ -535,7 +598,7 @@ class _MapPickerTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: hasAddress
-                      ? AppColor.secondary.withOpacity(0.4)
+                      ? AppColor.secondary.withValues(alpha:0.4)
                       : AppColor.lightGrey,
                   width: 1.5,
                 ),
@@ -546,7 +609,7 @@ class _MapPickerTile extends StatelessWidget {
                     padding: const EdgeInsets.all(9),
                     decoration: BoxDecoration(
                       color: hasAddress
-                          ? AppColor.secondary.withOpacity(0.15)
+                          ? AppColor.secondary.withValues(alpha:0.15)
                           : AppColor.lightGrey,
                       borderRadius: BorderRadius.circular(9),
                     ),
@@ -591,8 +654,6 @@ class _MapPickerTile extends StatelessWidget {
             ),
           );
         }),
-
-        // ✅ Uses controller.latText / langText (RxString) — fully reactive
         Obx(() {
           final lat = controller.latText.value;
           final lng = controller.langText.value;
@@ -627,9 +688,9 @@ class _CoordChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.08),
+        color: AppColor.primary.withValues(alpha:0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColor.primary.withOpacity(0.25)),
+        border: Border.all(color: AppColor.primary.withValues(alpha:0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -656,9 +717,7 @@ class _CoordChip extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Country / State / City — each Obx only reads reactive vars
-// ─────────────────────────────────────────────────────────────
+
 class _CountryStateCity extends StatelessWidget {
   final VendorStoreController controller;
   const _CountryStateCity({required this.controller});
@@ -667,7 +726,7 @@ class _CountryStateCity extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Obx(() => _buildDropdown<CountryModel>(
+        Obx(() => _buildDropdown<company_profile.CountryModel>(
           label: 'Country',
           icon: Icons.public_rounded,
           isLoading: controller.isCountryLoading.value,
@@ -679,7 +738,7 @@ class _CountryStateCity extends StatelessWidget {
           required: true,
         )),
         const SizedBox(height: 16),
-        Obx(() => _buildDropdown<StateModel>(
+        Obx(() => _buildDropdown<company_profile.StateModel>(
           label: 'State',
           icon: Icons.location_city_rounded,
           isLoading: controller.isStateLoading.value,
@@ -691,7 +750,7 @@ class _CountryStateCity extends StatelessWidget {
           required: true,
         )),
         const SizedBox(height: 16),
-        Obx(() => _buildDropdown<CityModel>(
+        Obx(() => _buildDropdown<company_profile.CityModel>(
           label: 'City',
           icon: Icons.apartment_rounded,
           isLoading: controller.isCityLoading.value,
@@ -758,7 +817,7 @@ class _CountryStateCity extends StatelessWidget {
           )
         else
           DropdownButtonFormField<T>(
-            value: value,
+            initialValue: items.any((item) => item == value) ? value : null,
             isExpanded: true,
             icon: const Icon(Icons.keyboard_arrow_down_rounded,
                 color: AppColor.grey),
@@ -813,9 +872,6 @@ class _CountryStateCity extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Thumbnail Picker
-// ─────────────────────────────────────────────────────────────
 class _ThumbnailPicker extends StatelessWidget {
   final VendorStoreController controller;
   const _ThumbnailPicker({required this.controller});
@@ -831,7 +887,7 @@ class _ThumbnailPicker extends StatelessWidget {
               padding:
               const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColor.info.withOpacity(0.1),
+                color: AppColor.info.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
@@ -852,8 +908,6 @@ class _ThumbnailPicker extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-
-        // ✅ Obx only wraps what changes reactively
         Obx(() {
           final file = controller.thumbnailImage.value;
           final url = controller.thumbnailUrl.value;
@@ -871,7 +925,7 @@ class _ThumbnailPicker extends StatelessWidget {
                 border: hasImage
                     ? null
                     : Border.all(
-                  color: AppColor.info.withOpacity(0.3),
+                  color: AppColor.info.withValues(alpha:0.3),
                   width: 1.5,
                 ),
                 image: hasImage
@@ -899,12 +953,15 @@ class _ThumbnailPicker extends StatelessWidget {
                             onTap: controller.pickThumbnailImage,
                             color: AppColor.primary,
                           ),
-                          const SizedBox(width: 8),
-                          _ActionBadge(
-                            icon: Icons.delete_rounded,
-                            onTap: controller.clearThumbnail,
-                            color: AppColor.red,
-                          ),
+                          if(file!=null)
+                         ...[
+                           const SizedBox(width: 8),
+                           _ActionBadge(
+                             icon: Icons.delete_rounded,
+                             onTap: controller.clearThumbnail,
+                             color: AppColor.red,
+                           ),
+                         ]
                         ],
                       ),
                     ),
@@ -917,7 +974,7 @@ class _ThumbnailPicker extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColor.info.withOpacity(0.08),
+                      color: AppColor.info.withValues(alpha:0.08),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -948,8 +1005,6 @@ class _ThumbnailPicker extends StatelessWidget {
             ),
           );
         }),
-
-        // Action buttons — reactive to thumbnailImage + thumbnailUrl
         Obx(() {
           if (controller.thumbnailImage.value == null &&
               controller.thumbnailUrl.value.isEmpty) {
@@ -985,9 +1040,7 @@ class _ThumbnailPicker extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Multi Image Picker
-// ─────────────────────────────────────────────────────────────
+
 class _MultiImagePicker extends StatelessWidget {
   final VendorStoreController controller;
   const _MultiImagePicker({required this.controller});
@@ -1003,7 +1056,7 @@ class _MultiImagePicker extends StatelessWidget {
               padding:
               const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColor.secondary.withOpacity(0.1),
+                color: AppColor.secondary.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
@@ -1022,7 +1075,6 @@ class _MultiImagePicker extends StatelessWidget {
               style: TextStyle(fontSize: 11, color: AppColor.grey),
             ),
             const Spacer(),
-            // ✅ Obx wraps only the counter badge
             Obx(() {
               final count = controller.storeImages.length +
                   controller.storeImageUrls.length;
@@ -1031,8 +1083,8 @@ class _MultiImagePicker extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
                   color: count >= 5
-                      ? AppColor.red.withOpacity(0.1)
-                      : AppColor.secondary.withOpacity(0.1),
+                      ? AppColor.red.withValues(alpha:0.1)
+                      : AppColor.secondary.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -1048,8 +1100,6 @@ class _MultiImagePicker extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-
-        // ✅ Obx wraps the whole image grid
         Obx(() {
           final localImages = controller.storeImages.toList();
           final urlImages = controller.storeImageUrls.toList();
@@ -1065,7 +1115,7 @@ class _MultiImagePicker extends StatelessWidget {
                   color: AppColor.backgroundLight,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                      color: AppColor.secondary.withOpacity(0.3), width: 1.5),
+                      color: AppColor.secondary.withValues(alpha:0.3), width: 1.5),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1073,7 +1123,7 @@ class _MultiImagePicker extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColor.secondary.withOpacity(0.08),
+                        color: AppColor.secondary.withValues(alpha:0.08),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.add_photo_alternate_rounded,
@@ -1097,7 +1147,6 @@ class _MultiImagePicker extends StatelessWidget {
               ),
             );
           }
-
           return Column(
             children: [
               GridView.builder(
@@ -1179,63 +1228,76 @@ class _MultiImagePicker extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Submit Button
-// ─────────────────────────────────────────────────────────────
+
 class _SubmitButton extends StatelessWidget {
   final VendorStoreController controller;
+
   const _SubmitButton({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final isCreating = controller.isCreating.value;
+      final isEdit = controller.store.value != null;
+
       return SizedBox(
         width: double.infinity,
         height: 56,
         child: ElevatedButton(
-          onPressed: isCreating ? null : controller.createStore,
+          onPressed: isCreating
+              ? null
+              : isEdit
+              ? controller.createStore
+              : controller.createStore,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColor.primary,
             disabledBackgroundColor: AppColor.primarylite,
             foregroundColor: Colors.white,
             elevation: isCreating ? 0 : 4,
-            shadowColor: AppColor.primary.withOpacity(0.4),
+            shadowColor: AppColor.primary.withValues(alpha: 0.4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
           ),
           child: isCreating
-              ? const Row(
+              ? Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(
+              const SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5),
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
-                'Creating Store...',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3),
+                isEdit
+                    ? 'Updating Store...'
+                    : 'Creating Store...',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
               ),
             ],
           )
-              : const Row(
+              : Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.storefront_rounded, size: 20),
-              SizedBox(width: 10),
+              const Icon(Icons.storefront_rounded, size: 20),
+              const SizedBox(width: 10),
               Text(
-                'Create Store',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3),
+                isEdit
+                    ? 'Update Store'
+                    : 'Create Store',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
               ),
             ],
           ),
@@ -1245,9 +1307,7 @@ class _SubmitButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Reusable Widgets
-// ─────────────────────────────────────────────────────────────
+
 class _ActionBadge extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -1267,7 +1327,7 @@ class _ActionBadge extends StatelessWidget {
           borderRadius: BorderRadius.circular(9),
           boxShadow: [
             BoxShadow(
-                color: color.withOpacity(0.4),
+                color: color.withValues(alpha:0.4),
                 blurRadius: 8,
                 offset: const Offset(0, 3)),
           ],
@@ -1302,9 +1362,9 @@ class _OutlinedIconButton extends StatelessWidget {
         padding:
         const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
+          color: color.withValues(alpha:0.05),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha:0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1343,7 +1403,7 @@ class _FullScreenLoader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha:0.06),
                       blurRadius: 18,
                       offset: const Offset(0, 6)),
                 ],

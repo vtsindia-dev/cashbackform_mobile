@@ -2,21 +2,19 @@ import 'dart:convert';
 
 class VendorStoreModel {
   final int? id;
-  final int userId;  // This is causing error - API returns String
-  final String name;
-  final String description;
+  final int? userId;
+  final String? name;
+  final String? description;
   final int? countryId;
-  final int? stateId;
-  final int? cityId;
-  final String city;  // API returns city name string, not ID
-  final String state; // API returns state name string, not ID
-  final String postalCode;
-  final String phone;
-  final String email;
+  City? city;
+  State? state;
+  final String? postalCode;
+  final String? phone;
+  final String? email;
   final String? website;
-  final double lat;
-  final double lang;
-  final String address;
+  final double? lat;
+  final double? lang;
+  final String? address;
   final String? instagram;
   final String? facebook;
   final String? whatsapp;
@@ -31,21 +29,19 @@ class VendorStoreModel {
 
   VendorStoreModel({
     this.id,
-    required this.userId,
-    required this.name,
-    required this.description,
+    this.userId,
+    this.name,
+    this.description,
     this.countryId,
-    this.stateId,
-    this.cityId,
-    required this.city,
-    required this.state,
-    required this.postalCode,
-    required this.phone,
-    required this.email,
+    this.city,
+    this.state,
+    this.postalCode,
+    this.phone,
+    this.email,
     this.website,
-    required this.lat,
-    required this.lang,
-    required this.address,
+    this.lat,
+    this.lang,
+    this.address,
     this.instagram,
     this.facebook,
     this.whatsapp,
@@ -62,14 +58,12 @@ class VendorStoreModel {
   factory VendorStoreModel.fromJson(Map<String, dynamic> json) {
     return VendorStoreModel(
       id: _parseInt(json['id']),
-      userId: _parseInt(json['user_id']) ?? 0,  // Convert String to int
+      userId: _parseInt(json['user_id']) ?? 0,
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      countryId: _parseInt(json['country']),  // If API returns country ID
-      stateId: _parseInt(json['state_id']),  // If API returns state ID
-      cityId: _parseInt(json['city_id']),    // If API returns city ID
-      city: json['city']?.toString() ?? '',   // Convert to string if it's number
-      state: json['state']?.toString() ?? '', // Convert to string if it's number
+      countryId: _parseInt(json['country']),
+        city : json['city'] != null ? City.fromJson(json['city']) : null,
+        state : json['state'] != null ? State.fromJson(json['state']) : null,
       postalCode: json['postal_code']?.toString() ?? '',
       phone: json['phone']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
@@ -93,7 +87,7 @@ class VendorStoreModel {
     );
   }
 
-  // Helper methods for safe type conversion
+
   static int? _parseInt(dynamic value) {
     if (value == null) return null;
     if (value is int) return value;
@@ -112,22 +106,18 @@ class VendorStoreModel {
 
   static List<String>? _parseImages(dynamic images) {
     if (images == null) return null;
-
-    // If images is a String (like JSON array string)
     if (images is String) {
       try {
-        // Try to parse as JSON array
+
         final decoded = json.decode(images);
         if (decoded is List) {
           return decoded.map((e) => e.toString()).toList();
         }
       } catch (e) {
-        // If not JSON, treat as single image path
+
         return [images];
       }
     }
-
-    // If images is already a List
     if (images is List) {
       return images.map((e) => e.toString()).toList();
     }
@@ -142,8 +132,6 @@ class VendorStoreModel {
       'name': name,
       'description': description,
       'country_id': countryId,
-      'state_id': stateId,
-      'city_id': cityId,
       'city': city,
       'state': state,
       'postal_code': postalCode,
@@ -165,7 +153,6 @@ class VendorStoreModel {
     };
   }
 
-  // Computed properties
   String get fullAddress {
     return '$address, $city, $state - $postalCode';
   }
@@ -184,16 +171,65 @@ class VendorStoreModel {
 
   List<String> get fullImageUrls {
     if (images == null) return [];
-    // Add base URL if needed
-    // return images!.map((path) => 'https://your-api.com/$path').toList();
     return images!;
   }
 
   String? get fullThumbnailUrl {
     if (thumbnail == null) return null;
-    // Add base URL if needed
-    // return 'https://your-api.com/$thumbnail';
     return thumbnail;
+  }
+}
+
+class City {
+  int? id;
+  int? stateId;
+  String? cityName;
+  int? status;
+  String? createdAt;
+  String? updatedAt;
+
+  City(
+      {this.id,
+        this.stateId,
+        this.cityName,
+        this.status,
+        this.createdAt,
+        this.updatedAt});
+
+  City.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    stateId = json['state_id'];
+    cityName = json['city_name'];
+    status = json['status'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+  }
+
+}
+
+class State {
+  int? id;
+  int? countryId;
+  String? stateName;
+  int? status;
+  String? createdAt;
+  String? updatedAt;
+
+  State(
+      {this.id,
+        this.countryId,
+        this.stateName,
+        this.status,
+        this.createdAt,
+        this.updatedAt});
+
+  State.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    countryId = json['country_id'];
+    stateName = json['state_name'];
+    status = json['status'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
   }
 }
 // Request Model for creating store

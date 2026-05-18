@@ -79,7 +79,7 @@ class _HomeState extends State<Home> {
 
                 Obx(() {
                   final banners = controller.featuredBanners;
-                  final List<String> images = banners.isNotEmpty ? banners.map((banner) => banner.image).where((image) => image.isNotEmpty).toList() : ['assets/images/banner1.png', 'assets/images/banner2.png'];
+                  final List<String> images = banners.isNotEmpty ? banners.map((banner) => banner.image).where((image) => image.isNotEmpty).toList() : [];
                   final List<String> redirectUrls = banners.isNotEmpty ? banners.map((banner) => banner.redirectUrl).where((url) => url != null && url.isNotEmpty).cast<String>().toList() : [];
                   return CarouselWidget(
                     images: images,

@@ -11,6 +11,8 @@ import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../model/dashboard_model.dart';
 import '../screens/menu.dart';
+
+
 extension StringExtension on String {
   String toTitleCase() {
     if (isEmpty) return this;
@@ -177,6 +179,7 @@ class DashboardController extends GetxController {
       _isServiceRequestInProgress = false;
     }
   }
+
   Future<void> fetchVendorRequests() async {
     if (_isVendorRequestInProgress) {
       print('⏸️ Vendor requests already in progress');

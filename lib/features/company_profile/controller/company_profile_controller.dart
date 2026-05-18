@@ -554,22 +554,21 @@ class VendorStoreController extends GetxController {
       SnackBarHelper.showError('Please select location on map');
       return false;
     }
-    if (thumbnailImage.value == null) {
+    if (thumbnailImage.value == null && thumbnailUrl.value.isEmpty) {
       SnackBarHelper.showError('Please select a thumbnail image');
       return false;
     }
-    if (storeImages.isEmpty) {
+
+    if (storeImages.isEmpty && storeImageUrls.isEmpty) {
       SnackBarHelper.showError('Please select at least one store image');
       return false;
     }
 
-    // Validate GST
     if (gstController.text.trim().isEmpty) {
       SnackBarHelper.showError('Please enter GST number');
       return false;
     }
 
-    // Validate established year format (optional but validate if provided)
     if (establishedYearController.text.trim().isNotEmpty) {
       final year = int.tryParse(establishedYearController.text.trim());
       final currentYear = DateTime.now().year;
@@ -650,8 +649,6 @@ class VendorStoreController extends GetxController {
         'gst': gstController.text.trim(),
         'estimate_date': establishedYearController.text.trim(),
       });
-
-      // Add images
       for (var i = 0; i < storeImages.length; i++) {
         final file = storeImages[i];
         if (await file.exists()) {
@@ -664,8 +661,6 @@ class VendorStoreController extends GetxController {
           ));
         }
       }
-
-      // Add thumbnail
       if (thumbnailImage.value != null && await thumbnailImage.value!.exists()) {
         formData.files.add(MapEntry(
           'thumbnail',
@@ -675,13 +670,7 @@ class VendorStoreController extends GetxController {
           ),
         ));
       }
-
       final response = await ApiService.postMultipart(ApiUrl.vendorStoreUrl, formData);
-
-      print('📥 Store API Response Status: ${response.statusCode}');
-      print('📥 Store API Response Data: ${response.data}');
-
-      // Handle response
       if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
         final responseData = response.data;
 
@@ -690,37 +679,21 @@ class VendorStoreController extends GetxController {
           SnackBarHelper.showError(errorMsg);
           return {'status': 500, 'message': errorMsg};
         }
-
-        // Check status field (fixing the typo from 'tue' to true)
         if (responseData['status'] == true) {
           final message = responseData['message'] ?? 'Store created successfully';
-
-          // Parse store data safely
-          if (responseData['data'] != null) {
-            try {
-              store.value = VendorStoreModel.fromJson(responseData['data']);
-              print('✅ Store model created successfully');
-            } catch (e) {
-              print('❌ Error parsing store model: $e');
-              // Continue even if parsing fails - the store was created
-            }
-          }
-
-          clearForm();
           SnackBarHelper.showSuccess(message);
+          await fetchStore();
           return {
             'status': 200,
             'message': message,
             'data': responseData['data']
           };
         } else {
-          // Business logic failure
           final errorMsg = responseData['message'] ?? 'Failed to create store';
           SnackBarHelper.showError(errorMsg);
           return {'status': 400, 'message': errorMsg};
         }
       } else {
-        // Handle error status codes
         final errorMsg = response.data?['message'] ??
             'Failed to create store (Status: ${response.statusCode})';
         SnackBarHelper.showError(errorMsg);
@@ -734,6 +707,7 @@ class VendorStoreController extends GetxController {
       isCreating(false);
     }
   }
+
   Future<void> fetchStore() async {
     try {
       isFetching(true);
@@ -743,13 +717,14 @@ class VendorStoreController extends GetxController {
         return;
       }
       final response = await ApiService.getAuthenticatedRequest(
-        '${ApiUrl.vendorStoreUrl}?user_id=${userId.value}',
+        '${ApiUrl.vendorStoreUrl}/${userId.value}',
         token,
       );
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData != null && responseData['data'] != null) {
           store.value = VendorStoreModel.fromJson(responseData['data']);
+          clearForm();
           await prefillFormData();
         }
       }
@@ -765,39 +740,39 @@ class VendorStoreController extends GetxController {
     if (store.value == null) return;
     final s = store.value!;
 
-    nameController.text = s.name;
-    descriptionController.text = s.description;
-    postalCodeController.text = s.postalCode;
-    phoneController.text = s.phone;
-    emailController.text = s.email;
+    nameController.text = s.name??'';
+    descriptionController.text = s.description??'';
+    postalCodeController.text = s.postalCode??'';
+    phoneController.text = s.phone??'';
+    emailController.text = s.email??'';
     websiteController.text = s.website ?? '';
     instagramController.text = s.instagram ?? '';
     facebookController.text = s.facebook ?? '';
-    whatsappController.text = s.whatsapp ?? s.phone;
+    whatsappController.text = s.whatsapp ?? s.phone ?? '';
     faxController.text = s.fax ?? '';
     taxController.text = s.tax ?? '';
     gstController.text = s.gst ?? '';
     establishedYearController.text = s.establishedYear != null ? s.establishedYear.toString() : '';
-    final addr = s.address;
-    addressController.text = addr;
-    searchAddressController.text = addr;
-    addressText.value = addr;
-    final latStr = s.lat.toString();
-    final lngStr = s.lang.toString();
+    final address = s.address;
+    addressController.text = address??'';
+    searchAddressController.text = address??'';
+    addressText.value = address??'';
+    final latStr = s.lat?.toString()??'';
+    final lngStr = s.lang?.toString()??'';
     latController.text = latStr;
     langController.text = lngStr;
     latText.value = latStr;
     langText.value = lngStr;
 
     if (s.lat != 0 && s.lang != 0) {
-      final latLng = LatLng(s.lat, s.lang);
+      final latLng = LatLng(s.lat??0, s.lang??0);
       selectedLocation.value = latLng;
       final marker = Marker(
         markerId: const MarkerId('stored_location'),
         position: latLng,
         infoWindow: InfoWindow(title: s.name),
       );
-      mapMarkers.value = {marker};
+      mapMarkers.assignAll({marker});
     }
 
     if (s.images != null && s.images!.isNotEmpty) {
@@ -807,20 +782,31 @@ class VendorStoreController extends GetxController {
       thumbnailUrl.value = s.thumbnail!;
     }
 
-    if (s.countryId != null) {
+    if (s.state?.countryId != null) {
       await fetchCountries();
-      final country = countries.firstWhereOrNull((c) => c.id == s.countryId);
+
+      final country =
+      countries.firstWhereOrNull((c) => c.id == s.state?.countryId);
+
       if (country != null) {
         selectedCountry.value = country;
-        if (s.stateId != null) {
-          await fetchStates(s.countryId!);
-          final state = states.firstWhereOrNull((st) => st.id == s.stateId);
+
+        if (s.state?.id != null) {
+          await fetchStates(s.state?.countryId ?? 0);
+
+          final state =
+          states.firstWhereOrNull((st) => st.id == s.state?.id);
+
           if (state != null) {
             selectedState.value = state;
             stateController.text = state.stateName;
-            if (s.cityId != null) {
-              await fetchCities(s.stateId!);
-              final city = cities.firstWhereOrNull((ci) => ci.id == s.cityId);
+
+            if (s.city?.id != null) {
+              await fetchCities(s.state?.id ?? 0);
+
+              final city =
+              cities.firstWhereOrNull((ci) => ci.id == s.city?.id);
+
               if (city != null) {
                 selectedCity.value = city;
                 cityController.text = city.cityName;

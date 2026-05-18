@@ -1166,6 +1166,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       ),
     );
   }
+  bool isCompanyExpanded = false;
 
 
   Widget _buildMenuList() {
@@ -1181,10 +1182,9 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                 () => Get.to(() => const GiftScreen())),
         _menuTile(Icons.currency_exchange, "Encashment",
                 () => Get.to(() => const EnCashMentScreen())),
+        _buildCompanyDropdown(),
         _menuTile(Icons.info_outline_rounded, "About Us",
                 () => Get.to(() => const AboutUs())),
-        _menuTile(Icons.business_center_rounded, "Company Profile",
-                () => Get.to(() => const VendorStoreView())),
         _menuTile(Icons.gavel_rounded, "Terms and Conditions",
                 () => Get.to(() => const TermsAndConditionsScreen())),
         _menuTile(Icons.headset_mic_rounded, "Contact Us",
@@ -1204,6 +1204,137 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
           isLogout: true,
         ),
       ],
+    );
+  }
+
+  Widget _buildCompanyDropdown() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 10.h),
+      decoration: BoxDecoration(
+        color: AppColor.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                isCompanyExpanded = !isCompanyExpanded;
+              });
+            },
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                  vertical: 14.h, horizontal: 16.w),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 40.w,
+                    decoration: BoxDecoration(
+                      color: AppColor.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Icon(
+                      Icons.business_center_rounded,
+                      color: AppColor.primary,
+                      size: 18.sp,
+                    ),
+                  ),
+                  SizedBox(width: 14.w),
+                  Expanded(
+                    child: Text(
+                      "Company Profile",
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        color: AppColor.textMain,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                  AnimatedRotation(
+                    turns: isCompanyExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 300),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 22.sp,
+                      color: AppColor.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isCompanyExpanded)
+            Padding(
+              padding: EdgeInsets.only(
+                  left: 20.w, right: 10.w, bottom: 10.h),
+              child: Column(
+                children: [
+                  _subMenuTile(
+                    Icons.apartment_rounded,
+                    "My Company Profile",
+                        () => Get.to(() => const VendorStoreView()),
+                      "assets/images/company-vision.png"
+                  ),
+
+                  _subMenuTile(
+                    Icons.miscellaneous_services_rounded,
+                    "My Service",
+                        () {
+                    },
+                      "assets/images/support1.png"
+                  ),
+                  _subMenuTile(
+                    Icons.settings_input_component_rounded,
+                    "My Material",
+                        () {
+                    },
+                      "assets/images/technical-support.png"
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _subMenuTile(
+      IconData icon,
+      String title,
+      VoidCallback onTap,
+      String image,
+      ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.r),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 10.h),
+        child: Row(
+          children: [
+            Image.asset(image,height: 20.h,),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColor.textMain,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
