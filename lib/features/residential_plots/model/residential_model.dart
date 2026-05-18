@@ -390,19 +390,10 @@ class Property {
   /// FIX: Country label for list page location indicator
   /// country 3 = Dubai (based on API), else India
   /// Adjust the country IDs to match your backend's actual values
-  String get countryLabel {
-    switch (country) {
-      case 1:
-        return '🇮🇳 India';
-      case 3:
-        return '🇦🇪 Dubai';
-      default:
-        return '🇮🇳 India';
-    }
-  }
+
 
   /// Returns true if this property is in Dubai
-  bool get isDubai => country == 3;
+  bool get isIndia => country == 1;
 
   /// FIX: Full blueprint URL helper
   /// API returns relative path like 'storage/plots/filename.jpeg'

@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../Properties/widget/property_card.dart';
 import '../controller/residential_controller.dart';
 import '../model/residential_model.dart';
-
 class ResidentialPropertyList extends StatelessWidget {
   ResidentialPropertyList({super.key});
 
@@ -24,58 +23,80 @@ class ResidentialPropertyList extends StatelessWidget {
       }
 
       final rowCount = (properties.length / 2).ceil();
+      // +1 for the load-more/end indicator row
+      final itemCount = rowCount + 1;
 
       return NotificationListener<ScrollNotification>(
         onNotification: (scroll) {
+          if (scroll is! ScrollEndNotification) return false; // only fire on scroll end
           if (!controller.hasMoreData.value) return false;
+          if (controller.isLoadMore.value) return false; // prevent duplicate calls
           if (scroll.metrics.pixels >=
-              scroll.metrics.maxScrollExtent * 0.9) {
+              scroll.metrics.maxScrollExtent - 200) { // 200px before end
             controller.loadMoreProperties();
           }
           return false;
         },
         child: ListView.builder(
           padding: EdgeInsets.all(16.r),
-          itemCount: rowCount + 1,
+          itemCount: itemCount,
           itemBuilder: (context, index) {
-            // Load-more indicator at the bottom
+            // Last item — load more indicator or end message
             if (index == rowCount) {
-              return controller.isLoadMore.value
-                  ? const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child:
-                Center(child: CircularProgressIndicator()),
-              )
-                  : const SizedBox.shrink();
+              if (controller.isLoadMore.value) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (!controller.hasMoreData.value && properties.isNotEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text(
+                      'No more properties',
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
             }
 
             final leftIndex = index * 2;
             final rightIndex = leftIndex + 1;
+
+            // Guard against out-of-bounds during load
+            if (leftIndex >= properties.length) return const SizedBox.shrink();
 
             final leftProperty = properties[leftIndex];
             final rightProperty = rightIndex < properties.length
                 ? properties[rightIndex]
                 : null;
 
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                    child: _buildPropertyCard(leftProperty)),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: rightProperty != null
-                      ? _buildPropertyCard(rightProperty)
-                      : const SizedBox.shrink(),
-                ),
-              ],
+            return Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildPropertyCard(leftProperty)),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: rightProperty != null
+                        ? _buildPropertyCard(rightProperty)
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
             );
           },
         ),
       );
     });
   }
-
   Widget _buildPropertyCard(Property property) {
     return Stack(
       children: [
@@ -128,7 +149,7 @@ class _LocationBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDubai = property.isDubai;
+    final bool isDubai = property.isIndia;
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),

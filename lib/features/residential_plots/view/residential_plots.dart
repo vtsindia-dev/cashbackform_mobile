@@ -91,7 +91,7 @@ class LocationIndicatorBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDubai = property.isDubai;
+    final bool isDubai = property.isIndia;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
       decoration: BoxDecoration(

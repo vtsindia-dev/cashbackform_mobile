@@ -527,7 +527,7 @@ class ResidentialPropertyController extends GetxController {
 
   String _buildQueryParams() {
     final params = <String>[
-      'page=${currentPage.value}',
+      'page_no=${currentPage.value}',
       'per_page=${perPage.value}',
     ];
 

@@ -445,6 +445,7 @@ class AuthController extends GetxController with CodeAutoFill {
         "country_id": selectedCountry?.id,
         "state_id": selectedState?.id,
         "city_id": selectedCity?.id,
+        "referral_code" : referralCodeController.text.trim(),
         "fcm_token": fcmToken.value, // ✅ FCM token sent on register too
       });
 

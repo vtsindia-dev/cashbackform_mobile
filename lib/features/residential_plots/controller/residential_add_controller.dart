@@ -52,6 +52,7 @@ class ResidentialPropertyFormController extends GetxController {
   // Location
   var selectedStateId = 0.obs;
   var selectedCityId = 0.obs;
+  var selectedCountryId = 1.obs;
   var statesList = <StateList>[].obs;
   var citiesList = <CityModel>[].obs;
 
@@ -950,7 +951,7 @@ class ResidentialPropertyFormController extends GetxController {
         'property_name': propertyName.value,
         'category_id': selectedCategoryId.value.toString(),
         'price': price.value,
-        'price_per_sqft': pricePerSqft.value,
+        'area_sqft_price': pricePerSqft.value,
         'area_sqft': areaSqft.value,
         'plot_count': plotCount.value,
         'location': location.value,
@@ -960,6 +961,8 @@ class ResidentialPropertyFormController extends GetxController {
         'user_type': userType.value.isNotEmpty ? userType.value : 'customer',
         if (selectedStateId.value > 0) 'state': selectedStateId.value.toString(),
         if (selectedCityId.value > 0) 'city': selectedCityId.value.toString(),
+        if (selectedCountryId.value > 0) 'country': selectedCountryId.value.toString(),
+
         if (selectedSubCategoryId.value > 0) 'sub_category_id': selectedSubCategoryId.value.toString(),
         if (selectedAmenityIds.isNotEmpty) 'amenities_data': selectedAmenityIds.map((id) => id.toString()).join(','),
         // amenities also sent as array below

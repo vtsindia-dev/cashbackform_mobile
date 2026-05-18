@@ -729,7 +729,7 @@ class _PropertyCard extends StatelessWidget {
   }
 
   Widget _countryBadge() {
-    final bool isDubai = property.isDubai;
+    final bool isDubai = property.isIndia;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(

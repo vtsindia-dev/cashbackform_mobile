@@ -621,31 +621,29 @@ class _RegistrationState extends State<Registration> {
                 ),
               ],
             ),
-            child: Obx(
-                  () => TextField(
-                controller: controller.referralCodeController,
-                textCapitalization: TextCapitalization.characters,
-                style: TextStyle(color: Colors.grey.shade800, fontSize: 16),
-                decoration: InputDecoration(
-                  hintText: 'Enter referral code (if any)',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  prefixIcon: Icon(Icons.code, color: AppColor.primary),
-                  suffixIcon: controller.referralCodeController.text.isNotEmpty
-                      ? (controller.isReferralCodeValid.value
-                      ? Icon(Icons.check_circle, color: Colors.green, size: 20)
-                      : Icon(Icons.error_outline, color: Colors.orange, size: 20))
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  filled: false,
+            child:TextField(
+              controller: controller.referralCodeController,
+              textCapitalization: TextCapitalization.characters,
+              style: TextStyle(color: Colors.grey.shade800, fontSize: 16),
+              decoration: InputDecoration(
+                hintText: 'Enter referral code (if any)',
+                hintStyle: TextStyle(color: Colors.grey.shade400),
+                prefixIcon: Icon(Icons.code, color: AppColor.primary),
+                suffixIcon: controller.referralCodeController.text.isNotEmpty
+                    ? (controller.isReferralCodeValid.value
+                    ? Icon(Icons.check_circle, color: Colors.green, size: 20)
+                    : Icon(Icons.error_outline, color: Colors.orange, size: 20))
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-                onChanged: (value) {
-                  controller.validateReferralCode(value);
-                },
+                filled: false,
               ),
+              onChanged: (value) {
+                controller.validateReferralCode(value);
+              },
             ),
           ),
         ),
