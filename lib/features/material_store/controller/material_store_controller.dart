@@ -1,6 +1,10 @@
 import 'package:cashback_farms/common/api_constant.dart';
 import 'package:cashback_farms/common/model/logger_model.dart';
+import 'package:cashback_farms/features/material_store/model/added_materials_list_model.dart'
+    as added_materials_list_model;
 import 'package:cashback_farms/features/material_store/model/material_home_list_model.dart';
+import 'package:cashback_farms/features/material_store/model/materials_type_list_model.dart'
+    as materials_type_list_model;
 import 'package:cashback_farms/features/service/model/material_unit_model.dart';
 import '../model/material_model.dart';
 import 'package:get/get.dart';
@@ -9,10 +13,9 @@ import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import 'package:cashback_farms/features/auth/models/location_model.dart';
-
+import 'package:dio/dio.dart' as dio;
 
 class MaterialController extends GetxController {
-
   var isLoading = false.obs;
   var currentPage = 1.obs;
   var hasMore = true.obs;
@@ -28,8 +31,8 @@ class MaterialController extends GetxController {
   var searchQuery = ''.obs;
   var selectedImage = ''.obs;
   final SessionManager _sessionHandler = SessionManager();
-////////////////////////////////////////////////////////////////////////////////////
 
+  ////////////////////////////////////////////////////////////////////////////////////
 
   @override
   void onInit() {
@@ -38,7 +41,6 @@ class MaterialController extends GetxController {
     super.onInit();
   }
 
-
   bool isStateLoading = false;
   bool isCityLoading = false;
   List<StateModel> stateList = [];
@@ -46,12 +48,10 @@ class MaterialController extends GetxController {
   String? selectedStateId;
   String? selectedCityId;
 
-
   Future<void> fetchStates() async {
     isStateLoading = true;
     update();
-    final stateResponse =
-    await ApiService.getRequest(ApiUrl.stateUrl);
+    final stateResponse = await ApiService.getRequest(ApiUrl.stateUrl);
     if (stateResponse.statusCode == 200) {
       StateResponse response = StateResponse.fromJson(stateResponse.data);
       stateList = response.data;
@@ -67,7 +67,9 @@ class MaterialController extends GetxController {
     cityList = [];
     selectedCityId = null;
     update();
-    final cityResponse = await ApiService.getRequest("${ApiUrl.cityUrl}$cityId");
+    final cityResponse = await ApiService.getRequest(
+      "${ApiUrl.cityUrl}$cityId",
+    );
     if (cityResponse.statusCode == 200) {
       CityResponse response = CityResponse.fromJson(cityResponse.data);
       cityList = response.data;
@@ -77,9 +79,6 @@ class MaterialController extends GetxController {
     isCityLoading = false;
     update();
   }
-
-
-
 
   TextEditingController searchController = TextEditingController();
   String? selectedCategory;
@@ -94,11 +93,9 @@ class MaterialController extends GetxController {
   List<SubSubCategoriesList> subSubCategoryList = [];
   List<BrandList> brandList = [];
 
-
   bool isCategoryLoading = false;
   bool isSubCategoryLoading = false;
   bool isSubSubCategoryLoading = false;
-
 
   Future<void> getCategories() async {
     try {
@@ -120,9 +117,7 @@ class MaterialController extends GetxController {
 
         if (data['status'] == 200) {
           List list = data['data']?['data'] ?? [];
-          categoryList = list
-              .map((e) => Category.fromJson(e))
-              .toList();
+          categoryList = list.map((e) => Category.fromJson(e)).toList();
         }
       }
     } catch (e) {
@@ -132,8 +127,6 @@ class MaterialController extends GetxController {
       update();
     }
   }
-
-
 
   Future<void> getSubCategories(String? categoryId) async {
     if (categoryId == null) return;
@@ -205,7 +198,7 @@ class MaterialController extends GetxController {
     String? category,
     String? subCategory,
     String? subSubCategory,
-    required List<String> brandIds
+    required List<String> brandIds,
   }) {
     searchText = search ?? "";
     selectedCategory = category;
@@ -263,14 +256,17 @@ class MaterialController extends GetxController {
         if (searchText.isNotEmpty) "material_name": searchText,
         if (selectedCategory != null) "category": selectedCategory!,
         if (selectedSubCategory != null) "sub_category": selectedSubCategory!,
-        if (selectedSubSubCategory != null) "sub_sub_category": selectedSubSubCategory!,
+        if (selectedSubSubCategory != null)
+          "sub_sub_category": selectedSubSubCategory!,
       };
 
       for (var id in selectedBrandIds) {
         queryParams.putIfAbsent("brand_id[]", () => id);
       }
 
-      final uri = Uri.parse(ApiUrl.marketList).replace(queryParameters: queryParams);
+      final uri = Uri.parse(
+        ApiUrl.marketList,
+      ).replace(queryParameters: queryParams);
 
       final response = await ApiService.getRequest(uri.toString());
 
@@ -281,7 +277,9 @@ class MaterialController extends GetxController {
         materialServiceTotalPages = data['pagination']?['last_page'] ?? 1;
 
         List list = data['material'] ?? [];
-        List<MaterialHomeListModel> tempList = list.map((e) => MaterialHomeListModel.fromJson(e)).toList();
+        List<MaterialHomeListModel> tempList = list
+            .map((e) => MaterialHomeListModel.fromJson(e))
+            .toList();
         List brand = data['brand_list'] ?? [];
         brandList = brand.map((e) => BrandList.fromJson(e)).toList();
         if (isInitialLoad) {
@@ -310,23 +308,19 @@ class MaterialController extends GetxController {
   void applyLocationFilter({
     String? stateId,
     String? cityId,
-    required String selectedCategoryId
+    required String selectedCategoryId,
   }) {
     selectedStateId = stateId;
     selectedCityId = cityId;
 
-    resetVendors(
-      selectedCategoryId: selectedCategoryId,
-    );
+    resetVendors(selectedCategoryId: selectedCategoryId);
   }
 
   void clearLocationFilter({required String selectedCategoryId}) {
     selectedStateId = null;
     selectedCityId = null;
 
-    resetVendors(
-      selectedCategoryId: selectedCategoryId,
-    );
+    resetVendors(selectedCategoryId: selectedCategoryId);
   }
 
   bool isVendorLoading = false;
@@ -343,10 +337,16 @@ class MaterialController extends GetxController {
     isVendorLoading = true;
     update();
 
-    await fetchVendors(isInitialLoad: true, selectedCategoryId: selectedCategoryId);
+    await fetchVendors(
+      isInitialLoad: true,
+      selectedCategoryId: selectedCategoryId,
+    );
   }
 
-  Future<void> fetchVendors({bool isInitialLoad = true, required String selectedCategoryId}) async {
+  Future<void> fetchVendors({
+    bool isInitialLoad = true,
+    required String selectedCategoryId,
+  }) async {
     if (isInitialLoad) {
       vendorList.clear();
       vendorCurrentPage = 1;
@@ -372,17 +372,18 @@ class MaterialController extends GetxController {
       final response = await ApiService.getRequest(url);
       if (response.data != null) {
         List list = response.data['data'] ?? [];
-        vendorTotalPages =
-            response.data['pagination']?['last_page'] ?? 1;
+        vendorTotalPages = response.data['pagination']?['last_page'] ?? 1;
 
-        List<Vendor> tempList =
-        list.map((e) => Vendor.fromJson(e)).toList();
+        List<Vendor> tempList = list.map((e) => Vendor.fromJson(e)).toList();
 
         if (isInitialLoad) {
           vendorList = tempList;
         } else {
-          final newItems = tempList.where((newItem) =>
-          !vendorList.any((old) => old.id == newItem.id)).toList();
+          final newItems = tempList
+              .where(
+                (newItem) => !vendorList.any((old) => old.id == newItem.id),
+              )
+              .toList();
           vendorList.addAll(newItems);
         }
       }
@@ -395,13 +396,14 @@ class MaterialController extends GetxController {
   }
 
   void loadMoreVendors({required String selectedCategoryId}) {
-    if (vendorCurrentPage < vendorTotalPages &&
-        !isFetchingMoreVendors) {
+    if (vendorCurrentPage < vendorTotalPages && !isFetchingMoreVendors) {
       vendorCurrentPage++;
-      fetchVendors(isInitialLoad: false, selectedCategoryId: selectedCategoryId);
+      fetchVendors(
+        isInitialLoad: false,
+        selectedCategoryId: selectedCategoryId,
+      );
     }
   }
-
 
   Vendor? vendorDetail;
   List<Brand>? brandDetailList;
@@ -438,14 +440,11 @@ class MaterialController extends GetxController {
     }
   }
 
-
   double selectedRating = 0;
   TextEditingController reviewController = TextEditingController();
   bool isSubmittingReview = false;
 
-  Future<void> submitReview({
-    required String vendorId,
-  }) async {
+  Future<void> submitReview({required String vendorId}) async {
     if (selectedRating == 0) {
       SnackBarHelper.showInfo('Please select rating');
       return;
@@ -464,18 +463,22 @@ class MaterialController extends GetxController {
         "rating": selectedRating,
         "review": reviewController.text,
       };
-      final response = await ApiService.postRequestWithToken(ApiUrl.submitReview, data: data, token: token??'',);
-      if(response.statusCode == 200 || response.statusCode == 201){
+      final response = await ApiService.postRequestWithToken(
+        ApiUrl.submitReview,
+        data: data,
+        token: token ?? '',
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
-        if(data !=null){
-          if(data['status'] == true){
+        if (data != null) {
+          if (data['status'] == true) {
             SnackBarHelper.showSuccess('Review submitted Successfully');
             selectedRating = 0;
             reviewController.clear();
             await fetchVendorDetail(id: vendorId);
           }
         }
-      }else{
+      } else {
         SnackBarHelper.showError('Something went wrong');
       }
     } catch (e) {
@@ -485,14 +488,13 @@ class MaterialController extends GetxController {
       update();
     }
   }
+
   TextEditingController quoteController = TextEditingController();
   String? selectedDate;
   String? selectedTime;
   bool isSubmittingEnquiry = false;
 
-  Future<void> submitEnquiry({
-    required String serviceId,
-  }) async {
+  Future<void> submitEnquiry({required String serviceId}) async {
     if (quoteController.text.trim().isEmpty) {
       SnackBarHelper.showInfo('Please enter your requirement');
       return;
@@ -543,19 +545,13 @@ class MaterialController extends GetxController {
           selectedDate = null;
           selectedTime = null;
         } else {
-          SnackBarHelper.showError(
-            resData?['message'] ?? 'Failed',
-          );
+          SnackBarHelper.showError(resData?['message'] ?? 'Failed');
         }
-
       } else if (response.statusCode == 409) {
-        SnackBarHelper.showError(
-          resData?['message'] ?? 'Already submitted',
-        );
+        SnackBarHelper.showError(resData?['message'] ?? 'Already submitted');
       } else {
         SnackBarHelper.showError('Something went wrong');
       }
-
     } catch (e) {
       SnackBarHelper.showError('Something went wrong');
     } finally {
@@ -567,15 +563,12 @@ class MaterialController extends GetxController {
   List<MaterialUnitModel> materialUnits = [];
   bool isUnitLoading = false;
 
-
   Future<void> fetchMaterialUnits() async {
     try {
       isUnitLoading = true;
       update();
 
-      final response = await ApiService.getRequest(
-        ApiUrl.materialUnit,
-      );
+      final response = await ApiService.getRequest(ApiUrl.materialUnit);
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -596,22 +589,16 @@ class MaterialController extends GetxController {
     }
   }
 
-
   TextEditingController productQuoteController = TextEditingController();
   TextEditingController quantityController = TextEditingController(text: "1");
   int quantity = 1;
   String? selectedUnit;
 
-
-  Future<void> submitProductEnquiry({
-    required String materialId,
-  }) async {
-
+  Future<void> submitProductEnquiry({required String materialId}) async {
     if (productQuoteController.text.trim().isEmpty) {
       SnackBarHelper.showInfo('Please enter your requirement');
       return;
     }
-
 
     try {
       isSubmittingEnquiry = true;
@@ -623,7 +610,7 @@ class MaterialController extends GetxController {
       Map<String, dynamic> data = {
         "material_id": materialId,
         "requirement": productQuoteController.text,
-        "unit_id": selectedUnit??'',
+        "unit_id": selectedUnit ?? '',
         "quantity": quantity,
         "user_id": userId,
       };
@@ -636,7 +623,7 @@ class MaterialController extends GetxController {
 
       final resData = response.data;
 
-      if(response.statusCode == 200 || response.statusCode == 201){
+      if (response.statusCode == 200 || response.statusCode == 201) {
         if (resData != null && resData['status'] == true) {
           Get.back();
 
@@ -653,10 +640,8 @@ class MaterialController extends GetxController {
         } else {
           SnackBarHelper.showError(resData?['message'] ?? 'Failed');
         }
-      }else if (response.statusCode == 409) {
-        SnackBarHelper.showError(
-          resData?['message'] ?? 'Already submitted',
-        );
+      } else if (response.statusCode == 409) {
+        SnackBarHelper.showError(resData?['message'] ?? 'Already submitted');
       } else {
         SnackBarHelper.showError('Something went wrong');
       }
@@ -668,13 +653,263 @@ class MaterialController extends GetxController {
     }
   }
 
+  List<materials_type_list_model.MaterialsTypeListModel>
+  materialsTypeListModel = [];
+  bool isMaterialsTypeLoading = false;
+
+  String? materialId;
+  List<String> brandId = [];
+
+  void setMaterialId(String value) {
+    materialId = value;
+    update();
+  }
+
+  void setBrandIds(List<String> values) {
+    brandId = values;
+    update();
+  }
+
+  void clearMaterialSelection() {
+    materialId = null;
+    brandId.clear();
+    update();
+  }
+
+  Future<void> fetchMaterialsTypeList() async {
+    try {
+      isMaterialsTypeLoading = true;
+      update();
+
+      final response = await ApiService.getRequest(ApiUrl.materialsTypeApi);
+
+      final data = response.data;
+
+      if (response.statusCode == 200) {
+        if (data != null && data['status'] == 200) {
+          final List materials = data['data']['material'] ?? [];
+
+          materialsTypeListModel = materials
+              .map(
+                (e) =>
+                    materials_type_list_model.MaterialsTypeListModel.fromJson(
+                      e,
+                    ),
+              )
+              .toList();
+        }
+      } else {
+        debugPrint("API Error : ${data?['message']}");
+      }
+    } catch (e) {
+      debugPrint('Something went wrong $e');
+    } finally {
+      isMaterialsTypeLoading = false;
+      update();
+    }
+  }
+
+  List<added_materials_list_model.AddedMaterialsListModel>
+  addedMaterialsListModel = [];
+
+  bool isAddedMaterialsLoading = false;
+
+  Future<void> fetchAddedMaterialsList() async {
+    try {
+      isAddedMaterialsLoading = true;
+      update();
+
+      final String? token = await SessionManager.getToken();
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      };
+      final response = await ApiService.getRequest(
+        ApiUrl.vendorMaterialsListApi,
+        headers: headers,
+      );
+      debugPrint("API RESPONSE : ${response.data}");
+      final data = response.data;
+      if (data != null && data['status'] == 200) {
+        addedMaterialsListModel = (data['data'] as List? ?? [])
+            .map(
+              (e) =>
+                  added_materials_list_model.AddedMaterialsListModel.fromJson(
+                    e,
+                  ),
+            )
+            .toList();
+        debugPrint("Materials Count : ${addedMaterialsListModel.length}");
+      } else {
+        debugPrint("API Error : ${data?['message']}");
+      }
+    } catch (e) {
+      debugPrint('Something went wrong: $e');
+    } finally {
+      isAddedMaterialsLoading = false;
+      update();
+    }
+  }
+
+  bool isVendorMaterialsRequestLoading = false;
+
+  Future<bool> vendorMaterialsRequest() async {
+
+    try {
+
+      isVendorMaterialsRequestLoading = true;
+      update();
+
+      final String? token = await SessionManager.getToken();
+
+      Map<String, dynamic> mapData = {
+        "material_id": materialId,
+      };
+
+      for (int i = 0; i < brandId.length; i++) {
+        mapData["brand_id[$i]"] = brandId[i];
+      }
+
+      dio.FormData formData = dio.FormData.fromMap(mapData);
+
+      final response = await ApiService.postMultipartWithToken(
+        ApiUrl.vendorMaterialsRequestApi,
+        formData,
+        token: token ?? '',
+      );
+
+      final resData = response.data;
+
+      debugPrint('vendorMaterialsRequest : $resData');
+
+      if (response.statusCode == 200) {
+
+        if (resData != null &&
+            (resData['status'] == 200 ||
+                resData['status'] == true)) {
+
+          SnackBarHelper.showSuccess(
+            resData['message'] ??
+                'Vendor material request submitted successfully',
+          );
+
+          await fetchAddedMaterialsList();
+
+          return true;
+
+        } else {
+
+          SnackBarHelper.showError(
+            resData?['message'] ?? 'Failed',
+          );
+
+          return false;
+        }
+
+      } else if (response.statusCode == 409) {
+
+        SnackBarHelper.showError(
+          resData?['message'] ?? 'Already submitted',
+        );
+
+        return false;
+
+      } else if (response.statusCode == 400) {
+
+        SnackBarHelper.showError(
+          resData?['message'] ?? 'Bad Request',
+        );
+
+        return false;
+
+      } else {
+
+        SnackBarHelper.showError(
+          'Something went wrong',
+        );
+
+        return false;
+      }
+
+    } catch (e) {
+
+      debugPrint('vendorMaterialsRequest error : $e');
+
+      SnackBarHelper.showError(
+        'Something went wrong',
+      );
+
+      return false;
+
+    } finally {
+
+      isVendorMaterialsRequestLoading = false;
+      update();
+    }
+  }
+
+  bool isDeleteMaterialLoading = false;
+  String? deletingMaterialId;
+
+  Future<bool> deleteVendorMaterial(String id) async {
+    try {
+      deletingMaterialId = id;
+      isDeleteMaterialLoading = true;
+      update();
+
+      final String? token = await SessionManager.getToken();
+
+      final response = await ApiService.postRequestWithToken(
+        '${ApiUrl.vendorMaterialDelete}/$id',
+        token: token ?? '', data: {},
+      );
+
+      final resData = response.data;
+
+      debugPrint('deleteVendorMaterial : $resData');
+
+      if (response.statusCode == 200) {
+        if (resData['status'] == true ||
+            resData['status'] == 200) {
+
+          SnackBarHelper.showSuccess(
+            resData['message'] ?? 'Deleted successfully',
+          );
+
+          await fetchAddedMaterialsList();
+
+          return true;
+        } else {
+          SnackBarHelper.showError(
+            resData['message'] ?? 'Delete failed',
+          );
+          return false;
+        }
+      } else {
+        SnackBarHelper.showError('Something went wrong');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('deleteVendorMaterial error : $e');
+
+      SnackBarHelper.showError('Something went wrong');
+      return false;
+    } finally {
+      isDeleteMaterialLoading = false;
+      deletingMaterialId = null;
+      update();
+    }
+  }
 
 
   String _buildUrlWithParams(String baseUrl, Map<String, dynamic> params) {
     if (params.isEmpty) return baseUrl;
 
     final queryString = params.entries
-        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value.toString())}')
+        .map(
+          (e) =>
+              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value.toString())}',
+        )
         .join('&');
 
     return '$baseUrl?$queryString';
@@ -785,7 +1020,8 @@ class MaterialController extends GetxController {
       isLoadingVendors(true);
       vendors.clear();
       pageErrorMessage.value = '';
-      final url ='https://admincashback.vrikshatech.in/public/api/v2/vendor?product_id=$materialId';
+      final url =
+          'https://admincashback.vrikshatech.in/public/api/v2/vendor?product_id=$materialId';
       print('🌐 Fetching vendors: $url');
       final response = await ApiService.getRequest(url);
       print('📥 Vendor response status: ${response.statusCode}');
@@ -802,7 +1038,6 @@ class MaterialController extends GetxController {
             } else {
               print('⚠️ No vendor data found in response');
               vendors.clear();
-
             }
           } else {
             final errorMsg = data['message'] ?? 'Failed to fetch sellers';
@@ -825,9 +1060,6 @@ class MaterialController extends GetxController {
       isLoadingVendors(false);
     }
   }
-
-
-
 
   // Search materials
   Future<void> searchMaterials(String query) async {
@@ -905,7 +1137,6 @@ class MaterialController extends GetxController {
     }
   }
 
-
   // Refresh all data
   Future<void> refreshData() async {
     await fetchMaterials();
@@ -918,7 +1149,6 @@ class MaterialController extends GetxController {
       await fetchMaterials(loadMore: true);
     }
   }
-
 
   // Clear all data
   void clearAllData() {

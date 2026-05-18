@@ -58,6 +58,39 @@ class ApiService {
       rethrow;
     }
   }
+
+  static Future<Response> postMultipartWithToken(
+      String url,
+      FormData formData, {
+        required String token,
+      }) async {
+
+    try {
+
+      return await dio.post(
+        url,
+        data: formData,
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Accept": "application/json",
+            "Content-Type": "multipart/form-data",
+          },
+        ),
+      );
+
+    } catch (e) {
+
+      if (e is DioException &&
+          e.response != null) {
+
+        return e.response!;
+      }
+
+      rethrow;
+    }
+  }
+
   static Future<Response> deleteRequest(String url) async {
     try {
       return await dio.delete(url);

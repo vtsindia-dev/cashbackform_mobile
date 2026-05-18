@@ -83,6 +83,9 @@ class ApiUrl {
   static const String generateCoupon = '$baseUrl/api/v2/generate-coupon';
   static const String enhanceCouponCheckApi = '$baseUrl/api/v2/enhance_coupon_check';
   static const String enhancePostApi = '$baseUrl/api/v2/enhancement';
-  static String enhancementListApi = '$baseUrl/api/v2/enhancement_list';
-
+  static const String enhancementListApi = '$baseUrl/api/v2/enhancement_list';
+  static const String materialsTypeApi = '$baseUrl/api/v2/material_all';
+  static const String vendorMaterialsListApi = '$baseUrl/api/v2/vendor_materials_list';
+  static const String vendorMaterialsRequestApi = '$baseUrl/api/v2/vendor_materials_request';
+  static const String vendorMaterialDelete = '$baseUrl/api/v2/vendor-material/delete';
 }

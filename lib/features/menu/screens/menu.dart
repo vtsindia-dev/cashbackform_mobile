@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:cashback_farms/features/material_store/screens/add_materials_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -1288,15 +1289,15 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                   _subMenuTile(
                     Icons.miscellaneous_services_rounded,
                     "My Service",
-                        () {
-                    },
+                          () {
+
+                          },
                       "assets/images/support1.png"
                   ),
                   _subMenuTile(
                     Icons.settings_input_component_rounded,
                     "My Material",
-                        () {
-                    },
+                          () => Get.to(() => const AddMaterialsScreen()),
                       "assets/images/technical-support.png"
                   ),
                 ],
