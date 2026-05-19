@@ -1165,8 +1165,11 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     final bool isVendor = profile?.isVendor == 1;
     final bool isService = profile?.isServices == 1;
 
+    final bool isNormalUser = !isAgent && !isVendor && !isService;
+
     final bool shouldHideCompanySection =
-        isAgent && !isVendor && !isService;
+        (isAgent && !isVendor && !isService) ||
+            isNormalUser;
 
     final bool showCompanyProfile = isVendor || isService;
 
