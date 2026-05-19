@@ -3,9 +3,6 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 
-import 'package:intl/intl.dart';
-import 'package:flutter/material.dart';
-
 class MarketPlot {
   final int id;
   final String name;
@@ -38,7 +35,10 @@ class MarketPlot {
   final List<Map<String, dynamic>>? nearbyPlaces;
   int? plotCount;
   String? threeDImage;
-  final bool documentVerification; // New field
+  final bool documentVerification;
+
+  // ── FIX: added commonfacility field so edit form can prefill ──
+  final List<String> commonFacilityIds;
 
   MarketPlot({
     required this.id,
@@ -73,16 +73,19 @@ class MarketPlot {
     this.plotCount,
     this.threeDImage,
     required this.documentVerification,
+    this.commonFacilityIds = const [],
   });
 
   factory MarketPlot.fromJson(Map<String, dynamic> json) {
     List<int>? parseAmenities(String? amenitiesStr) {
       if (amenitiesStr == null || amenitiesStr.isEmpty) return null;
       try {
-        // Handle both string format and array format
         if (amenitiesStr.startsWith('[')) {
           final list = jsonDecode(amenitiesStr) as List;
-          return list.map((e) => int.tryParse(e.toString()) ?? 0).where((e) => e > 0).toList();
+          return list
+              .map((e) => int.tryParse(e.toString()) ?? 0)
+              .where((e) => e > 0)
+              .toList();
         } else {
           return amenitiesStr
               .split(',')
@@ -100,7 +103,6 @@ class MarketPlot {
       return List<Map<String, dynamic>>.from(places);
     }
 
-    // Parse document_verification - can be bool, int, or string
     bool parseDocumentVerification(dynamic value) {
       if (value == null) return false;
       if (value is bool) return value;
@@ -111,21 +113,46 @@ class MarketPlot {
       return false;
     }
 
+    // ── FIX: parse commonfacility list (comes as ["17","16","15"]) ──
+    List<String> parseCommonFacilityIds(dynamic raw) {
+      if (raw == null) return [];
+      if (raw is List) {
+        return raw.map((e) => e.toString()).toList();
+      }
+      if (raw is String && raw.isNotEmpty) {
+        // fallback: comma-separated string
+        return raw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      }
+      return [];
+    }
+
     return MarketPlot(
       id: json['id'] as int,
       name: json['name']?.toString() ?? '',
-      type: json['type'] as int?,
+      type: json['type'] != null
+          ? (json['type'] is int
+          ? json['type'] as int
+          : int.tryParse(json['type'].toString()))
+          : null,
       userId: json['user_id']?.toString() ?? '',
       map: json['map']?.toString(),
       address: json['address']?.toString() ?? '',
       lat: json['lat']?.toString() ?? '',
       long: json['long']?.toString() ?? '',
-      city: json['city'] != null ? City.fromJson(json['city']) : null,
-      state: json['state'] != null ? AppState.fromJson(json['state']) : null,
+      city: json['city'] != null && json['city'] is Map
+          ? City.fromJson(json['city'])
+          : null,
+      state: json['state'] != null && json['state'] is Map
+          ? AppState.fromJson(json['state'])
+          : null,
       area: json['area']?.toString() ?? '',
       price: json['price']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
-      unitSplit: json['unit_spilt'] as int? ?? 0,
+      unitSplit: json['unit_spilt'] != null
+          ? (json['unit_spilt'] is int
+          ? json['unit_spilt'] as int
+          : int.tryParse(json['unit_spilt'].toString()) ?? 0)
+          : 0,
       images: _parseImages(json['image']),
       plotImage: json['plot_image']?.toString(),
       bluePrint: json['blue_print']?.toString(),
@@ -133,19 +160,38 @@ class MarketPlot {
       agentId: json['agent_id']?.toString(),
       uldNo: json['uld_no']?.toString(),
       priceperSqft: json['price_sqft']?.toString(),
-      status: json['status'] as int? ?? 0,
-      verifyStatus: json['verify_status'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toString()),
-      threeDImage: json['three_d_image'],
-      propertyType: json['property_type'] != null
+      status: json['status'] != null
+          ? (json['status'] is int
+          ? json['status'] as int
+          : int.tryParse(json['status'].toString()) ?? 0)
+          : 0,
+      verifyStatus: json['verify_status'] != null
+          ? (json['verify_status'] is int
+          ? json['verify_status'] as int
+          : int.tryParse(json['verify_status'].toString()) ?? 0)
+          : 0,
+      createdAt: DateTime.tryParse(
+          json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(
+          json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
+      threeDImage: json['three_d_image']?.toString(),
+      propertyType: json['property_type'] != null && json['property_type'] is Map
           ? PropertyType.fromJson(json['property_type'])
           : null,
       verification: _parseVerificationAmount(json['market_plot_amount']),
       amenities: parseAmenities(json['aminities']?.toString()),
       nearbyPlaces: parseNearbyPlaces(json['nearby_places']),
-      plotCount: json['plot_count'],
-      documentVerification: parseDocumentVerification(json['doucment_verficaiton']),
+      plotCount: json['plot_count'] != null
+          ? (json['plot_count'] is int
+          ? json['plot_count'] as int
+          : int.tryParse(json['plot_count'].toString()))
+          : null,
+      documentVerification:
+      parseDocumentVerification(json['doucment_verficaiton']),
+      // ── FIX: populate commonFacilityIds ──
+      commonFacilityIds: parseCommonFacilityIds(json['commonfacility']),
     );
   }
 
@@ -178,44 +224,20 @@ class MarketPlot {
   bool get hasPlotImage => plotImage != null && plotImage!.isNotEmpty;
   String get firstImage => images.isNotEmpty ? images.first : '';
 
-  // New getters for verification status
-  String get verificationStatusText {
-    if (documentVerification) {
-      return "Paid";
-    } else {
-      return "Verify Land";
-    }
-  }
+  String get verificationStatusText =>
+      documentVerification ? 'Paid' : 'Verify Land';
 
-  Color get verificationStatusColor {
-    if (documentVerification) {
-      return Colors.green;
-    } else {
-      return Colors.orange;
-    }
-  }
+  Color get verificationStatusColor =>
+      documentVerification ? Colors.green : Colors.orange;
 
-  IconData get verificationStatusIcon {
-    if (documentVerification) {
-      return Icons.paid;
-    } else {
-      return Icons.verified_outlined;
-    }
-  }
+  IconData get verificationStatusIcon =>
+      documentVerification ? Icons.paid : Icons.verified_outlined;
 
-  String get verifyBadgeText {
-    if (verifyStatus == 1) {
-      return "Verified ✓";
-    }
-    return "Not Verified";
-  }
+  String get verifyBadgeText =>
+      verifyStatus == 1 ? 'Verified ✓' : 'Not Verified';
 
-  Color get verifyBadgeColor {
-    if (verifyStatus == 1) {
-      return Colors.green;
-    }
-    return Colors.grey;
-  }
+  Color get verifyBadgeColor =>
+      verifyStatus == 1 ? Colors.green : Colors.grey;
 
   String _formatNumber(String number) {
     try {
@@ -235,6 +257,11 @@ class MarketPlot {
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// City
+// ─────────────────────────────────────────────────────────────────────────────
+
 class City {
   final int id;
   final int stateId;
@@ -264,13 +291,19 @@ class City {
       status: json['status'] is int
           ? json['status']
           : int.tryParse(json['status']?.toString() ?? '') ?? 0,
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt:
+      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      updatedAt:
+      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
           DateTime.now(),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MarketPlotDetail
+// ─────────────────────────────────────────────────────────────────────────────
 
 class MarketPlotDetail {
   final int id;
@@ -309,7 +342,6 @@ class MarketPlotDetail {
   final String? shareLink;
   final String? threeDImage;
   final List<MapSet>? mapSet;
-  // ADDED: for nearby/similar properties
 
   MarketPlotDetail({
     required this.id,
@@ -347,7 +379,7 @@ class MarketPlotDetail {
     this.plotCount,
     this.shareLink,
     this.threeDImage,
-    this.mapSet, // ADDED
+    this.mapSet,
   });
 
   factory MarketPlotDetail.fromJson(Map<String, dynamic> json) {
@@ -394,11 +426,8 @@ class MarketPlotDetail {
 
     double? parseMarketPlotAmount(dynamic amount) {
       if (amount == null) return null;
-      if (amount is num) {
-        return amount.toDouble();
-      } else if (amount is String) {
-        return double.tryParse(amount);
-      }
+      if (amount is num) return amount.toDouble();
+      if (amount is String) return double.tryParse(amount);
       return null;
     }
 
@@ -415,9 +444,7 @@ class MarketPlotDetail {
       if (verified is String) {
         return verified.toLowerCase() == 'true' || verified == '1';
       }
-      if (verified is num) {
-        return verified == 1;
-      }
+      if (verified is num) return verified == 1;
       return false;
     }
 
@@ -432,8 +459,12 @@ class MarketPlotDetail {
       address: json['address']?.toString() ?? '',
       lat: json['lat']?.toString() ?? '',
       long: json['long']?.toString() ?? '',
-      city: json['city'] != null ? City.fromJson(json['city']) : null,
-      state: json['state'] != null ? AppState.fromJson(json['state']) : null,
+      city: json['city'] != null && json['city'] is Map
+          ? City.fromJson(json['city'])
+          : null,
+      state: json['state'] != null && json['state'] is Map
+          ? AppState.fromJson(json['state'])
+          : null,
       area: json['area']?.toString() ?? '',
       price: json['price']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
@@ -451,20 +482,26 @@ class MarketPlotDetail {
       amenityList: parseAmenityList(json['amenity']),
       documents: parseDocuments(json['documents']),
       nearbyLocations: parseNearbyLocations(json['nearby_locations']),
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt:
+      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      updatedAt:
+      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
           DateTime.now(),
       marketPlotAmount: parseMarketPlotAmount(json['market_plot_amount']),
       documentVerified: parseDocumentVerified(json['document_verified']),
-      plotCount: json['plot_count'],
-      threeDImage: json['three_d_image'],
-      shareLink: json['share'],
+      plotCount: json['plot_count'] != null
+          ? (json['plot_count'] is int
+          ? json['plot_count'] as int
+          : int.tryParse(json['plot_count'].toString()))
+          : null,
+      threeDImage: json['three_d_image']?.toString(),
+      shareLink: json['share']?.toString(),
       commonFacility: json['commonfacility'] != null
           ? List<CommonFacility>.from(
           json['commonfacility'].map((v) => CommonFacility.fromJson(v)))
           : [],
-      mapSet: parseMapSet(json['map_set']), // ADDED
+      mapSet: parseMapSet(json['map_set']),
     );
   }
 
@@ -560,16 +597,16 @@ class MarketPlotDetail {
     }
   }
 
-  String get formattedCreatedDate {
-    return DateFormat('dd/MM/yyyy').format(createdAt);
-  }
-
-  String get formattedUpdatedDate {
-    return DateFormat('dd/MM/yyyy').format(updatedAt);
-  }
+  String get formattedCreatedDate =>
+      DateFormat('dd/MM/yyyy').format(createdAt);
+  String get formattedUpdatedDate =>
+      DateFormat('dd/MM/yyyy').format(updatedAt);
 }
 
-// NEW: MapSet class for nearby/similar properties
+// ─────────────────────────────────────────────────────────────────────────────
+// MapSet
+// ─────────────────────────────────────────────────────────────────────────────
+
 class MapSet {
   final int id;
   final String name;
@@ -618,6 +655,10 @@ class MapSet {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Document
+// ─────────────────────────────────────────────────────────────────────────────
+
 class Document {
   final int id;
   final int propertyId;
@@ -650,14 +691,20 @@ class Document {
       file: json['file']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
       docType: json['douc_type']?.toString(),
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt:
+      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      updatedAt:
+      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
           DateTime.now(),
       downloadUrl: json['download_url']?.toString() ?? '',
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Amenity
+// ─────────────────────────────────────────────────────────────────────────────
 
 class Amenity {
   final int id;
@@ -681,13 +728,19 @@ class Amenity {
           : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       title: json['title']?.toString() ?? '',
       image: json['image']?.toString() ?? '',
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt:
+      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      updatedAt:
+      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
           DateTime.now(),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NearbyLocation
+// ─────────────────────────────────────────────────────────────────────────────
 
 class NearbyLocation {
   final int id;
@@ -713,14 +766,20 @@ class NearbyLocation {
           : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       title: json['title']?.toString() ?? '',
       image: json['image']?.toString() ?? '',
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt:
+      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      updatedAt:
+      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
           DateTime.now(),
       pivot: json['pivot'] != null ? Pivot.fromJson(json['pivot']) : null,
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pivot
+// ─────────────────────────────────────────────────────────────────────────────
 
 class Pivot {
   final int marketPropertyId;
@@ -743,9 +802,7 @@ class Pivot {
       if (distance is double) return distance;
       if (distance is int) return distance.toDouble();
       if (distance is num) return distance.toDouble();
-      if (distance is String) {
-        return double.tryParse(distance) ?? 0.0;
-      }
+      if (distance is String) return double.tryParse(distance) ?? 0.0;
       return 0.0;
     }
 
@@ -757,13 +814,19 @@ class Pivot {
           ? json['nearby_location_id']
           : int.tryParse(json['nearby_location_id']?.toString() ?? '') ?? 0,
       distance: parseDistance(json['distance']),
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt:
+      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      updatedAt:
+      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
           DateTime.now(),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AppState
+// ─────────────────────────────────────────────────────────────────────────────
 
 class AppState {
   final int id;
@@ -795,6 +858,10 @@ class AppState {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PropertyType
+// ─────────────────────────────────────────────────────────────────────────────
+
 class PropertyType {
   final int id;
   final String categoryName;
@@ -812,14 +879,26 @@ class PropertyType {
 
   factory PropertyType.fromJson(Map<String, dynamic> json) {
     return PropertyType(
-      id: json['id'] as int? ?? 0,
-      categoryName: json['category_name'] as String? ?? '',
-      status: json['status'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? ''),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? ''),
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      categoryName: json['category_name']?.toString() ?? '',
+      status: json['status'] is int
+          ? json['status']
+          : int.tryParse(json['status']?.toString() ?? '') ?? 0,
+      createdAt:
+      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt:
+      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MarketPlotEnquiry
+// ─────────────────────────────────────────────────────────────────────────────
 
 class MarketPlotEnquiry {
   final int id;
@@ -846,8 +925,12 @@ class MarketPlotEnquiry {
       userId: json['user_id'] ?? 0,
       propertyId: json['property_id'],
       counts: json['counts'] ?? 1,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.tryParse(
+          json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(
+          json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
       property: json['property'] != null
           ? MarketPlotEnquiryProperty.fromJson(json['property'])
           : null,
@@ -857,9 +940,9 @@ class MarketPlotEnquiry {
   String get formattedDate => DateFormat('dd MMM yyyy').format(createdAt);
   String get formattedTime => DateFormat('hh:mm a').format(createdAt);
   String get enquiryStatus {
-    if (counts >= 5) return "High Priority";
-    if (counts >= 3) return "Active";
-    return "New";
+    if (counts >= 5) return 'High Priority';
+    if (counts >= 3) return 'Active';
+    return 'New';
   }
 
   Color get statusColor {
@@ -868,6 +951,10 @@ class MarketPlotEnquiry {
     return Colors.blue;
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MarketPlotEnquiryProperty
+// ─────────────────────────────────────────────────────────────────────────────
 
 class MarketPlotEnquiryProperty {
   final int id;
@@ -906,9 +993,7 @@ class MarketPlotEnquiryProperty {
     List<String> images = [];
     if (json['image'] is List) {
       for (var image in json['image']) {
-        if (image is String) {
-          images.add(image);
-        }
+        if (image is String) images.add(image);
       }
     }
 
@@ -964,12 +1049,15 @@ class MarketPlotEnquiryProperty {
     return '$area Sq.ft';
   }
 
-  String get thumbnail {
-    return images.isNotEmpty ? images.first : 'https://via.placeholder.com/150';
-  }
+  String get thumbnail =>
+      images.isNotEmpty ? images.first : 'https://via.placeholder.com/150';
 
   bool get hasProperty => id > 0;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CommonFacility
+// ─────────────────────────────────────────────────────────────────────────────
 
 class CommonFacility {
   int? id;

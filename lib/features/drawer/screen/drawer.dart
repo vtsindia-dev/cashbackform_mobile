@@ -274,7 +274,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
             ),
             title: Text(
               title,
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+              style: (Theme.of(context).textTheme.bodyMedium ?? const TextStyle()).copyWith(
                 color: delete ? Colors.red : Colors.black,
                 fontWeight: delete ? FontWeight.w600 : FontWeight.normal,
               ),

@@ -482,10 +482,9 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
   bool _loadingCities = false;
   bool _isApplying = false;
 
-  // country options — id must match your API's country field values
   static const List<_CountryOption> _countryOptions = [
-    _CountryOption(id: 3, label: 'India', flag: '🇮🇳'),   // 3 = India ✓
-    _CountryOption(id: 2, label: 'Dubai', flag: '🇦🇪'),   // 2 = Dubai ✓ (was 1, wrong)
+    _CountryOption(id: 3, label: 'India', flag: '🇮🇳'),  
+    _CountryOption(id: 2, label: 'Dubai', flag: '🇦🇪'),
   ];
 
   @override
@@ -500,10 +499,10 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
 
     _priceChanged = c.selectedMinPrice.value.isNotEmpty;
     double startP = _priceChanged
-        ? double.parse(c.selectedMinPrice.value)
+        ? (double.tryParse(c.selectedMinPrice.value) ?? c.priceMin.value)
         : c.priceMin.value;
     double endP = c.selectedMaxPrice.value.isNotEmpty
-        ? double.parse(c.selectedMaxPrice.value)
+        ? (double.tryParse(c.selectedMaxPrice.value) ?? c.priceMax.value)
         : c.priceMax.value;
     _priceRange = RangeValues(
       startP.clamp(c.priceMin.value, c.priceMax.value),
@@ -512,10 +511,10 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
 
     _areaChanged = c.selectedMinArea.value.isNotEmpty;
     double startA = _areaChanged
-        ? double.parse(c.selectedMinArea.value)
+        ? (double.tryParse(c.selectedMinArea.value) ?? c.sqftMin.value.toDouble())
         : c.sqftMin.value.toDouble();
     double endA = c.selectedMaxArea.value.isNotEmpty
-        ? double.parse(c.selectedMaxArea.value)
+        ? (double.tryParse(c.selectedMaxArea.value) ?? c.sqftMax.value.toDouble())
         : c.sqftMax.value.toDouble();
     _areaRange = RangeValues(
       startA.clamp(

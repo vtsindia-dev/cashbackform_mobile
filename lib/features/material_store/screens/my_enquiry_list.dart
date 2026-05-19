@@ -124,6 +124,7 @@ class _MyMaterialListState extends State<MyMaterialList>
                       index == controller.materialEnquiries.length) {
                     return _buildEndOfList();
                   }
+                  if (index >= controller.materialEnquiries.length) return const SizedBox.shrink();
                   final enquiry = controller.materialEnquiries[index];
                   return _EnquiryCard(
                     enquiry: enquiry,

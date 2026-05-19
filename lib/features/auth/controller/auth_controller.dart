@@ -483,7 +483,11 @@ class AuthController extends GetxController with CodeAutoFill {
           SnackBarHelper.showSuccess("Registration successful!");
         }
 
-        final userData = response.data['data']['user'];
+        final
+
+
+
+        userData = response.data['data']['user'];
         final token = response.data['data']['token'];
 
         print('Extracted User Data: $userData');

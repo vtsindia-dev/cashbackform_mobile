@@ -72,10 +72,8 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
   File? _plotImage;
   File? _upload3dImage;
 
-  // ── Video upload ────────────────────────────────────────────────────────
   File? _selectedVideo;
   String? _existingVideoUrl;
-  // ────────────────────────────────────────────────────────────────────────
 
   String? _existingPlotImageUrl;
   String? _existing3dImageUrl;
@@ -85,23 +83,14 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
   LatLng? _selectedLocation;
   bool _isGettingLocation = false;
 
-  // UI State
   bool _showAllAmenities = false;
   bool _showAllNearbyPlaces = false;
-
-  // ── Common Facility Show More ────────────────────────────────────────────
   bool _showAllFacilities = false;
-  static const int _facilityPreviewCount = 5;
-  // ────────────────────────────────────────────────────────────────────────
+  static const int _facilityPreviewCount = 6;
 
-  // Map selection variables
   bool _showMap = false;
   LatLng? _temporarySelectedLocation;
-
-  // Google Maps controller
   GoogleMapController? _googleMapController;
-
-  // Search variables
   final TextEditingController _searchController = TextEditingController();
   List<MapSearchResult> _searchResults = [];
   bool _isSearching = false;
@@ -115,38 +104,24 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
   }
 
   Future<void> _loadInitialData() async {
+    // Reset facilities before loading
     controller.selectedFacilityIds = [];
     controller.update();
+
     try {
-      setState(() {
-        _isLoadingData = true;
-      });
+      if (mounted) setState(() => _isLoadingData = true);
 
-      print('🔄 Loading initial data...');
-
-      if (controller.states.isEmpty) {
-        await controller.fetchStates();
-      }
+      if (controller.states.isEmpty) await controller.fetchStates();
       states = List.from(controller.states);
-      print('✅ Loaded ${states.length} states');
 
-      if (controller.plotTypes.isEmpty) {
-        await controller.fetchPropertyTypes();
-      }
+      if (controller.plotTypes.isEmpty) await controller.fetchPropertyTypes();
       propertyTypes = List.from(controller.plotTypes);
-      print('✅ Loaded ${propertyTypes.length} property types');
 
-      if (controller.amenities.isEmpty) {
-        await controller.fetchAmenities();
-      }
+      if (controller.amenities.isEmpty) await controller.fetchAmenities();
       amenities = List.from(controller.amenities);
-      print('✅ Loaded ${amenities.length} amenities');
 
-      if (controller.nearbyPlaces.isEmpty) {
-        await controller.fetchNearbyPlaces();
-      }
+      if (controller.nearbyPlaces.isEmpty) await controller.fetchNearbyPlaces();
       nearbyPlaces = List.from(controller.nearbyPlaces);
-      print('✅ Loaded ${nearbyPlaces.length} nearby places');
 
       for (var place in nearbyPlaces) {
         final placeId = place['id'];
@@ -155,113 +130,73 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         }
       }
 
-      if (widget.plot != null) {
-        await _prefillData();
-      }
+      if (widget.plot != null) await _prefillData();
 
-      setState(() {
-        _isLoadingData = false;
-      });
-
-      print('✅ Form data loading complete');
+      if (mounted) setState(() => _isLoadingData = false);
     } catch (e) {
-      print('❌ Error loading data: $e');
       SnackBarHelper.showError('Failed to load form data: ${e.toString()}');
-      setState(() {
-        _isLoadingData = false;
-      });
+      if (mounted) setState(() => _isLoadingData = false);
     }
   }
 
   Future<void> _prefillData() async {
     try {
-      print('🔄 Prefilling form data...');
-
       if (widget.plot is MarketPlot) {
         final plot = widget.plot as MarketPlot;
 
-        _nameController.text = plot.name ?? '';
-        _areaController.text = plot.area?.toString() ?? '';
-        _priceController.text = plot.price?.toString() ?? '';
+        _nameController.text = plot.name;
+        _areaController.text = plot.area;
+        _priceController.text = plot.price;
         _plotCountController.text = plot.plotCount?.toString() ?? '';
-        _priceSqftController.text =
-            plot.priceperSqft?.toString() ?? plot.price?.toString() ?? '';
-        _latController.text = plot.lat?.toString() ?? '';
-        _longController.text = plot.long?.toString() ?? '';
-        _descriptionController.text = plot.description ?? '';
-        _uldNoController.text = plot.uldNo?.toString() ?? '';
-        _addressController.text = plot.address ?? '';
+        _priceSqftController.text = plot.priceperSqft ?? plot.price;
+        _latController.text = plot.lat;
+        _longController.text = plot.long;
+        _descriptionController.text = plot.description;
+        _uldNoController.text = plot.uldNo ?? '';
+        _addressController.text = plot.address;
         _workController.text = plot.work ?? '';
 
-        if (plot.lat?.isNotEmpty == true && plot.long?.isNotEmpty == true) {
-          try {
-            final lat = double.tryParse(plot.lat ?? '');
-            final long = double.tryParse(plot.long ?? '');
-            if (lat != null && long != null) {
-              _selectedLocation = LatLng(lat, long);
-              _temporarySelectedLocation = LatLng(lat, long);
-            }
-          } catch (e) {
-            print('❌ Error parsing location: $e');
-          }
+        // Location
+        final lat = double.tryParse(plot.lat);
+        final lng = double.tryParse(plot.long);
+        if (lat != null && lng != null) {
+          _selectedLocation = LatLng(lat, lng);
+          _temporarySelectedLocation = LatLng(lat, lng);
         }
 
+        // State & City
         if (plot.state?.id != null) {
-          _selectedState = states.firstWhereOrNull(
-                (state) => state.id == plot.state?.id,
-          );
+          _selectedState =
+              states.firstWhereOrNull((s) => s.id == plot.state!.id);
           if (_selectedState != null) {
             await controller.fetchCitiesForState(_selectedState!.id);
             cities = List.from(controller.cities);
-
             if (plot.city?.id != null) {
-              _selectedCity = cities.firstWhereOrNull(
-                    (city) => city.id == plot.city?.id,
-              );
+              _selectedCity =
+                  cities.firstWhereOrNull((c) => c.id == plot.city!.id);
             }
           }
         }
 
-        int? propertyTypeId;
+        // Property type
         if (plot.type != null) {
-          propertyTypeId = plot.type;
-        } else if (plot.propertyType != null) {
-          if (plot.propertyType is int) {
-            propertyTypeId = plot.propertyType as int;
-          } else if (plot.propertyType is PropertyType) {
-            propertyTypeId = (plot.propertyType as PropertyType).id;
-          }
+          _selectedPropertyType =
+              propertyTypes.firstWhereOrNull((t) => t.id == plot.type);
         }
 
-        if (propertyTypeId != null) {
-          _selectedPropertyType = propertyTypes.firstWhereOrNull(
-                (type) => type.id == propertyTypeId,
-          );
+        // Amenities
+        if (plot.amenities != null) {
+          _selectedAmenities = List<int>.from(plot.amenities!);
         }
 
-        if (plot.amenities != null && plot.amenities!.isNotEmpty) {
-          try {
-            if (plot.amenities is String) {
-              final amenityString = plot.amenities as String;
-              _selectedAmenities = amenityString
-                  .split(',')
-                  .map((e) => int.tryParse(e.trim()) ?? 0)
-                  .where((id) => id > 0)
-                  .toList();
-            } else if (plot.amenities is List) {
-              _selectedAmenities = List<int>.from(plot.amenities!);
-            }
-          } catch (e) {
-            print('❌ Error parsing amenities: $e');
-          }
-        }
-
-        if (plot.nearbyPlaces != null && plot.nearbyPlaces!.isNotEmpty) {
+        // Nearby places
+        if (plot.nearbyPlaces != null) {
           for (var nearby in plot.nearbyPlaces!) {
             try {
-              final placeId = nearby['place_id'] ?? nearby['place'];
-              var distance = (nearby['distance'] ?? 0).toDouble();
-
+              final placeId =
+                  nearby['place_id'] ?? nearby['place'];
+              final distance =
+              (nearby['distance'] ?? 0.0).toDouble();
               if (placeId != null &&
                   distance > 0 &&
                   _nearbyPlaceControllers.containsKey(placeId)) {
@@ -272,79 +207,46 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                   'distance': distance,
                 });
               }
-            } catch (e) {
-              print('❌ Error parsing nearby place: $e');
-            }
+            } catch (_) {}
           }
         }
 
-        if (plot.images != null) {
-          try {
-            if (plot.images is String && (plot.images as String).isNotEmpty) {
-              final imageString = plot.images as String;
-              if (imageString.contains(',')) {
-                _existingImageUrls = imageString
-                    .split(',')
-                    .map((e) => e.trim())
-                    .where((url) => url.isNotEmpty)
-                    .toList();
-              } else {
-                _existingImageUrls = [imageString];
-              }
-            } else if (plot.images is List) {
-              final imagesList = plot.images as List;
-              _existingImageUrls = imagesList
-                  .whereType<String>()
-                  .where((url) => url.isNotEmpty)
-                  .toList();
-            }
-          } catch (e) {
-            print('❌ Error parsing images: $e');
-            _existingImageUrls = [];
-          }
-        } else {
-          _existingImageUrls = [];
+        // Gallery images
+        if (plot.images.isNotEmpty) {
+          _existingImageUrls = List<String>.from(plot.images);
         }
 
+        // 3D image
         if (plot.threeDImage != null && plot.threeDImage!.isNotEmpty) {
-          setState(() {
-            _existing3dImageUrl = plot.threeDImage;
-          });
+          _existing3dImageUrl = plot.threeDImage;
         }
 
-        if (plot.plotImage != null && plot.plotImage!.isNotEmpty) {
-          final plotImageUrl = plot.plotImage!;
-          if (!plotImageUrl.startsWith('http')) {
-            _existingPlotImageUrl =
-            'https://admincashback.vrikshatech.in/public/$plotImageUrl';
-          } else {
-            _existingPlotImageUrl = plotImageUrl;
-          }
+        // ── FIX: Blueprint prefill ──────────────────────────────────────
+        if (plot.bluePrint != null && plot.bluePrint!.isNotEmpty) {
+          final bp = plot.bluePrint!;
+          _existingPlotImageUrl = bp.startsWith('http')
+              ? bp
+              : 'https://admincashback.vrikshatech.in/public/$bp';
+        } else if (plot.plotImage != null && plot.plotImage!.isNotEmpty) {
+          final pi = plot.plotImage!;
+          _existingPlotImageUrl = pi.startsWith('http')
+              ? pi
+              : 'https://admincashback.vrikshatech.in/public/$pi';
         }
-      } else if (widget.plot is Map) {
-        final plotMap = widget.plot as Map<String, dynamic>;
 
-        _nameController.text = plotMap['name']?.toString() ?? '';
-        _areaController.text = plotMap['area']?.toString() ?? '';
-        _priceController.text = plotMap['price']?.toString() ?? '';
-        _latController.text = plotMap['lat']?.toString() ?? '';
-        _longController.text = plotMap['long']?.toString() ?? '';
-        _descriptionController.text = plotMap['description']?.toString() ?? '';
-        _uldNoController.text = plotMap['uld_no']?.toString() ?? '';
-        _addressController.text = plotMap['address']?.toString() ?? '';
-        _workController.text = plotMap['work']?.toString() ?? '';
-
-        final typeId = plotMap['type'];
-        if (typeId != null) {
-          _selectedPropertyType = propertyTypes.firstWhereOrNull(
-                (type) => type.id == typeId,
-          );
+        // ── FIX: Common facility prefill ────────────────────────────────
+        // commonFacilityIds comes as List<String> e.g. ["17","16","15"]
+        if (plot.commonFacilityIds.isNotEmpty) {
+          final ids = plot.commonFacilityIds
+              .map((e) => int.tryParse(e))
+              .whereType<int>()
+              .toList();
+          controller.selectedFacilityIds = ids;
+          controller.update();
         }
       }
-
-      print('✅ Prefill data complete');
     } catch (e) {
-      print('❌ Error in _prefillData: $e');
+      debugPrint('❌ _prefillData error: $e');
     }
   }
 
@@ -367,18 +269,16 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     super.dispose();
   }
 
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isGettingLocation = true;
-    });
+  // ── Location ──────────────────────────────────────────────────────────────
 
+  Future<void> _getCurrentLocation() async {
+    if (mounted) setState(() => _isGettingLocation = true);
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         SnackBarHelper.showError('Location services are disabled');
         return;
       }
-
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -387,106 +287,90 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           return;
         }
       }
-
       if (permission == LocationPermission.deniedForever) {
         SnackBarHelper.showError('Location permissions are permanently denied');
         return;
       }
-
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      setState(() {
-        _latController.text = position.latitude.toStringAsFixed(6);
-        _longController.text = position.longitude.toStringAsFixed(6);
-        _selectedLocation = LatLng(position.latitude, position.longitude);
-        _temporarySelectedLocation = LatLng(
-          position.latitude,
-          position.longitude,
-        );
-      });
-
-      await _getAddressFromCoordinates(position.latitude, position.longitude);
+          desiredAccuracy: LocationAccuracy.high);
+      if (mounted) {
+        setState(() {
+          _latController.text = position.latitude.toStringAsFixed(6);
+          _longController.text = position.longitude.toStringAsFixed(6);
+          _selectedLocation = LatLng(position.latitude, position.longitude);
+          _temporarySelectedLocation =
+              LatLng(position.latitude, position.longitude);
+        });
+      }
+      await _getAddressFromCoordinates(
+          position.latitude, position.longitude);
     } catch (e) {
-      print('Error getting location: $e');
       SnackBarHelper.showError('Failed to get location');
     } finally {
-      setState(() {
-        _isGettingLocation = false;
-      });
+      if (mounted) setState(() => _isGettingLocation = false);
     }
   }
 
   Future<void> _getAddressFromCoordinates(double lat, double lng) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
-      if (placemarks.isNotEmpty) {
-        Placemark placemark = placemarks.first;
+      List<Placemark> placemarks =
+      await placemarkFromCoordinates(lat, lng);
+      if (placemarks.isNotEmpty && mounted) {
+        Placemark p = placemarks.first;
         String address = [
-          placemark.street,
-          placemark.locality,
-          placemark.subLocality,
-          placemark.administrativeArea,
-          placemark.postalCode,
-          placemark.country,
-        ].where((part) => part != null && part.isNotEmpty).join(', ');
+          p.street,
+          p.locality,
+          p.subLocality,
+          p.administrativeArea,
+          p.postalCode,
+          p.country,
+        ].where((x) => x != null && x.isNotEmpty).join(', ');
         _addressController.text = address;
       }
-    } catch (e) {
-      print('Error getting address: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> _searchPlaces(
       String query,
-      StateSetter setState,
+      StateSetter setS,
       Function(List<MapSearchResult>) onResults,
       ) async {
     if (query.length < 3) {
       onResults([]);
       return;
     }
-
-    setState(() {
-      _isSearching = true;
-    });
-
+    setS(() => _isSearching = true);
     try {
       final response = await http.get(
         Uri.parse(
-          'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=5&countrycodes=in',
-        ),
+            'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=5&countrycodes=in'),
         headers: {'User-Agent': 'PropertyApp/1.0'},
       );
-
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        final results = data.map((item) {
-          return MapSearchResult(
-            name: item['name'] ?? '',
-            displayName: item['display_name'] ?? '',
-            location: LatLng(
-              double.parse(item['lat']),
-              double.parse(item['lon']),
-            ),
-          );
-        }).toList();
+        final results = data
+            .map((item) => MapSearchResult(
+          name: item['name'] ?? '',
+          displayName: item['display_name'] ?? '',
+          location: LatLng(
+            double.tryParse(item['lat']?.toString() ?? '') ?? 0.0,
+            double.tryParse(item['lon']?.toString() ?? '') ?? 0.0,
+          ),
+        ))
+            .toList();
         onResults(results);
       } else {
         onResults([]);
       }
-    } catch (e) {
-      print('Search error: $e');
+    } catch (_) {
       onResults([]);
     } finally {
-      setState(() {
-        _isSearching = false;
-      });
+      setS(() => _isSearching = false);
     }
   }
 
-  // ── Google Maps bottom sheet ──────────────────────────────────────────────
+  // ── Map bottom sheet ──────────────────────────────────────────────────────
+
   void _showMapSelection() {
     _temporarySelectedLocation =
         _selectedLocation ?? const LatLng(13.018674, 80.206710);
@@ -494,234 +378,192 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     bool localIsSearching = false;
 
     Get.bottomSheet(
-      StatefulBuilder(
-        builder: (BuildContext context, StateSetter setState) {
-          return Container(
-            height: MediaQuery.of(context).size.height * 0.9,
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20.r),
-                topRight: Radius.circular(20.r),
-              ),
-            ),
-            child: Column(
-              children: [
-                // ── Header ──────────────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Select Location',
+      StatefulBuilder(builder: (ctx, setS) {
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.9,
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius:
+            BorderRadius.vertical(top: Radius.circular(20.r)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Select Location',
                       style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold)),
+                  IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: () => Get.back(),
-                    ),
-                  ],
-                ),
-                Divider(color: Colors.grey[300]),
-
-                // ── Search Bar ──────────────────────────────────────────
-                Container(
-                  margin: EdgeInsets.only(bottom: 8.h),
-                  child: TextFormField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search for places, addresses...',
-                      prefixIcon:
-                      Icon(Icons.search, color: AppColor.primary),
-                      suffixIcon: localIsSearching
-                          ? Padding(
-                        padding: EdgeInsets.all(12.w),
-                        child: SizedBox(
-                          width: 18.w,
-                          height: 18.h,
-                          child: CircularProgressIndicator(
+                      onPressed: () => Get.back()),
+                ],
+              ),
+              Divider(color: Colors.grey[300]),
+              Container(
+                margin: EdgeInsets.only(bottom: 8.h),
+                child: TextFormField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search for places, addresses...',
+                    prefixIcon:
+                    Icon(Icons.search, color: AppColor.primary),
+                    suffixIcon: localIsSearching
+                        ? Padding(
+                      padding: EdgeInsets.all(12.w),
+                      child: SizedBox(
+                        width: 18.w,
+                        height: 18.h,
+                        child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColor.primary,
-                          ),
-                        ),
-                      )
-                          : _searchController.text.isNotEmpty
-                          ? IconButton(
+                            color: AppColor.primary),
+                      ),
+                    )
+                        : _searchController.text.isNotEmpty
+                        ? IconButton(
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchController.clear();
-                          setState(() {
-                            localSearchResults.clear();
-                          });
-                        },
-                      )
-                          : null,
-                      border: OutlineInputBorder(
+                          setS(() => localSearchResults.clear());
+                        })
+                        : null,
+                    border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
                         borderSide:
-                        BorderSide(color: Colors.grey[300]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
+                        BorderSide(color: Colors.grey[300]!)),
+                    focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
                         borderSide: BorderSide(
-                          color: AppColor.primary,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      if (value.length > 2) {
-                        _searchPlaces(value, setState, (results) {
-                          setState(() {
-                            localSearchResults = results;
-                            localIsSearching = false;
-                          });
+                            color: AppColor.primary, width: 2)),
+                  ),
+                  onChanged: (value) {
+                    if (value.length > 2) {
+                      _searchPlaces(value, setS, (results) {
+                        setS(() {
+                          localSearchResults = results;
+                          localIsSearching = false;
                         });
-                      } else {
-                        setState(() => localSearchResults.clear());
-                      }
+                      });
+                    } else {
+                      setS(() => localSearchResults.clear());
+                    }
+                  },
+                ),
+              ),
+              if (localSearchResults.isNotEmpty)
+                Container(
+                  height: 150.h,
+                  margin: EdgeInsets.only(bottom: 8.h),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: ListView.builder(
+                    padding: EdgeInsets.all(8.w),
+                    itemCount: localSearchResults.length,
+                    itemBuilder: (_, i) {
+                      final result = localSearchResults[i];
+                      return ListTile(
+                        leading: Icon(Icons.location_on,
+                            size: 20.sp, color: AppColor.primary),
+                        title: Text(
+                          result.name.isNotEmpty
+                              ? result.name
+                              : result.displayName.split(',').first,
+                          style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(result.displayName,
+                            style: TextStyle(fontSize: 10.sp),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis),
+                        onTap: () {
+                          setS(() {
+                            _temporarySelectedLocation =
+                                result.location;
+                            _googleMapController?.animateCamera(
+                                CameraUpdate.newLatLngZoom(
+                                    result.location, 15));
+                          });
+                          _searchController.clear();
+                          setS(() => localSearchResults.clear());
+                        },
+                      );
                     },
                   ),
                 ),
-
-                // ── Search Results ──────────────────────────────────────
-                if (localSearchResults.isNotEmpty)
-                  Container(
-                    height: 150.h,
-                    margin: EdgeInsets.only(bottom: 8.h),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: ListView.builder(
-                      padding: EdgeInsets.all(8.w),
-                      itemCount: localSearchResults.length,
-                      itemBuilder: (context, index) {
-                        final result = localSearchResults[index];
-                        return ListTile(
-                          leading: Icon(
-                            Icons.location_on,
-                            size: 20.sp,
-                            color: AppColor.primary,
-                          ),
-                          title: Text(
-                            result.name.isNotEmpty
-                                ? result.name
-                                : result.displayName.split(',').first,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            result.displayName,
-                            style: TextStyle(fontSize: 10.sp),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          onTap: () {
-                            setState(() {
-                              _temporarySelectedLocation =
-                                  result.location;
-                              _googleMapController?.animateCamera(
+              Expanded(child: _buildGoogleMap(setS)),
+              SizedBox(height: 12.h),
+              _buildCoordinatesDisplay(),
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        setS(() => localIsSearching = true);
+                        await _getCurrentLocation();
+                        setS(() {
+                          localIsSearching = false;
+                          if (_selectedLocation != null) {
+                            _temporarySelectedLocation =
+                                _selectedLocation;
+                            _googleMapController?.animateCamera(
                                 CameraUpdate.newLatLngZoom(
-                                    result.location, 15),
-                              );
-                            });
-                            _searchController.clear();
-                            setState(() => localSearchResults.clear());
-                          },
-                        );
+                                    _temporarySelectedLocation!,
+                                    15));
+                          }
+                        });
                       },
-                    ),
-                  ),
-
-                // ── Google Map ──────────────────────────────────────────
-                Expanded(
-                  child: _buildGoogleMap(setState),
-                ),
-
-                SizedBox(height: 12.h),
-
-                // ── Coordinates Display ─────────────────────────────────
-                _buildCoordinatesDisplay(),
-
-                SizedBox(height: 12.h),
-
-                // ── Action Buttons ──────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          setState(() => localIsSearching = true);
-                          await _getCurrentLocation();
-                          setState(() {
-                            localIsSearching = false;
-                            if (_selectedLocation != null) {
-                              _temporarySelectedLocation =
-                                  _selectedLocation;
-                              _googleMapController?.animateCamera(
-                                CameraUpdate.newLatLngZoom(
-                                    _temporarySelectedLocation!, 15),
-                              );
-                            }
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColor.primary,
-                          padding:
-                          EdgeInsets.symmetric(vertical: 12.h),
-                        ),
-                        icon: localIsSearching
-                            ? SizedBox(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.primary,
+                        padding:
+                        EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      icon: localIsSearching
+                          ? SizedBox(
                           height: 16.h,
                           width: 16.h,
-                          child:
-                          const CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                            : Icon(Icons.my_location, size: 18.sp,color: Colors.white,),
-                        label: const Text('Current Location',style: TextStyle(color: Colors.white),),
-                      ),
+                          child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white))
+                          : Icon(Icons.my_location,
+                          size: 18.sp, color: Colors.white),
+                      label: const Text('Current Location',
+                          style: TextStyle(color: Colors.white)),
                     ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () =>
-                            _showManualCoordinateInput(setState),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppColor.primary),
-                          padding:
-                          EdgeInsets.symmetric(vertical: 12.h),
-                        ),
-                        icon: Icon(
-                          Icons.edit_location_alt,
-                          size: 18.sp,
-                          color: AppColor.primary,
-                        ),
-                        label: const Text('Enter Coordinates'),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () =>
+                          _showManualCoordinateInput(setS),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColor.primary),
+                        padding:
+                        EdgeInsets.symmetric(vertical: 12.h),
                       ),
+                      icon: Icon(Icons.edit_location_alt,
+                          size: 18.sp, color: AppColor.primary),
+                      label: const Text('Enter Coordinates'),
                     ),
-                  ],
-                ),
-
-                SizedBox(height: 12.h),
-
-                // ── Confirm Button ──────────────────────────────────────
-                ElevatedButton(
-                  onPressed: () {
-                    if (_temporarySelectedLocation != null) {
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              ElevatedButton(
+                onPressed: () {
+                  if (_temporarySelectedLocation != null) {
+                    if (mounted) {
                       setState(() {
-                        _selectedLocation = _temporarySelectedLocation;
+                        _selectedLocation =
+                            _temporarySelectedLocation;
                         _latController.text =
                             _temporarySelectedLocation!.latitude
                                 .toStringAsFixed(6);
@@ -729,43 +571,39 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                             _temporarySelectedLocation!.longitude
                                 .toStringAsFixed(6);
                       });
-                      _getAddressFromCoordinates(
-                        _temporarySelectedLocation!.latitude,
-                        _temporarySelectedLocation!.longitude,
-                      );
-                      Get.back();
-                      SnackBarHelper.showSuccess('Location updated');
                     }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColor.primary,
-                    minimumSize: Size(double.infinity, 50.h),
-                  ),
-                  child: Text(
-                    'Confirm Location',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white
-                    ),
-                  ),
+                    _getAddressFromCoordinates(
+                      _temporarySelectedLocation!.latitude,
+                      _temporarySelectedLocation!.longitude,
+                    );
+                    Get.back();
+                    SnackBarHelper.showSuccess('Location updated');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.primary,
+                  minimumSize: Size(double.infinity, 50.h),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+                child: Text('Confirm Location',
+                    style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      }),
       isScrollControlled: true,
     );
   }
 
-  // ── Google Maps widget (replaces FlutterMap) ──────────────────────────────
-  Widget _buildGoogleMap(StateSetter setState) {
+  Widget _buildGoogleMap(StateSetter setS) {
     final initialPosition = CameraPosition(
-      target: _temporarySelectedLocation ?? const LatLng(13.018674, 80.206710),
+      target: _temporarySelectedLocation ??
+          const LatLng(13.018674, 80.206710),
       zoom: 15,
     );
-
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.r),
@@ -777,30 +615,23 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           children: [
             GoogleMap(
               initialCameraPosition: initialPosition,
-              onMapCreated: (GoogleMapController mapController) {
-                _googleMapController = mapController;
-              },
+              onMapCreated: (c) => _googleMapController = c,
               markers: _temporarySelectedLocation != null
                   ? {
                 Marker(
-                  markerId: const MarkerId('selected_location'),
+                  markerId:
+                  const MarkerId('selected_location'),
                   position: _temporarySelectedLocation!,
                   draggable: true,
-                  onDragEnd: (newPosition) {
-                    setState(() {
-                      _temporarySelectedLocation = newPosition;
-                    });
-                  },
-                ),
+                  onDragEnd: (pos) =>
+                      setS(() => _temporarySelectedLocation = pos),
+                )
               }
                   : {},
-              onTap: (LatLng point) {
-                setState(() {
-                  _temporarySelectedLocation = point;
-                });
-                _googleMapController?.animateCamera(
-                  CameraUpdate.newLatLng(point),
-                );
+              onTap: (point) {
+                setS(() => _temporarySelectedLocation = point);
+                _googleMapController
+                    ?.animateCamera(CameraUpdate.newLatLng(point));
               },
               myLocationEnabled: true,
               myLocationButtonEnabled: false,
@@ -808,8 +639,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
               mapType: MapType.normal,
               compassEnabled: true,
             ),
-
-            // ── Tap hint label ──────────────────────────────────────────
             Positioned(
               top: 10,
               left: 0,
@@ -823,39 +652,29 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                     borderRadius: BorderRadius.circular(20.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3))
                     ],
                   ),
-                  child: Text(
-                    '📍 Tap on map to set location',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColor.primary,
-                    ),
-                  ),
+                  child: Text('📍 Tap on map to set location',
+                      style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColor.primary)),
                 ),
               ),
             ),
-
-            // ── Zoom controls ───────────────────────────────────────────
             Positioned(
               right: 10,
               bottom: 60,
               child: Column(
                 children: [
-                  _mapZoomButton(Icons.add_rounded, () {
-                    _googleMapController
-                        ?.animateCamera(CameraUpdate.zoomIn());
-                  }),
+                  _mapZoomButton(Icons.add_rounded,
+                          () => _googleMapController?.animateCamera(CameraUpdate.zoomIn())),
                   SizedBox(height: 4.h),
-                  _mapZoomButton(Icons.remove_rounded, () {
-                    _googleMapController
-                        ?.animateCamera(CameraUpdate.zoomOut());
-                  }),
+                  _mapZoomButton(Icons.remove_rounded,
+                          () => _googleMapController?.animateCamera(CameraUpdate.zoomOut())),
                 ],
               ),
             ),
@@ -876,17 +695,15 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           borderRadius: BorderRadius.circular(8.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 6,
+                offset: const Offset(0, 2))
           ],
         ),
         child: Icon(icon, size: 20.sp, color: AppColor.primary),
       ),
     );
   }
-  // ─────────────────────────────────────────────────────────────────────────
 
   Widget _buildCoordinatesDisplay() {
     return Container(
@@ -896,142 +713,113 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Selected Coordinates',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Latitude',
+                    style: TextStyle(
+                        fontSize: 11.sp, color: Colors.grey[600])),
+                SizedBox(height: 4.h),
+                Text(
+                  _temporarySelectedLocation?.latitude
+                      .toStringAsFixed(6) ??
+                      'Not set',
+                  style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColor.textMain),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 8.h),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Latitude',
-                      style: TextStyle(
-                          fontSize: 11.sp, color: Colors.grey[600]),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      _temporarySelectedLocation?.latitude
-                          .toStringAsFixed(6) ??
-                          'Not set',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColor.textMain,
-                      ),
-                    ),
-                  ],
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Longitude',
+                    style: TextStyle(
+                        fontSize: 11.sp, color: Colors.grey[600])),
+                SizedBox(height: 4.h),
+                Text(
+                  _temporarySelectedLocation?.longitude
+                      .toStringAsFixed(6) ??
+                      'Not set',
+                  style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColor.textMain),
                 ),
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Longitude',
-                      style: TextStyle(
-                          fontSize: 11.sp, color: Colors.grey[600]),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      _temporarySelectedLocation?.longitude
-                          .toStringAsFixed(6) ??
-                          'Not set',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColor.textMain,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showManualCoordinateInput(StateSetter setState) {
-    TextEditingController latController = TextEditingController(
-      text: _temporarySelectedLocation?.latitude.toStringAsFixed(6) ?? '',
-    );
-    TextEditingController lngController = TextEditingController(
-      text: _temporarySelectedLocation?.longitude.toStringAsFixed(6) ?? '',
-    );
-
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Enter Coordinates'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: latController,
-                decoration: const InputDecoration(
-                  labelText: 'Latitude',
-                  hintText: 'e.g., 13.018674',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-              ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: lngController,
-                decoration: const InputDecoration(
-                  labelText: 'Longitude',
-                  hintText: 'e.g., 80.206710',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-              ),
-            ],
+  void _showManualCoordinateInput(StateSetter setS) {
+    TextEditingController latCtrl = TextEditingController(
+        text: _temporarySelectedLocation?.latitude.toStringAsFixed(6) ?? '');
+    TextEditingController lngCtrl = TextEditingController(
+        text: _temporarySelectedLocation?.longitude.toStringAsFixed(6) ?? '');
+    Get.dialog(AlertDialog(
+      title: const Text('Enter Coordinates'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: latCtrl,
+            decoration: const InputDecoration(
+                labelText: 'Latitude',
+                hintText: 'e.g., 13.018674',
+                border: OutlineInputBorder()),
+            keyboardType:
+            const TextInputType.numberWithOptions(decimal: true),
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              final lat = double.tryParse(latController.text);
-              final lng = double.tryParse(lngController.text);
-              if (lat != null && lng != null) {
-                setState(() {
-                  _temporarySelectedLocation = LatLng(lat, lng);
-                  _googleMapController?.animateCamera(
-                    CameraUpdate.newLatLngZoom(LatLng(lat, lng), 15),
-                  );
-                });
-                Get.back();
-                SnackBarHelper.showSuccess('Coordinates updated');
-              } else {
-                SnackBarHelper.showError('Please enter valid coordinates');
-              }
-            },
-            style: ElevatedButton.styleFrom(
+          SizedBox(height: 16.h),
+          TextField(
+            controller: lngCtrl,
+            decoration: const InputDecoration(
+                labelText: 'Longitude',
+                hintText: 'e.g., 80.206710',
+                border: OutlineInputBorder()),
+            keyboardType:
+            const TextInputType.numberWithOptions(decimal: true),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: () {
+            final lat = double.tryParse(latCtrl.text);
+            final lng = double.tryParse(lngCtrl.text);
+            if (lat != null && lng != null) {
+              setS(() {
+                _temporarySelectedLocation = LatLng(lat, lng);
+                _googleMapController?.animateCamera(
+                    CameraUpdate.newLatLngZoom(LatLng(lat, lng), 15));
+              });
+              Get.back();
+              SnackBarHelper.showSuccess('Coordinates updated');
+            } else {
+              SnackBarHelper.showError('Please enter valid coordinates');
+            }
+          },
+          style: ElevatedButton.styleFrom(
               backgroundColor: AppColor.primary,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Update'),
-          ),
-        ],
-      ),
-    );
+              foregroundColor: Colors.white),
+          child: const Text('Update'),
+        ),
+      ],
+    ));
   }
+
+  // ── Image / Video pickers ─────────────────────────────────────────────────
 
   Future<void> _pickImages() async {
     try {
@@ -1041,23 +829,21 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           SnackBarHelper.showError('Maximum 10 images allowed');
           return;
         }
-        setState(() {
-          _selectedImages.addAll(images.map((e) => File(e.path)));
-        });
+        if (mounted) {
+          setState(() =>
+              _selectedImages.addAll(images.map((e) => File(e.path))));
+        }
       }
-    } catch (e) {
-      print('Error picking images: $e');
+    } catch (_) {
       SnackBarHelper.showError('Failed to pick images');
     }
   }
 
-  // ── Video picker ──────────────────────────────────────────────────────────
   Future<void> _pickVideo() async {
     try {
       final XFile? video = await _picker.pickVideo(
-        source: ImageSource.gallery,
-        maxDuration: const Duration(minutes: 5),
-      );
+          source: ImageSource.gallery,
+          maxDuration: const Duration(minutes: 5));
       if (video != null) {
         final file = File(video.path);
         final sizeInMB = await file.length() / (1024 * 1024);
@@ -1065,29 +851,22 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           SnackBarHelper.showError('Video size must be less than 50 MB');
           return;
         }
-        setState(() {
-          _selectedVideo = file;
-        });
+        if (mounted) setState(() => _selectedVideo = file);
         SnackBarHelper.showSuccess('Video selected successfully');
       }
-    } catch (e) {
-      print('Error picking video: $e');
+    } catch (_) {
       SnackBarHelper.showError('Failed to pick video');
     }
   }
-  // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> _pickPlotImage() async {
     try {
       final XFile? image =
       await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        setState(() {
-          _plotImage = File(image.path);
-        });
+      if (image != null && mounted) {
+        setState(() => _plotImage = File(image.path));
       }
-    } catch (e) {
-      print('Error picking plot image: $e');
+    } catch (_) {
       SnackBarHelper.showError('Failed to pick image');
     }
   }
@@ -1096,29 +875,27 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     try {
       final XFile? image =
       await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        setState(() {
-          _upload3dImage = File(image.path);
-        });
+      if (image != null && mounted) {
+        setState(() => _upload3dImage = File(image.path));
       }
-    } catch (e) {
-      print('Error picking 3D image: $e');
+    } catch (_) {
       SnackBarHelper.showError('Failed to pick image');
     }
   }
 
   void _removeImage(int index) {
+    if (!mounted) return;
     setState(() {
       if (index < _existingImageUrls.length) {
         _existingImageUrls.removeAt(index);
       } else {
-        final adjustedIndex = index - _existingImageUrls.length;
-        if (adjustedIndex < _selectedImages.length) {
-          _selectedImages.removeAt(adjustedIndex);
-        }
+        final adj = index - _existingImageUrls.length;
+        if (adj < _selectedImages.length) _selectedImages.removeAt(adj);
       }
     });
   }
+
+  // ── UI helpers ────────────────────────────────────────────────────────────
 
   Widget _buildDropdown<T>({
     required String label,
@@ -1129,92 +906,69 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     bool isRequired = false,
     bool isEnabled = true,
   }) {
-    final validItems = items.where((item) => item != null).toList();
-
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label${isRequired ? ' *' : ''}',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColor.textMain,
+          Text.rich(
+            TextSpan(
+              text: label,
+              style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700]),
+              children: [
+                if (isRequired)
+                  const TextSpan(
+                      text: ' *', style: TextStyle(color: Colors.red))
+              ],
             ),
           ),
           SizedBox(height: 6.h),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          DropdownButtonFormField<T>(
+            value: value,
+            items: [
+              DropdownMenuItem<T>(
+                value: null,
+                child: Text('Select $label',
+                    style: TextStyle(color: Colors.grey[500])),
+              ),
+              ...items.map((item) => DropdownMenuItem<T>(
+                value: item,
+                child: Text(displayText(item),
+                    overflow: TextOverflow.ellipsis),
+              )),
+            ],
+            onChanged: isEnabled ? onChanged : null,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: isEnabled ? Colors.white : Colors.grey[100],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide:
+                BorderSide(color: AppColor.primary, width: 1.5),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                  horizontal: 14.w, vertical: 12.h),
             ),
-            child: DropdownButtonFormField<T>(
-              value: value,
-              items: [
-                DropdownMenuItem<T>(
-                  value: null,
-                  child: Text(
-                    'Select $label',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ),
-                ...validItems.map((item) {
-                  return DropdownMenuItem<T>(
-                    value: item,
-                    child: Text(
-                      displayText(item),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  );
-                }).toList(),
-              ],
-              onChanged: isEnabled ? onChanged : null,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: isEnabled ? Colors.white : Colors.grey[100],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                  borderSide:
-                  BorderSide(color: AppColor.primary, width: 2),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 14.w,
-                  vertical: 12.h,
-                ),
-              ),
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: isEnabled ? Colors.black87 : Colors.grey[600],
-              ),
-              validator: isRequired
-                  ? (value) =>
-              value == null ? 'Please select $label' : null
-                  : null,
-              isExpanded: true,
-              icon: Icon(
-                Icons.arrow_drop_down,
-                color:
-                isEnabled ? AppColor.primary : Colors.grey[400],
-              ),
-              dropdownColor: Colors.white,
-              menuMaxHeight: 300.h,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+            validator: isRequired
+                ? (v) => v == null ? 'Please select $label' : null
+                : null,
+            isExpanded: true,
+            icon: Icon(Icons.keyboard_arrow_down_rounded,
+                color: AppColor.primary),
+            dropdownColor: Colors.white,
+            menuMaxHeight: 300.h,
           ),
         ],
       ),
@@ -1223,7 +977,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
 
   Widget _buildTextField(
       String label,
-      TextEditingController controller, {
+      TextEditingController ctrl, {
         TextInputType keyboardType = TextInputType.text,
         bool isRequired = false,
         int maxLines = 1,
@@ -1239,71 +993,51 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
             TextSpan(
               text: label,
               style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColor.textMain,
-              ),
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700]),
               children: [
                 if (isRequired)
                   const TextSpan(
-                    text: ' *',
-                    style: TextStyle(color: Colors.red),
-                  ),
+                      text: ' *', style: TextStyle(color: Colors.red))
               ],
             ),
           ),
           SizedBox(height: 6.h),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          TextFormField(
+            controller: ctrl,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            enabled: isEnabled,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: isEnabled ? Colors.white : Colors.grey[100],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide:
+                BorderSide(color: AppColor.primary, width: 1.5),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                  horizontal: 14.w, vertical: 12.h),
+              suffixIcon: suffixIcon,
             ),
-            child: TextFormField(
-              controller: controller,
-              keyboardType: keyboardType,
-              maxLines: maxLines,
-              enabled: isEnabled,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: isEnabled ? Colors.white : Colors.grey[100],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                  borderSide:
-                  BorderSide(color: AppColor.primary, width: 2),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 14.w,
-                  vertical: 12.h,
-                ),
-                suffixIcon: suffixIcon,
-              ),
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: isEnabled ? Colors.black87 : Colors.grey[600],
-              ),
-              validator: isRequired
-                  ? (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'This field is required';
-                }
-                return null;
+            style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+            validator: isRequired
+                ? (v) {
+              if (v == null || v.trim().isEmpty) {
+                return 'This field is required';
               }
-                  : null,
-            ),
+              return null;
+            }
+                : null,
           ),
         ],
       ),
@@ -1312,30 +1046,33 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
 
   Widget _buildSectionTitle(String title) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 8.h),
+      margin: EdgeInsets.only(bottom: 16.h, top: 8.h),
       child: Row(
         children: [
-          Expanded(
-              child: Divider(thickness: 1, color: Colors.grey[300])),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w),
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColor.primary,
-              ),
+          Container(
+            width: 4.w,
+            height: 20.h,
+            decoration: BoxDecoration(
+              color: AppColor.primary,
+              borderRadius: BorderRadius.circular(2.r),
             ),
           ),
-          Expanded(
-              child: Divider(thickness: 1, color: Colors.grey[300])),
+          SizedBox(width: 10.w),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w800,
+              color: AppColor.primary,
+              letterSpacing: 0.3,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // ── Common Facility Widget with Show More (> 5) ──────────────────────────
+  // ── IMPROVED Common Facility Section ─────────────────────────────────────
   Widget _selectedCommonFacilityWidget() {
     return GetBuilder<PlotMarketController>(
       builder: (ctrl) {
@@ -1345,122 +1082,263 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
             : allFacilities.take(_facilityPreviewCount).toList();
 
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle('Common Facility'),
-            SizedBox(height: 12.h),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: showFacilities.map((facility) {
-                final isSelected =
-                ctrl.selectedFacilityIds.contains(facility.id);
-                return GestureDetector(
-                  onTap: () => ctrl.toggleFacility(facility.id!),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 12.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.amber
-                          : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.amber
-                            : Colors.grey.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Text(
-                      facility.title ?? '',
+            _buildSectionTitle('Common Facilities'),
+            if (allFacilities.isEmpty)
+              Container(
+                padding: EdgeInsets.symmetric(
+                    vertical: 20.h, horizontal: 16.w),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Center(
+                  child: Text('Loading facilities...',
                       style: TextStyle(
-                        color: isSelected
-                            ? Colors.black
-                            : Colors.grey[700],
-                        fontWeight: FontWeight.w500,
-                        fontSize: 13.sp,
-                      ),
-                    ),
+                          fontSize: 13.sp, color: Colors.grey[500])),
+                ),
+              )
+            else ...[
+              // Selected count badge
+              if (ctrl.selectedFacilityIds.isNotEmpty)
+                Container(
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: AppColor.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                        color: AppColor.primary.withOpacity(0.3)),
                   ),
-                );
-              }).toList(),
-            ),
-
-            // Show More / Show Less button when > 5 facilities
-            if (allFacilities.length > _facilityPreviewCount)
-              Align(
-                alignment: Alignment.center,
-                child: TextButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _showAllFacilities = !_showAllFacilities;
-                    });
-                  },
-                  icon: Icon(
-                    _showAllFacilities
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: AppColor.primary,
-                    size: 18.sp,
-                  ),
-                  label: Text(
-                    _showAllFacilities
-                        ? 'Show Less'
-                        : 'Show More (${allFacilities.length - _facilityPreviewCount} more)',
+                  child: Text(
+                    '${ctrl.selectedFacilityIds.length} facilit${ctrl.selectedFacilityIds.length == 1 ? 'y' : 'ies'} selected',
                     style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
                       color: AppColor.primary,
-                      fontSize: 13.sp,
                     ),
                   ),
                 ),
+
+              // Grid of facility chips with icons
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10.w,
+                  mainAxisSpacing: 10.h,
+                  childAspectRatio: 3.2,
+                ),
+                itemCount: showFacilities.length,
+                itemBuilder: (_, index) {
+                  final facility = showFacilities[index];
+                  final isSelected =
+                  ctrl.selectedFacilityIds.contains(facility.id);
+                  return GestureDetector(
+                    onTap: () => ctrl.toggleFacility(facility.id!),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 10.w, vertical: 8.h),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColor.primary
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColor.primary
+                              : Colors.grey[200]!,
+                          width: 1.5,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                          BoxShadow(
+                            color: AppColor.primary
+                                .withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          )
+                        ]
+                            : [
+                          BoxShadow(
+                            color:
+                            Colors.black.withOpacity(0.04),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          // Facility icon from URL or fallback
+                          Container(
+                            width: 28.w,
+                            height: 28.w,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.white.withOpacity(0.2)
+                                  : AppColor.primary.withOpacity(0.08),
+                              borderRadius:
+                              BorderRadius.circular(6.r),
+                            ),
+                            child: facility.image != null &&
+                                facility.image!.isNotEmpty
+                                ? ClipRRect(
+                              borderRadius:
+                              BorderRadius.circular(6.r),
+                              child: Image.network(
+                                facility.image!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    Icon(
+                                      Icons.check_circle_outline,
+                                      size: 16.sp,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : AppColor.primary,
+                                    ),
+                              ),
+                            )
+                                : Icon(
+                              Icons.check_circle_outline,
+                              size: 16.sp,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColor.primary,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              facility.title ?? '',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.grey[800],
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(Icons.check_circle,
+                                size: 14.sp, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
 
+              // Show more / less
+              if (allFacilities.length > _facilityPreviewCount)
+                Align(
+                  alignment: Alignment.center,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      if (mounted) {
+                        setState(() =>
+                        _showAllFacilities = !_showAllFacilities);
+                      }
+                    },
+                    icon: Icon(
+                      _showAllFacilities
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: AppColor.primary,
+                      size: 18.sp,
+                    ),
+                    label: Text(
+                      _showAllFacilities
+                          ? 'Show Less'
+                          : 'Show ${allFacilities.length - _facilityPreviewCount} More',
+                      style: TextStyle(
+                          color: AppColor.primary, fontSize: 13.sp),
+                    ),
+                  ),
+                ),
+            ],
             SizedBox(height: 8.h),
           ],
         );
       },
     );
   }
-  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Amenities ─────────────────────────────────────────────────────────────
 
   Widget _buildAmenitiesSection() {
     final showAmenities =
-    _showAllAmenities ? amenities : amenities.take(6);
-
+    _showAllAmenities ? amenities : amenities.take(6).toList();
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Amenities'),
-          SizedBox(height: 12.h),
           Wrap(
             spacing: 8.w,
             runSpacing: 8.h,
             children: showAmenities.map((amenity) {
               final amenityId = amenity['id'];
               final isSelected = _selectedAmenities.contains(amenityId);
-              return ChoiceChip(
-                label: Text(
-                  amenity['title'] ?? 'Unknown',
-                  style: TextStyle(fontSize: 12.sp),
-                ),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedAmenities.add(amenityId);
-                    } else {
-                      _selectedAmenities.remove(amenityId);
-                    }
-                  });
+              return GestureDetector(
+                onTap: () {
+                  if (mounted) {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedAmenities.remove(amenityId);
+                      } else {
+                        _selectedAmenities.add(amenityId);
+                      }
+                    });
+                  }
                 },
-                selectedColor: AppColor.primary,
-                backgroundColor: Colors.grey[100],
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : Colors.grey[700],
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.r),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 14.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color:
+                    isSelected ? AppColor.primary : Colors.white,
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColor.primary
+                          : Colors.grey[300]!,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                      BoxShadow(
+                        color:
+                        AppColor.primary.withOpacity(0.2),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      )
+                    ]
+                        : [],
+                  ),
+                  child: Text(
+                    amenity['title'] ?? 'Unknown',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.grey[700],
+                    ),
+                  ),
                 ),
               );
             }).toList(),
@@ -1470,9 +1348,10 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
               alignment: Alignment.center,
               child: TextButton(
                 onPressed: () {
-                  setState(() {
-                    _showAllAmenities = !_showAllAmenities;
-                  });
+                  if (mounted) {
+                    setState(
+                            () => _showAllAmenities = !_showAllAmenities);
+                  }
                 },
                 child: Text(
                   _showAllAmenities ? 'Show Less' : 'Show More',
@@ -1485,51 +1364,65 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     );
   }
 
-  Widget _buildNearbyPlacesSection() {
-    final showPlaces =
-    _showAllNearbyPlaces ? nearbyPlaces : nearbyPlaces.take(4);
+  // ── Nearby places ─────────────────────────────────────────────────────────
 
+  Widget _buildNearbyPlacesSection() {
+    final showPlaces = _showAllNearbyPlaces
+        ? nearbyPlaces
+        : nearbyPlaces.take(4).toList();
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Nearby Places (Distance in KM)'),
-          SizedBox(height: 12.h),
           Column(
             children: showPlaces.map((place) {
               final placeId = place['id'];
               final ctrl = _nearbyPlaceControllers[placeId] ??
                   TextEditingController();
-
               return Container(
                 margin: EdgeInsets.only(bottom: 8.h),
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: Colors.grey[200]!),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2))
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.place,
-                            size: 16.sp, color: AppColor.primary),
-                        SizedBox(width: 8.w),
+                        Container(
+                          padding: EdgeInsets.all(6.w),
+                          decoration: BoxDecoration(
+                            color: AppColor.primary.withOpacity(0.1),
+                            borderRadius:
+                            BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(Icons.place,
+                              size: 16.sp, color: AppColor.primary),
+                        ),
+                        SizedBox(width: 10.w),
                         Expanded(
                           child: Text(
                             place['title'] ?? 'Unknown Place',
                             style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[800]),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 8.h),
+                    SizedBox(height: 10.h),
                     TextFormField(
                       controller: ctrl,
                       keyboardType: const TextInputType.numberWithOptions(
@@ -1537,31 +1430,38 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                       decoration: InputDecoration(
                         hintText: 'Enter distance in KM',
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: Colors.grey[50],
                         contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 10.h,
-                        ),
+                            horizontal: 12.w, vertical: 10.h),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.r),
                           borderSide:
-                          BorderSide(color: Colors.grey[300]!),
+                          BorderSide(color: Colors.grey[200]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                          borderSide:
+                          BorderSide(color: Colors.grey[200]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                          borderSide: BorderSide(
+                              color: AppColor.primary, width: 1.5),
                         ),
                         suffixText: 'km',
                         suffixStyle: TextStyle(
-                          color: AppColor.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            color: AppColor.primary,
+                            fontWeight: FontWeight.bold),
                       ),
                       onChanged: (value) {
                         if (value.trim().isNotEmpty) {
                           final distance = double.tryParse(value);
                           if (distance != null) {
-                            final existingIndex =
-                            _selectedNearbyPlaces.indexWhere(
+                            final idx = _selectedNearbyPlaces
+                                .indexWhere(
                                     (p) => p['place'] == placeId);
-                            if (existingIndex >= 0) {
-                              _selectedNearbyPlaces[existingIndex]
+                            if (idx >= 0) {
+                              _selectedNearbyPlaces[idx]
                               ['distance'] = distance;
                             } else {
                               _selectedNearbyPlaces.add({
@@ -1586,9 +1486,10 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
               alignment: Alignment.center,
               child: TextButton(
                 onPressed: () {
-                  setState(() {
-                    _showAllNearbyPlaces = !_showAllNearbyPlaces;
-                  });
+                  if (mounted) {
+                    setState(() =>
+                    _showAllNearbyPlaces = !_showAllNearbyPlaces);
+                  }
                 },
                 child: Text(
                   _showAllNearbyPlaces
@@ -1603,6 +1504,8 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     );
   }
 
+  // ── Location section ──────────────────────────────────────────────────────
+
   Widget _buildLocationSection() {
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -1610,41 +1513,38 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Location Details'),
-          SizedBox(height: 12.h),
-
-          // Location Preview Card
           GestureDetector(
             onTap: _showMapSelection,
             child: Container(
-              height: 150.h,
+              height: 140.h,
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.r),
-                color: Colors.grey[200],
-                border: Border.all(color: AppColor.primary),
+                borderRadius: BorderRadius.circular(12.r),
+                color: AppColor.primary.withOpacity(0.04),
+                border: Border.all(color: AppColor.primary.withOpacity(0.4)),
               ),
               child: _selectedLocation != null
                   ? Stack(
                 children: [
                   Center(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment:
+                      MainAxisAlignment.center,
                       children: [
                         Icon(Icons.location_on,
-                            size: 40.sp, color: Colors.red),
-                        SizedBox(height: 8.h),
-                        Text(
-                          'Location Selected',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppColor.primary,
-                          ),
-                        ),
+                            size: 36.sp, color: Colors.red),
+                        SizedBox(height: 6.h),
+                        Text('Location Selected',
+                            style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColor.primary)),
                         SizedBox(height: 4.h),
                         Text(
                           '${_selectedLocation!.latitude.toStringAsFixed(4)}, ${_selectedLocation!.longitude.toStringAsFixed(4)}',
-                          style: TextStyle(fontSize: 12.sp),
+                          style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.grey[600]),
                         ),
                       ],
                     ),
@@ -1653,19 +1553,17 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                     top: 8.w,
                     right: 8.w,
                     child: Container(
-                      padding: EdgeInsets.all(4.r),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 8.w, vertical: 4.h),
                       decoration: BoxDecoration(
                         color: AppColor.primary,
                         borderRadius:
                         BorderRadius.circular(6.r),
                       ),
-                      child: Text(
-                        'Tap to change',
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: Text('Tap to change',
+                          style: TextStyle(
+                              fontSize: 10.sp,
+                              color: Colors.white)),
                     ),
                   ),
                 ],
@@ -1675,79 +1573,65 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.map_outlined,
-                        size: 40.sp, color: AppColor.primary),
+                        size: 36.sp, color: AppColor.primary),
                     SizedBox(height: 8.h),
-                    Text(
-                      'Tap to select location',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppColor.primary,
-                      ),
-                    ),
+                    Text('Tap to select location',
+                        style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColor.primary)),
                   ],
                 ),
               ),
             ),
           ),
-
           SizedBox(height: 16.h),
-
           Row(
             children: [
               Expanded(
-                child: _buildTextField(
-                  'Latitude',
-                  _latController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true),
-                  isRequired: true,
-                  suffixIcon: Icon(Icons.gps_fixed, size: 18.sp),
-                ),
+                child: _buildTextField('Latitude', _latController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    isRequired: true,
+                    suffixIcon:
+                    Icon(Icons.gps_fixed, size: 18.sp)),
               ),
               SizedBox(width: 12.w),
               Expanded(
-                child: _buildTextField(
-                  'Longitude',
-                  _longController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true),
-                  isRequired: true,
-                  suffixIcon: Icon(Icons.gps_fixed, size: 18.sp),
-                ),
+                child: _buildTextField('Longitude', _longController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    isRequired: true,
+                    suffixIcon:
+                    Icon(Icons.gps_fixed, size: 18.sp)),
               ),
             ],
           ),
-
-          _buildTextField(
-            'Full Address',
-            _addressController,
-            maxLines: 3,
-            isRequired: true,
-          ),
-
-          SizedBox(height: 16.h),
-
+          _buildTextField('Full Address', _addressController,
+              maxLines: 3, isRequired: true),
+          SizedBox(height: 8.h),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed:
-                  _isGettingLocation ? null : _getCurrentLocation,
+                  onPressed: _isGettingLocation
+                      ? null
+                      : _getCurrentLocation,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColor.primary,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    padding:
+                    EdgeInsets.symmetric(vertical: 12.h),
                   ),
                   icon: _isGettingLocation
                       ? SizedBox(
-                    height: 16.h,
-                    width: 16.h,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                      : Icon(Icons.my_location, size: 18.sp),
-                  label: const Text('Current Location',style: TextStyle(color: Colors.white),),
+                      height: 16.h,
+                      width: 16.h,
+                      child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white))
+                      : Icon(Icons.my_location,
+                      size: 18.sp, color: Colors.white),
+                  label: const Text('Current Location',
+                      style: TextStyle(color: Colors.white)),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -1756,7 +1640,8 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                   onPressed: _showMapSelection,
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColor.primary),
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    padding:
+                    EdgeInsets.symmetric(vertical: 12.h),
                   ),
                   icon: Icon(Icons.map,
                       size: 18.sp, color: AppColor.primary),
@@ -1770,22 +1655,19 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     );
   }
 
-  // ── Land Images + Video section ──────────────────────────────────────────
+  // ── Images & Video ────────────────────────────────────────────────────────
+
   Widget _buildImageSection() {
     final allImages = [
       ..._existingImageUrls.map((url) => {'type': 'url', 'value': url}),
       ..._selectedImages.map((file) => {'type': 'file', 'value': file}),
     ];
-
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Land Images & Video'),
-          SizedBox(height: 12.h),
-
-          // ── Images grid ────────────────────────────────────────────────
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -1796,40 +1678,33 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
               childAspectRatio: 1,
             ),
             itemCount: allImages.length + 1,
-            itemBuilder: (context, index) {
+            itemBuilder: (_, index) {
               if (index == allImages.length) {
                 return GestureDetector(
                   onTap: _pickImages,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: AppColor.primary.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(
-                        color: AppColor.primary,
-                      ),
+                          color: AppColor.primary.withOpacity(0.4),
+                          style: BorderStyle.solid),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.add_photo_alternate,
-                          color: AppColor.primary,
-                          size: 24.sp,
-                        ),
+                        Icon(Icons.add_photo_alternate,
+                            color: AppColor.primary, size: 24.sp),
                         SizedBox(height: 4.h),
-                        Text(
-                          'Add Image',
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            color: AppColor.primary,
-                          ),
-                        ),
+                        Text('Add Image',
+                            style: TextStyle(
+                                fontSize: 10.sp,
+                                color: AppColor.primary)),
                       ],
                     ),
                   ),
                 );
               }
-
               final image = allImages[index];
               return Stack(
                 children: [
@@ -1853,9 +1728,8 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                       child: Container(
                         padding: EdgeInsets.all(4.r),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
+                            color: Colors.red,
+                            shape: BoxShape.circle),
                         child: Icon(Icons.close,
                             size: 12.sp, color: Colors.white),
                       ),
@@ -1865,35 +1739,30 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
               );
             },
           ),
-
           SizedBox(height: 16.h),
 
-          // ── Video upload ───────────────────────────────────────────────
-          Text(
-            'Property Video',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColor.textMain,
-            ),
-          ),
+          // Video
+          Text('Property Video',
+              style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700])),
           SizedBox(height: 6.h),
           GestureDetector(
             onTap: _pickVideo,
             child: Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(
-                  vertical: 20.h, horizontal: 16.w),
+                  vertical: 18.h, horizontal: 16.w),
               decoration: BoxDecoration(
                 color: _selectedVideo != null
                     ? AppColor.primary.withOpacity(0.06)
-                    : Colors.grey[100],
+                    : Colors.grey[50],
                 borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(
                   color: _selectedVideo != null
                       ? AppColor.primary
-                      : Colors.grey[300]!,
-                  style: BorderStyle.solid,
+                      : Colors.grey[200]!,
                 ),
               ),
               child: _selectedVideo != null
@@ -1907,7 +1776,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                       BorderRadius.circular(8.r),
                     ),
                     child: Icon(Icons.videocam,
-                        color: AppColor.primary, size: 28.sp),
+                        color: AppColor.primary, size: 26.sp),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -1915,21 +1784,19 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                       crossAxisAlignment:
                       CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Video Selected',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColor.primary,
-                          ),
-                        ),
+                        Text('Video Selected',
+                            style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColor.primary)),
                         SizedBox(height: 2.h),
                         Text(
-                          _selectedVideo!.path.split('/').last,
+                          _selectedVideo!.path
+                              .split('/')
+                              .last,
                           style: TextStyle(
-                            fontSize: 11.sp,
-                            color: Colors.grey[600],
-                          ),
+                              fontSize: 11.sp,
+                              color: Colors.grey[500]),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1938,19 +1805,17 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      setState(() {
-                        _selectedVideo = null;
-                      });
+                      if (mounted) {
+                        setState(() => _selectedVideo = null);
+                      }
                     },
                     child: Container(
                       padding: EdgeInsets.all(4.r),
                       decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
+                          color: Colors.red,
+                          shape: BoxShape.circle),
                       child: Icon(Icons.close,
-                          size: 14.sp,
-                          color: Colors.white),
+                          size: 14.sp, color: Colors.white),
                     ),
                   ),
                 ],
@@ -1967,57 +1832,41 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                       BorderRadius.circular(8.r),
                     ),
                     child: Icon(Icons.play_circle_filled,
-                        color: AppColor.primary,
-                        size: 28.sp),
+                        color: AppColor.primary, size: 26.sp),
                   ),
                   SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Existing Video',
+                  Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+                      Text('Existing Video',
                           style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColor.primary,
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          'Tap to replace',
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.primary)),
+                      Text('Tap to replace',
                           style: TextStyle(
-                            fontSize: 11.sp,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
+                              fontSize: 11.sp,
+                              color: Colors.grey[500])),
+                    ],
                   ),
                 ],
               )
                   : Column(
                 children: [
                   Icon(Icons.video_library_outlined,
-                      size: 36.sp, color: AppColor.primary),
+                      size: 34.sp, color: AppColor.primary),
                   SizedBox(height: 8.h),
-                  Text(
-                    'Tap to add Property Video',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: AppColor.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  Text('Tap to add Property Video',
+                      style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColor.primary,
+                          fontWeight: FontWeight.w500)),
                   SizedBox(height: 4.h),
-                  Text(
-                    'MP4, MOV • Max 50 MB',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: Colors.grey[500],
-                    ),
-                  ),
+                  Text('MP4, MOV • Max 50 MB',
+                      style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.grey[400])),
                 ],
               ),
             ),
@@ -2026,40 +1875,160 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       ),
     );
   }
-  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Image picker card (Blueprint / 3D) ────────────────────────────────────
+
+  Widget _buildImagePickerCard({
+    required String title,
+    required VoidCallback onTap,
+    required File? newFile,
+    required String? existingUrl,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        height: 160.h,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          color: Colors.grey[50],
+          border: Border.all(
+            color: (newFile != null || existingUrl != null)
+                ? AppColor.primary
+                : Colors.grey[200]!,
+          ),
+        ),
+        child: newFile != null
+            ? Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12.r),
+              child: Image.file(newFile,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity),
+            ),
+            Positioned(
+              top: 8.w,
+              right: 8.w,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                    horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: AppColor.primary,
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Text('Tap to change',
+                    style: TextStyle(
+                        fontSize: 10.sp, color: Colors.white)),
+              ),
+            ),
+          ],
+        )
+            : existingUrl != null
+            ? Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12.r),
+              child: Image.network(
+                existingUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (_, __, ___) => Center(
+                  child: Column(
+                    mainAxisAlignment:
+                    MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.broken_image,
+                          size: 36.sp, color: Colors.grey),
+                      Text('Image failed to load',
+                          style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey[500])),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8.w,
+              right: 8.w,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                    horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: AppColor.primary,
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Text('Tap to change',
+                    style: TextStyle(
+                        fontSize: 10.sp,
+                        color: Colors.white)),
+              ),
+            ),
+          ],
+        )
+            : Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: EdgeInsets.all(14.w),
+                decoration: BoxDecoration(
+                  color:
+                  AppColor.primary.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.add_a_photo,
+                    size: 30.sp, color: AppColor.primary),
+              ),
+              SizedBox(height: 10.h),
+              Text('Tap to add $title',
+                  style: TextStyle(
+                      color: AppColor.primary,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500)),
+              SizedBox(height: 4.h),
+              Text('JPG, PNG supported',
+                  style: TextStyle(
+                      fontSize: 11.sp,
+                      color: Colors.grey[400])),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
       SnackBarHelper.showError('Please fill all required fields');
       return;
     }
-
     if (_selectedState == null) {
       SnackBarHelper.showError('Please select state');
       return;
     }
-
     if (_selectedCity == null) {
       SnackBarHelper.showError('Please select city');
       return;
     }
-
     if (_selectedPropertyType == null) {
       SnackBarHelper.showError('Please select property type');
       return;
     }
-
     if (controller.selectedFacilityIds.isEmpty) {
-      SnackBarHelper.showError(
-          'Please select minimum one common facility');
+      SnackBarHelper.showError('Please select minimum one common facility');
       return;
     }
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    if (mounted) setState(() => _isSubmitting = true);
 
     try {
+      // Rebuild nearby places from controllers
       _selectedNearbyPlaces.clear();
       for (var entry in _nearbyPlaceControllers.entries) {
         final placeId = entry.key;
@@ -2094,11 +2063,9 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       if (_selectedNearbyPlaces.isNotEmpty) {
         formData['nearby'] = _selectedNearbyPlaces;
       }
-
       if (_workController.text.trim().isNotEmpty) {
         formData['work'] = _workController.text.trim();
       }
-
       if (widget.plot != null) {
         if (widget.plot is MarketPlot) {
           formData['id'] = (widget.plot as MarketPlot).id.toString();
@@ -2106,8 +2073,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           formData['id'] = widget.plot['id'].toString();
         }
       }
-
-      print('📤 Submitting form data: $formData');
 
       final result = await controller.submitMarketPlot(
         formData: formData,
@@ -2120,8 +2085,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         isUpdate: widget.plot != null,
       );
 
-      print('📥 Submission result: $result');
-
       if (result['status'] == 200) {
         SnackBarHelper.showSuccess(
           result['message'] ??
@@ -2130,7 +2093,8 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         controller.selectedFacilityIds = [];
         controller.update();
         await controller.fetchMyMarketPlots();
-        Get.back(result: true);
+        // Navigator.pop is already called inside submitMarketPlot,
+        // so do NOT pop again here.
       } else {
         SnackBarHelper.showError(
           result['message'] ??
@@ -2138,14 +2102,16 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         );
       }
     } catch (e) {
-      print('❌ Submission error: $e');
       SnackBarHelper.showError('Error: ${e.toString()}');
     } finally {
-      setState(() {
-        _isSubmitting = false;
-      });
+      // ── FIX: guard setState with mounted check ──────────────────────
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -2171,7 +2137,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: DynamicAppBar(
         title: widget.plot != null ? 'Edit Land' : 'Add Land',
         showBackButton: true,
@@ -2183,351 +2149,257 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Basic Information',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
-                ),
-              ),
-              SizedBox(height: 16.h),
-
-              _buildTextField('Plot Name', _nameController,
-                  isRequired: true),
-
-              _buildDropdown<PropertyType>(
-                label: 'Property Type',
-                items: propertyTypes,
-                value: _selectedPropertyType,
-                displayText: (type) =>
-                type.categoryName ?? 'Unknown Type',
-                onChanged: (type) {
-                  setState(() {
-                    _selectedPropertyType = type;
-                  });
-                },
-                isRequired: true,
-              ),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildDropdown<AppState>(
-                      label: 'State',
-                      items: states,
-                      value: _selectedState,
-                      displayText: (state) => state.stateName,
-                      onChanged: (state) async {
-                        setState(() {
-                          _selectedState = state;
-                          _selectedCity = null;
-                          cities.clear();
-                        });
-                        if (state != null) {
-                          await controller
-                              .fetchCitiesForState(state.id);
-                          setState(() {
-                            cities =
-                                List.from(controller.cities);
-                          });
+              // ── Basic Info card ─────────────────────────────────────
+              _buildCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Basic Information'),
+                    _buildTextField('Plot Name', _nameController,
+                        isRequired: true),
+                    _buildDropdown<PropertyType>(
+                      label: 'Property Type',
+                      items: propertyTypes,
+                      value: _selectedPropertyType,
+                      displayText: (t) => t.categoryName,
+                      onChanged: (t) {
+                        if (mounted) {
+                          setState(() => _selectedPropertyType = t);
                         }
                       },
                       isRequired: true,
                     ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: _buildDropdown<City>(
-                      label: 'City',
-                      items: cities,
-                      value: _selectedCity,
-                      displayText: (city) => city.cityName,
-                      onChanged: (city) {
-                        setState(() {
-                          _selectedCity = city;
-                        });
-                      },
-                      isRequired: true,
-                      isEnabled: _selectedState != null,
-                    ),
-                  ),
-                ],
-              ),
-
-              _buildLocationSection(),
-
-              Text(
-                'Property Details',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
-                ),
-              ),
-              SizedBox(height: 16.h),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      'Area (sq ft)',
-                      _areaController,
-                      keyboardType: TextInputType.number,
-                      isRequired: true,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: _buildTextField(
-                      'Price (₹)',
-                      _priceController,
-                      keyboardType: TextInputType.number,
-                      isRequired: true,
-                    ),
-                  ),
-                ],
-              ),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      'Price per Sqft (₹)',
-                      _priceSqftController,
-                      keyboardType: TextInputType.number,
-                      isRequired: true,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: _buildTextField(
-                      'ULPIN Number',
-                      _uldNoController,
-                    ),
-                  ),
-                ],
-              ),
-
-              _buildTextField(
-                'Plot Count',
-                _plotCountController,
-                keyboardType: TextInputType.number,
-                isRequired: true,
-              ),
-
-              Text(
-                'Description',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
-                ),
-              ),
-              SizedBox(height: 16.h),
-
-              _buildTextField(
-                'Description',
-                _descriptionController,
-                maxLines: 4,
-                isRequired: true,
-              ),
-
-              _selectedCommonFacilityWidget(),
-              _buildAmenitiesSection(),
-              _buildNearbyPlacesSection(),
-              _buildImageSection(),
-
-              // ── Blueprint ──────────────────────────────────────────────
-              Text(
-                'Blue Print Image',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              GestureDetector(
-                onTap: _pickPlotImage,
-                child: Container(
-                  width: double.infinity,
-                  height: 150.h,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10.r),
-                    color: Colors.grey[100],
-                    border: Border.all(color: AppColor.primary),
-                  ),
-                  child: _plotImage != null
-                      ? ClipRRect(
-                    borderRadius: BorderRadius.circular(10.r),
-                    child: Image.file(_plotImage!,
-                        fit: BoxFit.cover),
-                  )
-                      : _existingPlotImageUrl != null
-                      ? ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(10.r),
-                    child: Image.network(
-                      _existingPlotImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder:
-                          (context, error, stackTrace) =>
-                          Center(
-                            child: Column(
-                              mainAxisAlignment:
-                              MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.broken_image,
-                                    size: 40.sp,
-                                    color: Colors.grey),
-                                Text('Load failed',
-                                    style: TextStyle(
-                                        fontSize: 12.sp)),
-                              ],
-                            ),
-                          ),
-                    ),
-                  )
-                      : Center(
-                    child: Column(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
+                    Row(
                       children: [
-                        Icon(Icons.add_a_photo,
-                            size: 40.sp,
-                            color: AppColor.primary),
-                        SizedBox(height: 8.h),
-                        Text(
-                          'Tap to add Blue Print Image',
-                          style: TextStyle(
-                              color: AppColor.primary),
+                        Expanded(
+                          child: _buildDropdown<AppState>(
+                            label: 'State',
+                            items: states,
+                            value: _selectedState,
+                            displayText: (s) => s.stateName,
+                            onChanged: (s) async {
+                              if (mounted) {
+                                setState(() {
+                                  _selectedState = s;
+                                  _selectedCity = null;
+                                  cities.clear();
+                                });
+                              }
+                              if (s != null) {
+                                await controller
+                                    .fetchCitiesForState(s.id);
+                                if (mounted) {
+                                  setState(() => cities = List.from(
+                                      controller.cities));
+                                }
+                              }
+                            },
+                            isRequired: true,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: _buildDropdown<City>(
+                            label: 'City',
+                            items: cities,
+                            value: _selectedCity,
+                            displayText: (c) => c.cityName,
+                            onChanged: (c) {
+                              if (mounted) {
+                                setState(() => _selectedCity = c);
+                              }
+                            },
+                            isRequired: true,
+                            isEnabled: _selectedState != null,
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
               ),
 
-              SizedBox(height: 10.h),
+              SizedBox(height: 12.h),
 
-              // ── 3D Image ───────────────────────────────────────────────
-              Text(
-                '3D Image',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              GestureDetector(
-                onTap: _pick3DImage,
-                child: Container(
-                  width: double.infinity,
-                  height: 150.h,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10.r),
-                    color: Colors.grey[100],
-                    border: Border.all(color: AppColor.primary),
-                  ),
-                  child: _upload3dImage != null
-                      ? ClipRRect(
-                    borderRadius: BorderRadius.circular(10.r),
-                    child: Image.file(_upload3dImage!,
-                        fit: BoxFit.cover),
-                  )
-                      : _existing3dImageUrl != null
-                      ? ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(10.r),
-                    child: Image.network(
-                      _existing3dImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder:
-                          (context, error, stackTrace) =>
-                          Center(
-                            child: Column(
-                              mainAxisAlignment:
-                              MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.broken_image,
-                                    size: 40.sp,
-                                    color: Colors.grey),
-                                Text('Load failed',
-                                    style: TextStyle(
-                                        fontSize: 12.sp)),
-                              ],
-                            ),
-                          ),
-                    ),
-                  )
-                      : Center(
-                    child: Column(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
+              // ── Location card ───────────────────────────────────────
+              _buildCard(child: _buildLocationSection()),
+
+              SizedBox(height: 12.h),
+
+              // ── Property details card ───────────────────────────────
+              _buildCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Property Details'),
+                    Row(
                       children: [
-                        Icon(Icons.add_a_photo,
-                            size: 40.sp,
-                            color: AppColor.primary),
-                        SizedBox(height: 8.h),
-                        Text(
-                          'Tap to add 3D Image',
-                          style: TextStyle(
-                              color: AppColor.primary),
+                        Expanded(
+                          child: _buildTextField('Area (sq ft)',
+                              _areaController,
+                              keyboardType:
+                              TextInputType.number,
+                              isRequired: true),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: _buildTextField(
+                              'Price (₹)', _priceController,
+                              keyboardType:
+                              TextInputType.number,
+                              isRequired: true),
                         ),
                       ],
                     ),
-                  ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                              'Price per Sqft (₹)',
+                              _priceSqftController,
+                              keyboardType:
+                              TextInputType.number,
+                              isRequired: true),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: _buildTextField(
+                              'ULPIN Number', _uldNoController),
+                        ),
+                      ],
+                    ),
+                    _buildTextField('Plot Count', _plotCountController,
+                        keyboardType: TextInputType.number,
+                        isRequired: true),
+                    _buildTextField('Description',
+                        _descriptionController,
+                        maxLines: 4, isRequired: true),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 12.h),
+
+              // ── Common Facilities card ──────────────────────────────
+              _buildCard(child: _selectedCommonFacilityWidget()),
+
+              SizedBox(height: 12.h),
+
+              // ── Amenities card ──────────────────────────────────────
+              _buildCard(child: _buildAmenitiesSection()),
+
+              SizedBox(height: 12.h),
+
+              // ── Nearby places card ──────────────────────────────────
+              _buildCard(child: _buildNearbyPlacesSection()),
+
+              SizedBox(height: 12.h),
+
+              // ── Images & Video card ─────────────────────────────────
+              _buildCard(child: _buildImageSection()),
+
+              SizedBox(height: 12.h),
+
+              // ── Blueprint card ──────────────────────────────────────
+              _buildCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Blue Print Image'),
+                    _buildImagePickerCard(
+                      title: 'Blue Print Image',
+                      onTap: _pickPlotImage,
+                      newFile: _plotImage,
+                      existingUrl: _existingPlotImageUrl,
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 12.h),
+
+              // ── 3D Image card ───────────────────────────────────────
+              _buildCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('3D Image'),
+                    _buildImagePickerCard(
+                      title: '3D Image',
+                      onTap: _pick3DImage,
+                      newFile: _upload3dImage,
+                      existingUrl: _existing3dImageUrl,
+                    ),
+                  ],
                 ),
               ),
 
               SizedBox(height: 24.h),
 
+              // ── Submit button ───────────────────────────────────────
               SizedBox(
                 width: double.infinity,
-                height: 50.h,
+                height: 54.h,
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColor.primary,
+                    disabledBackgroundColor:
+                    AppColor.primary.withOpacity(0.6),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
+                        borderRadius: BorderRadius.circular(14.r)),
+                    elevation: 4,
+                    shadowColor: AppColor.primary.withOpacity(0.3),
                   ),
                   child: _isSubmitting
                       ? SizedBox(
-                    height: 20.h,
-                    width: 20.h,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
+                      height: 22.h,
+                      width: 22.h,
+                      child: const CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white))
                       : Text(
-                    widget.plot != null
-                        ? 'Update Plot'
-                        : 'Add Plot',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white
-                    ),
-                  ),
+                      widget.plot != null
+                          ? 'Update Plot'
+                          : 'Add Plot',
+                      style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
                 ),
               ),
 
-              SizedBox(height: 20.h),
-              Text(
-                '* indicates required field',
-                style:
-                TextStyle(fontSize: 12.sp, color: Colors.grey),
+              SizedBox(height: 8.h),
+              Center(
+                child: Text('* indicates required field',
+                    style: TextStyle(
+                        fontSize: 12.sp, color: Colors.grey[400])),
               ),
               SizedBox(height: 40.h),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// Wraps content in a white card with shadow
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }

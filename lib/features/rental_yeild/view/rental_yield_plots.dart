@@ -118,8 +118,8 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
 
     // Rent Range (Monthly Rent)
     _rentChanged = c.selectedMinRent.value.isNotEmpty;
-    double startR = _rentChanged ? double.parse(c.selectedMinRent.value) : c.rentMin.value;
-    double endR = c.selectedMaxRent.value.isNotEmpty ? double.parse(c.selectedMaxRent.value) : c.rentMax.value;
+    double startR = _rentChanged ? (double.tryParse(c.selectedMinRent.value) ?? c.rentMin.value) : c.rentMin.value;
+    double endR = c.selectedMaxRent.value.isNotEmpty ? (double.tryParse(c.selectedMaxRent.value) ?? c.rentMax.value) : c.rentMax.value;
     _rentRange = RangeValues(
       startR.clamp(c.rentMin.value, c.rentMax.value),
       endR.clamp(c.rentMin.value, c.rentMax.value),
@@ -128,8 +128,8 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
     // Yield Range (Annual Yield Percentage)
     // Since yieldMin and yieldMax might not exist in your controller, use defaults
     _yieldChanged = c.selectedMinYield.value.isNotEmpty;
-    double startY = _yieldChanged ? double.parse(c.selectedMinYield.value) : 0.0;
-    double endY = c.selectedMaxYield.value.isNotEmpty ? double.parse(c.selectedMaxYield.value) : 20.0;
+    double startY = _yieldChanged ? (double.tryParse(c.selectedMinYield.value) ?? 0.0) : 0.0;
+    double endY = c.selectedMaxYield.value.isNotEmpty ? (double.tryParse(c.selectedMaxYield.value) ?? 20.0) : 20.0;
     _yieldRange = RangeValues(
       startY.clamp(0.0, 20.0),
       endY.clamp(0.0, 20.0),

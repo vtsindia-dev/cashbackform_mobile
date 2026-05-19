@@ -421,7 +421,7 @@ class MaterialController extends GetxController {
       if (response.data != null && response.data['status'] == true) {
         vendorDetail = Vendor.fromJson(response.data['data']);
 
-        if (response.data['brands'] != null) {
+        if (response.data['brands'] is List) {
           brandDetailList = (response.data['brands'] as List)
               .map((e) => Brand.fromJson(e))
               .toList();
@@ -573,7 +573,7 @@ class MaterialController extends GetxController {
       if (response.statusCode == 200) {
         final data = response.data;
 
-        if (data != null && data['status'] == true) {
+        if (data != null && data['status'] == true && data['data'] is List) {
           materialUnits = (data['data'] as List)
               .map((e) => MaterialUnitModel.fromJson(e))
               .toList();

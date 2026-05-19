@@ -79,7 +79,7 @@ class NotificationController extends ChangeNotifier {
       if (!_isActive) return;
 
       if (response.statusCode == 200 && response.data['status'] == true) {
-        final notificationsData = response.data['data']['notifications'] as List;
+        final notificationsData = (response.data['data']?['notifications'] as List?) ?? [];
 
         if (_currentPage == 1) {
           _notifications = notificationsData

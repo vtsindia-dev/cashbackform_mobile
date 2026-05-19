@@ -525,9 +525,11 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
   Widget _buildShareButton(String code) {
     return GestureDetector(
       onTap: () async {
-        final profile = dashboardController.profile.value;
-        final role = profile?.role?.role ?? "User";
-        await Share.share(_getShareMessage(code, role));
+        try {
+          final profile = dashboardController.profile.value;
+          final role = profile?.role?.role ?? "User";
+          await Share.share(_getShareMessage(code, role));
+        } catch (_) {}
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
