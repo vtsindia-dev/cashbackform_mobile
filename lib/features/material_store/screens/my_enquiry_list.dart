@@ -498,7 +498,7 @@ class _EnquiryCardState extends State<_EnquiryCard>
           ),
         ),
       ),
-    );
+    ); 
   }
 
   // ── Status ────────────────────────────────────────────────────────────────

@@ -91,7 +91,7 @@ class LocationIndicatorBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDubai = property.isIndia;
+    final bool isDubai = property.isDubai; // was: property.isIndia (wrong!)
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
       decoration: BoxDecoration(
@@ -128,7 +128,6 @@ class LocationIndicatorBadge extends StatelessWidget {
     );
   }
 }
-
 // =============================================================================
 // COMPACT FILTER BAR — with live autocomplete overlay
 // =============================================================================
@@ -485,8 +484,8 @@ class _ModernFilterSheetState extends State<_ModernFilterSheet> {
 
   // country options — id must match your API's country field values
   static const List<_CountryOption> _countryOptions = [
-    _CountryOption(id: 3, label: 'India', flag: '🇮🇳'),
-    _CountryOption(id: 1, label: 'Dubai', flag: '🇦🇪'),
+    _CountryOption(id: 3, label: 'India', flag: '🇮🇳'),   // 3 = India ✓
+    _CountryOption(id: 2, label: 'Dubai', flag: '🇦🇪'),   // 2 = Dubai ✓ (was 1, wrong)
   ];
 
   @override

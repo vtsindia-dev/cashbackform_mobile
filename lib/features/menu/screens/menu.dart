@@ -620,22 +620,22 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 6.h),
-                Container(
-                  padding:
-                  EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha:0.2),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    profile?.role?.role ?? "User",
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
+                // Container(
+                //   padding:
+                //   EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
+                //   decoration: BoxDecoration(
+                //     color: Colors.white.withValues(alpha:0.2),
+                //     borderRadius: BorderRadius.circular(20.r),
+                //   ),
+                //   child: Text(
+                //     profile?.role?.role ?? "User",
+                //     style: TextStyle(
+                //       fontSize: 11.sp,
+                //       color: Colors.white,
+                //       fontWeight: FontWeight.w500,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),

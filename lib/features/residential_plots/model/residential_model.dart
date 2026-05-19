@@ -372,7 +372,8 @@ class Property {
   }
 
   String get formattedArea => '$areaSqft sq.ft';
-
+  bool get isIndia => country == 2;
+  bool get isDubai => country == 3;
   String get formattedPricePerSqft {
     if (areaSqftPrice != null) {
       return '₹${areaSqftPrice!.toStringAsFixed(2)}/sq.ft';
@@ -393,7 +394,6 @@ class Property {
 
 
   /// Returns true if this property is in Dubai
-  bool get isIndia => country == 1;
 
   /// FIX: Full blueprint URL helper
   /// API returns relative path like 'storage/plots/filename.jpeg'
