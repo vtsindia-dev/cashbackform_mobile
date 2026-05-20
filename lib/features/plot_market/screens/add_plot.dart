@@ -2135,7 +2135,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         ),
       );
     }
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: DynamicAppBar(
@@ -2149,7 +2148,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Basic Info card ─────────────────────────────────────
               _buildCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2218,17 +2216,10 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                   ],
                 ),
               ),
-
               SizedBox(height: 12.h),
-
-              // ── Location card ───────────────────────────────────────
               _buildCard(child: _buildLocationSection()),
-
               SizedBox(height: 12.h),
-
-              // ── Property details card ───────────────────────────────
-              _buildCard(
-                child: Column(
+              _buildCard( child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSectionTitle('Property Details'),
@@ -2275,32 +2266,16 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                         _descriptionController,
                         maxLines: 4, isRequired: true),
                   ],
-                ),
-              ),
-
+                ),),
               SizedBox(height: 12.h),
-
-              // ── Common Facilities card ──────────────────────────────
               _buildCard(child: _selectedCommonFacilityWidget()),
-
               SizedBox(height: 12.h),
-
-              // ── Amenities card ──────────────────────────────────────
               _buildCard(child: _buildAmenitiesSection()),
-
               SizedBox(height: 12.h),
-
-              // ── Nearby places card ──────────────────────────────────
               _buildCard(child: _buildNearbyPlacesSection()),
-
               SizedBox(height: 12.h),
-
-              // ── Images & Video card ─────────────────────────────────
               _buildCard(child: _buildImageSection()),
-
               SizedBox(height: 12.h),
-
-              // ── Blueprint card ──────────────────────────────────────
               _buildCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2318,7 +2293,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
 
               SizedBox(height: 12.h),
 
-              // ── 3D Image card ───────────────────────────────────────
               _buildCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2333,10 +2307,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                   ],
                 ),
               ),
-
               SizedBox(height: 24.h),
-
-              // ── Submit button ───────────────────────────────────────
               SizedBox(
                 width: double.infinity,
                 height: 54.h,
@@ -2368,7 +2339,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                           color: Colors.white)),
                 ),
               ),
-
               SizedBox(height: 8.h),
               Center(
                 child: Text('* indicates required field',
@@ -2382,8 +2352,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       ),
     );
   }
-
-  /// Wraps content in a white card with shadow
   Widget _buildCard({required Widget child}) {
     return Container(
       width: double.infinity,

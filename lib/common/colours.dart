@@ -4,7 +4,7 @@ class AppColor {
   static const Color primary = Color(0xff92AF5D);
   static const Color primarylite = Color(0xffC7DD94);
   static const Color black = Color(0xff000000);
-  static const Color accent = Color(0xFF6A5AE0); // Purple modern accent
+  static const Color accent = Color(0xFF6A5AE0);
   static const Color white = Color(0xffFFFFFF);
   static const Color secondary = Color(0xFF4CAF50);
   static const Color orange = Color(0xFFFEB821);

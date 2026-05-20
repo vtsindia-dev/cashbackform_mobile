@@ -1055,10 +1055,6 @@ class MarketPlotEnquiryProperty {
   bool get hasProperty => id > 0;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CommonFacility
-// ─────────────────────────────────────────────────────────────────────────────
-
 class CommonFacility {
   int? id;
   String? title;

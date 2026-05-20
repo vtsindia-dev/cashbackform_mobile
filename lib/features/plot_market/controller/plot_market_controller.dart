@@ -108,7 +108,6 @@ class PlotMarketController extends GetxController {
     }
     update();
   }
-
   Future<void> getCommonFacility() async {
     final token = await SessionManager.getToken();
     try {
@@ -135,32 +134,27 @@ class PlotMarketController extends GetxController {
       debugPrint('Error :: $e');
     }
   }
-
   Future<void> sendEnquiry(int propertyId) async {
     isEnquiryLoading.value = true;
     final token = await SessionManager.getToken();
 
     try {
-      // Create form data or JSON body
       final Map<String, dynamic> requestData = {
         'property_id': propertyId,
       };
-
       final response = await dio.Dio().post(
         ApiUrl.sendMarketEnquiry,
-        data: requestData, // Send property_id in request body
+        data: requestData,
         options: dio.Options(
           headers: {
             "Accept": "application/json",
-            "Content-Type": "application/json", // Add content type
+            "Content-Type": "application/json",
             if (token != null && token.isNotEmpty)
               "Authorization": "Bearer $token",
           },
         ),
       );
-
       final data = response.data;
-
       if (response.statusCode == 200 && data['status'] == true) {
         enquiryCount.value = data['counts'] ?? 0;
         message.value = data['message'] ?? '';
@@ -190,11 +184,9 @@ class PlotMarketController extends GetxController {
       final url = '${ApiUrl.marketDetails}/$id';
       print('🌐 Fetching Market Plot Detail URL: $url');
       final response = await ApiService.getRequest(url);
-
       if (response.statusCode == 200) {
         final responseData = response.data;
         print('📦 Full Response: ${responseData.toString()}');
-
         if (responseData != null && responseData['data'] != null) {
           try {
             marketDetail.value =
@@ -356,7 +348,7 @@ class PlotMarketController extends GetxController {
 
       final response = await ApiService.getRequest(url);
       if (response.statusCode == 200) {
-        final responseData = response.data;
+        final  responseData = response.data;
         if (responseData != null &&
             responseData['data'] != null &&
             responseData['data']['market'] != null) {

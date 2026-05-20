@@ -396,13 +396,11 @@ class ApiService {
       FormData formData = FormData.fromMap({});
       data.forEach((key, value) {
         if (value is File) {
-          // Add files with proper field names
           formData.files.add(MapEntry(
             key,
             MultipartFile.fromFileSync(value.path),
           ));
         } else if (value is List<File>) {
-          // Handle multiple files (e.g., gallery images)
           for (int i = 0; i < value.length; i++) {
             if (value[i].existsSync()) {
               formData.files.add(MapEntry(
@@ -412,7 +410,6 @@ class ApiService {
             }
           }
         } else {
-          // Add regular form fields
           if (value != null) {
             formData.fields.add(MapEntry(key, value.toString()));
           }
@@ -458,7 +455,6 @@ class ApiService {
     }
   }
 
-  /// Get unread notification count
   static Future<Response> getNotificationCount({required String token}) async {
     try {
       return await dio.get(
@@ -476,7 +472,6 @@ class ApiService {
     }
   }
 
-  /// Mark single notification as read
   static Future<Response> markNotificationAsRead({
     required String token,
     required int notificationId,
@@ -497,7 +492,6 @@ class ApiService {
     }
   }
 
-  /// Clear all notifications (mark all as read)
   static Future<Response> clearAllNotifications({required String token}) async {
     try {
       return await dio.post(
@@ -514,7 +508,6 @@ class ApiService {
       );
     }
   }
-// Delete a single notification
   static Future<Response> deleteNotification({
     required String token,
     required int notificationId,
@@ -537,6 +530,5 @@ class ApiService {
       );
     }
   }
-  // Keep your existing _createErrorResponse method
 
 }

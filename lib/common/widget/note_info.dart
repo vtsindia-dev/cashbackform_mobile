@@ -57,14 +57,11 @@ class _CompactNoteCardState extends State<CompactNoteCard> with SingleTickerProv
               borderRadius: BorderRadius.circular(8.r),
               child: Stack(
                 children: [
-                  // 1. STAR BACKGROUND
                   Positioned.fill(
                     child: CustomPaint(
                       painter: StarPainter(animationValue: _shimmerController.value),
                     ),
                   ),
-
-                  // 2. SHINING SIDE ACCENT (Matches full height automatically)
                   Positioned(
                     left: 0,
                     top: 0,
@@ -76,8 +73,6 @@ class _CompactNoteCardState extends State<CompactNoteCard> with SingleTickerProv
                       ),
                     ),
                   ),
-
-                  // 3. MAIN CONTENT
                   Padding(
                     padding: EdgeInsets.fromLTRB(14.w, 10.h, 10.w, 10.h),
                     child: Column(
@@ -121,14 +116,13 @@ class _CompactNoteCardState extends State<CompactNoteCard> with SingleTickerProv
                           ],
                         ),
 
-                        // SMOTHER EXPANSION using AnimatedSize
                         AnimatedSize(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.fastOutSlowIn,
                           alignment: Alignment.topCenter,
                           child: isExpanded
                               ? Padding(
-                            padding: EdgeInsets.only(top: 8.h, left: 26.w), // 16 icon + 10 gap
+                            padding: EdgeInsets.only(top: 8.h, left: 26.w),
                             child: ShaderMask(
                               shaderCallback: (bounds) => shaderGradient.createShader(bounds),
                               child: Text(

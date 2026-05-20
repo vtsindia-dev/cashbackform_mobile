@@ -8,10 +8,10 @@ import 'package:url_launcher/url_launcher.dart';
 class CarouselWidget extends StatefulWidget {
   final List<String> images;
   final List<String>? redirectUrls;
-  final double? height; // Now optional — auto-calculates if null
+  final double? height;
   final Duration autoPlayDuration;
   final double borderRadius;
-  final BoxFit imageFit; // NEW: control fit per use case
+  final BoxFit imageFit;
   final Function(String)? onTap;
   final Function(int, dynamic)? onError;
 
@@ -19,10 +19,10 @@ class CarouselWidget extends StatefulWidget {
     super.key,
     required this.images,
     this.redirectUrls,
-    this.height, // null = use AspectRatio (16:9 by default)
+    this.height,
     this.autoPlayDuration = const Duration(seconds: 5),
     this.borderRadius = 12,
-    this.imageFit = BoxFit.cover, // cover fills space, contain keeps full image
+    this.imageFit = BoxFit.cover,
     this.onTap,
     this.onError,
   });
@@ -34,13 +34,6 @@ class CarouselWidget extends StatefulWidget {
 class _CarouselWidgetState extends State<CarouselWidget> {
   int _currentIndex = 0;
   final Map<int, bool> _imageErrorMap = {};
-
-  double get _resolvedHeight {
-    if (widget.height != null) return widget.height!;
-    // Fallback: will be handled by AspectRatio widget
-    return 0;
-  }
-
   Future<void> _handleBannerTap(int index) async {
     String? redirectUrl;
     if (widget.redirectUrls != null && index < widget.redirectUrls!.length) {
@@ -51,7 +44,6 @@ class _CarouselWidgetState extends State<CarouselWidget> {
       widget.onTap!(redirectUrl ?? '');
       return;
     }
-
     if (redirectUrl != null && redirectUrl.isNotEmpty) {
       try {
         final Uri url = Uri.parse(redirectUrl);
@@ -134,7 +126,7 @@ class _CarouselWidgetState extends State<CarouselWidget> {
       return Image.network(
         path,
         width: double.infinity,
-        height: double.infinity, // Let parent constrain the size
+        height: double.infinity,
         fit: widget.imageFit,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
@@ -159,13 +151,10 @@ class _CarouselWidgetState extends State<CarouselWidget> {
       );
     }
   }
-
-  /// Wraps content in either a fixed height or a responsive AspectRatio
   Widget _sizeWrapper({required Widget child}) {
     if (widget.height != null) {
       return SizedBox(height: widget.height, child: child);
     }
-    // Default 16:9 — works on every screen width automatically
     return AspectRatio(aspectRatio: 16 / 9, child: child);
   }
 
@@ -206,7 +195,6 @@ class _CarouselWidgetState extends State<CarouselWidget> {
                 );
               },
               options: CarouselOptions(
-                // Height must match the wrapper; 0 = use parent constraints
                 height: widget.height ?? double.infinity,
                 viewportFraction: 1.0,
                 autoPlay: widget.images.length > 1,

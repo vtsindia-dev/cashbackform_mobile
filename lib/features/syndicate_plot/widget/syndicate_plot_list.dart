@@ -70,14 +70,13 @@ class SyndicatePlotList extends StatelessWidget {
 
   Widget _buildCardAnimated(SyndicatePlot plot, int index) {
     return PropertyCard(
-      imageUrl: plot.images.isNotEmpty ? plot.images[0] :'', // Use first image
+      imageUrl: plot.images.isNotEmpty ? plot.images[0] :'',
       title: plot.name,
       price: plot.formattedPrice,
       area: plot.formattedArea,
       location: plot.location,
       description: plot.description,
       onTap: () {
-
         Get.toNamed('/syndicateDetails', arguments: {"id": plot.id, "title": plot.name,});
       },
     )

@@ -647,7 +647,6 @@ class _RegistrationState extends State<Registration> {
             ),
           ),
         ),
-        // Show error message if any
         Obx(() {
           if (controller.referralCodeError.value.isNotEmpty &&
               controller.referralCodeController.text.isNotEmpty) {
@@ -696,7 +695,6 @@ class _RegistrationState extends State<Registration> {
       ],
     );
   }
-  // ==================== TERMS AND CONDITIONS WIDGET ====================
   Widget _buildTermsAndConditions() {
     return Animate(
       effects: [
@@ -788,7 +786,6 @@ class _RegistrationState extends State<Registration> {
       ),
     );
   }
-
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,

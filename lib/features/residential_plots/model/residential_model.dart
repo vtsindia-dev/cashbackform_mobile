@@ -347,19 +347,15 @@ class Property {
       // FIX: Parse sold_status and sold_amount from API
       soldStatus: safeIntCast(json['sold_status']),
       soldAmount: safeNullableDoubleCast(json['sold_amount']),
-      // FIX: Parse blueprint — API returns relative path, not full URL
       blueprint: json['blueprint'] as String?,
       featured: safeIntCast(json['featured']),
-      // FIX: Parse map_set array
       mapSet: (json['map_set'] as List<dynamic>? ?? [])
           .map((e) => MapSetItem.fromJson(e as Map<String, dynamic>))
           .toList(),
-      // API key has a typo: 'doucment_verficaiton'
       documentVerification: safeBoolCast(json['doucment_verficaiton']),
     );
   }
 
-  // ---- Computed getters ----
 
   String get formattedPrice {
     if (price >= 10000000) {
@@ -385,19 +381,7 @@ class Property {
   bool get isAdminPosted => userType == 'admin';
   bool get isCustomerPosted => userType == 'customer';
 
-  /// FIX: isSoldOut based on sold_status from API (1 = sold out)
   bool get isSoldOut => soldStatus == 1;
-
-  /// FIX: Country label for list page location indicator
-  /// country 3 = Dubai (based on API), else India
-  /// Adjust the country IDs to match your backend's actual values
-
-
-  /// Returns true if this property is in Dubai
-
-  /// FIX: Full blueprint URL helper
-  /// API returns relative path like 'storage/plots/filename.jpeg'
-  /// Pass your base URL when building the widget, or use this helper
   String blueprintUrl(String baseUrl) {
     if (blueprint == null || blueprint!.isEmpty) return '';
     if (blueprint!.startsWith('http')) return blueprint!;
@@ -406,8 +390,6 @@ class Property {
     final path = blueprint!.startsWith('/') ? blueprint!.substring(1) : blueprint!;
     return '$base$path';
   }
-
-  // Get facilities as map for easy access
   Map<String, String> get facilitiesMap {
     final map = <String, String>{};
     for (final facility in facilities) {
@@ -421,7 +403,6 @@ class Property {
     return map;
   }
 
-  // Get specific facility value
   String? getFacilityValue(String facilityName) {
     for (final facility in facilities) {
       final currentFacilityName = facility.fac.isNotEmpty
@@ -433,8 +414,6 @@ class Property {
     }
     return null;
   }
-
-  // Get amenities with images
   List<Map<String, String>> get amenitiesWithImages {
     return amenitiesAll
         .map((amenity) => {
@@ -443,8 +422,6 @@ class Property {
     })
         .toList();
   }
-
-  // Get nearby locations with distance
   List<Map<String, dynamic>> get nearbyLocationsWithDistance {
     return nearbyLocations
         .map((location) => {
@@ -455,19 +432,14 @@ class Property {
         .toList();
   }
 
-  // Get gallery images excluding thumbnail
   List<String> get additionalGalleryImages {
     return galleryImages.where((image) => image != thumbnail).toList();
   }
 
-  // Get first image for display
   String get displayImage =>
       galleryImages.isNotEmpty ? galleryImages.first : thumbnail;
 }
 
-// ======================================================
-// MAP SET ITEM — for nearby properties on map
-// ======================================================
 
 class MapSetItem {
   final int id;
@@ -516,10 +488,6 @@ class MapSetItem {
   }
 }
 
-// ======================================================
-// SUPPORTING MODELS
-// ======================================================
-
 class PropertyCategory {
   final int id;
   final String categoryName;
@@ -531,7 +499,6 @@ class PropertyCategory {
   final DateTime updatedAt;
   final DateTime? deletedAt;
   final List<PropertySubCategory>? subCategories;
-
   PropertyCategory({
     required this.id,
     required this.categoryName,
@@ -544,7 +511,6 @@ class PropertyCategory {
     this.deletedAt,
     this.subCategories,
   });
-
   factory PropertyCategory.fromJson(Map<String, dynamic> json) {
     List<PropertySubCategory>? subCategories;
     if (json['sub_categories'] != null && json['sub_categories'] is List) {
@@ -553,7 +519,6 @@ class PropertyCategory {
           PropertySubCategory.fromJson(item as Map<String, dynamic>))
           .toList();
     }
-
     return PropertyCategory(
       id: safeIntCast(json['id']),
       categoryName: json['category_name'] as String? ?? '',
@@ -580,7 +545,6 @@ class PropertyCategory {
         .where((id) => id > 0)
         .toList();
   }
-
   List<int> get documentIds {
     if (documents == null || documents!.isEmpty) return [];
     return documents!
@@ -589,7 +553,6 @@ class PropertyCategory {
         .where((id) => id > 0)
         .toList();
   }
-
   bool get isActive => status == 1;
 }
 
@@ -598,7 +561,6 @@ class PropertySubCategory {
   final String name;
   final String? icon;
   final int? categoryId;
-
   PropertySubCategory({
     required this.id,
     required this.name,
@@ -616,7 +578,7 @@ class PropertySubCategory {
   }
 }
 
-class StateList {
+class StateList  {
   final int id;
   final String stateName;
   final int status;

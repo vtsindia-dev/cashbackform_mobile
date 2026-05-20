@@ -23,7 +23,6 @@ class AddressSelectionScreen extends StatelessWidget {
           Expanded(
             child: Stack(
               children: [
-                // ✅ GoogleMap — only mapMarkers is reactive, wrapped properly
                 Obx(() => GoogleMap(
                   initialCameraPosition: controller.initialCameraPosition,
                   onMapCreated: controller.onMapCreated,
@@ -37,13 +36,10 @@ class AddressSelectionScreen extends StatelessWidget {
                 )),
 
                 const _CenterPin(),
-
-                // ✅ Loading overlay — only isMapLoading is read
                 Obx(() => controller.isMapLoading.value
                     ? _LoadingOverlay()
                     : const SizedBox.shrink()),
 
-                // Location FAB — only isLocatingUser is read
                 Positioned(
                   right: 16,
                   bottom: 160,
@@ -53,15 +49,13 @@ class AddressSelectionScreen extends StatelessWidget {
                   )),
                 ),
 
-                // Zoom controls — no reactive data, always visible
                 Positioned(
                   right: 16,
                   bottom: 228,
                   child: _ZoomControls(controller: controller),
                 ),
 
-                // ✅ Address preview — uses controller.addressText (RxString)
-                Positioned(
+                              Positioned(
                   bottom: 84,
                   left: 16,
                   right: 16,

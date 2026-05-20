@@ -27,16 +27,12 @@ class SessionManager {
       print('📱 User Data received: ${userData.toString()}');
       print('🔑 Token received: $token');
       print('📋 User Data keys: ${userData.keys.toList()}');
-
-      // Save individual fields
       await prefs.setBool(_isLoggedInKey, true);
       String? userId = userData['id']?.toString() ??
           userData['user_id']?.toString() ??
           userData['userId']?.toString();
       await prefs.setString(_userIdKey, userId ?? '');
       print('👤 User ID saved: $userId');
-
-      // Save name
       String? fullName = userData['name']?.toString() ??
           userData['full_name']?.toString() ??
           '${userData['first_name'] ?? ''} ${userData['last_name'] ?? ''}'.trim();
@@ -44,15 +40,11 @@ class SessionManager {
       await prefs.setString(_firstNameKey, nameParts.isNotEmpty ? nameParts[0] : '');
       await prefs.setString(_lastNameKey, nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '');
       print('👤 Name saved: $fullName');
-
-      // Save contact info
       await prefs.setString(_phoneKey, userData['phone']?.toString() ?? userData['mobile']?.toString() ?? '');
       await prefs.setString(_emailKey, userData['email']?.toString() ?? '');
       print('📞 Phone saved: ${userData['phone']}');
       print('📧 Email saved: ${userData['email']}');
-
-      // Save gender (convert to int)
-      int gender = 1; // default
+      int gender = 1;
       if (userData['gender'] != null) {
         if (userData['gender'] is int) {
           gender = userData['gender'];
@@ -62,8 +54,7 @@ class SessionManager {
       }
       await prefs.setInt(_genderKey, gender);
       print('⚧ Gender saved: $gender');
-
-      int role = 1; // default
+      int role = 1;
       if (userData['role'] != null) {
         if (userData['role'] is int) {
           role = userData['role'];
@@ -73,19 +64,14 @@ class SessionManager {
       }
       await prefs.setInt(_roleKey, role);
       print('🎭 Role saved: $role');
-
-      // Save additional info
       await prefs.setString(_dobKey, userData['dob']?.toString() ?? userData['date_of_birth']?.toString() ?? '');
       await prefs.setString(_pinCodeKey, userData['pin']?.toString() ?? userData['pincode']?.toString() ?? userData['zip_code']?.toString() ?? '');
       await prefs.setString(_addressKey, userData['address']?.toString() ?? '');
       await prefs.setString(_profileImageKey, userData['avatar']?.toString() ?? userData['profile_image']?.toString() ?? userData['image']?.toString() ?? '');
-
       print('🎂 DOB saved: ${userData['dob']}');
       print('📍 PIN saved: ${userData['pin']}');
       print('🏠 Address saved: ${userData['address']}');
       print('🖼️ Profile image saved: ${userData['avatar']}');
-
-      // CRITICAL: Save token
       if (token != null && token.isNotEmpty) {
         await prefs.setString(_tokenKey, token);
         print('✅ Token saved successfully: ${token.substring(0, min(token.length, 20))}...');
@@ -100,16 +86,9 @@ class SessionManager {
           print('⚠️ WARNING: No token found to save!');
         }
       }
-
-      // Save login time
       await prefs.setString(_loginTimeKey, DateTime.now().toIso8601String());
-
-      // Save complete user data as JSON for debugging
       await prefs.setString(_userDataKey, json.encode(userData));
-
-      // Verify everything was saved
       await _verifySessionSaved();
-
       print('✅ === SESSION SAVED SUCCESSFULLY ===');
     } catch (e) {
       print('❌ Error saving session: $e');
@@ -118,18 +97,14 @@ class SessionManager {
   }
   static Future<void> _verifySessionSaved() async {
     final prefs = await SharedPreferences.getInstance();
-
     print('🔍 === VERIFYING SESSION ===');
     print('🔑 Token exists: ${prefs.containsKey(_tokenKey)}');
     print('🔑 Token value: ${prefs.getString(_tokenKey)?.substring(0, min(prefs.getString(_tokenKey)?.length ?? 0, 20))}...');
     print('👤 User ID exists: ${prefs.containsKey(_userIdKey)}');
     print('👤 User ID value: ${prefs.getString(_userIdKey)}');
     print('✅ IsLoggedIn: ${prefs.getBool(_isLoggedInKey)}');
-
-    // Print all stored keys
     final allKeys = prefs.getKeys();
     print('📋 All stored keys: $allKeys');
-
     for (final key in allKeys) {
       if (key == _tokenKey) {
         final token = prefs.getString(key);
@@ -140,7 +115,6 @@ class SessionManager {
     }
     print('✅ === VERIFICATION COMPLETE ===');
   }
-// Add in sessionhandler.dart
   static Future<void> saveFcmToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('fcm_token', token);
@@ -151,36 +125,21 @@ class SessionManager {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('fcm_token');
   }
-  // Check if user is logged in
-// Check if user is logged in
   static Future<bool> isLoggedIn() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
       print('🔍 === CHECKING LOGIN STATUS ===');
-
-      // Changed variable name from 'isLoggedIn' to 'loggedInFlag' to avoid conflict
       final loggedInFlag = prefs.getBool(_isLoggedInKey) ?? false;
       final userId = prefs.getString(_userIdKey);
       final token = prefs.getString(_tokenKey);
-
       print('   IsLoggedIn flag: $loggedInFlag');
       print('   User ID: $userId');
       print('   Token exists: ${token != null}');
       print('   Token length: ${token?.length ?? 0}');
-
-      final result = loggedInFlag &&
-          userId != null &&
-          userId.isNotEmpty &&
-          token != null &&
-          token.isNotEmpty;
-
+      final result = loggedInFlag && userId != null && userId.isNotEmpty && token != null && token.isNotEmpty;
       print('   Final result: $result');
       print('🔍 === == == === END LOGIN   === == == ===');
-
-
       return result;
-
     } catch (e) {
       print('❌ Error checking login status: $e');
       return false;
@@ -189,7 +148,6 @@ class SessionManager {
   static Future<String?> getToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
       print('🔐 === GETTING TOKEN ===');
 
       final token = prefs.getString(_tokenKey);
