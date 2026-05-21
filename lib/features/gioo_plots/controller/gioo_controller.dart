@@ -41,7 +41,6 @@ class GiooPlotController extends GetxController {
   var isLoadingDetail = false.obs;
   var giooPlotDetail = Rxn<GiooPlotDetail>();
   var errorMessage = ''.obs;
-  var isExpanded = false.obs;
   var minAreaSqft = ''.obs;
   var maxAreaSqft = ''.obs;
   var isDescriptionExpanded = false.obs;
@@ -121,7 +120,6 @@ class GiooPlotController extends GetxController {
     ever(isApplied, (_) => calculateFinalAmount());
   }
 
-  void toggleExpansion() => isExpanded.value = !isExpanded.value;
 
   void toggleDescription() =>
       isDescriptionExpanded.value = !isDescriptionExpanded.value;

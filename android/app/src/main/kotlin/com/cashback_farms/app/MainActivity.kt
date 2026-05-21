@@ -1,4 +1,4 @@
-package com.cashback_farms.app
+package com.geofarms.app
 
 import io.flutter.embedding.android.FlutterActivity
 

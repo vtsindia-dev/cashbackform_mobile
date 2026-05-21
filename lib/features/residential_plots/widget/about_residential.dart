@@ -155,7 +155,7 @@ class _ResidentialBlueprintWidgetState
       final String rawBlueprint = property.blueprint ?? '';
       if (rawBlueprint.isEmpty) return const SizedBox.shrink();
 
-      const String _baseUrl = 'https://admincashback.vrikshatech.in/public/';
+      const String _baseUrl = '${ApiUrl.baseUrl}/';
       final String imageUrl = rawBlueprint.startsWith('http')
           ? rawBlueprint
           : '$_baseUrl$rawBlueprint';
@@ -557,7 +557,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                       GestureDetector(
                         onTap: () {
                           final cleanBaseUrl =
-                          ApiUrl.WebsidebaseUrl.replaceAll('/public', '');
+                          ApiUrl.webSideBaseUrl.replaceAll('/public', '');
                           Share.share(
                               '$cleanBaseUrl/residential-property/details/${property.id}');
                         },

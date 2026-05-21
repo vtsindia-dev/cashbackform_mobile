@@ -6,11 +6,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
 import '../../../common/widget/media_carousel_widget.dart';
+import '../../../common/widget/share_action_button_widget.dart';
 import '../controller/syndicate_controller.dart';
 
 class AboutPlot extends StatelessWidget {
@@ -26,7 +28,7 @@ class AboutPlot extends StatelessWidget {
       final images = detail?.images.isNotEmpty == true
           ? detail!.images
           : [
-        'https://admincashback.vrikshatech.in/public/uploads/property/placeholder.png'
+        '${ApiUrl.baseUrl}/uploads/property/placeholder.png'
       ];
 
       return Container(
@@ -46,8 +48,9 @@ class AboutPlot extends StatelessWidget {
         child: Column(
           children: [
             _buildCarouselSection(images, detail?.isSoldOut ?? false),
-            _buildActionRow(controller),
-            Obx(() => _buildExpandableSection(controller, detail)),
+            _buildActionRow(controller, detail),
+            SizedBox(height: 10.h),
+            _buildExpandableSection(controller, detail),
           ],
         ),
       );
@@ -160,99 +163,108 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  // ────────────────────────────────────────
-  Widget _buildActionRow(SyndicatePlotController controller) {
+
+  Widget _buildActionRow(SyndicatePlotController controller, detail) {
+    final youtubeLink = detail?.youtubeLink;
     return Container(
       margin: EdgeInsets.symmetric(vertical: 6.h, horizontal: 5.h),
-      child: Obx(
-            () => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: SingleChildScrollView(
+        child: Row(
           children: [
-            // View/Hide Details button
-            GestureDetector(
-              onTap: controller.toggleExpansion,
-              child: Container(
-                padding:
-                EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColor.primary, AppColor.primarylite],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20.r),
+            if (youtubeLink != null && youtubeLink.isNotEmpty) ...[
+              ActionButtonWidget(
+                onTap: () async {
+                  final Uri url = Uri.parse(youtubeLink);
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(
+                      url,
+                      mode: LaunchMode.externalApplication,
+                    );
+                  } else {
+                    Get.snackbar(
+                      "Failed",
+                      "Could not open video link",
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  }
+                },
+                title: "Watch Video",
+                icon: Image.asset(
+                  'assets/images/youtube.png',
+                  height: 18.h,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      controller.isExpanded.value
-                          ? 'Hide Details'
-                          : 'View Details',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.sp,
-                      ),
-                    ),
-                    SizedBox(width: 6.w),
-                    Icon(
-                      controller.isExpanded.value
-                          ? Icons.arrow_upward
-                          : Icons.arrow_downward,
-                      size: 18.sp,
-                      color: Colors.black,
-                    ),
-                  ],
-                ),
+                textColor: Colors.red.shade800,
+                borderColor: Colors.red.shade200,
+                gradientColors: [
+                  Colors.red.shade50,
+                  Colors.red.shade100.withValues(alpha: 0.5),
+                ],
               ),
-            ),
+            ],
+            if (detail?.share != null &&
+                detail!.share!.isNotEmpty) ...[
+              SizedBox(width: 8.w),
 
-            SizedBox(width: 12.w),
-
-            // Share button
-            GestureDetector(
-              onTap: () {
-                final id = controller.syndicateDetail.value?.id?? '';
-                if (id == null) return;
-                final cleanBase =
-                ApiUrl.WebsidebaseUrl.replaceAll('/public', '');
-                Share.share('$cleanBase/syndicate-plots/details/$id');
-              },
-              child: Container(
-                padding:
-                EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(20.r),
+              ActionButtonWidget(
+                onTap: () async {
+                  final url = detail.share ?? '';
+                  final whatsappUrl = Uri.parse(
+                    "https://wa.me/?text=${Uri.encodeComponent(url)}",
+                  );
+                  if (await canLaunchUrl(whatsappUrl)) {
+                    await launchUrl(
+                      whatsappUrl,
+                      mode: LaunchMode.externalApplication,
+                    );
+                  }
+                },
+                title: "WhatsApp",
+                icon: Image.asset(
+                  'assets/images/whatsapp (1).png',
+                  height: 18.h,
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.share, size: 18.sp, color: AppColor.black),
-                    SizedBox(width: 6.w),
-                    Text('Share',
-                        style: TextStyle(
-                            fontSize: 13.sp, fontWeight: FontWeight.w600)),
-                  ],
-                ),
+                bgColor: Colors.grey.shade100,
+                borderColor: Colors.grey.shade300,
+                textColor: Colors.grey.shade800,
               ),
-            ),
+            ],
+            if (detail?.id != null) ...[
+              SizedBox(width: 8.w),
+
+              ActionButtonWidget(
+                onTap: () {
+                  final cleanBaseUrl =
+                  ApiUrl.webSideBaseUrl.replaceAll('/public', '');
+                  Share.share(
+                    '$cleanBaseUrl/gioo-plots/details/${detail?.id}',
+                  );
+                },
+                title: "Share",
+                icon: Icon(
+                  Icons.share_outlined,
+                  size: 16.sp,
+                  color: AppColor.black.withValues(alpha:0.8),
+                ),
+                bgColor: Colors.grey.shade100,
+                borderColor: Colors.grey.shade300,
+                textColor: Colors.grey.shade800,
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  // ────────────────────────────────────────
   Widget _buildExpandableSection(
       SyndicatePlotController controller, detail) {
     return AnimatedContainer(
       duration: 400.ms,
       padding: EdgeInsets.symmetric(horizontal: 20.w),
-      height: controller.isExpanded.value ? null : 0,
-      child: controller.isExpanded.value
-          ? _buildExpandedContent(controller, detail)
-          : const SizedBox(),
+      height: null,
+      child: _buildExpandedContent(controller, detail),
     );
   }
 
@@ -263,6 +275,7 @@ class AboutPlot extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+
         SizedBox(height: 6.h),
 
         // ── Core details ──

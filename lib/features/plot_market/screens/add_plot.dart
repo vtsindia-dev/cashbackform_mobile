@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cashback_farms/common/api_constant.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geocoding/geocoding.dart';
@@ -9,7 +10,6 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-
 import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/toster.dart';
@@ -226,12 +226,12 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
           final bp = plot.bluePrint!;
           _existingPlotImageUrl = bp.startsWith('http')
               ? bp
-              : 'https://admincashback.vrikshatech.in/public/$bp';
+              : '${ApiUrl.baseUrl}/$bp';
         } else if (plot.plotImage != null && plot.plotImage!.isNotEmpty) {
           final pi = plot.plotImage!;
           _existingPlotImageUrl = pi.startsWith('http')
               ? pi
-              : 'https://admincashback.vrikshatech.in/public/$pi';
+              : '${ApiUrl.baseUrl}/$pi';
         }
 
         // ── FIX: Common facility prefill ────────────────────────────────

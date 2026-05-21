@@ -4,11 +4,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
 import '../../../common/widget/media_carousel_widget.dart';
+import '../../../common/widget/share_action_button_widget.dart';
 
 class AboutGiooPlot extends StatelessWidget {
   const AboutGiooPlot({super.key});
@@ -21,13 +23,10 @@ class AboutGiooPlot extends StatelessWidget {
       final detail = controller.giooPlotDetail.value;
       final projectName = detail?.name ?? 'No Name';
       final location = detail?.address ?? 'No Address';
-      final totalLayout = detail?.area ?? 'No Area';
-      final plotCount = '${detail?.unitSpilt ?? 0} Residential Plots';
       final pricePerSqFt = '₹ ${detail?.price ?? '0'} per Sq.Ft';
-      final status = detail?.work ?? 'No Status';
       final totalArea = "${detail?.area} Sq.Ft";
-      final ulpin = detail?.uldNo ?? '';
       final totalPrize = "₹  ${detail?.totalPrice}";
+      final youtubeLink = detail?.youtubeLink;
       final images = detail?.images.isNotEmpty == true
           ? detail!.images
           : [
@@ -46,7 +45,7 @@ class AboutGiooPlot extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
+              color: Colors.grey.withValues(alpha:0.3),
               blurRadius: 15.r,
               offset: const Offset(0, 4),
             ),
@@ -68,7 +67,7 @@ class AboutGiooPlot extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.white.withOpacity(0.4),
+                          color: Colors.white.withValues(alpha:0.4),
                           blurRadius: 8.r,
                           spreadRadius: 2.r,
                           offset: const Offset(0, 3),
@@ -104,7 +103,7 @@ class AboutGiooPlot extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.red.withOpacity(0.3),
+                            color: Colors.red.withValues(alpha:0.3),
                             blurRadius: 8.r,
                             offset: const Offset(0, 2),
                           ),
@@ -134,97 +133,99 @@ class AboutGiooPlot extends StatelessWidget {
                   ),
               ],
             ),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                /// SHARE BUTTON
-                Padding(
-                  padding: EdgeInsets.only(right: 12.w, left: 8.w),
-                  child: GestureDetector(
-                    onTap: controller.toggleExpansion,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColor.primary, AppColor.primarylite],
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w),
+              child: SingleChildScrollView(
+                child: Row(
+                  children: [
+                    if (youtubeLink != null && youtubeLink.isNotEmpty) ...[
+                      ActionButtonWidget(
+                        onTap: () async {
+                          final Uri url = Uri.parse(youtubeLink);
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          } else {
+                            Get.snackbar(
+                              "Failed",
+                              "Could not open video link",
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                          }
+                        },
+                        title: "Watch Video",
+                        icon: Image.asset(
+                          'assets/images/youtube.png',
+                          height: 18.h,
                         ),
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            controller.isExpanded.value
-                                ? 'Hide Details'
-                                : 'View Details',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                          SizedBox(width: 6.w),
-                          Icon(
-                            controller.isExpanded.value
-                                ? Icons.arrow_upward
-                                : Icons.arrow_downward,
-                            size: 18.sp,
-                            color: Colors.black,
-                          ),
+                        textColor: Colors.red.shade800,
+                        borderColor: Colors.red.shade200,
+                        gradientColors: [
+                          Colors.red.shade50,
+                          Colors.red.shade100.withValues(alpha: 0.5),
                         ],
                       ),
-                    ),
-                  ),
+                    ],
+                    if (detail?.share != null &&
+                        detail!.share!.isNotEmpty) ...[
+                      SizedBox(width: 8.w),
+                
+                      ActionButtonWidget(
+                        onTap: () async {
+                          final url = detail.share ?? '';
+                          final whatsappUrl = Uri.parse(
+                            "https://wa.me/?text=${Uri.encodeComponent(url)}",
+                          );
+                          if (await canLaunchUrl(whatsappUrl)) {
+                            await launchUrl(
+                              whatsappUrl,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        },
+                        title: "WhatsApp",
+                        icon: Image.asset(
+                          'assets/images/whatsapp (1).png',
+                          height: 18.h,
+                        ),
+                        bgColor: Colors.grey.shade100,
+                        borderColor: Colors.grey.shade300,
+                        textColor: Colors.grey.shade800,
+                      ),
+                    ],
+                    if (detail?.id != null) ...[
+                      SizedBox(width: 8.w),
+                
+                      ActionButtonWidget(
+                        onTap: () {
+                          final cleanBaseUrl =
+                          ApiUrl.webSideBaseUrl.replaceAll('/public', '');
+                          Share.share(
+                            '$cleanBaseUrl/gioo-plots/details/${detail?.id}',
+                          );
+                        },
+                        title: "Share",
+                        icon: Icon(
+                          Icons.share_outlined,
+                          size: 16.sp,
+                          color: AppColor.black.withValues(alpha:0.8),
+                        ),
+                        bgColor: Colors.grey.shade100,
+                        borderColor: Colors.grey.shade300,
+                        textColor: Colors.grey.shade800,
+                      ),
+                    ],
+                  ],
                 ),
-
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.w),
-                  child: GestureDetector(
-                    onTap: () {
-                      final cleanBaseUrl =
-                      ApiUrl.WebsidebaseUrl.replaceAll('/public', '');
-
-                      Share.share(
-                        '$cleanBaseUrl/gioo-plots/details/${detail?.id ?? ''}',
-                      );
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.share, size: 18.sp, color: AppColor.black),
-                          SizedBox(width: 6.w),
-                          Text(
-                            "Share",
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-
-            AnimatedContainer(
-              duration: 400.ms,
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              height: controller.isExpanded.value ? null : 0,
-              child: controller.isExpanded.value
-                  ? Column(
+            Padding(
+              padding:  EdgeInsets.symmetric(horizontal: 10.w),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: 6.h),
@@ -234,7 +235,7 @@ class AboutGiooPlot extends StatelessWidget {
                       width: double.infinity,
                       padding: EdgeInsets.symmetric(vertical: 8.h),
                       decoration: BoxDecoration(
-                        color: AppColor.primary.withOpacity(0.1),
+                        color: AppColor.primary.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Text(
@@ -264,7 +265,7 @@ class AboutGiooPlot extends StatelessWidget {
                           .then(delay: 0.ms)
                           .shimmer(
                         duration: 800.ms,
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha:0.3),
                       ),
                     ),
                   ),
@@ -276,7 +277,7 @@ class AboutGiooPlot extends StatelessWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
+                          SizedBox(
                             width: 110.w,
                             child: Text(
                               'Plot Type',
@@ -328,7 +329,7 @@ class AboutGiooPlot extends StatelessWidget {
                       ).then(delay: 200.ms)
                           .shimmer(
                         duration: 800.ms,
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha:0.3),
                       ),
                     ),
                   ],
@@ -392,7 +393,7 @@ class AboutGiooPlot extends StatelessWidget {
                         .then(delay: 200.ms)
                         .shimmer(
                       duration: 800.ms,
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha:0.3),
                     ),
                   ),
 
@@ -455,7 +456,7 @@ class AboutGiooPlot extends StatelessWidget {
                         .then(delay: 400.ms)
                         .shimmer(
                       duration: 800.ms,
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha:0.3),
                     ),
                   ),
 
@@ -518,7 +519,7 @@ class AboutGiooPlot extends StatelessWidget {
                         .then(delay: 400.ms)
                         .shimmer(
                       duration: 800.ms,
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha:0.3),
                     ),
                   ),
 
@@ -581,7 +582,7 @@ class AboutGiooPlot extends StatelessWidget {
                         .then(delay: 100.ms)
                         .shimmer(
                       duration: 800.ms,
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha:0.3),
                     ),
                   ),
 
@@ -598,7 +599,7 @@ class AboutGiooPlot extends StatelessWidget {
                             vertical: 8.h,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColor.primary.withOpacity(0.1),
+                            color: AppColor.primary.withValues(alpha:0.1),
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Text(
@@ -680,9 +681,8 @@ class AboutGiooPlot extends StatelessWidget {
                   }),
                   SizedBox(height: 10.h),
                 ],
-              )
-                  : const SizedBox(),
-            ),
+              ),
+            )
           ],
         ),
       );

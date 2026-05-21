@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.cashback_farms.app"
+    namespace = "com.geofarms.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.cashback_farms.app"
+        applicationId = "com.geofarms.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

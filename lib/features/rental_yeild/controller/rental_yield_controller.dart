@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cashback_farms/common/api_constant.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -17,9 +18,9 @@ class RentalYieldController extends GetxController {
   RxBool isLoadingEnquiries = false.obs;
 
   // API Configuration
-  final String baseUrl = 'https://admincashback.vrikshatech.in/public/api/v2/';
+  final String baseUrl = '${ApiUrl.baseUrl}/api/v2/';
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'https://admincashback.vrikshatech.in/public/api/v2/',
+    baseUrl: '${ApiUrl.baseUrl}/api/v2/',
     connectTimeout: const Duration(seconds: 30),
     receiveTimeout: const Duration(seconds: 30),
   ));

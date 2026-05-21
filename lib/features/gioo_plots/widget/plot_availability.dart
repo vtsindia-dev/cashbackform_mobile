@@ -166,7 +166,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildChartWithData(List<String> ranges, List<double> bookedValues, List<double> availableValues) {
+  /*Widget _buildChartWithData(List<String> ranges, List<double> bookedValues, List<double> availableValues) {
     double maxVal = 0;
     if (bookedValues.isNotEmpty) maxVal = max(maxVal, bookedValues.reduce(max));
     if (availableValues.isNotEmpty) maxVal = max(maxVal, availableValues.reduce(max));
@@ -271,9 +271,9 @@ class PlotAvailabilityWidget extends StatelessWidget {
         ],
       ),
     );
-  }
+  }*/
 
-/*  Widget _buildChartWithData(List<String> ranges, List<double> bookedValues, List<double> availableValues) {
+  Widget _buildChartWithData(List<String> ranges, List<double> bookedValues, List<double> availableValues) {
     double maxY = 0;
     if (bookedValues.isNotEmpty && availableValues.isNotEmpty) {
       for (int i = 0; i < bookedValues.length; i++) {
@@ -378,7 +378,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
         }),
       ),
     );
-  }*/
+  }
 
   Widget _buildEmptyChart() {
     return Center(

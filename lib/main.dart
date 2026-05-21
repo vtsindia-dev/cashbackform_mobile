@@ -70,7 +70,7 @@ class MyApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (_, child) => GetMaterialApp(
-        title: 'Geo Rental Farms',
+        title: 'Geofarms',
         theme: ThemeData(
           progressIndicatorTheme: const
           ProgressIndicatorThemeData(

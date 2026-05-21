@@ -624,6 +624,8 @@ class GiooPlotDetail {
   final String? share;
   final String? frontendUrl;
   final String? threeDImage;
+  final String? youtubeLink;
+
 
   GiooPlotDetail({
     required this.id,
@@ -670,6 +672,7 @@ class GiooPlotDetail {
     this.share,
     this.frontendUrl,
     this.threeDImage,
+    this.youtubeLink
   });
 
   factory GiooPlotDetail.fromJson(Map<String, dynamic> json) {
@@ -764,6 +767,7 @@ class GiooPlotDetail {
       share: json['share']?.toString(),
       frontendUrl: json['frontend_url']?.toString(),
       threeDImage: json['three_d_image']?.toString(),
+      youtubeLink: json['youtube_link']?.toString(),
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'].toString())
           : DateTime.now(),

@@ -930,7 +930,7 @@ class MaterialController extends GetxController {
     //
     //   // Build URL with query parameters manually
     //   final url = _buildUrlWithParams(
-    //       'https://admincashback.vrikshatech.in/public/api/v2/material_list',
+    //       '${ApiUrl.baseUrl}/public/api/v2/material_list',
     //       {'page': currentPage.value}
     //   );
     //
@@ -1021,7 +1021,7 @@ class MaterialController extends GetxController {
       vendors.clear();
       pageErrorMessage.value = '';
       final url =
-          'https://admincashback.vrikshatech.in/public/api/v2/vendor?product_id=$materialId';
+          '${ApiUrl.baseUrl}/api/v2/vendor?product_id=$materialId';
       print('🌐 Fetching vendors: $url');
       final response = await ApiService.getRequest(url);
       print('📥 Vendor response status: ${response.statusCode}');
@@ -1076,7 +1076,7 @@ class MaterialController extends GetxController {
     //   pageErrorMessage.value = '';
     //
     //   final url = _buildUrlWithParams(
-    //       'https://admincashback.vrikshatech.in/public/api/v2/material_list',
+    //       '${ApiUrl.baseUrl}/api/v2/material_list',
     //       {
     //         'page': 1,
     //         'search': query,

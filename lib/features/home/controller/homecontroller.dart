@@ -1,5 +1,6 @@
 import 'package:cashback_farms/common/model/logger_model.dart';
 import 'package:cashback_farms/features/home/model/feature_gio_rental_model.dart';
+import 'package:cashback_farms/features/home/model/featured_plot_model.dart';
 import 'package:cashback_farms/features/home/model/home_category_model.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -174,6 +175,7 @@ class HomeController extends GetxController {
         fetchMaterials(),
         fetchBanners(),
         fetchFeaturedSyndicates(),
+        fetchFeaturedPlots(),
         fetchFeaturedRental(),
         fetchFeaturedMarket(),
         fetchFeaturedGioo(),
@@ -468,7 +470,7 @@ class HomeController extends GetxController {
       isLoadingBanners(true);
       bannerError('');
 
-      const bannerUrl = 'https://admincashback.vrikshatech.in/public/api/v2/carousel_banner';
+      final bannerUrl = '${ApiUrl.baseUrl}/api/v2/carousel_banner';
       print('🌐 Fetching banners from: $bannerUrl');
 
       final response = await ApiService.getRequest(bannerUrl);
@@ -664,6 +666,147 @@ class HomeController extends GetxController {
 
     await fetchFeaturedSyndicates(loadMore: true);
   }
+
+  var plotCurrentPage = 1.obs;
+  var plotTotalPages = 1.obs;
+  var plotHasMore = true.obs;
+
+  var plotPagination = Rxn<Pagination>();
+
+  var featuredPlots = <Syndicate>[].obs;
+
+  var plotError = ''.obs;
+
+  var _isFetchingPlots = false;
+
+  var isLoadingPlots = false.obs;
+  var isLoadingMorePlots = false.obs;
+
+  Future<void> fetchFeaturedPlots({
+    bool loadMore = false,
+  }) async {
+    try {
+      if (_isFetchingPlots) {
+        print('⏸️ Plots fetch already in progress');
+        return;
+      }
+
+      if (loadMore && !plotHasMore.value) {
+        print('🛑 No more plots to load');
+        return;
+      }
+
+      _isFetchingPlots = true;
+
+      if (loadMore) {
+        isLoadingMorePlots(true);
+      } else {
+        isLoadingPlots(true);
+        plotError('');
+      }
+
+      final page =
+      loadMore ? plotCurrentPage.value + 1 : 1;
+
+      final url =
+          '${ApiUrl.featuredPlot}?page=$page';
+
+      print('🌐 Fetching featured plots from: $url');
+
+      final response = await ApiService.getRequest(url);
+
+      print('📦 Response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        if (responseData != null &&
+            responseData is Map<String, dynamic>) {
+
+          final plotResponse =
+          FeaturedPlotProperty.fromJson(
+            responseData,
+          );
+
+          final plots =
+              plotResponse.data?.syndicate ?? [];
+
+          final pagination =
+              plotResponse.data?.pagination;
+
+          if (loadMore) {
+            featuredPlots.addAll(plots);
+          } else {
+            featuredPlots.assignAll(plots);
+          }
+
+
+          plotPagination.value = pagination;
+
+          plotCurrentPage.value =
+              pagination?.currentPage ?? 1;
+
+          plotTotalPages.value =
+              pagination?.lastPage ?? 1;
+
+          plotHasMore.value =
+              plotCurrentPage.value <
+                  plotTotalPages.value;
+
+          print(
+            '✅ Loaded ${featuredPlots.length} featured plots',
+          );
+
+          print(
+            '📄 Current Page: ${plotCurrentPage.value}',
+          );
+
+          print(
+            '📄 Total Pages: ${plotTotalPages.value}',
+          );
+
+          print(
+            '📄 Has More: ${plotHasMore.value}',
+          );
+        } else {
+          plotError(
+            'Invalid plots response format',
+          );
+
+          print(
+            '❌ Invalid plots response format',
+          );
+        }
+      } else {
+        plotError(
+          'Failed to load plots: ${response.statusCode}',
+        );
+
+        print(
+          '❌ API Error: ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      plotError('Plots error: $e');
+
+      print(
+        '❌ Error fetching featured plots: $e',
+      );
+
+      print(stackTrace);
+    } finally {
+      isLoadingPlots(false);
+      isLoadingMorePlots(false);
+
+      _isFetchingPlots = false;
+    }
+  }
+  Future<void> loadMoreFeaturedPlots() async {
+    if (!plotHasMore.value || isLoadingMorePlots.value) return;
+    await fetchFeaturedPlots(loadMore: true);
+  }
+
+
 
   // FETCH FEATURED MARKET PROPERTIES (WITH PAGINATION)
   Future<void> fetchFeaturedMarket({bool loadMore = false}) async {
@@ -942,6 +1085,8 @@ class HomeController extends GetxController {
   Future<void> refreshSyndicates() => fetchFeaturedSyndicates();
   Future<void> refreshMarket() => fetchFeaturedMarket();
   Future<void> refreshGioo() => fetchFeaturedGioo();
+  Future<void> refreshPlots() => fetchFeaturedPlots();
+
 
   // ========== HELPER METHODS FOR SERVICES AND MATERIALS ==========
   String getServiceImage(int index) {

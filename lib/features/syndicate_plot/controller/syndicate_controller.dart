@@ -67,7 +67,7 @@ class SyndicatePlotController extends GetxController {
   Timer? _debounce;
 
   var errorMessage = ''.obs;
-  var isExpanded = false.obs;
+  var isExpanded = true.obs;
   var isExpandedrefral = false.obs;
   RxList<Map<String, dynamic>> plots = <Map<String, dynamic>>[].obs;
   RxList<int> selectedPlots = <int>[].obs;

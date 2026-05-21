@@ -156,7 +156,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                 Container(
                   width: size.width,
                   decoration: BoxDecoration(
-                    color: AppColor.primarylite.withOpacity(0.2),
+                    color: AppColor.primarylite.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   padding: const EdgeInsets.all(15),
@@ -206,7 +206,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                                         border: InputBorder.none,
                                         hintText: 'Enter coupon code',
                                         hintStyle: TextStyle(
-                                            color: Colors.grey.withOpacity(0.7),
+                                            color: Colors.grey.withValues(alpha: 0.7),
                                             fontSize: 14,
                                             fontWeight: FontWeight.w400
                                         ),
@@ -282,7 +282,7 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -325,49 +325,59 @@ class _EnCashMentScreenState extends State<EnCashMentScreen> {
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: RadioListTile<String>(
-                                value: "upi",
-                                groupValue: paymentType,
-                                onChanged: (value) {
-                                  setState(() => paymentType = value.toString());
-                                },
-                                title: const Text(
-                                  "UPI",
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                            RadioGroup<String>(
+                              groupValue: paymentType,
+                              onChanged: (value) {
+                                setState(() => paymentType = value!);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey.shade300),
                                 ),
-                                secondary: const Icon(Icons.account_balance_wallet, color: Colors.green),
-                                activeColor: Colors.green,
-                                contentPadding: EdgeInsets.zero,
+                                child: RadioListTile<String>(
+                                  value: "upi",
+                                  title: const Text(
+                                    "UPI",
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  secondary: const Icon(
+                                    Icons.account_balance_wallet,
+                                    color: Colors.green,
+                                  ),
+                                  activeColor: Colors.green,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: RadioListTile<String>(
-                                value: "bank",
-                                groupValue: paymentType,
-                                onChanged: (value) {
-                                  setState(() => paymentType = value.toString());
-                                },
-                                title: const Text(
-                                  "Bank Transfer",
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                            RadioGroup<String>(
+                              groupValue: paymentType,
+                              onChanged: (value) {
+                                setState(() => paymentType = value!);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey.shade300),
                                 ),
-                                secondary: const Icon(Icons.account_balance, color: Colors.blue),
-                                activeColor: Colors.blue,
-                                contentPadding: EdgeInsets.zero,
+                                child: RadioListTile<String>(
+                                  value: "bank",
+                                  title: const Text(
+                                    "Bank Transfer",
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  secondary: const Icon(
+                                    Icons.account_balance,
+                                    color: Colors.blue,
+                                  ),
+                                  activeColor: Colors.blue,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
                               ),
-                            ),
+                            )
                           ],
                         ),
                         const SizedBox(height: 10),

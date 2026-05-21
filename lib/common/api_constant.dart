@@ -1,9 +1,14 @@
 class ApiUrl {
+
   // static const String baseUrl = "http://192.168.1.114/admincashback/public";
 
   /// main baser URL
-  static const String baseUrl = "https://admincashback.vrikshatech.in/public";
-  static const String WebsidebaseUrl = "https://cashback.vrikshatech.in/public";
+  // static const String baseUrl = "https://admincashback.vrikshatech.in/public";
+  // static const String webSideBaseUrl = "https://cashback.vrikshatech.in/public";
+
+  static const String baseUrl = "https://admin.cashbackfarms.com/public";
+  static const String webSideBaseUrl = "https://cashbackfarms.com/public";
+
   static const String login = "$baseUrl/api/v2/login";
   static const String otp = "$baseUrl/api/v2/otp";
   static const String register = "$baseUrl/api/v2/register";
@@ -36,6 +41,7 @@ class ApiUrl {
   static const String privacy = "$baseUrl/api/v2/privacy";
   static const String carouselBanners = '$baseUrl/api/v2/ ';
   static const String featuredSyndicates = '$baseUrl/api/v2/synticate/featured';
+  static const String featuredPlot = '$baseUrl/api/v2/plot/featured';
   static const String featuredMarket = '$baseUrl/api/v2/market/featured';
   static const String featuredGioo = "$baseUrl/api/v2/geo/featured";
   static const String featuredRental= "$baseUrl/api/v2/rental/featured";

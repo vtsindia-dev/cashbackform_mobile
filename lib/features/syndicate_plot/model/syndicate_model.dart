@@ -205,6 +205,8 @@ class SyndicateDetail {
   final bool? propertyBooked;
   final bool? kycVerified;
   final int? transactionId;
+  final String? youtubeLink;
+  final String? share;
 
   SyndicateDetail({
     required this.id,
@@ -242,7 +244,9 @@ class SyndicateDetail {
     required this.nearbyLocations,
     this.propertyBooked,
     this.kycVerified,
-    this.transactionId
+    this.transactionId,
+    this.youtubeLink,
+    this.share,
   });
 
   factory SyndicateDetail.fromJson(Map<String, dynamic> json) {
@@ -288,10 +292,12 @@ class SyndicateDetail {
       status: safeInt(json['status']),
       soldStatus: safeInt(json['sold_status']), // ✅
       aminities: safeString(json['aminities'] ?? ''),
+      share: json['share']?.toString(),
       uldNo: safeString(json['uld_no'] ?? ''),
       propertyBooked : json['property_booked'],
         kycVerified : json['kyc_verified'],
         transactionId : json['transaction_id'],
+      youtubeLink: json['youtube_link']?.toString(),
       startingPrice: safeString(json['starting_price'] ?? '0'),
       amenities: (json['amenity'] is List)
           ? (json['amenity'] as List).map((e) => Amenity.fromJson(e)).toList()

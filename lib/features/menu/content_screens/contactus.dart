@@ -32,7 +32,7 @@ class ContactUsScreen extends StatelessWidget {
                 children: [
                   SizedBox(height: 40.h),
                   Obx(() => Text(
-                    "Contact ${controller.businessSettings.value?.businessName ?? 'Geo Rental Farms'}",
+                    "Contact ${controller.businessSettings.value?.businessName ?? 'Geofarms'}",
                     style: TextStyle(
                       fontSize: 28.sp,
                       fontWeight: FontWeight.bold,
@@ -171,7 +171,7 @@ class ContactUsScreen extends StatelessWidget {
       whatsapp = whatsapp.substring(1);
     }
 
-    final businessName = settings.businessName ?? 'Geo Rental Farms';
+    final businessName = settings.businessName ?? 'Geofarms';
     final whatsappUrl = 'https://wa.me/$whatsapp?text=Hello%20${Uri.encodeComponent(businessName)}';
 
     try {
@@ -193,7 +193,7 @@ class ContactUsScreen extends StatelessWidget {
       return;
     }
 
-    final businessName = settings.businessName ?? 'Geo Rental Farms';
+    final businessName = settings.businessName ?? 'Geofarms';
     final emailUrl = Uri(
       scheme: 'mailto',
       path: settings.businessEmail!,

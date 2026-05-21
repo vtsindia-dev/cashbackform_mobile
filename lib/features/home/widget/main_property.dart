@@ -2,186 +2,194 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
-
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
 import '../../../common/route/router.dart';
 
+
 class PropertyMain extends StatelessWidget {
   const PropertyMain({super.key});
 
-  final List<Map<String, String>> properties = const [
-    {"title": "Land", "icon": Images.featuredPlotMarket},
-    {"title": "Gioo Nano Plots", "icon": Images.featuredGioo},
-    {"title": "Gio Rental Yield – Syndicate Plot", "icon": Images.featuredSyndicate},
-    {"title": "Flat/Villas", "icon": Images.featuredResidential},
-    {"title": "Gio Rental Yield", "icon": Images.featuredGioo},
-  ];
-
-  final List<Color> iconColors = const [
-         Color(0xFF6A5AE0),
-    Color(0xFF2CC8B3),
-    Color(0xFFF49B33),
-    Color(0xFFE54788),
-    Color(0xFF0440FF),
+  final List<Map<String, dynamic>> properties = const [
+    {
+      "title": "Market Land/Plots",
+      "icon": Images.featuredPlotMarket,
+      "color": Color(0xFFE8E5FF),
+      "iconColor": Color(0xFF6A5AE0),
+      "route": AppRoutes.plotMarket
+    },
+    {
+      "title": "Flats/villas",
+      "icon": Images.featuredResidential,
+      "color": Color(0xFFE2FBE9),
+      "iconColor": Color(0xFF2CC8B3),
+      "route": AppRoutes.residentialList
+    },
+    {
+      "title": "Gio Rental Yield Plots",
+      "icon": Images.featuredGioo,
+      "color": Color(0xFFE3EDFF),
+      "iconColor": Color(0xFF0440FF),
+      "route": AppRoutes.rentalYieldList
+    },
+    {
+      "title": "Gio Syndicate Plots",
+      "icon": Images.featuredSyndicate,
+      "color": Color(0xFFFFF0DC),
+      "iconColor": Color(0xFFF49B33),
+      "route": AppRoutes.syndicate
+    },
+    {
+      "title": "Gio Nano Plots",
+      "icon": Images.featuredGioo,
+      "color": Color(0xFFFFE3EE),
+      "iconColor": Color(0xFFE54788),
+      "route": AppRoutes.gioo
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
-    final rowCount = (properties.length / 2).ceil();
-
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start  ,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Explore All",
-          style: TextStyle(
-            fontSize: 19.sp,
-            fontWeight: FontWeight.bold,
-            color: AppColor.textMain,
-          ),
+        Row(
+          children: [
+            Text(
+              "Plot ",
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColor.textMain,
+              ),
+            ),
+            Text(
+              "Categories",
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFFC107),
+              ),
+            ),
+          ],
         ),
-
+        SizedBox(height: 16.h),
+        Row(
+          children: [
+            Expanded(child: _buildAnimateCard(properties[0], 0)),
+            SizedBox(width: 12.w),
+            Expanded(child: _buildAnimateCard(properties[1], 1)),
+          ],
+        ),
         SizedBox(height: 12.h),
-
-        ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: rowCount,
-          itemBuilder: (context, rowIndex) {
-            final left = rowIndex * 2;
-            final right = left + 1;
-
-            return Row(
-              children: [
-                Expanded(
-                  child: _buildCard(properties[left], left)
-                      .animate()
-                      .slideX(
-                    begin: (left % 2 == 0) ? 0.6 : -0.6,
-                    end: 0,
-                    duration: 650.ms,
-                    curve: Curves.easeOutCubic,
-                  )
-                      .fadeIn(duration: 500.ms),
-                ),
-                SizedBox(width: 12.w),
-
-
-                Expanded(
-                  child: right < properties.length
-                      ? _buildCard(properties[right], right)
-                      .animate()
-                      .slideX(
-                    begin: (right % 2 == 0) ? 0.6 : -0.6,
-                    end: 0,
-                    duration: 650.ms,
-                    curve: Curves.easeOutCubic,
-                  )
-                      .fadeIn(duration: 500.ms)
-                      : SizedBox.shrink(),
-                ),
-              ],
-            ).paddingOnly(bottom: 10.h);
-          },
+        Row(
+          children: [
+            Expanded(child: _buildAnimateCard(properties[2], 2)),
+            SizedBox(width: 10.w),
+            Expanded(child: _buildAnimateCard(properties[3], 3)),
+            SizedBox(width: 10.w),
+            Expanded(child: _buildAnimateCard(properties[4], 4)),
+          ],
         ),
       ],
     );
   }
-  
 
-  void _navigateByTitle(String title) {
-    if (title == "Land") {
-      Get.toNamed(AppRoutes.plotMarket);
-    } else if (title == "Gioo Nano Plots") {
-      Get.toNamed(AppRoutes.gioo);
-    } else if (title == "Gio Rental Yield – Syndicate Plot") {
-      Get.toNamed(AppRoutes.syndicate);
-    }
-    else if (title == "Gio Rental Yield") {
-      Get.toNamed(AppRoutes.rentalYieldList);
-    } else {
-      Get.toNamed(AppRoutes.residentialList);
-    }
+  Widget _buildAnimateCard(Map<String, dynamic> item, int index) {
+    return _buildCard(item)
+        .animate()
+        .slideX(
+      begin: (index % 2 == 0) ? 0.4 : -0.4,
+      end: 0,
+      duration: 600.ms,
+      curve: Curves.easeOutCubic,
+    )
+        .fadeIn(duration: 450.ms);
   }
 
-  Widget _buildCard(Map<String, String> item, int index) {
-    final title = item["title"]!;
-    final icon = item["icon"]!;
-    final iconBg = iconColors[index % iconColors.length];
+  Widget _buildCard(Map<String, dynamic> item) {
+    final String title = item["title"]!;
+    final String icon = item["icon"]!;
+    final Color bgColor = item["color"]!;
+    final Color iconColor = item["iconColor"]!;
+    final String route = item["route"]!;
 
     return GestureDetector(
-      onTap: () => _navigateByTitle(title),
+      onTap: () => Get.toNamed(route),
       child: Container(
-        height: 80.h,
-        width: 10,
+        height: 76.h,
         decoration: BoxDecoration(
-          color: iconBg.withOpacity(0.2),
+          color: bgColor,
           borderRadius: BorderRadius.circular(14.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: Offset(0, 3),
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Stack(
           children: [
             Positioned(
-              right: 8.w,
-              bottom: 8.h,
+              right: 4.w,
+              bottom: 4.h,
               child: Opacity(
-                opacity: 0.06,
+                opacity: 0.05,
                 child: Image.asset(
                   icon,
-                  height: 55.h,
-                  width: 55.h,
+                  height: 52.h,
+                  width: 52.h,
                   color: Colors.black,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
-
-            Positioned(
-              top: 10.h,
-              left: 10.w,
-              child: Container(
-                padding: EdgeInsets.all(8.r),
-                decoration: BoxDecoration(
-                  color: iconBg.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Image.asset(
-                  icon,
-                  height: 26.h,
-                  width: 26.h,
-                  color: iconBg,
-                ),
-              ),
-            ),
-
-            Positioned(
-              bottom: 8.h,
-              left: 12.w,
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(5.r),
+                    decoration: BoxDecoration(
+                      color: iconColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Image.asset(
+                      icon,
+                      height: 22.h,
+                      width: 22.h,
+                      color: iconColor,
+                    ),
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.bottomLeft,
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  )
+                ],
               ),
             ),
           ],
         ),
       ),
-    )
-        .animate(onPlay: (c) => c.repeat())
-        .shimmer(
-      duration: 2300.ms,
-      color: Colors.white.withOpacity(0.40),
+    ).animate(onPlay: (c) => c.repeat()).shimmer(
+      duration: 2500.ms,
+      color: Colors.white.withValues(alpha: 0.25),
     );
   }
 }

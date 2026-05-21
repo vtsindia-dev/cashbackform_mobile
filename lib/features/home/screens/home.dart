@@ -1,6 +1,7 @@
 import 'package:cashback_farms/common/route/router.dart';
 import 'package:cashback_farms/common/widget/carousel.dart';
 import 'package:cashback_farms/features/home/widget/featured_gio_rental_yield_plots.dart';
+import 'package:cashback_farms/features/home/widget/features_flats_villas_properties.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -120,6 +121,18 @@ class _HomeState extends State<Home> {
                       ),
                       const SizedBox(height: 10),
                       FeaturesPlotProperties(),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Column(
+                    children: [
+                      SubtitleWidget(
+                        title: "Featured Flats / Villas Properties",
+                        highlightWord: "Flats / Villas",
+                        onViewAllTap: () =>   Get.toNamed(AppRoutes.residentialList),
+                      ),
+                      const SizedBox(height: 10),
+                      FeaturedFlatsVillasProperties(),
                     ],
                   ),
                   const SizedBox(height: 20),

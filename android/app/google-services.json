@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "523459218953",
-    "project_id": "cashback-90cba",
-    "storage_bucket": "cashback-90cba.firebasestorage.app"
+    "project_number": "629218686640",
+    "project_id": "geofarms-53879",
+    "storage_bucket": "geofarms-53879.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:523459218953:android:d4f00cfc6ef07620fff2d8",
+        "mobilesdk_app_id": "1:629218686640:android:495a70eafeae402c2eed75",
         "android_client_info": {
-          "package_name": "com.cashback_farms.app"
+          "package_name": "com.geofarms.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAAd_tEChMYShy9EqldVLM-JpSldnlfmzg"
+          "current_key": "AIzaSyDh9swc6rWta-GQY8pubhlFHF8Bj6a8cx4"
         }
       ],
       "services": {
@@ -27,6 +27,3 @@
   ],
   "configuration_version": "1"
 }
-
-
-
