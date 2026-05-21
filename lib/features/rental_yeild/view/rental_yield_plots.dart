@@ -708,7 +708,7 @@ class _CompactFilterSection extends StatelessWidget {
                       },
                       style: const TextStyle(fontSize: 14),
                       decoration: const InputDecoration(
-                          hintText: "Search rental yields...",
+                          hintText: "Search Property...",
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: EdgeInsets.zero),

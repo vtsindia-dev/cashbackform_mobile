@@ -2280,9 +2280,9 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionTitle('Blue Print Image'),
+                    _buildSectionTitle('Layout Sketch Image'),
                     _buildImagePickerCard(
-                      title: 'Blue Print Image',
+                      title: 'Layout Sketch Image',
                       onTap: _pickPlotImage,
                       newFile: _plotImage,
                       existingUrl: _existingPlotImageUrl,

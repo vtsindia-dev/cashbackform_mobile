@@ -1275,12 +1275,12 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
           ),
           SizedBox(height: 14.h),
 
-          // Blueprint Section
+          // Layout Sketch Section
           _buildSectionCard(
-            title: 'Blueprint / Floor Plan',
+            title: 'Layout Sketch / Floor Plan',
             icon: Iconsax.document,
             children: [
-              Text('Upload the property blueprint or floor plan (Optional)',
+              Text('Upload the property layout sketch or floor plan (Optional)',
                   style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
               SizedBox(height: 12.h),
               Obx(() {
@@ -1291,8 +1291,8 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                     icon: Iconsax.document_code,
                     label: hasFile
                         ? _controller.blueprintFile.value!.path.split('/').last
-                        : 'Blueprint uploaded',
-                    sublabel: hasFile ? 'New blueprint selected' : 'Existing blueprint',
+                        : 'Layout Sketch uploaded',
+                    sublabel: hasFile ? 'New Layout Sketch selected' : 'Existing Layout Sketch',
                     onRemove: () => _controller.removeBlueprint(),
                     iconColor: const Color(0xFF0EA5E9),
                     iconBg: const Color(0xFFE0F2FE),
@@ -1301,7 +1301,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                 }
                 return _buildUploadDropzone(
                   icon: Iconsax.document,
-                  label: 'Upload Blueprint / Floor Plan',
+                  label: 'Upload Layout Sketch / Floor Plan',
                   sublabel: 'PDF, PNG, JPG • Max 10MB',
                   onTap: () => _controller.pickBlueprint(),
                   accentColor: const Color(0xFF0EA5E9),

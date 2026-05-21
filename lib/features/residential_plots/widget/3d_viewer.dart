@@ -106,7 +106,7 @@ class _Property3DImageViewerState extends State<Property3DImageViewer> {
                         border: Border.all(color: AppColor.primary.withOpacity(0.3), width: 1.w),
                       ),
                       child: Text(
-                        is3DModel ? '3D Model Viewer' : 'Property 3D Image',
+                        is3DModel ? 'Aerial View' : 'Aerial View Image',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,

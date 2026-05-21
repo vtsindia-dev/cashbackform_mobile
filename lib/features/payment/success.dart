@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:confetti/confetti.dart';
-
 import '../gioo_plots/controller/gioo_controller.dart';
 import '../plot_market/controller/plot_market_controller.dart';
 import '../rental_yeild/controller/rental_yield_controller.dart';

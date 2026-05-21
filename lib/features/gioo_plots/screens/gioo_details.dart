@@ -59,7 +59,7 @@ class _GiooDetailsState extends State<GiooDetails> {
               GioSchemeOverview(),
               buyersList(controller),
               BluePrint(
-                title: "Green Heap Plots Blueprint",
+                title: "Green Heap Plots Layout Sketch",
                 imageUrl: controller.giooPlotDetail.value?.bluePrint,
               ),
               BluePrint(

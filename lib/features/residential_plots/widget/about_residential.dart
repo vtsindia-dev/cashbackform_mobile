@@ -192,7 +192,7 @@ class _ResidentialBlueprintWidgetState
                           color: AppColor.primary.withOpacity(0.3), width: 1),
                     ),
                     child: Text(
-                      'Blueprint',
+                      'Layout Sketch',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,

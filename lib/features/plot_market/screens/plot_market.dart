@@ -100,7 +100,7 @@ class PlotMarket extends StatelessWidget {
               onChanged: controller.onSearchChanged, // ← autocomplete hook
               onSubmitted: (_) => controller.applySearch(),
               decoration: InputDecoration(
-                hintText: "Search plots...",
+                hintText: "Search Property...",
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,

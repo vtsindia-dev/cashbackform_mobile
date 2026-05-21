@@ -73,7 +73,7 @@ class _PlotMarketBlueprintState extends State<PlotMarketBlueprint> {
                         border: Border.all(color: AppColor.primary.withOpacity(0.3), width: 1.w),
                       ),
                       child: Text(
-                        'Blue Print',
+                        'Layout Sketch',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
@@ -110,7 +110,7 @@ class _PlotMarketBlueprintState extends State<PlotMarketBlueprint> {
                       child: imageUrl.contains('placeholder')
                           ? Center(
                         child: Text(
-                          "Blueprint Image Missing",
+                          "Layout Sketch Image Missing",
                           style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade400),
                         ),
                       )

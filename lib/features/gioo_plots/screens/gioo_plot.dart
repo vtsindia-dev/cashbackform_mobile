@@ -863,7 +863,7 @@ class _CompactFilterSection extends StatelessWidget {
                       onSubmitted: (_) => controller.applySearch(),
                       style: const TextStyle(fontSize: 14),
                       decoration: const InputDecoration(
-                        hintText: "Search your plots...",
+                        hintText: "Search Property...",
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,

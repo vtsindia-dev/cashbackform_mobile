@@ -38,7 +38,7 @@ class _Plot360ViewWidgetState extends State<Plot360ViewWidget> {
               const Icon(Icons.view_in_ar, color: Color(0xFF689F00), size: 20),
               SizedBox(width: 8.w),
               Text(
-                "360° Virtual Tour",
+                "Aerial View",
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w800,

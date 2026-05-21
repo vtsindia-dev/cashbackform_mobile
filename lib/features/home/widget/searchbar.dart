@@ -36,7 +36,7 @@ class HomeSearchBar extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                "Search Your Location...",
+                "Search Your Property...",
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.grey,
                   fontSize: 14,

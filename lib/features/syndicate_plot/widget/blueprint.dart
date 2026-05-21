@@ -109,7 +109,7 @@ class _SyndicateBlueprintState extends State<SyndicateBlueprint> {
                       child: imageUrl.contains('placeholder')
                           ? Center(
                         child: Text(
-                          "Blueprint Image Missing",
+                          "Layout Sketch Image Missing",
                           style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade400),
                         ),
                       )

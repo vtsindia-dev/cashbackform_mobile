@@ -141,7 +141,7 @@ class _SearchAndFiltersSection extends StatelessWidget {
                           },
                           style: const TextStyle(fontSize: 14),
                           decoration: const InputDecoration(
-                            hintText: "Search syndicate plots... (min 5 chars)",
+                            hintText: "Search Property...",
                             border: InputBorder.none,
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
@@ -149,8 +149,9 @@ class _SearchAndFiltersSection extends StatelessWidget {
                         ),
                       ),
                       Obx(() {
-                        if (controller.searchQuery.value.isEmpty)
+                        if (controller.searchQuery.value.isEmpty) {
                           return const SizedBox.shrink();
+                        }
                         return GestureDetector(
                           onTap: () {
                             controller.searchQuery.value = '';

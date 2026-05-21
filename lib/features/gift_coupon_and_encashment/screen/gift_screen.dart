@@ -313,7 +313,7 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
                           color: Color(0xFFFFE082), letterSpacing: 2.2)),
                 ),
                 const SizedBox(height: 10),
-                const Text('Gift\nCoupons',
+                const Text('Gift/Payment Coupon',
                     style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900,
                         height: 1.05, letterSpacing: -1.5)),
                 const SizedBox(height: 6),

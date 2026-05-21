@@ -322,7 +322,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
-                hintText: "Search Your Location...",
+                hintText: "Search Your Property...",
                 hintStyle: const TextStyle(
                   color: Colors.grey,
                   fontSize: 14,

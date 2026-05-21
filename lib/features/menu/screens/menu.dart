@@ -127,7 +127,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     }) {
       if (isApproved) {
         return _RoleChipData(
-          label: "YOU'RE A\n$roleName",
+          label: "You're a\n$roleName",
           icon: icon,
           color: const Color(0xFF16A34A),
           status: RoleStatus.approved,
@@ -136,7 +136,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         );
       } else if (requestStatus == 1) {
         return _RoleChipData(
-          label: "$roleName REQUEST\nPENDING",
+          label: "$roleName Request\nPending",
           icon: icon,
           color: const Color(0xFFD97706),
           status: RoleStatus.pending,
@@ -146,7 +146,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       } else if (requestStatus == 2) {
         return _RoleChipData(
           // label: "RE-APPLY AS\n$roleName",
-          label: "JOIN AS\n$roleName",
+          label: "Join as\n$roleName",
           icon: icon,
           color: const Color(0xFFDC2626),
           status: RoleStatus.rejected,
@@ -155,7 +155,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         );
       } else {
         return _RoleChipData(
-          label: "JOIN AS\n$roleName",
+          label: "Join as\n$roleName",
           icon: icon,
           color: AppColor.primary,
           status: RoleStatus.joinNow,
@@ -169,21 +169,21 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       resolveChip(
         isApproved:    isAgent,
         requestStatus: agentRequest,
-        roleName:      "AGENT",
+        roleName:      "Agent",
         icon:          "assets/images/join_agent.png",
         roleType:      RoleType.agent,
       ),
       resolveChip(
         isApproved:    isVendor,
         requestStatus: vendorRequest,
-        roleName:      "VENDOR",
+        roleName:      "Builder/Promoters",
         icon:          "assets/images/join_vendor.png",
         roleType:      RoleType.vendor,
       ),
       resolveChip(
         isApproved:    isService,
         requestStatus: serviceRequest,
-        roleName:      "SERVICE",
+        roleName:      "Material/Service Provider",
         icon:          "assets/images/service_provider.png",
         roleType:      RoleType.service,
       ),
@@ -1131,7 +1131,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
             Icons.verified_user, "Kyc", () => Get.toNamed("/kycScreen")),
         _menuTile(Icons.notification_add_outlined, "Notification",
                 () => Get.toNamed("/NotificationsPage")),
-        _menuTile(Icons.card_giftcard, "Gift Coupon",
+        _menuTile(Icons.card_giftcard, "Gift/Payment Coupon",
                 () => Get.to(() => const GiftScreen())),
         _menuTile(Icons.currency_exchange, "Encashment",
                 () => Get.to(() => const EnCashMentScreen())),

@@ -338,7 +338,7 @@ class _CompactFilterSectionState extends State<_CompactFilterSection> {
                         onChanged: _onSearchChanged,
                         style: const TextStyle(fontSize: 14),
                         decoration: const InputDecoration(
-                          hintText: "Search plots...",
+                          hintText: "Search Property...",
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
