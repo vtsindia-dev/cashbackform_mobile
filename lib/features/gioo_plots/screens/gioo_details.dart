@@ -1,4 +1,5 @@
 import 'package:cashback_farms/features/gioo_plots/widget/gio_scheme_overview.dart';
+import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -25,7 +26,7 @@ class GiooDetails extends StatefulWidget {
 
 class _GiooDetailsState extends State<GiooDetails> {
   final GiooPlotController controller = Get.put(GiooPlotController());
-
+  DashboardController dashboardController = Get.put(DashboardController());
 
   @override
   void initState() {
@@ -52,12 +53,8 @@ class _GiooDetailsState extends State<GiooDetails> {
         return SingleChildScrollView(
           child: Column(
             children: [
-
               AboutGiooPlot(),
-              PlotAvailabilityWidget(),
-              NearbyProject(),
-              GioSchemeOverview(),
-              buyersList(controller),
+              GioSchemeOverview(youtubeLink: dashboardController.businessSettings.value?.howItWorkYoutubeLink),
               BluePrint(
                 title: "Green Heap Plots Layout Sketch",
                 imageUrl: controller.giooPlotDetail.value?.bluePrint,
@@ -67,6 +64,9 @@ class _GiooDetailsState extends State<GiooDetails> {
                 imageUrl: controller.giooPlotDetail.value?.plotImage,
               ),
               ReserveSlot(),
+              NearbyProject(),
+              PlotAvailabilityWidget(),
+              buyersList(controller),
               SizedBox(height: 45,)
             ],
           ),

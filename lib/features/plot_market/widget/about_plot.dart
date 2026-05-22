@@ -1,9 +1,12 @@
+import 'package:cashback_farms/common/api_constant.dart';
+import 'package:cashback_farms/common/widget/share_action_button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/media_carousel_widget.dart';
 import '../controller/plot_market_controller.dart';
@@ -42,6 +45,11 @@ class AboutPlot extends StatelessWidget {
           ? detail!.images
           : ["https://via.placeholder.com/500x300.png?text=No+Image"];
 
+      final cleanBaseUrl = ApiUrl.webSideBaseUrl.replaceAll('/public', '');
+
+      final shareUrl =
+          '$cleanBaseUrl/plot-marketplace/details/${detail?.id}';
+
       return Container(
         margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
@@ -58,6 +66,90 @@ class AboutPlot extends StatelessWidget {
         child: Column(
           children: [
             _buildCarousel(images, detail?.shareLink ?? '', isSoldOut),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w),
+              child: SingleChildScrollView(
+                child: Row(
+                  children: [
+                    if (detail?.youtubeLink != null && (detail?.youtubeLink?.isNotEmpty ?? false)) ...[
+                      ActionButtonWidget(
+                        onTap: () async {
+                          final Uri url = Uri.parse(detail?.youtubeLink??'');
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          } else {
+                            Get.snackbar(
+                              "Failed",
+                              "Could not open video link",
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                          }
+                        },
+                        title: "Watch Video",
+                        icon: Image.asset(
+                          'assets/images/youtube.png',
+                          height: 18.h,
+                        ),
+                        textColor: Colors.red.shade800,
+                        borderColor: Colors.red.shade200,
+                        gradientColors: [
+                          Colors.red.shade50,
+                          Colors.red.shade100.withValues(alpha: 0.5),
+                        ],
+                      ),
+                    ],
+                    if (detail?.id != null) ...[
+                      SizedBox(width: 8.w),
+                      ActionButtonWidget(
+                        onTap: () async {
+                          final whatsappUrl = Uri.parse(
+                            'https://wa.me/?text=${Uri.encodeComponent(shareUrl)}',
+                          );
+
+                          if (await canLaunchUrl(whatsappUrl)) {
+                            await launchUrl(
+                              whatsappUrl,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        },
+                        title: "WhatsApp",
+                        icon: Image.asset(
+                          'assets/images/whatsapp (1).png',
+                          height: 18.h,
+                        ),
+                        bgColor: Colors.grey.shade100,
+                        borderColor: Colors.grey.shade300,
+                        textColor: Colors.grey.shade800,
+                      ),
+                    ],
+                    if (detail?.id != null) ...[
+                      SizedBox(width: 8.w),
+                      ActionButtonWidget(
+                        onTap: () {
+                          Share.share(shareUrl);
+                        },
+                        title: "Share",
+                        icon: Icon(
+                          Icons.share_outlined,
+                          size: 16.sp,
+                          color: AppColor.black.withValues(alpha:0.8),
+                        ),
+                        bgColor: Colors.grey.shade100,
+                        borderColor: Colors.grey.shade300,
+                        textColor: Colors.grey.shade800,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 15.h,),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [_buildViewDetailsButton(controller)],

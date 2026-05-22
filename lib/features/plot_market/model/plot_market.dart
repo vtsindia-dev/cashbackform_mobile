@@ -342,6 +342,7 @@ class MarketPlotDetail {
   final String? shareLink;
   final String? threeDImage;
   final List<MapSet>? mapSet;
+  final String? youtubeLink;
 
   MarketPlotDetail({
     required this.id,
@@ -380,6 +381,7 @@ class MarketPlotDetail {
     this.shareLink,
     this.threeDImage,
     this.mapSet,
+    this.youtubeLink
   });
 
   factory MarketPlotDetail.fromJson(Map<String, dynamic> json) {
@@ -502,6 +504,7 @@ class MarketPlotDetail {
           json['commonfacility'].map((v) => CommonFacility.fromJson(v)))
           : [],
       mapSet: parseMapSet(json['map_set']),
+        youtubeLink : json['youtube_link']
     );
   }
 

@@ -84,7 +84,7 @@ class VendorStoreController extends GetxController {
   var mapMarkers = <Marker>{}.obs;
   var searchResults = <Map<String, dynamic>>[].obs;
   var isSearching = false.obs;
-  final String googleApiKey = 'AIzaSyDDJ17OjVJ0TS2qYt7GMOnrMjAu1CYZFg8';
+
 
   @override
   void onInit() {
@@ -142,7 +142,7 @@ class VendorStoreController extends GetxController {
     }
     try {
       isSearching.value = true;
-      final url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$googleApiKey&components=country:in';
+      final url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=${ApiUrl.googleApiKey}&components=country:in';
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -167,7 +167,7 @@ class VendorStoreController extends GetxController {
       final placeId = result['place_id'];
       final url = 'https://maps.googleapis.com/maps/api/place/details/json'
           '?place_id=$placeId'
-          '&key=$googleApiKey';
+          '&key=${ApiUrl.googleApiKey}';
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

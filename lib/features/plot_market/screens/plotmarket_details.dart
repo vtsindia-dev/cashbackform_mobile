@@ -4,15 +4,12 @@ import 'package:cashback_farms/features/plot_market/widget/plotmarket_details_wi
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/loader.dart';
-import '../../syndicate_plot/widget/scheme_overview.dart';
 import '../controller/plot_market_controller.dart';
 import '../widget/plot_market_blueprint.dart';
 import '../widget/plotmarket_details_widgets/mapset.dart';
 import '../widget/plotmarket_details_widgets/three_d_image_view_widget.dart';
-import '../widget/plotmarket_document.dart' show LegalDocumentsScreen;
 import '../widget/plotmarket_nearby.dart';
 
 
@@ -34,6 +31,7 @@ class _PlotMarketDetailsState extends State<PlotMarketDetails> {
     if (widget.id != null) {
       controller.fetchMarketPlotDetail(widget.id!);
     }
+    controller.isExpanded.value = true;
   }
 
   @override
@@ -54,8 +52,6 @@ class _PlotMarketDetailsState extends State<PlotMarketDetails> {
           return _buildNoDataAvailable();
         }
         final detail = controller.marketDetail.value!;
-
-        // Parse lat/long for map
         final currentLat = double.tryParse(detail.lat) ?? 0.0;
         final currentLong = double.tryParse(detail.long) ?? 0.0;
         final mapSet = detail.mapSet ?? [];
@@ -69,8 +65,6 @@ class _PlotMarketDetailsState extends State<PlotMarketDetails> {
               NearbyPlotMarket(),
               DescriptionWidget(marketPlotDetail: detail),
               CommonFacilityWidget(marketPlotDetail: detail),
-
-              // Add MapSet Widget here (only if mapSet is not empty)
               if (mapSet.isNotEmpty) ...[
                 SizedBox(height: 10.h),
                 Padding(

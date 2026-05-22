@@ -49,7 +49,7 @@ class ResidentialPropertyController extends GetxController {
   Timer? _searchDebounce;
   var errorMessage = ''.obs;
   var detailErrorMessage = ''.obs;
-  final isExpanded = false.obs;
+  final isExpanded = true.obs;
   final isDescriptionExpanded = false.obs;
   var isEnquiryLoading = false.obs;
   var enquirySent = false.obs;

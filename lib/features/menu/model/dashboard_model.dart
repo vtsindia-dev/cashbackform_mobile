@@ -579,6 +579,7 @@ class BusinessSettings {
   double? couponServiceCharge;
   double? minCouponVal;
   double? maxCouponVal;
+  String? howItWorkYoutubeLink;
 
   BusinessSettings({
     this.id,
@@ -655,6 +656,7 @@ class BusinessSettings {
     this.couponServiceCharge,
     this.minCouponVal,
     this.maxCouponVal,
+    this.howItWorkYoutubeLink
   });
 
   factory BusinessSettings.fromJson(Map<String, dynamic> json) {
@@ -759,6 +761,7 @@ class BusinessSettings {
       residentialTerms: json['residential_terms'] as String?,
       sealImage: json['seal_image'] as String?,
       signatureImage: json['signature_image'] as String?,
+      howItWorkYoutubeLink: json['how_it_work_youtube_link'] as String?,
       refundAmount: json['refund_amount'] != null
           ? double.tryParse(json['refund_amount'].toString())
           : null,

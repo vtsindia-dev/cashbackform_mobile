@@ -2,6 +2,7 @@
 class MaterialHomeListModel {
   int? id;
   String? materialName;
+  String? materialCode;
   int? categoryId;
   String? brandId;
   int? unitId;
@@ -17,6 +18,7 @@ class MaterialHomeListModel {
   MaterialHomeListModel(
       {this.id,
         this.materialName,
+        this.materialCode,
         this.categoryId,
         this.brandId,
         this.unitId,
@@ -31,6 +33,7 @@ class MaterialHomeListModel {
 
   MaterialHomeListModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
+    materialCode = json['material_code'];
     materialName = json['material_name'];
     categoryId = json['category_id'];
     brandId = json['brand_id'];

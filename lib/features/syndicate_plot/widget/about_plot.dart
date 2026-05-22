@@ -166,6 +166,13 @@ class AboutPlot extends StatelessWidget {
 
   Widget _buildActionRow(SyndicatePlotController controller, detail) {
     final youtubeLink = detail?.youtubeLink;
+
+    final cleanBaseUrl =
+    ApiUrl.webSideBaseUrl.replaceAll('/public', '');
+
+    final shareUrl =
+        '$cleanBaseUrl/gioo-plots/details/${detail?.id}';
+
     return Container(
       margin: EdgeInsets.symmetric(vertical: 6.h, horizontal: 5.h),
       child: SingleChildScrollView(
@@ -203,16 +210,14 @@ class AboutPlot extends StatelessWidget {
                 ],
               ),
             ],
-            if (detail?.share != null &&
-                detail!.share!.isNotEmpty) ...[
+            if (detail?.share != null && detail!.share!.isNotEmpty) ...[
               SizedBox(width: 8.w),
-
               ActionButtonWidget(
                 onTap: () async {
-                  final url = detail.share ?? '';
                   final whatsappUrl = Uri.parse(
-                    "https://wa.me/?text=${Uri.encodeComponent(url)}",
+                    'https://wa.me/?text=${Uri.encodeComponent(shareUrl)}',
                   );
+
                   if (await canLaunchUrl(whatsappUrl)) {
                     await launchUrl(
                       whatsappUrl,
@@ -232,14 +237,9 @@ class AboutPlot extends StatelessWidget {
             ],
             if (detail?.id != null) ...[
               SizedBox(width: 8.w),
-
               ActionButtonWidget(
                 onTap: () {
-                  final cleanBaseUrl =
-                  ApiUrl.webSideBaseUrl.replaceAll('/public', '');
-                  Share.share(
-                    '$cleanBaseUrl/gioo-plots/details/${detail?.id}',
-                  );
+                  Share.share(shareUrl);
                 },
                 title: "Share",
                 icon: Icon(

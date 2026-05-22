@@ -1,30 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../animations/arrowlines.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
 import '../../home/widget/sub_title.dart';
+
 class GioSchemeOverview extends StatelessWidget {
-  const GioSchemeOverview({super.key});
+  final String? youtubeLink;
+  const GioSchemeOverview({super.key, this.youtubeLink});
+
   final List<Map<String, dynamic>> _schemeItems = const [
-    {
-      'image': Images.selectSlot,
-      'title': 'Select Your Slot',
-    },
-    {
-      'image': Images.getPayment,
-      'title': 'Get Payment Verified',
-    },
-    {
-      'image': Images.registrationProcess,
-      'title': 'Registration Process',
-    },
-    {
-      'image': Images.plotRegistered,
-      'title': 'Plot Registered',
-    },
+    {'image': Images.selectSlot, 'title': 'Select Your Slot'},
+    {'image': Images.getPayment, 'title': 'Get Payment Verified'},
+    {'image': Images.registrationProcess, 'title': 'Lease Registration'},
+    {'image': Images.plotRegistered, 'title': 'Plot Registered'},
   ];
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -35,9 +29,33 @@ class GioSchemeOverview extends StatelessWidget {
             showViewAll: false,
             title: "How it's Works",
             highlightWord: "Works",
-            onViewAllTap: () {
-              print("View All clicked");
-            },
+            onViewAllTap: () {},
+            moreButton: youtubeLink == null ? SizedBox.shrink() : GestureDetector(
+              onTap: () async {
+                if(youtubeLink!=null){
+                  final Uri url = Uri.parse(youtubeLink??'');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  } else {
+                    Get.snackbar(
+                      "Failed",
+                      "Could not open video link",
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  }
+                }
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                decoration: BoxDecoration(
+                  color: AppColor.primary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text('More', style: TextStyle(color: Colors.white)),
+              ),
+            ),
           ),
         ),
         Container(
@@ -58,9 +76,11 @@ class GioSchemeOverview extends StatelessWidget {
             ),
           ),
           child: _buildTimeline(),
-        ),      ],
+        ),
+      ],
     );
   }
+
   Widget _buildTimeline() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -84,35 +104,36 @@ class GioSchemeOverview extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: List.generate(
                     _schemeItems.length,
-                        (i) => _buildAvatar(_schemeItems[i], i),
+                    (i) => _buildAvatar(_schemeItems[i], i),
                   ),
                 ),
               ),
             ],
           ),
         ),
-        SizedBox(height: 5,),
+        SizedBox(height: 5),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: List.generate(_schemeItems.length, (index) {
             return Expanded(
               child: Center(
-                child: Text(
-                  _schemeItems[index]['title'],
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColor.black,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2, // allow wrapping
-                  overflow: TextOverflow.ellipsis,
-                )
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: 0.2, end: 0)
-                    .then(delay: (index * 200).ms),
+                child:
+                    Text(
+                          _schemeItems[index]['title'],
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.black,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2, // allow wrapping
+                          overflow: TextOverflow.ellipsis,
+                        )
+                        .animate()
+                        .fadeIn(duration: 400.ms)
+                        .slideY(begin: 0.2, end: 0)
+                        .then(delay: (index * 200).ms),
               ),
             );
           }),
@@ -120,39 +141,38 @@ class GioSchemeOverview extends StatelessWidget {
       ],
     );
   }
+
   Widget _buildAvatar(Map<String, dynamic> item, int index) {
     return Container(
-        width: 50.w,
-        height: 50.h,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColor.primary, width: 2.w),
-          boxShadow: [
-            BoxShadow(
-              color: AppColor.primary.withOpacity(0.3),
-              blurRadius: 8.r,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: CircleAvatar(
-          radius: 28,
-          backgroundColor: AppColor.white,
-          child: ClipOval(
-            child: Image.asset(
-              item['image'],
-              width: 30,
-              height: 30,
-              fit: BoxFit.contain, // image shrinks inside
+          width: 50.w,
+          height: 50.h,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColor.primary, width: 2.w),
+            boxShadow: [
+              BoxShadow(
+                color: AppColor.primary.withOpacity(0.3),
+                blurRadius: 8.r,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 28,
+            backgroundColor: AppColor.white,
+            child: ClipOval(
+              child: Image.asset(
+                item['image'],
+                width: 30,
+                height: 30,
+                fit: BoxFit.contain, // image shrinks inside
+              ),
             ),
           ),
         )
-
-    )
         .animate()
         .scale(begin: const Offset(0.3, 0.3), end: const Offset(1, 1))
         .fadeIn(duration: 400.ms)
         .then(delay: (index * 200).ms);
   }
 }
-

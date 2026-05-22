@@ -1115,26 +1115,50 @@ class _MaterialStoreState extends State<MaterialStore>
                 ),
               ),
 
-              // Name + arrow
+              // Name + code + arrow
               Padding(
                 padding: EdgeInsets.fromLTRB(
                     10.w, 10.h, 10.w, 10.h),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: Text(
-                        item.materialName ?? '',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.5.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
-                          height: 1.3,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.materialName ?? '',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12.5.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1A1A1A),
+                              height: 1.3,
+                            ),
+                          ),
+
+                          if (item.materialCode != null &&
+                              item.materialCode!.isNotEmpty) ...[
+                            SizedBox(height: 4.h),
+                            Text(
+                              "Code: ${item.materialCode}",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
+
                     SizedBox(width: 4.w),
+
                     Container(
                       padding: EdgeInsets.all(5.w),
                       decoration: BoxDecoration(

@@ -416,6 +416,19 @@ class _ReferralsState extends State<Referrals> {
     );
   }
 
+  String maskEmail(String email) {
+    if (email.isEmpty || !email.contains('@')) return email;
+
+    final parts = email.split('@');
+    final username = parts[0];
+    final domain = parts[1];
+
+    final maskedName =
+        '${username[0]}${'*' * (username.length - 1)}';
+
+    return '$maskedName@$domain';
+  }
+
   Widget _buildUserCard(String name, String email, int plotsCount) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
@@ -451,7 +464,7 @@ class _ReferralsState extends State<Referrals> {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  email,
+                  maskEmail(email),
                   style: TextStyle(
                     fontSize: 10.sp,
                     color: Colors.grey[600],

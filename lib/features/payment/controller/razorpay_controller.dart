@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:cashback_farms/common/model/logger_model.dart';
+import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -137,6 +138,8 @@ class RazorpayController extends GetxController {
   String? localCouponCode;
   String? localSpicalDiscountAmount;
 
+  final dashboardController = Get.put(DashboardController());
+
   void openCheckout({
     required String customerName,
     required String customerEmail,
@@ -162,7 +165,7 @@ class RazorpayController extends GetxController {
       isProcessing.value = true;
 
       var options = {
-        'key': 'rzp_test_t8LKc2rPhJVv2N',
+        'key': '${dashboardController.businessSettings.value?.paymentApiKey}',
         'amount': amount,
         'name': customerName,
         'description': description,

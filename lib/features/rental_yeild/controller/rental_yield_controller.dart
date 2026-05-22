@@ -76,7 +76,7 @@ class RentalYieldController extends GetxController {
   RxBool isEnquiryLoading = false.obs;
 
   // Expansion state for property details
-  RxBool isExpanded = false.obs;
+  RxBool isExpanded = true.obs;
 
   // Property details cache
   final Map<int, RentalDetailProperty> _propertyDetailsCache = {};

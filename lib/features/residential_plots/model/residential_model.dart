@@ -211,6 +211,7 @@ class Property {
 
   // API key: 'doucment_verficaiton' (typo in API) — true means docs verified
   final bool documentVerification;
+  final String? youtubeLink;
 
   Property({
     required this.id,
@@ -268,6 +269,7 @@ class Property {
     this.featured = 0,
     this.mapSet = const [],
     this.documentVerification = false,
+    this.youtubeLink
   });
 
   factory Property.fromJson(Map<String, dynamic> json) {
@@ -313,6 +315,7 @@ class Property {
       roadWidth: json['road_width'] as String?,
       boundaryWall: safeBoolCast(json['boundary_wall']),
       features: json['features'] as String?,
+      youtubeLink : json['youtube_link'] as String?,
       aboutProperty: json['about_property'] as String? ?? '',
       landApproval: json['land_approval'] as String? ?? '',
       constructionGuidelines: json['construction_guidelines'] as String? ?? '',

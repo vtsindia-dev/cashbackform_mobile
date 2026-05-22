@@ -11,10 +11,12 @@ class SubtitleWidget extends StatelessWidget {
   final Color normalColor;
   final bool showViewAll;
   final Duration delay;
+  final Widget? moreButton;
 
   const SubtitleWidget({
     super.key,
     required this.title,
+    this.moreButton,
     required this.highlightWord,
     this.onViewAllTap,
     this.highlightColor = AppColor.primary,
@@ -41,11 +43,13 @@ class SubtitleWidget extends StatelessWidget {
             ),
           ),
         ),
+        if(moreButton != null)
+          moreButton!,
         if (showViewAll)
           GestureDetector(
             onTap: onViewAllTap,
-            child: const Text(
-              "View All",
+            child:  Text(
+               "View All",
               style: TextStyle(
                 color: AppColor.primary,
                 fontWeight: FontWeight.bold,

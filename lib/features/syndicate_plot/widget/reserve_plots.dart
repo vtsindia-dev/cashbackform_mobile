@@ -30,8 +30,6 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
       builder: (_) {
         final detail = controller.syndicateDetail.value;
         if (detail == null) return SizedBox.shrink();
-
-        // Check if property is sold out
         final isSoldOut = detail.isSoldOut == true;
 
         final selectedCount = controller.selectedPlots.length;
@@ -45,20 +43,14 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
         final plotAreas = controller.getPlotAreas();
         final totalArea = plotAreas.fold(0.0, (sum, area) => sum + area);
 
-        // Check if payment can proceed
-        final canProceedToPayment = !isSoldOut &&
-            selectedCount > 0 &&
-            controller.isTermsAccepted.value;
+        final canProceedToPayment = !isSoldOut && selectedCount > 0 && controller.isTermsAccepted.value;
 
-        // Remove Expanded and use SingleChildScrollView directly
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.symmetric(vertical: 10.h),
           child: Column(
             children: [
-              // Show sold out banner if applicable
               if (isSoldOut) _buildSoldOutBanner(),
-
               if (!isSoldOut) ...[
                 Padding(
                   padding: EdgeInsets.all(8.w),
@@ -71,7 +63,6 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                       .slideY(begin: 0.3, end: 0),
                 ),
               ],
-
               Container(
                 margin: EdgeInsets.all(8.w),
                 padding: EdgeInsets.all(12.w),
@@ -80,7 +71,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                   borderRadius: BorderRadius.circular(18.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha:0.05),
                       blurRadius: 8.r,
                       offset: const Offset(0, 4),
                     )
@@ -89,7 +80,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Price and Area info - hide if sold out
+
                     if (!isSoldOut) ...[
                       Padding(
                         padding: EdgeInsets.only(bottom: 10.h),
@@ -128,8 +119,6 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                         ),
                       ),
                     ],
-
-                    // Legend - hide if sold out
                     if (!isSoldOut)
                       Wrap(
                         spacing: 15.w,
@@ -149,10 +138,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                           ),
                         ],
                       ),
-
                     if (!isSoldOut) SizedBox(height: 20.h),
-
-                    // Dynamic grid based on API data
                     controller.plots.isEmpty
                         ? (isSoldOut ? SizedBox.shrink() : Center(child: CircularProgressIndicator()))
                         : GridView.builder(
@@ -173,13 +159,10 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                         final formattedArea = controller.formatArea(area);
                         final isSelected = controller.selectedPlots.contains(id);
                         final adminBlockAmount = controller.getPricePerPlotFromAdminBlock();
-
                         return GestureDetector(
-                          // Disable tapping if sold out
                           onTap: isSoldOut ? null : () => controller.toggleSelect(id, type),
                           child: Container(
                             decoration: BoxDecoration(
-                              // Use grey color for sold out state
                               color: isSoldOut
                                   ? Colors.grey[400]
                                   : controller.getColor(type, isSelected),
@@ -190,7 +173,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                               boxShadow: isSelected && !isSoldOut
                                   ? [
                                 BoxShadow(
-                                  color: Colors.orange.withOpacity(0.3),
+                                  color: Colors.orange.withValues(alpha:0.3),
                                   blurRadius: 4,
                                   spreadRadius: 1,
                                 )
@@ -232,8 +215,6 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                         );
                       },
                     ),
-
-                    // Payment Summary - only show if not sold out and plots selected
                     if (!isSoldOut && selectedCount > 0) ...[
                       SizedBox(height: 15.h),
                       Container(
@@ -318,15 +299,10 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                     ],
 
                     SizedBox(height: 8.h),
-
-                    // Terms and Conditions Checkbox
                     Center(
                       child: gioTermsCheckbox(),
                     ),
-
                     SizedBox(height: 8.h),
-
-                    // Payment Button with terms validation
                     Center(
                       child: InkWell(
                         onTap: () {
@@ -349,24 +325,22 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                           width: 230.w,
                           height: 45.h,
                           decoration: BoxDecoration(
-                            color: canProceedToPayment
+                            color: selectedCount > 0
                                 ? Colors.green
-                                : (isSoldOut || selectedCount == 0)
-                                ? Colors.grey[400]
-                                : Colors.grey[300],
+                                : Colors.grey[400],
                             borderRadius: BorderRadius.circular(30.r),
-                            boxShadow: canProceedToPayment
+                            boxShadow: selectedCount > 0
                                 ? [
                               BoxShadow(
-                                color: Colors.green.withOpacity(0.3),
+                                color: Colors.green.withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               )
                             ]
                                 : null,
                             border: Border.all(
-                              color: canProceedToPayment
-                                  ? Colors.green[700]!
+                              color: selectedCount > 0
+                                  ? Colors.green.shade700
                                   : Colors.grey,
                               width: 1,
                             ),
@@ -382,7 +356,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                                     ? "Pay ₹${amountWithGst.toStringAsFixed(2)}"
                                     : "Select Plots to Reserve"),
                                 style: TextStyle(
-                                  color: canProceedToPayment || isSoldOut
+                                  color: selectedCount > 0 || isSoldOut
                                       ? Colors.white
                                       : Colors.grey,
                                   fontSize: 14.sp,
@@ -390,22 +364,28 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              if (!isSoldOut && selectedCount > 0 && !controller.isTermsAccepted.value) ...[
+
+                              if (!isSoldOut &&
+                                  selectedCount > 0 &&
+                                  !controller.isTermsAccepted.value) ...[
                                 SizedBox(height: 2.h),
                                 Text(
                                   "Accept terms to proceed",
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     fontSize: 10.sp,
                                   ),
                                 ),
                               ],
-                              if (!isSoldOut && selectedCount > 0 && controller.isTermsAccepted.value) ...[
+
+                              if (!isSoldOut &&
+                                  selectedCount > 0 &&
+                                  controller.isTermsAccepted.value) ...[
                                 SizedBox(height: 2.h),
                                 Text(
                                   "${selectedCount} plot${selectedCount > 1 ? 's' : ''} selected • Fixed amount",
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     fontSize: 10.sp,
                                   ),
                                 ),
@@ -415,25 +395,25 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                                 Text(
                                   "No longer available",
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     fontSize: 10.sp,
                                   ),
                                 ),
                               ],
                             ],
                           ),
-                        ).animate(
+                        )
+                            .animate(
                           onPlay: (ctrl) => ctrl.repeat(),
-                        ).shake(
-                          hz: canProceedToPayment ? 3 : 0,
+                        )
+                            .shake(
+                          hz: selectedCount > 0 ? 3 : 0,
                           offset: const Offset(4, 0),
                           duration: 1000.ms,
                           curve: Curves.easeInOut,
                         ),
                       ),
                     ),
-
-                    // Info text - only show if not sold out and plots selected
                     if (!isSoldOut && selectedCount > 0) ...[
                       SizedBox(height: 10.h),
                       Center(
@@ -446,8 +426,6 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                         ),
                       ),
                     ],
-
-                    // Add bottom padding for better scrolling experience
                     SizedBox(height: 20.h),
                   ],
                 ),
@@ -497,8 +475,8 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
               padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
               decoration: BoxDecoration(
                 color: controller.isTermsAccepted.value
-                    ? AppColor.primary.withOpacity(0.1)
-                    : AppColor.textMain.withOpacity(0.03),
+                    ? AppColor.primary.withValues(alpha:0.1)
+                    : AppColor.textMain.withValues(alpha:0.03),
                 borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(
                   color: controller.isTermsAccepted.value ? AppColor.primary : Colors.transparent,
@@ -590,7 +568,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
         border: Border.all(color: Colors.red.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 8.r,
             offset: const Offset(0, 2),
           )

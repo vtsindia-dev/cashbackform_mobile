@@ -13,63 +13,6 @@ class NearbyProject extends StatelessWidget {
   final ScrollController amenitiesScrollController = ScrollController();
   final ScrollController nearbyScrollController = ScrollController();
 
-  Future<void> _launchGoogleMaps(dynamic lat, dynamic lng) async {
-    double? latitude;
-    double? longitude;
-    double? _toDouble(dynamic value) {
-      if (value == null) return null;
-      if (value is int) {
-        return value.toDouble();
-      } else if (value is double) {
-        return value;
-      } else if (value is String) {
-        return double.tryParse(value);
-      } else if (value is num) {
-        return value.toDouble();
-      }
-      return null;
-    }
-    latitude = _toDouble(lat);
-    longitude = _toDouble(lng);
-    if (latitude == null || longitude == null) {
-      final detail = controller.giooPlotDetail.value;
-      if (detail != null) {
-        latitude = _toDouble(detail.lat) ?? 0.0;
-        longitude = _toDouble(detail.long) ?? 0.0;
-      } else {
-        latitude = 0.0;
-        longitude = 0.0;
-      }
-    }
-    if (latitude == 0.0 && longitude == 0.0) {
-      Get.snackbar("Error", "Location coordinates not available");
-      return;
-    }
-    final googleMapsUrl = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
-    );
-    final appleMapsUrl = Uri.parse(
-      'https://maps.apple.com/?q=$latitude,$longitude',
-    );
-    try {
-      if (await canLaunchUrl(googleMapsUrl)) {
-        await launchUrl(
-          googleMapsUrl,
-          mode: LaunchMode.externalApplication,
-        );
-      } else if (await canLaunchUrl(appleMapsUrl)) {
-        await launchUrl(
-          appleMapsUrl,
-          mode: LaunchMode.externalApplication,
-        );
-      } else {
-        Get.snackbar("Error", "Could not launch maps application");
-      }
-    } catch (e) {
-      Get.snackbar("Error", "Failed to open maps: ${e.toString()}");
-    }
-  }
-
   String _formatDistance(dynamic distance) {
     if (distance == null) return "";
     if (distance is String) {
@@ -125,83 +68,7 @@ class NearbyProject extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // LOCATION DETAILS SECTION
-            Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 45.w,
-                    height: 45.w,
-                    decoration: BoxDecoration(
-                      color: AppColor.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Center(
-                      child: Icon(Icons.location_on_outlined,
-                          color: AppColor.primary, size: 25.w),
-                    ),
-                  ),
-                  12.w.horizontalSpace,
 
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Property location",
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppColor.textMain.withOpacity(0.8),
-                          ),
-                        ),
-                        4.h.verticalSpace,
-                        Text(
-                          address,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        4.h.verticalSpace,
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: "ULPIN Number: ",
-                                style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: AppColor.primary,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                              TextSpan(
-                                text: uldNo,
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Show coordinates if available
-                        if (detail.lat != null || detail.long != null) ...[
-                          4.h.verticalSpace,
-                          Text(
-                            "Coordinates: ${detail.lat ?? '-'}, ${detail.long ?? '-'}",
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
 
             25.h.verticalSpace,
 
@@ -223,39 +90,7 @@ class NearbyProject extends StatelessWidget {
                   ),
 
                   // VIEW MAP BUTTON
-                  GestureDetector(
-                    onTap: () => _launchGoogleMaps(
-                      detail.lat,
-                      detail.long,
-                    ),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: AppColor.primary.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.map_outlined,
-                            size: 14.sp,
-                            color: Colors.white,
-                          ),
-                          4.w.horizontalSpace,
-                          Text(
-                            "View on Map",
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+
                 ],
               ),
             ),

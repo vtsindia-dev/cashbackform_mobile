@@ -15,7 +15,8 @@ class SyndicateBuyingListWidget extends StatefulWidget {
   const SyndicateBuyingListWidget({super.key});
 
   @override
-  State<SyndicateBuyingListWidget> createState() => _SyndicateBuyingListWidgetState();
+  State<SyndicateBuyingListWidget> createState() =>
+      _SyndicateBuyingListWidgetState();
 }
 
 class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
@@ -105,10 +106,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
           SizedBox(height: 8.h),
           Text(
             'Fetching syndicate portfolio',
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade500),
           ),
         ],
       ),
@@ -185,7 +183,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                   borderRadius: BorderRadius.circular(12.r),
                   boxShadow: [
                     BoxShadow(
-                      color: _primaryColor.withOpacity(0.3),
+                      color: _primaryColor.withValues(alpha:0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -239,7 +237,8 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
         controller: _scrollController,
         padding: EdgeInsets.all(16.w),
         physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: controller.buyingList.length +
+        itemCount:
+            controller.buyingList.length +
             (controller.hasMoreBuyingData.value ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == controller.buyingList.length) {
@@ -259,58 +258,58 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
       child: Center(
         child: controller.isLoadingBuyingList.value
             ? Container(
-          width: 40.w,
-          height: 40.w,
-          padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(_primaryColor),
-          ),
-        )
+                width: 40.w,
+                height: 40.w,
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha:0.1),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(_primaryColor),
+                ),
+              )
             : ElevatedButton(
-          onPressed: controller.loadMoreBuyingList,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: _primaryColor,
-            side: BorderSide(
-              color: _primaryColor.withOpacity(0.3),
-              width: 2,
-            ),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: 32.w,
-              vertical: 14.h,
-            ),
-            shadowColor: Colors.transparent,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.expand_more, size: 20.w),
-              8.w.horizontalSpace,
-              Text(
-                'Load More Investments',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
+                onPressed: controller.loadMoreBuyingList,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: _primaryColor,
+                  side: BorderSide(
+                    color: _primaryColor.withValues(alpha:0.3),
+                    width: 2,
+                  ),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 32.w,
+                    vertical: 14.h,
+                  ),
+                  shadowColor: Colors.transparent,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.expand_more, size: 20.w),
+                    8.w.horizontalSpace,
+                    Text(
+                      'Load More Investments',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -328,16 +327,13 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: _neutralDark.withOpacity(0.05),
+            color: _neutralDark.withValues(alpha:0.05),
             blurRadius: 25,
             spreadRadius: 0,
             offset: const Offset(0, 10),
           ),
         ],
-        border: Border.all(
-          color: Colors.grey.shade100,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey.shade100, width: 1),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.r),
@@ -378,7 +374,10 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                           height: 60.w,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [_primaryColor.withOpacity(0.1), _secondaryColor.withOpacity(0.1)],
+                              colors: [
+                                _primaryColor.withValues(alpha:0.1),
+                                _secondaryColor.withValues(alpha:0.1),
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -423,7 +422,8 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                   4.w.horizontalSpace,
                                   Expanded(
                                     child: Text(
-                                      property?.address ?? "Location not available",
+                                      property?.address ??
+                                          "Location not available",
                                       style: TextStyle(
                                         fontSize: 12.sp,
                                         color: Colors.grey.shade600,
@@ -445,7 +445,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                             vertical: 6.h,
                           ),
                           decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
+                            color: statusColor.withValues(alpha:0.1),
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
@@ -507,8 +507,8 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            _primaryColor.withOpacity(0.03),
-                            _secondaryColor.withOpacity(0.03),
+                            _primaryColor.withValues(alpha:0.03),
+                            _secondaryColor.withValues(alpha:0.03),
                           ],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
@@ -537,7 +537,9 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                 ),
                                 2.h.verticalSpace,
                                 Text(
-                                  investment.transaction.transactionId.toString()?? "N/A",
+                                  investment.transaction.transactionId
+                                          .toString() ??
+                                      "N/A",
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w700,
@@ -560,7 +562,8 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                     ),
 
                     // Action buttons (only if active)
-                    if (investment.transaction.status.toLowerCase() == 'completed')
+                    if (investment.transaction.status.toLowerCase() ==
+                        'completed')
                       16.h.verticalSpace,
                     Row(
                       children: [
@@ -568,7 +571,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                         //   child: OutlinedButton.icon(
                         //     onPressed: () => _showCancelConfirmation(investment),
                         //     style: OutlinedButton.styleFrom(
-                        //       side: BorderSide(color: _dangerColor.withOpacity(0.3)),
+                        //       side: BorderSide(color: _dangerColor.withValues(alpha:0.3)),
                         //       padding: EdgeInsets.symmetric(vertical: 12.h),
                         //       shape: RoundedRectangleBorder(
                         //         borderRadius: BorderRadius.circular(12.r),
@@ -642,15 +645,20 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
           width: 40.w,
           height: 40.w,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha:0.1),
             shape: BoxShape.circle,
           ),
           child: Center(
-            child: Icon(
-              icon,
-              size: 18.w,
-              color: color,
-            ),
+            child: label == "Investment"
+                ? Text(
+                    "₹",
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  )
+                : Icon(icon, size: 18.w, color: color),
           ),
         ),
         8.h.verticalSpace,
@@ -716,7 +724,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
 
   void _showInvestmentDetails(SyndicateBuyingList investment) {
     Get.to(
-          () => SyndicateInvestmentDetailsWidget(investment: investment),
+      () => SyndicateInvestmentDetailsWidget(investment: investment),
       transition: Transition.cupertino,
       duration: const Duration(milliseconds: 300),
     );
@@ -732,11 +740,12 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
 
 class SyndicateInvestmentDetailsWidget extends StatelessWidget {
   final SyndicateBuyingList investment;
-  final SyndicatePlotController controller = Get.find<SyndicatePlotController>();
+  final SyndicatePlotController controller =
+      Get.find<SyndicatePlotController>();
   final ScrollController _scrollController = ScrollController();
 
   // Syndicate-specific colors
- // Violet
+  // Violet
   final Color _primaryColor = const Color(0xff92AF5D); // Indigo
   final Color _secondaryColor = const Color(0xffC7DD94);
   final Color _accentColor = const Color(0xFF06B6D4); // Cyan
@@ -769,7 +778,8 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
       appBar: DynamicAppBar(
         title: "Investment Details",
         showBackButton: true,
-        backgroundColor: _primaryColor,textColor: Colors.white,
+        backgroundColor: _primaryColor,
+        textColor: Colors.white,
       ),
       backgroundColor: _neutralLight,
       body: _buildBody(context),
@@ -954,15 +964,17 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-
-              _primaryColor.withOpacity(0.9),
-              _secondaryColor.withOpacity(0.9),
+              _primaryColor.withValues(alpha:0.9),
+              _secondaryColor.withValues(alpha:0.9),
             ],
           ),
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(40.r),top: Radius.circular(40.r)),
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(40.r),
+            top: Radius.circular(40.r),
+          ),
           boxShadow: [
             BoxShadow(
-              color: _primaryColor.withOpacity(0.3),
+              color: _primaryColor.withValues(alpha:0.3),
               blurRadius: 30,
               spreadRadius: 5,
             ),
@@ -975,7 +987,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha:0.2),
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Row(
@@ -1019,7 +1031,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               children: [
                 Icon(
                   Icons.location_on_rounded,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha:0.9),
                   size: 18.w,
                 ),
                 8.w.horizontalSpace,
@@ -1028,7 +1040,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                     property?.address ?? "Location not available",
                     style: TextStyle(
                       fontSize: 15.sp,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha:0.9),
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 2,
@@ -1044,9 +1056,9 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                border: Border.all(color: Colors.white.withValues(alpha:0.2)),
               ),
               child: Row(
                 children: [
@@ -1058,7 +1070,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                   Container(
                     height: 40.h,
                     width: 1,
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha:0.3),
                     margin: EdgeInsets.symmetric(horizontal: 20.w),
                   ),
                   _headerStatItem(
@@ -1070,7 +1082,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                   Container(
                     height: 40.h,
                     width: 1,
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha:0.3),
                     margin: EdgeInsets.symmetric(horizontal: 20.w),
                   ),
                   _headerStatItem(
@@ -1092,14 +1104,14 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
     required String label,
     required String value,
     bool isHighlight = false,
-  })
-  {return Expanded(
+  }) {
+    return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             icon,
-            color: isHighlight ? Colors.white : Colors.white.withOpacity(0.8),
+            color: isHighlight ? Colors.white : Colors.white.withValues(alpha:0.8),
             size: 24.w,
           ),
           8.h.verticalSpace,
@@ -1116,7 +1128,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11.sp,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha:0.7),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1140,7 +1152,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
+                  color: _primaryColor.withValues(alpha:0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1170,16 +1182,13 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(24.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha:0.05),
                   blurRadius: 30,
                   spreadRadius: 0,
                   offset: const Offset(0, 10),
                 ),
               ],
-              border: Border.all(
-                color: Colors.grey.shade100,
-                width: 1,
-              ),
+              border: Border.all(color: Colors.grey.shade100, width: 1),
             ),
             child: Column(
               children: [
@@ -1188,7 +1197,9 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                   padding: EdgeInsets.all(24.w),
                   decoration: BoxDecoration(
                     color: _neutralLight,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24.r),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1223,8 +1234,8 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              statusColor.withOpacity(0.2),
-                              statusColor.withOpacity(0.05),
+                              statusColor.withValues(alpha:0.2),
+                              statusColor.withValues(alpha:0.05),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(20.r),
@@ -1298,11 +1309,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 20.w,
-          color: _primaryColor,
-        ),
+        Icon(icon, size: 20.w, color: _primaryColor),
         12.w.horizontalSpace,
         Expanded(
           child: Column(
@@ -1320,19 +1327,17 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               GestureDetector(
                 onTap: isCopyable
                     ? () {
-                  Clipboard.setData(
-                    ClipboardData(text: value),
-                  );
+                        Clipboard.setData(ClipboardData(text: value));
 
-                  Get.snackbar(
-                    'Copied',
-                    'Transaction ID copied to clipboard',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.black87,
-                    colorText: Colors.white,
-                    duration: const Duration(seconds: 2),
-                  );
-                }
+                        Get.snackbar(
+                          'Copied',
+                          'Transaction ID copied to clipboard',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.black87,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 2),
+                        );
+                      }
                     : null,
                 child: Row(
                   children: [
@@ -1375,7 +1380,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.1),
+              color: _primaryColor.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(
@@ -1400,19 +1405,16 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
 
   SliverList _buildPlotsList() {
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-            (context, index) {
-          final detail = controller.buyingDetailList[index];
-          return _buildPlotCard(detail);
-        },
-        childCount: controller.buyingDetailList.length,
-      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final detail = controller.buyingDetailList[index];
+        return _buildPlotCard(detail);
+      }, childCount: controller.buyingDetailList.length),
     );
   }
 
-// Alternative: Update just the widget to work with existing model
+  // Alternative: Update just the widget to work with existing model
 
-// Helper method to get color based on transaction status
+  // Helper method to get color based on transaction status
   Color _getTransactionStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -1429,17 +1431,15 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
         return Colors.grey.shade600;
     }
   }
+
   Widget _statusChip(String title, String value, Color color) {
     return Expanded(
       child: Container(
         padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
+          color: color.withValues(alpha:0.05),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: color.withOpacity(0.2),
-            width: 1,
-          ),
+          border: Border.all(color: color.withValues(alpha:0.2), width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1449,7 +1449,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: 9.sp,
                 fontWeight: FontWeight.w800,
-                color: color.withOpacity(0.7),
+                color: color.withValues(alpha:0.7),
                 letterSpacing: 0.5,
               ),
             ),
@@ -1476,62 +1476,63 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
       child: Center(
         child: controller.isLoadingBuyingDetail.value
             ? Container(
-          width: 50.w,
-          height: 50.w,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation(_primaryColor),
-            ),
-          ),
-        )
+                width: 50.w,
+                height: 50.w,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha:0.1),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation(_primaryColor),
+                  ),
+                ),
+              )
             : ElevatedButton(
-          onPressed: controller.loadMoreBuyingDetail,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: _primaryColor,
-            side: BorderSide(
-              color: _primaryColor.withOpacity(0.3),
-              width: 2,
-            ),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: 32.w,
-              vertical: 14.h,
-            ),
-            shadowColor: Colors.transparent,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.expand_more, size: 22.w),
-              8.w.horizontalSpace,
-              Text(
-                'Load More Plots',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
+                onPressed: controller.loadMoreBuyingDetail,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: _primaryColor,
+                  side: BorderSide(
+                    color: _primaryColor.withValues(alpha:0.3),
+                    width: 2,
+                  ),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 32.w,
+                    vertical: 14.h,
+                  ),
+                  shadowColor: Colors.transparent,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.expand_more, size: 22.w),
+                    8.w.horizontalSpace,
+                    Text(
+                      'Load More Plots',
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }
+
   void _showCancelPlotConfirmation(SyndicateBuyingDetail detail) {
     // Determine status based on your model (similar to Gioo logic)
     // Assuming SyndicateBuyingDetail has cancelStatus and refundStatus fields
@@ -1607,7 +1608,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(20.r),
               decoration: BoxDecoration(
-                color: _dangerColor.withOpacity(0.1),
+                color: _dangerColor.withValues(alpha:0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -1633,20 +1634,23 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               textAlign: TextAlign.center,
               text: TextSpan(
                 style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey.shade600,
-                    height: 1.5
+                  fontSize: 14.sp,
+                  color: Colors.grey.shade600,
+                  height: 1.5,
                 ),
                 children: [
                   const TextSpan(text: 'Are you sure you want to cancel '),
                   TextSpan(
                     text: 'Plot #${detail.unit}',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _neutralDark
+                      fontWeight: FontWeight.bold,
+                      color: _neutralDark,
                     ),
                   ),
-                  const TextSpan(text: '? This action will release the plot back to the syndicate pool.'),
+                  const TextSpan(
+                    text:
+                        '? This action will release the plot back to the syndicate pool.',
+                  ),
                 ],
               ),
             ),
@@ -1656,16 +1660,16 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
-                color: _accentColor.withOpacity(0.1),
+                color: _accentColor.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: _accentColor.withOpacity(0.3)),
+                border: Border.all(color: _accentColor.withValues(alpha:0.3)),
               ),
               child: Row(
                 children: [
                   Icon(
-                      Icons.account_balance_wallet_rounded,
-                      color: _accentColor,
-                      size: 20.w
+                    Icons.account_balance_wallet_rounded,
+                    color: _accentColor,
+                    size: 20.w,
                   ),
                   12.w.horizontalSpace,
                   Expanded(
@@ -1675,37 +1679,40 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                         Text(
                           'Estimated Refund',
                           style: TextStyle(
-                              fontSize: 11.sp,
-                              color: _accentColor,
-                              fontWeight: FontWeight.bold
+                            fontSize: 11.sp,
+                            color: _accentColor,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
                           '₹${detail.amount}',
                           style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w900,
-                              color: _neutralDark
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w900,
+                            color: _neutralDark,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6.r)
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: Text(
-                        "AUTO-REFUND",
-                        style: TextStyle(
-                            fontSize: 9.sp,
-                            fontWeight: FontWeight.bold,
-                            color: _accentColor
-                        )
+                      "AUTO-REFUND",
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.bold,
+                        color: _accentColor,
+                      ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -1720,15 +1727,15 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16.h),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r)
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                     ),
                     child: Text(
                       'Keep Plot',
                       style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15.sp
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.sp,
                       ),
                     ),
                   ),
@@ -1746,14 +1753,14 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       elevation: 0,
                       padding: EdgeInsets.symmetric(vertical: 16.h),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r)
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                     ),
                     child: Text(
                       'Cancel Plot',
                       style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.bold
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -1812,10 +1819,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
             Text(
               'Please wait while we process your cancellation request...',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -1840,7 +1844,6 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
 
       // Refresh the details
       await controller.fetchSyndicateBuyingListDetails();
-
     } catch (error) {
       // Close dialog
       if (Navigator.of(Get.context!).canPop()) {
@@ -1861,7 +1864,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
     }
   }
 
-// Update your plot card to include the cancel button with proper status handling
+  // Update your plot card to include the cancel button with proper status handling
   Widget _buildPlotCard(SyndicateBuyingDetail detail) {
     // Determine status based on model
     final int cancelStatus = detail.cancelStatus ?? 0;
@@ -1904,16 +1907,13 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 20,
             spreadRadius: 0,
             offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(
-          color: Colors.grey.shade100,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey.shade100, width: 1),
       ),
       child: Column(
         children: [
@@ -1927,10 +1927,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                   height: 60.w,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        _primaryColor,
-                        _secondaryColor,
-                      ],
+                      colors: [_primaryColor, _secondaryColor],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -1978,7 +1975,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                 // Cancel button - only show for active plots
                 if (cancelStatus == 0)
                   Material(
-                    color: _dangerColor.withOpacity(0.1),
+                    color: _dangerColor.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(12.r),
                     child: InkWell(
                       onTap: () => _showCancelPlotConfirmation(detail),
@@ -2005,9 +2002,9 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
-                      color: _warningColor.withOpacity(0.1),
+                      color: _warningColor.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: _warningColor.withOpacity(0.3)),
+                      border: Border.all(color: _warningColor.withValues(alpha:0.3)),
                     ),
                     child: Row(
                       children: [
@@ -2036,9 +2033,9 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
-                      color: _dangerColor.withOpacity(0.1),
+                      color: _dangerColor.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: _dangerColor.withOpacity(0.3)),
+                      border: Border.all(color: _dangerColor.withValues(alpha:0.3)),
                     ),
                     child: Row(
                       children: [
@@ -2067,9 +2064,9 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
-                      color: _successColor.withOpacity(0.1),
+                      color: _successColor.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: _successColor.withOpacity(0.3)),
+                      border: Border.all(color: _successColor.withValues(alpha:0.3)),
                     ),
                     child: Row(
                       children: [
@@ -2099,17 +2096,15 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
             decoration: BoxDecoration(
               color: _neutralLight,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24.r)),
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(24.r),
+              ),
             ),
             child: Column(
               children: [
                 Row(
                   children: [
-                    _statusChip(
-                      'Plot Status',
-                      statusText,
-                      statusColor,
-                    ),
+                    _statusChip('Plot Status', statusText, statusColor),
                     12.w.horizontalSpace,
                     _statusChip(
                       'Payment',
@@ -2128,8 +2123,8 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            _warningColor.withOpacity(0.1),
-                            _primaryColor.withOpacity(0.1),
+                            _warningColor.withValues(alpha:0.1),
+                            _primaryColor.withValues(alpha:0.1),
                           ],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
@@ -2181,8 +2176,8 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            _accentColor.withOpacity(0.1),
-                            _primaryColor.withOpacity(0.1),
+                            _accentColor.withValues(alpha:0.1),
+                            _primaryColor.withValues(alpha:0.1),
                           ],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,

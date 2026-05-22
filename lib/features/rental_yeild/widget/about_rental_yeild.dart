@@ -1,7 +1,10 @@
+import 'package:cashback_farms/common/api_constant.dart';
+import 'package:cashback_farms/common/widget/share_action_button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/media_carousel_widget.dart';
@@ -31,6 +34,14 @@ class AboutPlot extends StatelessWidget {
           ? property.images
           : ['https://via.placeholder.com/500x300.png?text=No+Image'];
 
+
+      final cleanBaseUrl =
+      ApiUrl.webSideBaseUrl.replaceAll('/public', '');
+
+      final shareUrl =
+          '$cleanBaseUrl/rental-yield-plots/details/${property.id}';
+
+
       return Column(
         children: [
           // ── Main card ────────────────────────────────────────────────────
@@ -41,7 +52,7 @@ class AboutPlot extends StatelessWidget {
               borderRadius: BorderRadius.circular(20.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
+                  color: Colors.grey.withValues(alpha: 0.3),
                   blurRadius: 15.r,
                   offset: const Offset(0, 4),
                 ),
@@ -51,7 +62,90 @@ class AboutPlot extends StatelessWidget {
               children: [
                 // Carousel
                 _buildCarousel(images),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w),
+                  child: SingleChildScrollView(
+                    child: Row(
+                      children: [
+                        if (property.youtubeLink != null && property.youtubeLink!.isNotEmpty) ...[
+                          ActionButtonWidget(
+                            onTap: () async {
+                              final Uri url = Uri.parse(property.youtubeLink??'');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(
+                                  url,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              } else {
+                                Get.snackbar(
+                                  "Failed",
+                                  "Could not open video link",
+                                  backgroundColor: Colors.red,
+                                  colorText: Colors.white,
+                                  snackPosition: SnackPosition.BOTTOM,
+                                );
+                              }
+                            },
+                            title: "Watch Video",
+                            icon: Image.asset(
+                              'assets/images/youtube.png',
+                              height: 18.h,
+                            ),
+                            textColor: Colors.red.shade800,
+                            borderColor: Colors.red.shade200,
+                            gradientColors: [
+                              Colors.red.shade50,
+                              Colors.red.shade100.withValues(alpha: 0.5),
+                            ],
+                          ),
+                        ],
+                        if (property.id != null) ...[
+                          SizedBox(width: 8.w),
+                          ActionButtonWidget(
+                            onTap: () async {
+                              final whatsappUrl = Uri.parse(
+                                'https://wa.me/?text=${Uri.encodeComponent(shareUrl)}',
+                              );
 
+                              if (await canLaunchUrl(whatsappUrl)) {
+                                await launchUrl(
+                                  whatsappUrl,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              }
+                            },
+                            title: "WhatsApp",
+                            icon: Image.asset(
+                              'assets/images/whatsapp (1).png',
+                              height: 18.h,
+                            ),
+                            bgColor: Colors.grey.shade100,
+                            borderColor: Colors.grey.shade300,
+                            textColor: Colors.grey.shade800,
+                          ),
+                        ],
+                        if (property.id != null) ...[
+                          SizedBox(width: 8.w),
+                          ActionButtonWidget(
+                            onTap: () {
+                              Share.share(shareUrl);
+                            },
+                            title: "Share",
+                            icon: Icon(
+                              Icons.share_outlined,
+                              size: 16.sp,
+                              color: AppColor.black.withValues(alpha:0.8),
+                            ),
+                            bgColor: Colors.grey.shade100,
+                            borderColor: Colors.grey.shade300,
+                            textColor: Colors.grey.shade800,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10.h),
                 // ── SOLD OUT banner (always visible when sold) ──────────────
                 if (_isSoldOut) _buildSoldOutBanner(),
 
@@ -87,6 +181,12 @@ class AboutPlot extends StatelessWidget {
               ],
             ),
           ),
+          if (property.lat != null && property.lng != null) ...[
+            SizedBox(height: 10.h),
+            _buildHeaderWithMap(property.lat!, property.lng!, fullLocation),
+            SizedBox(height: 10.h),
+          ],
+          _buildPropertyHeader(fullLocation),
           if (amenities.isNotEmpty) ...[
             SizedBox(height: 15.h),
             _buildAmenitiesSection(amenities),
@@ -95,12 +195,7 @@ class AboutPlot extends StatelessWidget {
             SizedBox(height: 15.h),
             _buildNearbyLocationsSection(nearbyLocations),
           ],
-          if (property.lat != null && property.lng != null) ...[
-            SizedBox(height: 10.h),
-            _buildHeaderWithMap(property.lat!, property.lng!, fullLocation),
-            SizedBox(height: 10.h),
-          ],
-          _buildPropertyHeader(fullLocation),
+
           SizedBox(height: 10.h),
         ],
       );
@@ -189,7 +284,7 @@ class AboutPlot extends StatelessWidget {
             borderRadius: BorderRadius.circular(35.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.blue.withOpacity(0.25),
+                color: Colors.blue.withValues(alpha:0.25),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -201,7 +296,7 @@ class AboutPlot extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(6.sp),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha:0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.credit_card_rounded,
@@ -279,7 +374,7 @@ class AboutPlot extends StatelessWidget {
             boxShadow: tappable
                 ? [
               BoxShadow(
-                color: gradientColors.last.withOpacity(0.25),
+                color: gradientColors.last.withValues(alpha:0.25),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -335,7 +430,7 @@ class AboutPlot extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.all(8.sp),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
+                        color: Colors.white.withValues(alpha:0.18),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(buttonIcon,
@@ -415,11 +510,11 @@ class AboutPlot extends StatelessWidget {
               padding:
               EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
               decoration: BoxDecoration(
-                color: Colors.red.shade700.withOpacity(0.92),
+                color: Colors.red.shade700.withValues(alpha:0.92),
                 borderRadius: BorderRadius.circular(10.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha:0.2),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -666,7 +761,7 @@ class AboutPlot extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(5.w),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.05),
+        color: AppColor.primary.withValues(alpha:0.05),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Column(
@@ -696,7 +791,7 @@ class AboutPlot extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 8.h),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.1),
+        color: AppColor.primary.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Text(
@@ -755,7 +850,7 @@ class AboutPlot extends StatelessWidget {
             width: 45.w,
             height: 45.w,
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.1),
+              color: AppColor.primary.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Center(
@@ -773,7 +868,7 @@ class AboutPlot extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
-                    color: AppColor.textMain.withOpacity(0.8),
+                    color: AppColor.textMain.withValues(alpha:0.8),
                   ),
                 ),
                 SizedBox(height: 4.h),
@@ -822,7 +917,7 @@ class AboutPlot extends StatelessWidget {
               padding:
               EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
               decoration: BoxDecoration(
-                color: AppColor.primary.withOpacity(0.7),
+                color: AppColor.primary.withValues(alpha:0.7),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Row(
@@ -849,7 +944,7 @@ class AboutPlot extends StatelessWidget {
                 .then()
                 .shimmer(
                 duration: 800.ms,
-                color: Colors.white.withOpacity(0.3)),
+                color: Colors.white.withValues(alpha:0.3)),
           ),
         ],
       ),
@@ -913,7 +1008,7 @@ class AboutPlot extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 8.r,
             offset: const Offset(0, 3),
           ),
@@ -925,7 +1020,7 @@ class AboutPlot extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.05),
+              color: AppColor.primary.withValues(alpha:0.05),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: amenity.image.isNotEmpty
@@ -1020,7 +1115,7 @@ class AboutPlot extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 8.r,
             offset: const Offset(0, 3),
           ),
@@ -1032,7 +1127,7 @@ class AboutPlot extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.05),
+              color: AppColor.primary.withValues(alpha:0.05),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: location.image.isNotEmpty
@@ -1066,7 +1161,7 @@ class AboutPlot extends StatelessWidget {
             padding:
             EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Text(
@@ -1091,7 +1186,7 @@ class AboutPlot extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.1),
+        color: AppColor.primary.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Text(
@@ -1122,7 +1217,7 @@ class AboutPlot extends StatelessWidget {
         height: 36.w,
         margin: EdgeInsets.symmetric(horizontal: 2.w),
         decoration: BoxDecoration(
-          color: AppColor.primary.withOpacity(0.1),
+          color: AppColor.primary.withValues(alpha:0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(

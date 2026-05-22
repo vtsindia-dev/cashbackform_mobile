@@ -566,6 +566,7 @@ class RentalDetailProperty {
   final bool doucmentVerficaiton;
   final double amountPay;
   final int? transactionId;
+  final String? youtubeLink;
 
 
   // Get images list
@@ -635,7 +636,8 @@ class RentalDetailProperty {
     this.kycVerified,
     this.booked,
     this.isAnyoneBooked,
-    this.transactionId
+    this.transactionId,
+    this.youtubeLink
   });
 
   factory RentalDetailProperty.fromJson(Map<String, dynamic> json) {
@@ -767,6 +769,7 @@ class RentalDetailProperty {
       booked: json['booked'],
       isAnyoneBooked: json['is_anyone_booked'],
         transactionId : json['transaction_id'],
+      youtubeLink:  json['youtube_link'],
     );
   }
 }

@@ -134,7 +134,7 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
     if (ud == null) return;
     try {
       _razorpay.open({
-        'key': 'rzp_test_t8LKc2rPhJVv2N',
+        'key': '${dashboardController.businessSettings.value?.paymentApiKey}',
         'amount': (double.parse(total) * 100).toInt(),
         'name': '${ud['first_name']} ${ud['last_name']}',
         'timeout': 300,

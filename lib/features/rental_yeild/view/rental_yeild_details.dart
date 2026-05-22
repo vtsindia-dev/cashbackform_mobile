@@ -30,6 +30,7 @@ class _RentalPropertyDetailsScreenState
   void initState() {
     super.initState();
     _fetchPropertyDetails();
+    controller.isExpanded.value = true;
   }
 
   Future<void> _fetchPropertyDetails() async {

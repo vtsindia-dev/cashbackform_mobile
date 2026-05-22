@@ -15,11 +15,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
 import '../../../common/widget/media_carousel_widget.dart';
+import '../../../common/widget/share_action_button_widget.dart';
 import '../../plot_market/model/plot_market.dart' show MapSet;
 import '../../plot_market/widget/plotmarket_details_widgets/mapset.dart' show MapSetWidget;
 import '../controller/residential_controller.dart';
@@ -47,8 +49,8 @@ class LocationIndicatorBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
           color: isDubai
-              ? const Color(0xFFFF9800).withOpacity(0.5)
-              : const Color(0xFF4CAF50).withOpacity(0.5),
+              ? const Color(0xFFFF9800).withValues(alpha:0.5)
+              : const Color(0xFF4CAF50).withValues(alpha:0.5),
         ),
       ),
       child: Row(
@@ -132,7 +134,7 @@ class _ResidentialBlueprintWidgetState
               child: Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha:0.9),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.close, color: Colors.black, size: 26.w),
@@ -167,7 +169,7 @@ class _ResidentialBlueprintWidgetState
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha:0.05),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
@@ -186,10 +188,10 @@ class _ResidentialBlueprintWidgetState
                     padding: EdgeInsets.symmetric(
                         horizontal: 16.w, vertical: 8.h),
                     decoration: BoxDecoration(
-                      color: AppColor.primary.withOpacity(0.1),
+                      color: AppColor.primary.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(20.r),
                       border: Border.all(
-                          color: AppColor.primary.withOpacity(0.3), width: 1),
+                          color: AppColor.primary.withValues(alpha:0.3), width: 1),
                     ),
                     child: Text(
                       'Layout Sketch',
@@ -370,6 +372,8 @@ class AboutResidentialProperty extends StatefulWidget {
 
 class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
   bool isExpanded = false;
+  final ResidentialPropertyController controller =
+  Get.find<ResidentialPropertyController>();
 
   final List<Color> cardColors = const [
     Color(0xFFFFE0E0),
@@ -379,6 +383,12 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
     Color(0xFFF3E5F5),
     Color(0xFFE0F7FA),
   ];
+
+  @override
+  void initState() {
+    controller.isExpanded.value = true;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -411,10 +421,13 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
       final handoverDate = property.handoverDate;
       final categoryName =
           property.category?.categoryName ?? 'Residential';
+      final cleanBaseUrl =
+      ApiUrl.webSideBaseUrl.replaceAll('/public', '');
 
+      final shareUrl =
+          '$cleanBaseUrl/residential-property/details/${property.id}';
       return Column(
         children: [
-          // ─── Main info card ───────────────────────────────────────────────
           Container(
             margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
             decoration: BoxDecoration(
@@ -422,7 +435,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
               borderRadius: BorderRadius.circular(20.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
+                  color: Colors.grey.withValues(alpha: 0.3),
                   blurRadius: 15.r,
                   offset: const Offset(0, 4),
                 ),
@@ -430,7 +443,6 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
             ),
             child: Column(
               children: [
-                // Carousel
                 Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: SizedBox(
@@ -446,8 +458,6 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                     ),
                   ),
                 ),
-
-                // Verified badge
                 if (isVerified)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -458,7 +468,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                         padding: EdgeInsets.symmetric(
                             horizontal: 12.w, vertical: 4.h),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
+                          color: Colors.green.withValues(alpha:0.1),
                           borderRadius: BorderRadius.circular(10.r),
                           border: Border.all(color: Colors.green, width: 1),
                         ),
@@ -480,8 +490,6 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                       ),
                     ],
                   ),
-
-                // ① Country / location indicator row
                 Padding(
                   padding:
                   EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
@@ -489,7 +497,6 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                     children: [
                       LocationIndicatorBadge(property: property),
                       const Spacer(),
-                      // ⑤ Sold-out badge
                       if (property.isSoldOut)
                         Container(
                           padding: EdgeInsets.symmetric(
@@ -511,8 +518,91 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                     ],
                   ),
                 ),
+                SizedBox(height: 10.h,),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w),
+                  child: SingleChildScrollView(
+                    child: Row(
+                      children: [
+                        if (property.youtubeLink != null && property.youtubeLink!.isNotEmpty) ...[
+                          ActionButtonWidget(
+                            onTap: () async {
+                              final Uri url = Uri.parse(property.youtubeLink??'');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(
+                                  url,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              } else {
+                                Get.snackbar(
+                                  "Failed",
+                                  "Could not open video link",
+                                  backgroundColor: Colors.red,
+                                  colorText: Colors.white,
+                                  snackPosition: SnackPosition.BOTTOM,
+                                );
+                              }
+                            },
+                            title: "Watch Video",
+                            icon: Image.asset(
+                              'assets/images/youtube.png',
+                              height: 18.h,
+                            ),
+                            textColor: Colors.red.shade800,
+                            borderColor: Colors.red.shade200,
+                            gradientColors: [
+                              Colors.red.shade50,
+                              Colors.red.shade100.withValues(alpha: 0.5),
+                            ],
+                          ),
+                        ],
+                        if (property.id != null) ...[
+                          SizedBox(width: 8.w),
+                          ActionButtonWidget(
+                            onTap: () async {
+                              final whatsappUrl = Uri.parse(
+                                'https://wa.me/?text=${Uri.encodeComponent(shareUrl)}',
+                              );
 
-                // View More / Share row
+                              if (await canLaunchUrl(whatsappUrl)) {
+                                await launchUrl(
+                                  whatsappUrl,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              }
+                            },
+                            title: "WhatsApp",
+                            icon: Image.asset(
+                              'assets/images/whatsapp (1).png',
+                              height: 18.h,
+                            ),
+                            bgColor: Colors.grey.shade100,
+                            borderColor: Colors.grey.shade300,
+                            textColor: Colors.grey.shade800,
+                          ),
+                        ],
+                        if (property.id != null) ...[
+                          SizedBox(width: 8.w),
+                          ActionButtonWidget(
+                            onTap: () {
+                              Share.share(shareUrl);
+                            },
+                            title: "Share",
+                            icon: Icon(
+                              Icons.share_outlined,
+                              size: 16.sp,
+                              color: AppColor.black.withValues(alpha:0.8),
+                            ),
+                            bgColor: Colors.grey.shade100,
+                            borderColor: Colors.grey.shade300,
+                            textColor: Colors.grey.shade800,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10.h,),
                 Padding(
                   padding:
                   EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
@@ -554,38 +644,9 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                           ),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          final cleanBaseUrl =
-                          ApiUrl.webSideBaseUrl.replaceAll('/public', '');
-                          Share.share(
-                              '$cleanBaseUrl/residential-property/details/${property.id}');
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 14.w, vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.share,
-                                  size: 18.sp, color: AppColor.black),
-                              SizedBox(width: 6.w),
-                              Text('Share',
-                                  style: TextStyle(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
-
-                // Expanded details
                 if (controller.isExpanded.value)
                   Padding(
                     padding: EdgeInsets.symmetric(
@@ -597,7 +658,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                           width: double.infinity,
                           padding: EdgeInsets.symmetric(vertical: 10.h),
                           decoration: BoxDecoration(
-                            color: AppColor.primary.withOpacity(0.1),
+                            color: AppColor.primary.withValues(alpha:0.1),
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Text(
@@ -764,7 +825,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                 border: Border.all(color: Colors.grey.shade200, width: 1),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
+                      color: Colors.black.withValues(alpha:0.02),
                       blurRadius: 10,
                       offset: const Offset(0, 4)),
                 ],
@@ -800,7 +861,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                             color: color,
                             borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(
-                                color: Colors.black.withOpacity(0.05)),
+                                color: Colors.black.withValues(alpha:0.05)),
                           ),
                           child: Row(
                             children: [
@@ -902,7 +963,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                 borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withValues(alpha:0.3),
                       blurRadius: 15.r,
                       offset: const Offset(0, 4)),
                 ],
@@ -936,7 +997,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                                 borderRadius: BorderRadius.circular(15.r),
                                 boxShadow: [
                                   BoxShadow(
-                                      color: Colors.grey.withOpacity(0.1),
+                                      color: Colors.grey.withValues(alpha:0.1),
                                       blurRadius: 10.r,
                                       offset: const Offset(0, 2)),
                                 ],
@@ -953,7 +1014,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                                       borderRadius:
                                       BorderRadius.circular(10.r),
                                       color:
-                                      AppColor.primary.withOpacity(0.1),
+                                      AppColor.primary.withValues(alpha:0.1),
                                     ),
                                     child: _buildAmenityImage(
                                         amenity['image'] ?? ''),
@@ -1024,7 +1085,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
+              color: Colors.grey.withValues(alpha:0.3),
               blurRadius: 5.r,
               offset: const Offset(0, 2)),
         ],
@@ -1121,7 +1182,7 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.1),
+        color: AppColor.primary.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Text(

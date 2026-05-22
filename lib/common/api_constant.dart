@@ -9,6 +9,8 @@ class ApiUrl {
   static const String baseUrl = "https://admin.cashbackfarms.com/public";
   static const String webSideBaseUrl = "https://cashbackfarms.com/public";
 
+  static const String googleApiKey = 'AIzaSyBMORJwqAENHll476u4UXGJmV_bSFJycA8';
+
   static const String login = "$baseUrl/api/v2/login";
   static const String otp = "$baseUrl/api/v2/otp";
   static const String register = "$baseUrl/api/v2/register";
