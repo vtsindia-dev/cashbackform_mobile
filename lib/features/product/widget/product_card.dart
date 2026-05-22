@@ -137,7 +137,7 @@ class ProductCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.poppins(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -157,7 +157,7 @@ class ProductCard extends StatelessWidget {
                       SizedBox(width: 4.w),
                       Text(
                         price,
-                        style: GoogleFonts.montserrat(
+                        style: GoogleFonts.poppins(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.bold,
                           color: AppColor.primary,
@@ -240,7 +240,7 @@ class ProductCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             location,
-                            style: GoogleFonts.montserrat(
+                            style: GoogleFonts.poppins(
                               fontSize: 10.sp,
                               color: Colors.grey[700],
                             ),
@@ -255,7 +255,7 @@ class ProductCard extends StatelessWidget {
                   SizedBox(height: 5.h),
                   Text(
                     description,
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.poppins(
                       fontSize: 11.sp,
                       color: Colors.grey[800],
                     ),
@@ -287,7 +287,7 @@ class ProductCard extends StatelessWidget {
                           ),
                           child: Text(
                             "View",
-                            style: GoogleFonts.montserrat(
+                            style: GoogleFonts.poppins(
                               color: AppColor.primary,
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w600,

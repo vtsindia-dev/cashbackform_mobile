@@ -580,6 +580,16 @@ class BusinessSettings {
   double? minCouponVal;
   double? maxCouponVal;
   String? howItWorkYoutubeLink;
+  double? giooServiceCharge;
+  double? giooIgst;
+  double? syndicateServiceCharge;
+  double? syndicateIgst;
+  double? marketServiceCharge;
+  double? marketIgst;
+  double? rentalServiceCharge;
+  double? rentalIgst;
+  double? residentialServiceCharge;
+  double? residentialIgst;
 
   BusinessSettings({
     this.id,
@@ -656,7 +666,17 @@ class BusinessSettings {
     this.couponServiceCharge,
     this.minCouponVal,
     this.maxCouponVal,
-    this.howItWorkYoutubeLink
+    this.howItWorkYoutubeLink,
+    this.giooServiceCharge,
+    this.giooIgst,
+    this.marketIgst,
+    this.marketServiceCharge,
+    this.rentalIgst,
+    this.rentalServiceCharge,
+    this.residentialIgst,
+    this.residentialServiceCharge,
+    this.syndicateIgst,
+    this.syndicateServiceCharge
   });
 
   factory BusinessSettings.fromJson(Map<String, dynamic> json) {
@@ -762,6 +782,39 @@ class BusinessSettings {
       sealImage: json['seal_image'] as String?,
       signatureImage: json['signature_image'] as String?,
       howItWorkYoutubeLink: json['how_it_work_youtube_link'] as String?,
+      giooServiceCharge: json['gioo_service_charge'] != null
+          ? double.tryParse(json['gioo_service_charge'].toString())
+          : null,
+      giooIgst: json['gioo_igst'] != null
+          ? double.tryParse(json['gioo_igst'].toString())
+          : null,
+      syndicateServiceCharge: json['syndicate_service_charge'] != null
+          ? double.tryParse(json['syndicate_service_charge'].toString())
+          : null,
+      syndicateIgst: json['syndicate_igst'] != null
+          ? double.tryParse(json['syndicate_igst'].toString())
+          : null,
+      marketServiceCharge: json['market_service_charge'] != null
+          ? double.tryParse(json['market_service_charge'].toString())
+          : null,
+      marketIgst: json['market_igst'] != null
+          ? double.tryParse(json['market_igst'].toString())
+          : null,
+      rentalServiceCharge: json['rental_service_charge'] != null
+          ? double.tryParse(json['rental_service_charge'].toString())
+          : null,
+      rentalIgst: json['rental_igst'] != null
+          ? double.tryParse(json['rental_igst'].toString())
+          : null,
+      residentialServiceCharge: json['residential_service_charge'] != null
+          ? double.tryParse(json['residential_service_charge'].toString())
+          : null,
+      residentialIgst: json['residential_igst'] != null
+          ? double.tryParse(json['residential_igst'].toString())
+          : null,
+
+
+
       refundAmount: json['refund_amount'] != null
           ? double.tryParse(json['refund_amount'].toString())
           : null,

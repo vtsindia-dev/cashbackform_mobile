@@ -85,7 +85,6 @@ class PropertyCard extends StatelessWidget {
                 },
               ),
             ),
-
             Padding(
               padding: EdgeInsets.all(8.w),
               child: Column(
@@ -93,7 +92,7 @@ class PropertyCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.poppins(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -124,7 +123,7 @@ class PropertyCard extends StatelessWidget {
                                 alignment: Alignment.centerLeft,
                                 child: Text(
                                   price,
-                                  style: GoogleFonts.montserrat(
+                                  style: GoogleFonts.poppins(
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.bold,
                                     color: AppColor.primary,
@@ -157,7 +156,7 @@ class PropertyCard extends StatelessWidget {
                                 alignment: Alignment.centerLeft,
                                 child: Text(
                                   "$area",
-                                  style: GoogleFonts.montserrat(
+                                  style: GoogleFonts.poppins(
                                     fontSize: 11.sp,
                                     fontWeight: FontWeight.w600,
                                     color: AppColor.primary,
@@ -185,7 +184,7 @@ class PropertyCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             location,
-                            style: GoogleFonts.montserrat(
+                            style: GoogleFonts.poppins(
                               fontSize: 10.sp,
                               color: Colors.grey[700],
                             ),
@@ -199,7 +198,7 @@ class PropertyCard extends StatelessWidget {
                   SizedBox(height: 5.h),
                   Text(
                     description,
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.poppins(
                       fontSize: 11.sp,
                       color: Colors.grey[800],
                     ),
@@ -230,7 +229,7 @@ class PropertyCard extends StatelessWidget {
                           ),
                           child: Text(
                             "View",
-                            style: GoogleFonts.montserrat(
+                            style: GoogleFonts.poppins(
                               color: AppColor.primary,
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w600,

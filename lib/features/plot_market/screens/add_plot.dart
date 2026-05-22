@@ -53,6 +53,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _workController = TextEditingController();
   final TextEditingController _plotCountController = TextEditingController();
+  final TextEditingController _youtubeLinkController = TextEditingController();
 
   List<AppState> states = [];
   List<City> cities = [];
@@ -155,6 +156,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         _uldNoController.text = plot.uldNo ?? '';
         _addressController.text = plot.address;
         _workController.text = plot.work ?? '';
+        _youtubeLinkController.text = plot.youtubeLink ?? '';
 
         // Location
         final lat = double.tryParse(plot.lat);
@@ -266,6 +268,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     _plotCountController.dispose();
     _nearbyPlaceControllers.values.forEach((c) => c.dispose());
     _googleMapController?.dispose();
+    _youtubeLinkController.dispose();
     super.dispose();
   }
 
@@ -2024,7 +2027,22 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       SnackBarHelper.showError('Please select minimum one common facility');
       return;
     }
+    final youtubeLink = _youtubeLinkController.text.trim();
 
+    if (youtubeLink.isNotEmpty) {
+      final uri = Uri.tryParse(youtubeLink);
+
+      final isValidYoutube =
+          uri != null &&
+              uri.hasAbsolutePath &&
+              (uri.host.contains('youtube.com') ||
+                  uri.host.contains('youtu.be'));
+
+      if (!isValidYoutube) {
+        SnackBarHelper.showError('Please enter a valid YouTube link');
+        return;
+      }
+    }
     if (mounted) setState(() => _isSubmitting = true);
 
     try {
@@ -2042,6 +2060,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         }
       }
 
+
       Map<String, dynamic> formData = {
         'name': _nameController.text.trim(),
         'type': _selectedPropertyType!.id.toString(),
@@ -2058,6 +2077,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         'amenities': _selectedAmenities.join(','),
         'status': '0',
         'plot_count': _plotCountController.text.trim(),
+        'youtube_link' : _youtubeLinkController.text.trim(),
       };
 
       if (_selectedNearbyPlaces.isNotEmpty) {
@@ -2093,8 +2113,6 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
         controller.selectedFacilityIds = [];
         controller.update();
         await controller.fetchMyMarketPlots();
-        // Navigator.pop is already called inside submitMarketPlot,
-        // so do NOT pop again here.
       } else {
         SnackBarHelper.showError(
           result['message'] ??
@@ -2248,8 +2266,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                           child: _buildTextField(
                               'Price per Sqft (₹)',
                               _priceSqftController,
-                              keyboardType:
-                              TextInputType.number,
+                              keyboardType: TextInputType.number,
                               isRequired: true),
                         ),
                         SizedBox(width: 12.w),
@@ -2265,6 +2282,9 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                     _buildTextField('Description',
                         _descriptionController,
                         maxLines: 4, isRequired: true),
+                    _buildTextField('YouTube Link', _youtubeLinkController,
+                        keyboardType: TextInputType.emailAddress,
+                        isRequired: false),
                   ],
                 ),),
               SizedBox(height: 12.h),

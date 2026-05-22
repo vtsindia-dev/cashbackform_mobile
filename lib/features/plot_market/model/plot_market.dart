@@ -36,8 +36,7 @@ class MarketPlot {
   int? plotCount;
   String? threeDImage;
   final bool documentVerification;
-
-  // ── FIX: added commonfacility field so edit form can prefill ──
+  final String? youtubeLink;
   final List<String> commonFacilityIds;
 
   MarketPlot({
@@ -72,6 +71,7 @@ class MarketPlot {
     this.nearbyPlaces,
     this.plotCount,
     this.threeDImage,
+    this.youtubeLink,
     required this.documentVerification,
     this.commonFacilityIds = const [],
   });
@@ -159,6 +159,7 @@ class MarketPlot {
       work: json['work']?.toString(),
       agentId: json['agent_id']?.toString(),
       uldNo: json['uld_no']?.toString(),
+        youtubeLink :  json['youtube_link']?.toString(),
       priceperSqft: json['price_sqft']?.toString(),
       status: json['status'] != null
           ? (json['status'] is int

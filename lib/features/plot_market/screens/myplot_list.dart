@@ -1,8 +1,7 @@
-// my_plots_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:iconsax/iconsax.dart';
 import '../../../common/colours.dart';
 import '../../../common/route/router.dart';
 import '../../../common/widget/loader.dart';
@@ -24,7 +23,6 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
   final ScrollController _scrollController = ScrollController();
   final dashboardController = Get.put(DashboardController());
 
-  // Debounce flag to prevent multiple scroll calls
   bool _isLoadingMore = false;
 
   @override
@@ -44,21 +42,23 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
   }
 
   void _scrollListener() {
-    // Debounce to prevent multiple calls
     if (_isLoadingMore) return;
 
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 100) {
-      if (controller.myHasMoreData.value && !controller.isLoadMoreMyPlots.value) {
+      if (controller.myHasMoreData.value &&
+          !controller.isLoadMoreMyPlots.value) {
         _isLoadingMore = true;
-        controller.loadMoreMyPlots().then((_) {
-          // Reset debounce after a short delay
-          Future.delayed(const Duration(milliseconds: 500), () {
-            _isLoadingMore = false;
-          });
-        }).catchError((_) {
-          _isLoadingMore = false;
-        });
+        controller
+            .loadMoreMyPlots()
+            .then((_) {
+              Future.delayed(const Duration(milliseconds: 500), () {
+                _isLoadingMore = false;
+              });
+            })
+            .catchError((_) {
+              _isLoadingMore = false;
+            });
       }
     }
   }
@@ -72,7 +72,8 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
           _buildHeader(),
           Expanded(
             child: Obx(() {
-              if (controller.isLoadingMyPlots.value && controller.myMarketPlots.isEmpty) {
+              if (controller.isLoadingMyPlots.value &&
+                  controller.myMarketPlots.isEmpty) {
                 return Center(
                   child: GifLoader(message: "Loading Your Lands", size: 120),
                 );
@@ -90,9 +91,11 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                 color: AppColor.primary,
                 child: ListView(
                   controller: _scrollController,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
                   children: [
-                    // Plots Grid
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -113,13 +116,12 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                           ),
                           onEdit: () => controller.openEditForm(plot),
                           onDelete: () => _confirmDelete(plot),
-                          onVerify: () => controller.initiateVerificationPayment(plot),
+                          onVerify: () =>
+                              controller.initiateVerificationPayment(plot),
                           isOwner: true,
                         );
                       },
                     ),
-
-                    // Load more indicator
                     if (controller.isLoadMoreMyPlots.value)
                       Padding(
                         padding: EdgeInsets.symmetric(vertical: 20.h),
@@ -130,9 +132,8 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                           ),
                         ),
                       ),
-
-                    // End of list message
-                    if (!controller.myHasMoreData.value && controller.myMarketPlots.isNotEmpty)
+                    if (!controller.myHasMoreData.value &&
+                        controller.myMarketPlots.isNotEmpty)
                       Padding(
                         padding: EdgeInsets.symmetric(vertical: 20.h),
                         child: Center(
@@ -158,7 +159,6 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
         onPressed: controller.openAddForm,
         backgroundColor: AppColor.primary,
         child: Icon(Icons.add, size: 24.sp),
-
       ),
     );
   }
@@ -183,11 +183,14 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                     width: 32.w,
                     height: 32.h,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
-                    child: Icon(Icons.arrow_back_ios_new,
-                        size: 14.sp, color: Colors.white),
+                    child: Icon(
+                      Icons.arrow_back_ios_new,
+                      size: 14.sp,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -207,16 +210,23 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
     );
   }
 
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/images/empty_properties.png',
-            height: 180.h,
-            width: 180.h,
-            color: AppColor.primary.withOpacity(0.3),
+          Container(
+            padding: EdgeInsets.all(24.r),
+            decoration: BoxDecoration(
+              color: AppColor.primary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Iconsax.house_2,
+              size: 56.sp,
+              color: AppColor.primary.withValues(alpha: 0.5),
+            ),
           ),
           SizedBox(height: 24.h),
           Text(
@@ -233,10 +243,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
             child: Text(
               "You haven't added any properties yet. Start by adding your first property to list it in the market.",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColor.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColor.textSecondary),
             ),
           ),
           SizedBox(height: 32.h),
@@ -257,7 +264,11 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                 SizedBox(width: 8.w),
                 Text(
                   "Add Your Land Here",
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Colors.white),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -306,10 +317,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
           SizedBox(height: 12.h),
           Text(
             "This action cannot be undone.",
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.red.shade600,
-            ),
+            style: TextStyle(fontSize: 12.sp, color: Colors.red.shade600),
           ),
         ],
       ),
@@ -322,7 +330,6 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
         final success = await controller.deleteMarketPlot(plot.id);
         if (success) {
           SnackBarHelper.showSuccess("Property deleted successfully");
-          // Reset pagination state and refresh
           _isLoadingMore = false;
           await controller.refreshMyPlots();
         }

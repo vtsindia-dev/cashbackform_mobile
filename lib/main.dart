@@ -15,11 +15,8 @@ import 'notifcation/service/notification_service.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print("🔔 Background message received: ${message.messageId}");
-  print("   Title: ${message.notification?.title}");
-  print("   Body: ${message.notification?.body}");
-  print("   Data: ${message.data}");
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -28,15 +25,12 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // ─── FIREBASE INIT ──────────────────────────────────────────────────────────
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Register background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Request notification permission (iOS + Android 13+)
   await FirebaseMessaging.instance.requestPermission(
     alert: true,
     announcement: false,
@@ -47,7 +41,6 @@ void main() async {
     sound: true,
   );
 
-  // For iOS — show notification in foreground
   await FirebaseMessaging.instance
       .setForegroundNotificationPresentationOptions(
     alert: true,
@@ -81,14 +74,14 @@ class MyApp extends StatelessWidget {
             primary: AppColor.primary,
           ),
           scaffoldBackgroundColor: Colors.white,
-          textTheme: GoogleFonts.montserratTextTheme(),
+          textTheme: GoogleFonts.poppinsTextTheme(),
         ),
         initialRoute: AppRoutes.splash,
         getPages: AppRoutes.routes,
         debugShowCheckedModeBanner: false,
         initialBinding:BindingsBuilder(() {
           Get.put(NetworkService(), permanent: true);
-          Get.put(NotificationService(), permanent: true); // ADD THIS
+          Get.put(NotificationService(), permanent: true);
         }),
         builder: (context, child) {
           return SafeArea(

@@ -33,7 +33,7 @@ class ServiceCard extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: GoogleFonts.montserrat(
+              style: GoogleFonts.poppins(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w500,
                 color: Colors.black87,
@@ -60,7 +60,7 @@ class ServiceCard extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: GoogleFonts.montserrat(
+              style: GoogleFonts.poppins(
                 fontSize: 11.sp,
                 fontWeight: isLink ? FontWeight.w600 : FontWeight.w500,
                 color: isLink ? AppColor.primary : Colors.black87,
@@ -88,7 +88,7 @@ class ServiceCard extends StatelessWidget {
           SizedBox(width: 4.w),
           Text(
             "verified Service",
-            style: GoogleFonts.montserrat(
+            style: GoogleFonts.poppins(
               fontSize: 9.sp,
               fontWeight: FontWeight.w600,
               color: Colors.black87,
@@ -156,7 +156,7 @@ class ServiceCard extends StatelessWidget {
                       // Expanded(
                       //   child: Text(
                       //     service.serviceName,
-                      //     style: GoogleFonts.montserrat(
+                      //     style: GoogleFonts.poppins(
                       //       fontSize: 15.sp,
                       //       fontWeight: FontWeight.w700,
                       //     ),
@@ -182,7 +182,7 @@ class ServiceCard extends StatelessWidget {
                   //     padding: EdgeInsets.only(bottom: 4.h),
                   //     child: Text(
                   //       service.description!,
-                  //       style: GoogleFonts.montserrat(
+                  //       style: GoogleFonts.poppins(
                   //         fontSize: 11.sp,
                   //         fontWeight: FontWeight.bold,
                   //         color: AppColor.primary,
@@ -227,7 +227,7 @@ class ServiceCard extends StatelessWidget {
                           ),
                           child: Text(
                             "Send Enquiry",
-                            style: GoogleFonts.montserrat(
+                            style: GoogleFonts.poppins(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,

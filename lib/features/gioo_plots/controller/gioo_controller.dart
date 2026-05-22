@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:action_slider/action_slider.dart';
 import 'package:cashback_farms/common/model/logger_model.dart';
 import 'package:cashback_farms/common/widget/sessionhandler.dart';
+import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
@@ -1790,7 +1791,13 @@ class GiooPlotController extends GetxController {
     useWallet.value = false;
     isApplied.value = false;
     couponController.clear();
+    giooServiceChargeAmount.value = 0.0;
+    giooIgstAmount.value = 0.0;
+    giooServiceChargePercent.value = 0.0;
+    giooIgstPercent.value = 0.0;
   }
+
+
 
   void removeCoupon() {
     couponController.clear();
@@ -1817,9 +1824,88 @@ class GiooPlotController extends GetxController {
     calculateFinalAmount();
   }
 
+
+  final dashboardController = Get.put(DashboardController());
+
+
+
+  RxDouble giooServiceChargeAmount = 0.0.obs;
+  RxDouble giooIgstAmount = 0.0.obs;
+  RxDouble giooServiceChargePercent = 0.0.obs;
+  RxDouble giooIgstPercent = 0.0.obs;
+
   void calculateFinalAmount() {
+    double baseAmount = totalAmount.value;
+
+    final businessSettings = dashboardController.businessSettings.value;
+    final double giooIgstPct = (businessSettings?.giooIgst ?? 0).toDouble();
+    final double giooServicePct = (businessSettings?.giooServiceCharge ?? 0).toDouble();
+
+    // 1️⃣ Special discount on base amount
+    double specialDiscount = 0.0;
+    if (discountMaxCost.value > 0 && baseAmount >= discountMaxCost.value) {
+      specialDiscount = (baseAmount * discountPercentage.value) / 100;
+      if (specialDiscount > discountMaxCost.value) specialDiscount = discountMaxCost.value;
+    }
+    specialDiscountAmount.value = specialDiscount;
+
+    // 2️⃣ Coupon on (base - special discount)
+    double couponDiscount = isApplied.value ? discountAmount.value : 0.0;
+    double amountAfterSpecial = baseAmount - specialDiscount;
+    if (isApplied.value && couponDiscount > amountAfterSpecial) {
+      isApplied.value = false;
+      discountAmount.value = 0.0;
+      couponController.clear();
+      couponDiscount = 0.0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Fluttertoast.showToast(msg: "Coupon removed - exceeds order value", gravity: ToastGravity.BOTTOM);
+      });
+    }
+
+    double appliedDiscount = specialDiscount + couponDiscount;
+    appliedDiscountAmount.value = appliedDiscount;
+
+    double amountAfterDiscount = baseAmount - appliedDiscount;
+    if (amountAfterDiscount < 0) amountAfterDiscount = 0;
+
+    // 3️⃣ Wallet deduction
+    double walletUsed = 0.0;
+    if (useWallet.value) {
+      double requestedWallet = walletUsedAmount.value > 0
+          ? walletUsedAmount.value
+          : walletBalance.value;
+      walletUsed = requestedWallet >= amountAfterDiscount
+          ? amountAfterDiscount
+          : requestedWallet;
+      amountAfterDiscount -= walletUsed;
+    }
+    actualWalletUsed.value = walletUsed;
+
+    // 4️⃣ Apply IGST + service charge AFTER discounts & wallet
+    final double serviceCharge = (amountAfterDiscount * giooServicePct) / 100;
+    final double igstCharge = (amountAfterDiscount * giooIgstPct) / 100;
+
+    // Expose for UI breakdown
+    giooServiceChargeAmount.value = serviceCharge;
+    giooIgstAmount.value = igstCharge;
+    giooServiceChargePercent.value = giooServicePct;
+    giooIgstPercent.value = giooIgstPct;
+
+    finalPayable.value = amountAfterDiscount + serviceCharge + igstCharge;
+    if (finalPayable.value < 0) finalPayable.value = 0;
+
+    print('💰 Base=$baseAmount, SpecialDisc=$specialDiscount, Coupon=$couponDiscount, Wallet=$walletUsed, Service=$serviceCharge, IGST=$igstCharge, Final=${finalPayable.value}');
+  }
+/*  void calculateFinalAmount() {
     double total = totalAmount.value;
     double specialDiscount = 0.0;
+
+
+    final businessSettings = dashboardController.businessSettings.value;
+    final double giooIgst = (businessSettings?.giooIgst ?? 0).toDouble();
+    final double giooServiceCharge = (businessSettings?.giooServiceCharge ?? 0).toDouble();
+
+
 
     if (discountMaxCost.value > 0 && total >= discountMaxCost.value) {
       specialDiscount = (total * discountPercentage.value) / 100;
@@ -1873,7 +1959,10 @@ class GiooPlotController extends GetxController {
     print(
       '💰 Total=$total, Special=$specialDiscount, Coupon=$couponDiscount, Applied=$appliedDiscount, Wallet=$walletUsed, Final=${finalPayable.value}',
     );
-  }}
+  }*/
+
+
+}
 
 class PlotUnit {
   final int id;

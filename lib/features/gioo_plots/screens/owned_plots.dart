@@ -802,7 +802,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // --- TOP SECTION: STATUS & AMOUNT ---
                 Container(
                   padding: EdgeInsets.all(20.w),
                   decoration: BoxDecoration(
@@ -834,8 +833,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // --- BOTTOM SECTION: DETAILS ---
                 Padding(
                   padding: EdgeInsets.all(20.w),
                   child: Column(

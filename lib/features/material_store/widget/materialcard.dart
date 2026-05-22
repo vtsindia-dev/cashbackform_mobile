@@ -71,7 +71,7 @@ class MaterialCard extends StatelessWidget {
                   // TITLE
                   Text(
                     name,
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.poppins(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -87,7 +87,7 @@ class MaterialCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           category,
-                          style: GoogleFonts.montserrat(
+                          style: GoogleFonts.poppins(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
                             color: AppColor.primary,
@@ -109,7 +109,7 @@ class MaterialCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           status,
-                          style: GoogleFonts.montserrat(
+                          style: GoogleFonts.poppins(
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w600,
                             color: AppColor.primary,
@@ -131,7 +131,7 @@ class MaterialCard extends StatelessWidget {
                   //     Expanded(
                   //       child: Text(
                   //         createdDate,
-                  //         style: GoogleFonts.montserrat(
+                  //         style: GoogleFonts.poppins(
                   //           fontSize: 10.sp,
                   //           color: Colors.grey[700],
                   //         ),
@@ -147,7 +147,7 @@ class MaterialCard extends StatelessWidget {
                   /// DESCRIPTION
                   Text(
                     description,
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.poppins(
                       fontSize: 11.sp,
                       color: Colors.grey[800],
                     ),
@@ -182,7 +182,7 @@ class MaterialCard extends StatelessWidget {
                           ),
                           child: Text(
                             "View",
-                            style: GoogleFonts.montserrat(
+                            style: GoogleFonts.poppins(
                               color: AppColor.primary,
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w600,

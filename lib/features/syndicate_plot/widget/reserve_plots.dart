@@ -39,6 +39,8 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
           totalAmount = controller.calculateSelectedPlotsAmount();
           print('💰 Screen - Selected: $selectedCount, Price per plot: $pricePerPlot, Total: $totalAmount');
         }
+
+
         final amountWithGst = totalAmount;
         final plotAreas = controller.getPlotAreas();
         final totalArea = plotAreas.fold(0.0, (sum, area) => sum + area);
@@ -217,85 +219,85 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                     ),
                     if (!isSoldOut && selectedCount > 0) ...[
                       SizedBox(height: 15.h),
-                      Container(
-                        padding: EdgeInsets.all(12.w),
-                        decoration: BoxDecoration(
-                          color: Colors.blue[50],
-                          borderRadius: BorderRadius.circular(10.r),
-                          border: Border.all(color: Colors.blue[100]!),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Payment Summary",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[800],
+                      Obx(() {
+                        final base = controller.getFixedBookingAmount();
+                        // Trigger recalculation to populate Rx breakdown values
+                        controller.calculateSelectedPlotsAmount();
+                        final serviceCharge = controller.syndicateServiceChargeAmount.value;
+                        final igst = controller.syndicateIgstAmount.value;
+                        final servicePct = controller.syndicateServiceChargePercent.value;
+                        final igstPct = controller.syndicateIgstPercent.value;
+                        final finalTotal = controller.syndicateFinalPayable.value;
+
+                        return Container(
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(10.r),
+                            border: Border.all(color: Colors.blue[100]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Payment Summary",
+                                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: Colors.blue[800])),
+                              SizedBox(height: 8.h),
+
+                              // Base
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("Booking Fee", style: TextStyle(fontSize: 12.sp, color: Colors.grey[700])),
+                                  Text("₹${base.toStringAsFixed(2)}",
+                                      style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: Colors.green)),
+                                ],
                               ),
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              "Calculation:",
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 4.h),
-                            Text(
-                              "${selectedCount} plots × ₹${pricePerPlot.toStringAsFixed(2)} = ₹${totalAmount.toStringAsFixed(2)}",
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: Colors.green,
-                              ),
-                            ),
-                            Divider(height: 12.h),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Base Amount:",
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  "₹${totalAmount.toStringAsFixed(2)}",
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.green,
-                                  ),
+
+                              // Service charge (only if > 0)
+                              if (serviceCharge > 0) ...[
+                                SizedBox(height: 6.h),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("Service Charge (${servicePct.toStringAsFixed(0)}%)",
+                                        style: TextStyle(fontSize: 12.sp, color: Colors.grey[700])),
+                                    Text("+ ₹${serviceCharge.toStringAsFixed(2)}",
+                                        style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600,
+                                            color: Colors.orange.shade700)),
+                                  ],
                                 ),
                               ],
-                            ),
-                            Divider(height: 12.h),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Total Amount:",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  "₹${amountWithGst.toStringAsFixed(2)}",
-                                  style: TextStyle(
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
+
+                              // IGST (only if > 0)
+                              if (igst > 0) ...[
+                                SizedBox(height: 6.h),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("IGST (${igstPct.toStringAsFixed(0)}%)",
+                                        style: TextStyle(fontSize: 12.sp, color: Colors.grey[700])),
+                                    Text("+ ₹${igst.toStringAsFixed(2)}",
+                                        style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600,
+                                            color: Colors.orange.shade700)),
+                                  ],
                                 ),
                               ],
-                            ),
-                          ],
-                        ),
-                      ),
+
+                              Divider(height: 14.h),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("Total Payable",
+                                      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
+                                  Text("₹${finalTotal.toStringAsFixed(2)}",
+                                      style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.green)),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
                     ],
 
                     SizedBox(height: 8.h),

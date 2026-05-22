@@ -794,26 +794,50 @@ class PlotMarketController extends GetxController {
       final dashboardController = Get.put(DashboardController());
 
       if (plot.verifyStatus == 1) {
-        Get.snackbar("Already Verified", "This plot is already verified!",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white);
+        Get.snackbar(
+          "Already Verified",
+          "This plot is already verified!",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
         return;
       }
 
-      double amountToCharge = 499.0;
+      /// Base verification amount
+      double baseAmount = 499.0;
+
       final businessSettings = dashboardController.businessSettings.value;
 
       if (businessSettings?.marketPlotVerifyAmount != null &&
           businessSettings!.marketPlotVerifyAmount! > 0) {
-        amountToCharge = businessSettings.marketPlotVerifyAmount!;
+        baseAmount = businessSettings.marketPlotVerifyAmount!;
       } else if (plot.verification != null && plot.verification! > 0) {
-        amountToCharge = plot.verification!.toDouble();
+        baseAmount = plot.verification!.toDouble();
       }
 
+      /// Percentage values
+      final double marketIgstPercentage =
+      (businessSettings?.marketIgst ?? 0).toDouble();
+
+      final double marketServicePercentage =
+      (businessSettings?.marketServiceCharge ?? 0).toDouble();
+
+      /// Charges calculation
+      final double serviceCharge =
+          (baseAmount * marketServicePercentage) / 100;
+
+      final double igstCharge =
+          (baseAmount * marketIgstPercentage) / 100;
+
+      /// Final total amount
+      final double totalAmount =
+          baseAmount + serviceCharge + igstCharge;
+
+      /// Setup payment with total amount
       razorpayController.setupMarketVerificationPayment(
         marketPlotId: plot.id,
-        amount: amountToCharge,
+        amount: totalAmount,
         propertyName: plot.name,
       );
 
@@ -821,10 +845,15 @@ class PlotMarketController extends GetxController {
         AlertDialog(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
           titlePadding: EdgeInsets.zero,
           title: Container(
-            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+            padding: EdgeInsets.symmetric(
+              vertical: 16.h,
+              horizontal: 20.w,
+            ),
             decoration: BoxDecoration(
               color: AppColor.primary.withOpacity(0.05),
               borderRadius: BorderRadius.only(
@@ -840,8 +869,11 @@ class PlotMarketController extends GetxController {
                     color: AppColor.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.verified_user_rounded,
-                      color: AppColor.primary, size: 22.sp),
+                  child: Icon(
+                    Icons.verified_user_rounded,
+                    color: AppColor.primary,
+                    size: 22.sp,
+                  ),
                 ),
                 SizedBox(width: 12.w),
                 Text(
@@ -855,15 +887,23 @@ class PlotMarketController extends GetxController {
               ],
             ),
           ),
+
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               Text(
                 "Get a verified badge and increase your buyer's trust instantly.",
-                style: TextStyle(fontSize: 13.sp, color: Colors.grey[600]),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: Colors.grey[600],
+                ),
               ),
+
               SizedBox(height: 16.h),
+
+              /// Plot Details
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(12.w),
@@ -880,141 +920,221 @@ class PlotMarketController extends GetxController {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          fontSize: 14.sp, fontWeight: FontWeight.bold),
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       plot.location,
                       maxLines: 1,
-                      style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.grey[500],
+                      ),
                     ),
                   ],
                 ),
               ),
+
               SizedBox(height: 16.h),
+
               _buildBenefitItem("Higher search ranking"),
               _buildBenefitItem("Official verification badge"),
               _buildBenefitItem("Verified seller protection"),
+
               SizedBox(height: 20.h),
+
+              /// Amount Breakdown UI
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                padding: EdgeInsets.all(14.w),
                 decoration: BoxDecoration(
                   color: AppColor.primary.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: AppColor.primary.withOpacity(0.1)),
+                  borderRadius: BorderRadius.circular(14.r),
+                  border: Border.all(
+                    color: AppColor.primary.withOpacity(0.1),
+                  ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    Text("Total Amount",
-                        style: TextStyle(
-                            fontSize: 13.sp, fontWeight: FontWeight.w500)),
-                    Text(
-                      "₹${amountToCharge.toStringAsFixed(0)}",
-                      style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w900,
-                          color: AppColor.primary),
+
+                    /// Base Amount
+                    _buildAmountRow(
+                      "Verification Fee",
+                      "₹${baseAmount.toStringAsFixed(2)}",
+                    ),
+
+                    SizedBox(height: 10.h),
+
+                    /// Service Charge
+                    _buildAmountRow(
+                      "Service Charge (${marketServicePercentage.toStringAsFixed(0)}%)",
+                      "₹${serviceCharge.toStringAsFixed(2)}",
+                    ),
+
+                    SizedBox(height: 10.h),
+
+                    /// IGST
+                    _buildAmountRow(
+                      "IGST (${marketIgstPercentage.toStringAsFixed(0)}%)",
+                      "₹${igstCharge.toStringAsFixed(2)}",
+                    ),
+
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      child: Divider(height: 1),
+                    ),
+
+                    /// Total
+                    Row(
+                      mainAxisAlignment:
+                      MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Total Amount",
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          "₹${totalAmount.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w900,
+                            color: AppColor.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
+
               SizedBox(height: 12.h),
-              // Updated Terms & Conditions with RichText
-              Obx(() => InkWell(
-                onTap: () => razorpayController.toggleTerms(),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      height: 24.w,
-                      width: 24.w,
-                      child: Checkbox(
-                        value: razorpayController.isTermsAccepted.value,
-                        onChanged: (v) => razorpayController.toggleTerms(),
-                        activeColor: AppColor.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4.r)),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: TextStyle(fontSize: 12.sp, color: AppColor.textMain),
-                          children: [
-                            const TextSpan(text: "I accept the "),
-                            // TextSpan(
-                            //   text: "Privacy Policy",
-                            //   style: TextStyle(
-                            //     color: AppColor.primary,
-                            //     fontWeight: FontWeight.w600,
-                            //     decoration: TextDecoration.underline,
-                            //   ),
-                            //   recognizer: TapGestureRecognizer()
-                            //     ..onTap = () {
-                            //       Get.to(
-                            //             () => LegalPageScreen(
-                            //           slug: "plot_market_place_verification_payment_terms_and_condition",
-                            //           title: "Privacy Policy",
-                            //         ),
-                            //       );
-                            //     },
-                            // ),
-                            // const TextSpan(text: " and "),
-                            TextSpan(
-                              text: "Terms & Conditions",
-                              style: TextStyle(
-                                color: AppColor.primary,
-                                fontWeight: FontWeight.w600,
-                                decoration: TextDecoration.underline,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Get.to(
-                                        () => LegalPageScreen(
-                                      slug: "plot_market_place_verification_payment_terms_and_condition",
-                                      title: "Terms & Conditions",
-                                    ),
-                                  );
-                                },
-                            ),
-                          ],
+
+              /// Terms & Conditions
+              Obx(
+                    () => InkWell(
+                  onTap: () =>
+                      razorpayController.toggleTerms(),
+                  child: Row(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 24.w,
+                        width: 24.w,
+                        child: Checkbox(
+                          value: razorpayController
+                              .isTermsAccepted.value,
+                          onChanged: (v) =>
+                              razorpayController
+                                  .toggleTerms(),
+                          activeColor: AppColor.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                            BorderRadius.circular(4.r),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+
+                      SizedBox(width: 8.w),
+
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColor.textMain,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: "I accept the ",
+                              ),
+                              TextSpan(
+                                text:
+                                "Terms & Conditions",
+                                style: TextStyle(
+                                  color: AppColor.primary,
+                                  fontWeight:
+                                  FontWeight.w600,
+                                  decoration:
+                                  TextDecoration
+                                      .underline,
+                                ),
+                                recognizer:
+                                TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Get.to(
+                                          () =>
+                                          LegalPageScreen(
+                                            slug:
+                                            "plot_market_place_verification_payment_terms_and_condition",
+                                            title:
+                                            "Terms & Conditions",
+                                          ),
+                                    );
+                                  },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              )),
+              ),
             ],
           ),
-          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+
+          actionsPadding:
+          EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+
           actions: [
             Row(
               children: [
+
+                /// Later Button
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Get.back(),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.grey[300]!),
+                      side: BorderSide(
+                        color: Colors.grey[300]!,
+                      ),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.r)),
+                        borderRadius:
+                        BorderRadius.circular(10.r),
+                      ),
                     ),
-                    child: Text("Later",
-                        style: TextStyle(
-                            color: Colors.grey[600], fontSize: 15.w)),
+                    child: Text(
+                      "Later",
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 15.sp,
+                      ),
+                    ),
                   ),
                 ),
+
                 SizedBox(width: 5.w),
+
+                /// Proceed Button
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
                     onPressed: () {
-                      if (!razorpayController.isTermsAccepted.value) {
-                        Get.snackbar("Required", "Please accept the Privacy Policy and Terms & Conditions",
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white);
+                      if (!razorpayController
+                          .isTermsAccepted.value) {
+                        Get.snackbar(
+                          "Required",
+                          "Please accept Terms & Conditions",
+                          backgroundColor: Colors.red,
+                          colorText: Colors.white,
+                        );
                         return;
                       }
+
                       Get.back();
                       razorpayController.initiatePayment();
                     },
@@ -1022,21 +1142,50 @@ class PlotMarketController extends GetxController {
                       backgroundColor: AppColor.primary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.r)),
+                        borderRadius:
+                        BorderRadius.circular(10.r),
+                      ),
                     ),
-                    child: Text("Proceed",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
+                    child: Text(
+                      "Proceed",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ],
         ),
-      );    } catch (e) {
-      // Error handling
+      );
+    } catch (e) {
+      debugPrint("Verification Payment Error: $e");
     }
+  }
+
+  /// Reusable Amount Row Widget
+  Widget _buildAmountRow(String title, String amount) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: Colors.grey[700],
+          ),
+        ),
+        Text(
+          amount,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildBenefitItem(String text) {

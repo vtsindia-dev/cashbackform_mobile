@@ -35,7 +35,7 @@ class SubtitleWidget extends StatelessWidget {
           child: RichText(
             text: TextSpan(
               style: TextStyle(
-                fontFamily: GoogleFonts.montserrat().fontFamily,
+                fontFamily: GoogleFonts.poppins().fontFamily,
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
               ),

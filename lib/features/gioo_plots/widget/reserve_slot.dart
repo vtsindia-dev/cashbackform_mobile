@@ -1450,7 +1450,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
             children: [
               TextSpan(
                 text: "ULPIN Number: ",
-                style: GoogleFonts.montserrat(
+                style: GoogleFonts.poppins(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w500,
                   color: AppColor.primary,
@@ -1458,7 +1458,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
               ),
               TextSpan(
                 text: detail.uldNo ?? "N/A",
-                style: GoogleFonts.montserrat(
+                style: GoogleFonts.poppins(
                   fontSize: 12.sp,
                   color: AppColor.black,
                 ),
@@ -1844,6 +1844,111 @@ class _ReserveSlotState extends State<ReserveSlot> {
           final total = controller.totalAmount.value;
           final couponDiscount = controller.discountAmount.value;
           final specialDiscount = controller.specialDiscountAmount.value;
+          final walletUsed = controller.useWallet.value ? controller.actualWalletUsed.value : 0.0;
+
+          final serviceCharge = controller.giooServiceChargeAmount.value;
+          final igst = controller.giooIgstAmount.value;
+          final servicePct = controller.giooServiceChargePercent.value;
+          final igstPct = controller.giooIgstPercent.value;
+
+          final savings = specialDiscount + couponDiscount + walletUsed;
+
+          return Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              children: [
+                _priceRow("Total Amount", "₹${total.toStringAsFixed(2)}"),
+
+                if (specialDiscount > 0)
+                  _priceRow(
+                    "Special Discount (${controller.discountPercentage.value.toInt()}%)",
+                    "- ₹${specialDiscount.toStringAsFixed(2)}",
+                    valueColor: Colors.green,
+                  ),
+
+                if (controller.isApplied.value && couponDiscount > 0)
+                  _priceRow(
+                    "Coupon Discount",
+                    "- ₹${couponDiscount.toStringAsFixed(2)}",
+                    valueColor: Colors.green,
+                  ),
+
+                if (controller.useWallet.value && walletUsed > 0)
+                  _priceRow(
+                    "Wallet Used",
+                    "- ₹${walletUsed.toStringAsFixed(2)}",
+                    valueColor: Colors.blue,
+                  ),
+
+                if (savings > 0)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("You Saved", style: TextStyle(fontSize: 12.sp, color: Colors.green, fontWeight: FontWeight.w600)),
+                        Text("₹${savings.toStringAsFixed(2)}", style: TextStyle(fontSize: 12.sp, color: Colors.green, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+
+                // ✅ Service charge row (only show if > 0)
+                if (serviceCharge > 0) ...[
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6.h),
+                    child: Divider(height: 1, color: Colors.grey.shade200),
+                  ),
+                  _priceRow(
+                    "Service Charge (${servicePct.toStringAsFixed(0)}%)",
+                    "+ ₹${serviceCharge.toStringAsFixed(2)}",
+                    valueColor: Colors.orange.shade700,
+                  ),
+                ],
+
+                if (igst > 0)
+                  _priceRow(
+                    "Service Tax (${igstPct.toStringAsFixed(0)}%)",
+                    "+ ₹${igst.toStringAsFixed(2)}",
+                    valueColor: Colors.orange.shade700,
+                  ),
+
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  child: Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w),
+                        child: Text("Payable", style: TextStyle(fontSize: 11.sp, color: Colors.grey)),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                    ],
+                  ),
+                ),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Final Payable", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: AppColor.black)),
+                    Text(
+                      "₹${controller.finalPayable.value.toStringAsFixed(2)}",
+                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: AppColor.orange),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+       /* Obx(() {
+          final total = controller.totalAmount.value;
+          final couponDiscount = controller.discountAmount.value;
+          final specialDiscount = controller.specialDiscountAmount.value;
 
           final walletUsed = controller.useWallet.value
               ? controller
@@ -1948,7 +2053,7 @@ class _ReserveSlotState extends State<ReserveSlot> {
               ],
             ),
           );
-        }),
+        }),*/
       ],
     );
   }

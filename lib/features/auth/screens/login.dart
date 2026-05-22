@@ -227,7 +227,7 @@ class _LoginState extends State<Login> {
         //             style: TextStyle(
         //               color: Colors.black87,
         //               fontSize: 13,
-        //               fontFamily: GoogleFonts.montserrat().fontFamily,
+        //               fontFamily: GoogleFonts.poppins().fontFamily,
         //             ),
         //             children: [
         //               TextSpan(
@@ -235,7 +235,7 @@ class _LoginState extends State<Login> {
         //                 style: TextStyle(
         //                   color: AppColor.primary,
         //                   fontWeight: FontWeight.bold,
-        //                   fontFamily: GoogleFonts.montserrat().fontFamily,
+        //                   fontFamily: GoogleFonts.poppins().fontFamily,
         //                 ),
         //                 recognizer: TapGestureRecognizer()
         //                   ..onTap = () {
@@ -247,7 +247,7 @@ class _LoginState extends State<Login> {
         //                 style: TextStyle(
         //                   color: AppColor.primary,
         //                   fontWeight: FontWeight.bold,
-        //                   fontFamily: GoogleFonts.montserrat().fontFamily,
+        //                   fontFamily: GoogleFonts.poppins().fontFamily,
         //                 ),
         //                 recognizer: TapGestureRecognizer()
         //                   ..onTap = () {

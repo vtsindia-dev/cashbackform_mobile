@@ -29,6 +29,7 @@ class _HomeState extends State<Home> {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   final HomeController controller = Get.put(HomeController());
+
   void _launchURL(String url) async {
     try {
       final Uri uri = Uri.parse(url);
@@ -55,6 +56,7 @@ class _HomeState extends State<Home> {
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,8 +64,11 @@ class _HomeState extends State<Home> {
       drawer: const CustomDrawer(),
       appBar: HomeAppBar(controller: controller, scaffoldKey: scaffoldKey),
       body: Obx(() {
-        if (controller.isLoadingLocation.value || controller.isLoadingFeaturedData.value) {
-          return const Center(child: GifLoader(message: "Loading...", size: 100));
+        if (controller.isLoadingLocation.value ||
+            controller.isLoadingFeaturedData.value) {
+          return const Center(
+            child: GifLoader(message: "Loading...", size: 100),
+          );
         }
 
         return RefreshIndicator(
@@ -77,36 +82,44 @@ class _HomeState extends State<Home> {
                 children: [
                   HomeSearchBar(),
                   const SizedBox(height: 20),
-
-                Obx(() {
-                  final banners = controller.featuredBanners;
-                  final List<String> images = banners.isNotEmpty ? banners.map((banner) => banner.image).where((image) => image.isNotEmpty).toList() : [];
-                  final List<String> redirectUrls = banners.isNotEmpty ? banners.map((banner) => banner.redirectUrl).where((url) => url != null && url.isNotEmpty).cast<String>().toList() : [];
-                  return CarouselWidget(
-                    images: images,
-                    redirectUrls: redirectUrls.isNotEmpty ? redirectUrls : null,
-                    height: 160,
-                    autoPlayDuration: const Duration(seconds: 3),
-                    borderRadius: 20,
-                    onTap: (url) {
-                      if (url.isNotEmpty) {
-                        print('Banner tapped with URL: $url');
-                        if (url.contains('residential-property')) {
-                          // Get.toNamed(AppRoutes.residentialDetails);
-                        } else if (url.contains('plot-marketplace')) {
-                          // Get.toNamed(AppRoutes.plotMarket);
-                        } else if (url.contains('syndicate-plots')) {
-                          // Get.toNamed(AppRoutes.syndicateDetails);
-                        } else {
-                          _launchURL(url);
+                  Obx(() {
+                    final banners = controller.featuredBanners;
+                    final List<String> images = banners.isNotEmpty
+                        ? banners
+                              .map((banner) => banner.image)
+                              .where((image) => image.isNotEmpty)
+                              .toList()
+                        : [];
+                    final List<String> redirectUrls = banners.isNotEmpty
+                        ? banners
+                              .map((banner) => banner.redirectUrl)
+                              .where((url) => url != null && url.isNotEmpty)
+                              .cast<String>()
+                              .toList()
+                        : [];
+                    return CarouselWidget(
+                      images: images,
+                      redirectUrls: redirectUrls.isNotEmpty
+                          ? redirectUrls
+                          : null,
+                      height: 160,
+                      autoPlayDuration: const Duration(seconds: 3),
+                      borderRadius: 15,
+                      onTap: (url) {
+                        if (url.isNotEmpty) {
+                          if (url.contains('residential-property')) {
+                            // Get.toNamed(AppRoutes.residentialDetails);
+                          } else if (url.contains('plot-marketplace')) {
+                            // Get.toNamed(AppRoutes.plotMarket);
+                          } else if (url.contains('syndicate-plots')) {
+                            // Get.toNamed(AppRoutes.syndicateDetails);
+                          } else {
+                            _launchURL(url);
+                          }
                         }
-                      }
-                    },
-                    onError: (index, error) {
-                      print('Image failed to load at index $index: $error');
-                    },
-                  );
-                }),
+                      },
+                    );
+                  }),
                   const SizedBox(height: 10),
                   PropertyMain(),
                   const SizedBox(height: 20),
@@ -129,7 +142,8 @@ class _HomeState extends State<Home> {
                       SubtitleWidget(
                         title: "Featured Flats / Villas Properties",
                         highlightWord: "Flats / Villas",
-                        onViewAllTap: () =>   Get.toNamed(AppRoutes.residentialList),
+                        onViewAllTap: () =>
+                            Get.toNamed(AppRoutes.residentialList),
                       ),
                       const SizedBox(height: 10),
                       FeaturedFlatsVillasProperties(),
@@ -146,15 +160,10 @@ class _HomeState extends State<Home> {
                         },
                       ),
                       const SizedBox(height: 10),
-
                       const FeaturedGioRentalYieldPlots(),
                     ],
                   ),
-
-
                   const SizedBox(height: 20),
-
-                  // GIOO Plots Section
                   Column(
                     children: [
                       SubtitleWidget(
@@ -162,34 +171,27 @@ class _HomeState extends State<Home> {
                         highlightWord: "GIOO",
                         onViewAllTap: () {
                           Get.toNamed('/gioo');
-
-                          print("View All clicked");
                         },
                       ),
                       const SizedBox(height: 10),
                       FeaturesGiooPlots(),
                     ],
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Syndicate Properties Section
                   Column(
                     children: [
                       SubtitleWidget(
-                        title: "Featured Gio Rental Yield – Syndicate Plots Properties",
+                        title:
+                            "Featured Gio Rental Yield – Syndicate Plots Properties",
                         highlightWord: "Gio Rental Yield – Syndicate",
                         onViewAllTap: () {
                           Get.toNamed('/syndicate');
-
-                          print("View All clicked");
                         },
                       ),
                       const SizedBox(height: 10),
                       FeaturesSyndicateProperties(),
                     ],
                   ),
-
                   const SizedBox(height: 20),
                   Column(
                     children: [
@@ -198,7 +200,6 @@ class _HomeState extends State<Home> {
                         highlightWord: "Professional",
                         onViewAllTap: () {
                           Get.toNamed('/service');
-                          print("View All clicked");
                         },
                       ),
                       const SizedBox(height: 10),
@@ -213,7 +214,6 @@ class _HomeState extends State<Home> {
                         highlightWord: "BestSelling",
                         onViewAllTap: () {
                           Get.toNamed('/materialStore');
-                          print("View All clicked");
                         },
                       ),
                       const SizedBox(height: 10),

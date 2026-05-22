@@ -43,6 +43,7 @@ class ResidentialPropertyFormController extends GetxController {
   var areaSqft = ''.obs;
   var plotCount = ''.obs;
   var userType = ''.obs;
+  var yotubeLink = ''.obs;
 
   // Categories
   var propertyCategories = <PropertyCategory>[].obs;
@@ -315,7 +316,7 @@ class ResidentialPropertyFormController extends GetxController {
 
   // ==================== PROPERTY LOADING ====================
 
-  Future<void> loadPropertyForEditing(int propertyId) async {
+  Future<String?> loadPropertyForEditing(int propertyId) async {
     try {
       isLoading(true);
       editingPropertyId.value = propertyId;
@@ -335,7 +336,7 @@ class ResidentialPropertyFormController extends GetxController {
       if (response.statusCode != 200 ||
           (response.data['status'] != true && response.data['status'] != 200)) {
         SnackBarHelper.showError('Failed to load property details');
-        return;
+        return null;
       }
 
       final rawData = response.data['data'] as Map<String, dynamic>;
@@ -350,6 +351,7 @@ class ResidentialPropertyFormController extends GetxController {
       aboutProperty.value = property.aboutProperty;
       location.value     = property.location;
       userType.value     = property.userType;
+      yotubeLink.value   = property.youtubeLink??'';
 
       if (property.price > 0 && property.areaSqft > 0) {
         pricePerSqft.value = (property.price / property.areaSqft).toStringAsFixed(2);
@@ -486,10 +488,11 @@ class ResidentialPropertyFormController extends GetxController {
       completedSteps.assignAll([0, 1, 2, 3]);
       update();
       print('✅ loadPropertyForEditing complete for $propertyId');
-
+      return  property.youtubeLink;
     } catch (e, st) {
       print('❌ Error loading property: $e\n$st');
       SnackBarHelper.showError('Failed to load property details');
+      return  null;
     } finally {
       isLoading(false);
     }
@@ -925,7 +928,19 @@ class ResidentialPropertyFormController extends GetxController {
         SnackBarHelper.showError(allErrors.values.first);
         return;
       }
+      final youtubeLink = yotubeLink.value.trim();
+      if (youtubeLink.isNotEmpty) {
+        final uri = Uri.tryParse(youtubeLink);
+        final isValidYoutube =
+            uri != null &&
+                uri.hasAbsolutePath &&
+                (uri.host.contains('youtube.com') || uri.host.contains('youtu.be'));
 
+        if (!isValidYoutube) {
+          SnackBarHelper.showError('Please enter a valid YouTube link');
+          return;
+        }
+      }
       isSubmitting(true);
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
@@ -959,6 +974,7 @@ class ResidentialPropertyFormController extends GetxController {
         'lng': longitude.value.toString(),
         'about_property': aboutProperty.value,
         'user_type': userType.value.isNotEmpty ? userType.value : 'customer',
+        if (yotubeLink.value.trim().isNotEmpty) 'youtube_link': yotubeLink.value.trim(),
         if (selectedStateId.value > 0) 'state': selectedStateId.value.toString(),
         if (selectedCityId.value > 0) 'city': selectedCityId.value.toString(),
         if (selectedCountryId.value > 0) 'country': selectedCountryId.value.toString(),
@@ -1170,14 +1186,48 @@ class ResidentialPropertyFormController extends GetxController {
     }
   }
 
+
   double getVerificationAmount() {
     try {
       final dashboardController = Get.put(DashboardController());
-      if (dashboardController.businessSettings.value?.residentialDocumentAmount != null &&
-          dashboardController.businessSettings.value!.residentialDocumentAmount! > 0) {
-        return dashboardController.businessSettings.value!.residentialDocumentAmount!;
+
+      /// Base amount
+      double baseAmount = 499.0;
+
+      if (dashboardController
+          .businessSettings.value?.residentialDocumentAmount !=
+          null &&
+          dashboardController
+              .businessSettings.value!.residentialDocumentAmount! >
+              0) {
+        baseAmount = dashboardController
+            .businessSettings.value!.residentialDocumentAmount!;
       }
-      return 499.0;
+
+      /// Percentage values
+      final double residentialIgst =
+      (dashboardController.businessSettings.value?.residentialIgst ??
+          0)
+          .toDouble();
+
+      final double residentialServiceCharge =
+      (dashboardController
+          .businessSettings.value?.residentialServiceCharge ??
+          0)
+          .toDouble();
+
+      /// Charges calculation
+      final double serviceChargeAmount =
+          (baseAmount * residentialServiceCharge) / 100;
+
+      final double igstAmount =
+          (baseAmount * residentialIgst) / 100;
+
+      /// Final total
+      final double totalAmount =
+          baseAmount + serviceChargeAmount + igstAmount;
+
+      return totalAmount;
     } catch (e) {
       print('❌ Error getting verification amount: $e');
       return 499.0;
@@ -1187,6 +1237,9 @@ class ResidentialPropertyFormController extends GetxController {
   Future<void> initiateVerificationPayment(Property property) async {
     try {
       final razorpayController = Get.put(RazorpayController());
+      final dashboardController = Get.put(DashboardController());
+
+      /// Already verified check
       if (property.isVerified) {
         Get.snackbar(
           "Already Verified",
@@ -1197,20 +1250,65 @@ class ResidentialPropertyFormController extends GetxController {
         );
         return;
       }
-      double amountToCharge = getVerificationAmount();
+
+      /// Base amount
+      double baseAmount = 499.0;
+
+      if (dashboardController
+          .businessSettings.value?.residentialDocumentAmount !=
+          null &&
+          dashboardController
+              .businessSettings.value!.residentialDocumentAmount! >
+              0) {
+        baseAmount = dashboardController
+            .businessSettings.value!.residentialDocumentAmount!;
+      }
+
+      /// Percentage values
+      final double residentialIgst =
+      (dashboardController.businessSettings.value?.residentialIgst ??
+          0)
+          .toDouble();
+
+      final double residentialServiceCharge =
+      (dashboardController
+          .businessSettings.value?.residentialServiceCharge ??
+          0)
+          .toDouble();
+
+      /// Charges
+      final double serviceChargeAmount =
+          (baseAmount * residentialServiceCharge) / 100;
+
+      final double igstAmount =
+          (baseAmount * residentialIgst) / 100;
+
+      /// Final total amount
+      final double amountToCharge =
+          baseAmount + serviceChargeAmount + igstAmount;
+
+      /// Razorpay setup
       razorpayController.setupResidentialVerificationPayment(
         residentialPlotId: property.id,
         amount: amountToCharge,
         propertyName: property.propertyName,
       );
+
       Get.dialog(
         AlertDialog(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+
+          /// HEADER
           titlePadding: EdgeInsets.zero,
           title: Container(
-            padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 24.w),
+            padding: EdgeInsets.symmetric(
+              vertical: 20.h,
+              horizontal: 24.w,
+            ),
             decoration: BoxDecoration(
               color: AppColor.primary.withOpacity(0.08),
               borderRadius: BorderRadius.only(
@@ -1218,73 +1316,100 @@ class ResidentialPropertyFormController extends GetxController {
                 topRight: Radius.circular(24.r),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(8.w),
-                      decoration: BoxDecoration(
-                        color: AppColor.primary,
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Icon(Icons.home_work_rounded, color: Colors.white, size: 22.sp),
-                    ),
-                    SizedBox(width: 12.w),
-                    Text(
-                      "Property Verification",
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColor.primary,
-                      ),
-                    ),
-                  ],
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: AppColor.primary,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Icon(
+                    Icons.home_work_rounded,
+                    color: Colors.white,
+                    size: 22.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Text(
+                  "Property Verification",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColor.primary,
+                  ),
                 ),
               ],
             ),
           ),
+
+          /// CONTENT
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+
                 Text(
                   "Secure your listing and reach more buyers with our verified badge.",
-                  style: TextStyle(fontSize: 13.sp, color: Colors.grey[600], height: 1.4),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: Colors.grey[600],
+                    height: 1.4,
+                  ),
                 ),
+
                 SizedBox(height: 16.h),
 
-                // Property Info Card
+                /// PROPERTY CARD
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: AppColor.primary.withOpacity(0.15)),
+                    border: Border.all(
+                      color: AppColor.primary.withOpacity(0.15),
+                    ),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
                     children: [
                       Text(
                         property.propertyName,
-                        style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: AppColor.black),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColor.black,
+                        ),
                       ),
-                      SizedBox(height: 2.h),
+
+                      SizedBox(height: 4.h),
+
                       Row(
                         children: [
-                          Icon(Icons.location_on, size: 10.sp, color: Colors.grey[400]),
+                          Icon(
+                            Icons.location_on,
+                            size: 12.sp,
+                            color: Colors.grey[400],
+                          ),
                           SizedBox(width: 4.w),
                           Expanded(
                             child: Text(
                               property.location,
-                              style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
                               overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: Colors.grey[500],
+                              ),
                             ),
                           ),
                         ],
@@ -1295,128 +1420,244 @@ class ResidentialPropertyFormController extends GetxController {
 
                 SizedBox(height: 20.h),
 
-                // Benefits Section
-                _buildBenefitItem("Priority search ranking for residential listings"),
-                _buildBenefitItem("Trusted Seller badge added to profile"),
-                _buildBenefitItem("Document validation for buyer confidence"),
+                /// BENEFITS
+                _buildBenefitItem(
+                  "Priority search ranking for residential listings",
+                ),
+                _buildBenefitItem(
+                  "Trusted Seller badge added to profile",
+                ),
+                _buildBenefitItem(
+                  "Document validation for buyer confidence",
+                ),
 
                 SizedBox(height: 20.h),
 
-                // Dynamic Price Box
+                /// PRICE BREAKDOWN
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppColor.primary.withOpacity(0.05), AppColor.primary.withOpacity(0.1)],
+                      colors: [
+                        AppColor.primary.withOpacity(0.05),
+                        AppColor.primary.withOpacity(0.1),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius:
+                    BorderRadius.circular(16.r),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
                     children: [
-                      Text("Verification Fee", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
-                      Text(
-                        "₹${amountToCharge.toStringAsFixed(0)}",
-                        style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: AppColor.primary),
+
+                      /// Base Fee
+                      _buildAmountRow(
+                        "Verification Fee",
+                        "₹${baseAmount.toStringAsFixed(2)}",
+                      ),
+
+                      SizedBox(height: 10.h),
+
+                      /// Service Charge
+                      _buildAmountRow(
+                        "Service Charge (${residentialServiceCharge.toStringAsFixed(0)}%)",
+                        "₹${serviceChargeAmount.toStringAsFixed(2)}",
+                      ),
+
+                      SizedBox(height: 10.h),
+
+                      /// IGST
+                      _buildAmountRow(
+                        "IGST (${residentialIgst.toStringAsFixed(0)}%)",
+                        "₹${igstAmount.toStringAsFixed(2)}",
+                      ),
+
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 12.h,
+                        ),
+                        child: Divider(),
+                      ),
+
+                      /// TOTAL
+                      Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Total Amount",
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            "₹${amountToCharge.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontSize: 24.sp,
+                              fontWeight: FontWeight.w900,
+                              color: AppColor.primary,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
 
-                SizedBox(height: 12.h),
+                SizedBox(height: 14.h),
 
-                // Terms & Conditions with Checkbox
-                Obx(() => Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 40.w,
-                      child: Checkbox(
-                        value: razorpayController.isTermsAccepted.value,
-                        onChanged: (_) => razorpayController.toggleTerms(),
-                        activeColor: AppColor.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 5.h),
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Colors.grey.shade700,
-                              height: 1.4,
-                            ),
-                            children: [
-                              const TextSpan(text: "I agree to the "),
-                              TextSpan(
-                                text: "Terms & Conditions",
-                                style: TextStyle(
-                                  color: AppColor.primary,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Get.to(
-                                          () => LegalPageScreen(
-                                        slug: "flatsvillas_payment_verification_terms_and_condition",
-                                        title: "Terms & Conditions",
-                                      ),
-                                    );
-                                  },
-                              ),
-                              const TextSpan(text: "."),
-                            ],
+                /// TERMS
+                Obx(
+                      () => Row(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 40.w,
+                        child: Checkbox(
+                          value: razorpayController
+                              .isTermsAccepted.value,
+                          onChanged: (_) =>
+                              razorpayController
+                                  .toggleTerms(),
+                          activeColor: AppColor.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                            BorderRadius.circular(4.r),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                )),
+
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 5.h),
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color:
+                                Colors.grey.shade700,
+                                height: 1.4,
+                              ),
+                              children: [
+                                const TextSpan(
+                                  text:
+                                  "I agree to the ",
+                                ),
+                                TextSpan(
+                                  text:
+                                  "Terms & Conditions",
+                                  style: TextStyle(
+                                    color:
+                                    AppColor.primary,
+                                    fontWeight:
+                                    FontWeight.bold,
+                                    decoration:
+                                    TextDecoration
+                                        .underline,
+                                  ),
+                                  recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Get.to(
+                                            () =>
+                                            LegalPageScreen(
+                                              slug:
+                                              "flatsvillas_payment_verification_terms_and_condition",
+                                              title:
+                                              "Terms & Conditions",
+                                            ),
+                                      );
+                                    },
+                                ),
+                                const TextSpan(
+                                  text: ".",
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-          actionsPadding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
+
+          /// ACTIONS
+          actionsPadding:
+          EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
+
           actions: [
             Row(
               children: [
+
+                /// CANCEL
                 Expanded(
                   child: TextButton(
                     onPressed: () {
-                      if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
+                      if (Get.isSnackbarOpen) {
+                        Get.closeCurrentSnackbar();
+                      }
                       Get.back();
                     },
-                    child: Text("Cancel", style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w600)),
+                    child: Text(
+                      "Cancel",
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
+
                 SizedBox(width: 12.w),
+
+                /// PAY
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
                     onPressed: () {
-                      if (!razorpayController.isTermsAccepted.value) {
+                      if (!razorpayController
+                          .isTermsAccepted.value) {
                         Get.snackbar(
                           "Action Required",
                           "Please accept the terms to proceed.",
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor:
+                          Colors.redAccent,
                           colorText: Colors.white,
-                          snackPosition: SnackPosition.BOTTOM,
+                          snackPosition:
+                          SnackPosition.BOTTOM,
                         );
                         return;
                       }
-                      if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
+
+                      if (Get.isSnackbarOpen) {
+                        Get.closeCurrentSnackbar();
+                      }
+
                       Get.back();
                       razorpayController.initiatePayment();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColor.primary,
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      padding: EdgeInsets.symmetric(
+                        vertical: 12.h,
+                      ),
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                        BorderRadius.circular(12.r),
+                      ),
                     ),
-                    child: Text("Proceed to Pay", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      "Proceed to Pay",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -1426,28 +1667,67 @@ class ResidentialPropertyFormController extends GetxController {
       );
     } catch (e) {
       print('❌ Error initiating verification payment: $e');
-      SnackBarHelper.showError('Failed to initiate payment');
+
+      SnackBarHelper.showError(
+        'Failed to initiate payment',
+      );
     }
   }
 
-// Helper method to build benefit items
+  /// BENEFIT ITEM
   Widget _buildBenefitItem(String text) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
         children: [
-          Icon(Icons.check_circle, color: AppColor.primary, size: 16.sp),
+          Icon(
+            Icons.check_circle,
+            color: AppColor.primary,
+            size: 16.sp,
+          ),
           SizedBox(width: 8.w),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.grey[700],
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  /// AMOUNT ROW
+  Widget _buildAmountRow(
+      String title,
+      String amount,
+      ) {
+    return Row(
+      mainAxisAlignment:
+      MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: Colors.grey[700],
+          ),
+        ),
+        Text(
+          amount,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+
 
 
   @override

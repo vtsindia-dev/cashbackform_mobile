@@ -42,6 +42,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
   final _areaController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
+  final TextEditingController _youtubeLinkController = TextEditingController();
 
   // Animation controllers
   late AnimationController _fadeAnimationController;
@@ -106,7 +107,13 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     _initializeDataBinding();
     if (widget.propertyId != null) {
       _controller.resetFormForEdit();
+      final result =
       await _controller.loadPropertyForEditing(widget.propertyId!);
+
+      setState(() {
+        _youtubeLinkController.text = result??'';
+      });
+
       if (!_isDisposed) {
         Future.delayed(const Duration(milliseconds: 300), _prefetchImages);
       }
@@ -141,6 +148,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     _controller.areaSqft.listen((v) => safeUpdate(_areaController, v));
     _controller.aboutProperty.listen((v) => safeUpdate(_descriptionController, v));
     _controller.location.listen((v) => safeUpdate(_locationController, v));
+    _controller.yotubeLink.listen((v) => safeUpdate(_youtubeLinkController, v));
 
     _propertyNameController.addListener(() {
       if (!_isDisposed && _controller.propertyName.value != _propertyNameController.text)
@@ -165,6 +173,10 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     _descriptionController.addListener(() {
       if (!_isDisposed && _controller.aboutProperty.value != _descriptionController.text)
         _controller.aboutProperty.value = _descriptionController.text;
+    });
+    _youtubeLinkController.addListener(() {
+      if (!_isDisposed && _controller.yotubeLink.value != _youtubeLinkController.text)
+        _controller.yotubeLink.value = _youtubeLinkController.text;
     });
     _locationController.addListener(() {
       if (!_isDisposed && _controller.location.value != _locationController.text)
@@ -211,6 +223,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
       _areaController.clear();
       _descriptionController.clear();
       _locationController.clear();
+      _youtubeLinkController.clear();
     }
   }
 
@@ -227,6 +240,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     _pricePerSqftController.dispose();
     _areaController.dispose();
     _descriptionController.dispose();
+    _youtubeLinkController.dispose();
     _locationController.dispose();
     _googleMapController?.dispose();
     imageCache.clear();
@@ -541,6 +555,16 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                   onChanged: (v) => _controller.aboutProperty.value = v,
                 ),
               ],
+            ),
+            SizedBox(height: 10,),
+            _buildFormField(
+              label: 'Youtube Link',
+              required: false,
+              controller: _youtubeLinkController,
+              hintText: 'Enter youtube link',
+              keyboardType: TextInputType.url,
+              suffix: Text('', style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 12.sp)),
+              onChanged: (v) => _controller.yotubeLink.value = v,
             ),
             SizedBox(height: 100.h),
           ],

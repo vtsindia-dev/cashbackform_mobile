@@ -14,39 +14,45 @@ class PropertyMain extends StatelessWidget {
     {
       "title": "Market Land/Plots",
       "icon": Images.featuredPlotMarket,
-      "color": Color(0xFFE8E5FF),
-      "iconColor": Color(0xFF6A5AE0),
-      "route": AppRoutes.plotMarket
+      "color": Color(0xFFE2FBE9),
+      "iconColor": Color(0xFF2CC8B3),
+      "route": AppRoutes.plotMarket,
+      "asset": "assets/images/home-categories-1.png",
     },
     {
       "title": "Flats/villas",
       "icon": Images.featuredResidential,
-      "color": Color(0xFFE2FBE9),
-      "iconColor": Color(0xFF2CC8B3),
-      "route": AppRoutes.residentialList
+      "color": Color(0xFFFFE3EE),
+      "iconColor": Color(0xFFE54788),
+      "route": AppRoutes.residentialList,
+      "asset": "assets/images/home-categories-2.png",
     },
     {
       "title": "Gio Rental Yield Plots",
       "icon": Images.featuredGioo,
       "color": Color(0xFFE3EDFF),
       "iconColor": Color(0xFF0440FF),
-      "route": AppRoutes.rentalYieldList
+      "route": AppRoutes.rentalYieldList,
+      "asset": "assets/images/home-categories-3.png",
     },
     {
       "title": "Gio Syndicate Plots",
       "icon": Images.featuredSyndicate,
       "color": Color(0xFFFFF0DC),
       "iconColor": Color(0xFFF49B33),
-      "route": AppRoutes.syndicate
+      "route": AppRoutes.syndicate,
+      "asset": "assets/images/home-categories-4.png",
     },
     {
       "title": "Gio Nano Plots",
       "icon": Images.featuredGioo,
-      "color": Color(0xFFFFE3EE),
-      "iconColor": Color(0xFFE54788),
-      "route": AppRoutes.gioo
+      "color": Color(0xFFE8E5FF),
+      "iconColor": Color(0xFF6A5AE0),
+      "route": AppRoutes.gioo,
+      "asset": "assets/images/home-categories-5.png",
     },
   ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +119,7 @@ class PropertyMain extends StatelessWidget {
     final Color bgColor = item["color"]!;
     final Color iconColor = item["iconColor"]!;
     final String route = item["route"]!;
+    final String asset = item["asset"]!;
 
     return GestureDetector(
       onTap: () => Get.toNamed(route),
@@ -158,10 +165,9 @@ class PropertyMain extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Image.asset(
-                      icon,
+                      asset,
                       height: 22.h,
                       width: 22.h,
-                      color: iconColor,
                     ),
                   ),
                   SizedBox(
@@ -174,8 +180,8 @@ class PropertyMain extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
                           color: Colors.black,
                         ),
                       ),
