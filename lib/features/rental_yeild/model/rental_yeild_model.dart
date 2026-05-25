@@ -300,6 +300,7 @@ class RentalListProperty {
   final int verifyStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int? soldStatus;
 
   // Get images list (files as images)
   List<String> get images => files;
@@ -371,6 +372,7 @@ class RentalListProperty {
     required this.verifyStatus,
     required this.createdAt,
     required this.updatedAt,
+    this.soldStatus
   });
 
   factory RentalListProperty.fromJson(Map<String, dynamic> json) {
@@ -475,6 +477,7 @@ class RentalListProperty {
       yieldAmount: json['yield_amount']?.toString() ?? '0',
       description: json['description']?.toString() ?? 'No description',
       plotImage: json['plot_image']?.toString(),
+      soldStatus : json['sold_status'],
       files: files,
       city: city,
       state: state,

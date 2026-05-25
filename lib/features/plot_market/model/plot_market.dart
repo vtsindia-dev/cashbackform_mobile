@@ -38,6 +38,7 @@ class MarketPlot {
   final bool documentVerification;
   final String? youtubeLink;
   final List<String> commonFacilityIds;
+  final int? soldStatus;
 
   MarketPlot({
     required this.id,
@@ -72,6 +73,7 @@ class MarketPlot {
     this.plotCount,
     this.threeDImage,
     this.youtubeLink,
+    this.soldStatus,
     required this.documentVerification,
     this.commonFacilityIds = const [],
   });
@@ -157,6 +159,7 @@ class MarketPlot {
       plotImage: json['plot_image']?.toString(),
       bluePrint: json['blue_print']?.toString(),
       work: json['work']?.toString(),
+        soldStatus : json['sold_status'],
       agentId: json['agent_id']?.toString(),
       uldNo: json['uld_no']?.toString(),
         youtubeLink :  json['youtube_link']?.toString(),

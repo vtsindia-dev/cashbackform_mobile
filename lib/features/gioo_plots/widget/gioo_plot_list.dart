@@ -7,7 +7,7 @@ import '../controller/gioo_controller.dart';
 import '../model/gioo_plot.dart';
 
 class GiooPlotList extends StatelessWidget {
-  final controller = Get.find<GiooPlotController>(); // ✅ reuse
+  final controller = Get.find<GiooPlotController>();
 
   GiooPlotList({super.key});
 
@@ -94,11 +94,9 @@ class GiooPlotList extends StatelessWidget {
       area: plot.formattedArea,
       location: plot.location,
       description: plot.description,
+      soldStatus: plot.soldStatus,
       onTap: () {
-        print("View Gioo Plot: ${plot.name}");
         Get.toNamed('/giooDetails', arguments: {"id": plot.id, "title": plot.name});
-        print('the Gioo plot is printed ');
-        print('');
       },
     ).animate().scale(
       begin: const Offset(0.8, 0.8),

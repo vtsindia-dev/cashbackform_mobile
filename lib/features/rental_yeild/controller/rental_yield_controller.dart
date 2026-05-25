@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:cashback_farms/common/api_constant.dart';
+import 'package:cashback_farms/common/colours.dart';
+import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -647,10 +649,6 @@ class RentalYieldController extends GetxController {
     update();
   }
 
-  // ==================== DOCUMENT PAYMENT METHODS ====================
-
-  // Method to initiate document payment - SIMILAR TO SYNDICATE CONTROLLER
-// In RentalYieldController's initiateDocumentPayment method:
   void initiateDocumentPayment(int documentId, String documentType, {double? customAmount}) {
     final detail = rentalDetail.value;
     if (detail == null) {
@@ -658,67 +656,303 @@ class RentalYieldController extends GetxController {
       return;
     }
 
-    // Get document price - use custom amount if provided, otherwise use property's amount
-    final amount = customAmount ?? detail.amountPay ?? 0.0;
-    if (amount <= 0) {
+    final dashboardController = Get.put(DashboardController());
+    final businessSettings = dashboardController.businessSettings.value;
+
+
+    final double baseAmount = customAmount ?? detail.amountPay ?? 0.0;
+    if (baseAmount <= 0) {
       SnackBarHelper.showError("Document price not available");
       return;
     }
 
-    // FIXED: Also update RazorpayController terms
+    final double rentalIgstPct =
+    (businessSettings?.rentalIgst ?? 0).toDouble();
+    final double rentalServicePct =
+    (businessSettings?.rentalServiceCharge ?? 0).toDouble();
+
+
+    final double serviceChargeAmount = (baseAmount * rentalServicePct) / 100;
+    final double igstAmount = (baseAmount * rentalIgstPct) / 100;
+    final double totalAmount = baseAmount + serviceChargeAmount + igstAmount;
+
     final paymentController = Get.put(RazorpayController());
     paymentController.isTermsAccepted.value = isTermsAccepted.value;
-
-    // Setup payment using RazorpayController
     paymentController.setupRentalDocumentPayment(
       propertyId: detail.id,
       documentId: documentId,
       documentType: documentType,
-      amount: amount,
+      amount: totalAmount,
       propertyName: detail.name,
     );
 
-    // Show payment summary dialog
-    _showDocumentPaymentSummaryDialog(amount, documentType);
+    _showDocumentPaymentSummaryDialog(
+      baseAmount: baseAmount,
+      serviceChargeAmount: serviceChargeAmount,
+      igstAmount: igstAmount,
+      servicePct: rentalServicePct,
+      igstPct: rentalIgstPct,
+      totalAmount: totalAmount,
+      documentType: documentType,
+    );
   }
-  // Show payment summary dialog before proceeding
-  void _showDocumentPaymentSummaryDialog(double amount, String documentType) {
+
+  void _showDocumentPaymentSummaryDialog({
+    required double baseAmount,
+    required double serviceChargeAmount,
+    required double igstAmount,
+    required double servicePct,
+    required double igstPct,
+    required double totalAmount,
+    required String documentType,
+  }) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Payment Summary'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        titlePadding: EdgeInsets.zero,
+
+        // ── Header ────────────────────────────────────────────────────────
+        title: Container(
+          padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+          decoration: BoxDecoration(
+            color: AppColor.primary.withOpacity(0.05),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20.r),
+              topRight: Radius.circular(20.r),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(6.w),
+                decoration: BoxDecoration(
+                  color: AppColor.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.description_rounded,
+                  color: AppColor.primary,
+                  size: 22.sp,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Text(
+                "Payment Summary",
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColor.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Body ──────────────────────────────────────────────────────────
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Document Type: $documentType'),
-            SizedBox(height: 8.h),
-            Text('Amount: ₹${amount.toStringAsFixed(2)}'),
-            SizedBox(height: 16.h),
             Text(
-              'You will be redirected to secure payment gateway.',
-              style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+              "Review the charges before proceeding to payment.",
+              style: TextStyle(fontSize: 13.sp, color: Colors.grey[600]),
+            ),
+
+            SizedBox(height: 14.h),
+
+            // Document type pill
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.folder_outlined,
+                      size: 18.sp, color: AppColor.primary),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      documentType,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 16.h),
+
+            // ── Amount breakdown ─────────────────────────────────────────
+            Container(
+              padding: EdgeInsets.all(14.w),
+              decoration: BoxDecoration(
+                color: AppColor.primary.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(
+                  color: AppColor.primary.withOpacity(0.1),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Base amount
+                  _buildAmountRow(
+                    "Document Fee",
+                    "₹${baseAmount.toStringAsFixed(2)}",
+                  ),
+
+                  // Service charge (only if > 0)
+                  if (serviceChargeAmount > 0) ...[
+                    SizedBox(height: 10.h),
+                    _buildAmountRow(
+                      "Service Charge (${servicePct.toStringAsFixed(0)}%)",
+                      "₹${serviceChargeAmount.toStringAsFixed(2)}",
+                    ),
+                  ],
+
+                  // IGST (only if > 0)
+                  if (igstAmount > 0) ...[
+                    SizedBox(height: 10.h),
+                    _buildAmountRow(
+                      "IGST (${igstPct.toStringAsFixed(0)}%)",
+                      "₹${igstAmount.toStringAsFixed(2)}",
+                    ),
+                  ],
+
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    child: const Divider(height: 1),
+                  ),
+
+                  // Total
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Total Amount",
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        "₹${totalAmount.toStringAsFixed(2)}",
+                        style: TextStyle(
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.w900,
+                          color: AppColor.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 12.h),
+
+            Text(
+              "You will be redirected to a secure payment gateway.",
+              style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
             ),
           ],
         ),
+
+        // ── Actions ───────────────────────────────────────────────────────
+        actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              // Initiate the payment
-              final paymentController = Get.find<RazorpayController>();
-              paymentController.initiatePayment();
-            },
-            child: const Text('Proceed to Pay'),
+          Row(
+            children: [
+              // Cancel
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Get.back(),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey[300]!),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                  ),
+                  child: Text(
+                    "Cancel",
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 15.sp,
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(width: 8.w),
+
+              // Proceed
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    final paymentController = Get.find<RazorpayController>();
+                    paymentController.initiatePayment();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.primary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                  ),
+                  child: Text(
+                    "Proceed to Pay",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15.sp,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
+// Reuse the same row builder pattern as the rest of the codebase
+  Widget _buildAmountRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: Colors.grey[600],
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColor.textMain,
+          ),
+        ),
+      ],
+    );
+  }
   // View document method
   Future<void> viewDocument(int documentId, String fileUrl) async {
     try {

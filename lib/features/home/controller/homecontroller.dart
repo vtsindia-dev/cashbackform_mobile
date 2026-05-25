@@ -261,6 +261,7 @@ class HomeController extends GetxController {
         areaName.value = subLocality.isNotEmpty ? subLocality : (locality.isNotEmpty ? locality : name);
 
         // Build full address
+
         List<String> addressParts = [];
         if (street.isNotEmpty) addressParts.add(street);
         if (locality.isNotEmpty && locality != areaName.value) addressParts.add(locality);
@@ -375,7 +376,7 @@ class HomeController extends GetxController {
     }
   }
 
-  // FETCH MATERIALS
+
   Future<void> fetchMaterials() async {
     try {
       if (_isFetchingMaterials) {
@@ -389,11 +390,11 @@ class HomeController extends GetxController {
 
       print('🌐 Fetching materials from: ${ApiUrl.marketList}');
 
-      final response =
-      await ApiService.getRequest(ApiUrl.marketList);
+      final response = await ApiService.getRequest(ApiUrl.marketList);
 
       if (response.statusCode == 200) {
         final responseData = response.data;
+
         print('📦 Materials API Response: $responseData');
 
         if (responseData != null &&
@@ -408,33 +409,78 @@ class HomeController extends GetxController {
 
             materials.assignAll(
               materialsData.map((material) {
+
+                // IMAGE HANDLE
+                String imageUrl = '';
+
+                if (material['image'] is List &&
+                    (material['image'] as List).isNotEmpty) {
+                  imageUrl = material['image'][0].toString();
+                } else if (material['image'] is String) {
+                  imageUrl = material['image'].toString();
+                }
+
                 return {
+                  // BASIC DETAILS
                   'id': material['id'] ?? 0,
                   'title': material['material_name'] ??
                       material['name'] ??
                       'Material',
-                  'image': material['image'] ??
-                      material['material_image'] ??
-                      '',
+
+                  'material_name': material['material_name'] ?? '',
+                  'material_code': material['material_code'] ?? '',
+
+                  // CATEGORY IDS
+                  'category_id': material['category_id'],
+                  'subcat_id': material['subcat_id'],
+                  'subsubcat_id': material['subsubcat_id'],
+
+                  // BRAND & UNIT
+                  'brand_id': material['brand_id'],
+                  'unit_id': material['unit_id'],
+
+                  // DESCRIPTION
                   'description': material['description'] ?? '',
+
+                  // IMAGE
+                  'image': imageUrl,
+
+                  // FULL IMAGE LIST
+                  'images': material['image'] ?? [],
+
+                  // GALLERY
+                  'gallery': material['gallery'] ?? '',
+
+                  // STATUS
+                  'status': material['status'] ?? 1,
+                  'is_deleted': material['is_deleted'] ?? 0,
+                  'featured': material['featured'] ?? 0,
+
+                  // LOCATION
+                  'country_id': material['country_id'],
+                  'state_id': material['state_id'],
+                  'city_id': material['city_id'],
+
+                  // CATEGORY DETAILS
                   'category': material['category'] != null
                       ? {
-                    'id':
-                    material['category']['id'] ?? 0,
-                    'name': material['category']
-                    ['category_name'] ??
+                    'id': material['category']['id'] ?? 0,
+                    'name':
+                    material['category']['category_name'] ??
                         'Uncategorized',
+                    'image': material['category']['image'],
+                    'status': material['category']['status'],
                   }
                       : null,
-                  'status': material['status'] ?? 1,
+
+                  // DATES
                   'created_at': material['created_at'],
                   'updated_at': material['updated_at'],
                 };
               }).toList(),
             );
 
-            print(
-                '✅ Loaded ${materials.length} materials');
+            print('✅ Loaded ${materials.length} materials');
           } else {
             materialError('Material list missing in response');
             print('❌ material key not found or invalid');
@@ -445,9 +491,12 @@ class HomeController extends GetxController {
         }
       } else {
         materialError(
-            'Failed to load materials: ${response.statusCode}');
+          'Failed to load materials: ${response.statusCode}',
+        );
+
         print(
-            '❌ Materials API Error: ${response.statusCode} - ${response.data}');
+          '❌ Materials API Error: ${response.statusCode} - ${response.data}',
+        );
       }
     } catch (e) {
       materialError('Materials error: $e');

@@ -59,7 +59,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="cashback.vrikshatech.in"
+                    android:host="cashbackfarms.com"
                     android:pathPrefix="/plot-marketplace/details" />
             </intent-filter>
 
@@ -69,7 +69,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="cashback.vrikshatech.in"
+                    android:host="cashbackfarms.com"
                     android:pathPrefix="/gioo-plots/details" />
             </intent-filter>
 
@@ -79,7 +79,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="cashback.vrikshatech.in"
+                    android:host="cashbackfarms.com"
                     android:pathPrefix="/syndicate-plots/details" />
             </intent-filter>
 
@@ -89,7 +89,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="cashback.vrikshatech.in"
+                    android:host="cashbackfarms.com"
                     android:pathPrefix="/rental-yield-plots/details" />
             </intent-filter>
 
@@ -99,7 +99,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="cashback.vrikshatech.in"
+                    android:host="cashbackfarms.com"
                     android:pathPrefix="/residential-property/details" />
             </intent-filter>
 

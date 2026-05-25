@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
 import '../../features/home/controller/homecontroller.dart';
+
 class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
   final HomeController? controller;
   final GlobalKey<ScaffoldState>? scaffoldKey;
@@ -41,11 +42,11 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
           bottomLeft: Radius.circular(25),
           bottomRight: Radius.circular(25),
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
         image: backgroundColor == Colors.transparent
@@ -61,6 +62,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: Row(
             children: [
               _buildLeftSection(context),
+              // ── Middle: takes all remaining space, never overflows ──────
               Expanded(
                 child: _buildMiddleSection(),
               ),
@@ -74,17 +76,14 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _buildLeftSection(BuildContext context) {
     return SizedBox(
-      width: 80,
+      width: 40,
       child: Row(
         children: [
           if (showBackButton)
             _buildIconButton(
               icon: Icons.arrow_back,
-              onTap: onBackPressed ?? () {
-                Navigator.pop(context);
-              },
+              onTap: onBackPressed ?? () => Navigator.pop(context),
             ),
-
           if (showDrawerButton && scaffoldKey != null)
             _buildIconButton(
               icon: Icons.menu,
@@ -93,7 +92,9 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
     );
-  }  Widget _buildMiddleSection() {
+  }
+
+  Widget _buildMiddleSection() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -102,16 +103,20 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
         if (showLocation && controller != null)
           _buildLocationText()
         else
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              color: textColor,
-              fontWeight: FontWeight.bold,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-            textAlign: TextAlign.center,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+                textAlign: TextAlign.center,
+              );
+            },
           ),
       ],
     );
@@ -119,7 +124,7 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _buildRightSection() {
     return SizedBox(
-      width: 80,
+      width: 40,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -146,21 +151,21 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.location_on,
-                color: AppColor.primary,
-                size: 16,
-              ),
+              Icon(Icons.location_on, color: AppColor.primary, size: 16),
               const SizedBox(width: 4),
-              Text(
-                controller!.areaName.isNotEmpty ? controller!.areaName.toString() : "Fetching...",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: Text(
+                  controller!.areaName.isNotEmpty
+                      ? controller!.areaName.toString()
+                      : 'Fetching...',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
               ),
             ],
           ),
@@ -184,22 +189,22 @@ class DynamicAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildIconButton({ IconData? icon, String? image, required VoidCallback onTap,
+  Widget _buildIconButton({
+    IconData? icon,
+    String? image,
+    required VoidCallback onTap,
   }) {
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
         ),
         child: icon != null
-            ? Icon(
-          icon,
-          size: 20,
-          color: AppColor.primary,
-        ) : Image.asset(
+            ? Icon(icon, size: 20, color: AppColor.primary)
+            : Image.asset(
           image!,
           width: 20,
           height: 20,

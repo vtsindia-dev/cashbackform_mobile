@@ -53,8 +53,7 @@ class _SyndicatePlotState extends State<SyndicatePlot> {
               searchController: _searchController,
             ),
             _buildNoteContent(),
-
-            Container(
+            SizedBox(
               height : MediaQuery.of(context).size.height * 0.74,
               child: SyndicatePlotList()),
             Spacer(),
@@ -64,17 +63,15 @@ class _SyndicatePlotState extends State<SyndicatePlot> {
       }),
     );
   }
+
   Widget _buildNoteContent() {
     final dashboardController = Get.find<DashboardController>();
-
     return Obx(() {
       if (dashboardController.isLoadingSettings.value) {
-        return const SizedBox.shrink(); // Or show a small loader
+        return const SizedBox.shrink();
       }
-
       final settings = dashboardController.businessSettings.value;
       if (settings == null) return const SizedBox.shrink();
-
       return Column(
         children: [
           if (settings.syndicateDescription != null &&
@@ -93,7 +90,7 @@ class _SyndicatePlotState extends State<SyndicatePlot> {
   }
 }
 
-// Search Bar with Filter Chips below
+
 class _SearchAndFiltersSection extends StatelessWidget {
   final SyndicatePlotController controller;
   final TextEditingController searchController;
@@ -107,7 +104,6 @@ class _SearchAndFiltersSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Search Bar
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
@@ -134,7 +130,6 @@ class _SearchAndFiltersSection extends StatelessWidget {
                             controller.onSearchChanged(value);
                           },
                           onSubmitted: (_) {
-                            // Only submit if query has at least 5 characters
                             if (controller.searchQuery.value.trim().length >= 2) {
                               controller.applySearch();
                             }
@@ -156,7 +151,7 @@ class _SearchAndFiltersSection extends StatelessWidget {
                           onTap: () {
                             controller.searchQuery.value = '';
                             searchController.clear();
-                            controller.fetchSyndicatePlots(); // Trigger API
+                            controller.fetchSyndicatePlots();
                           },
                           child: const Icon(Icons.close, size: 16, color: Colors.grey),
                         );

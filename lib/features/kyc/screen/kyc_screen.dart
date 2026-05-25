@@ -32,8 +32,6 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-  // ── Sliver App Bar ──────────────────────────────────────────────────────────
-
   Widget _buildSliverAppBar(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 130,
@@ -109,7 +107,6 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-  // ── Sliver Body ─────────────────────────────────────────────────────────────
 
   Widget _buildSliverBody(BuildContext context) {
     if (controller.isLoading.value) {
@@ -129,7 +126,6 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-  // ── States ──────────────────────────────────────────────────────────────────
 
   Widget _buildLoadingState() {
     return Center(
@@ -262,7 +258,6 @@ class KYCListScreen extends StatelessWidget {
     );
   }
 
-  // ── KYC Card ────────────────────────────────────────────────────────────────
 
   Widget _buildKYCCard(BuildContext context, KYCDocument kyc, int index) {
     final List<Color> accentColors = [

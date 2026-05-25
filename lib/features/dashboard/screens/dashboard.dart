@@ -182,7 +182,7 @@ class _DashboardState extends State<Dashboard> {
                               scale: 0.5 + 0.5 * _menuAnimationValue,
                               child: _buildPlotMenuItem(
                                 Images.plotMarketplace,
-                                "Plot Marketplace",
+                                "Land",
                                     () => _onPlotMenuItemTap(0),
                                 alignment: Alignment.bottomLeft,
                               ),
@@ -200,7 +200,7 @@ class _DashboardState extends State<Dashboard> {
                               scale: 0.5 + 0.5 * Curves.elasticOut.transform(_menuAnimationValue),
                               child: _buildPlotMenuItem(
                                 Images.GiooPlots,
-                                "GIOO Plots",
+                                "Gioo Nano Plots",
                                     () => _onPlotMenuItemTap(1),
                                 alignment: Alignment.topCenter,
                               ),
@@ -218,7 +218,7 @@ class _DashboardState extends State<Dashboard> {
                               scale: 0.5 + 0.5 * _menuAnimationValue,
                               child: _buildPlotMenuItem(
                                 Images.syndicatePlots,
-                                "Syndicate Plots",
+                                "Gioo Syndicate Plots",
                                     () => _onPlotMenuItemTap(2),
                                 alignment: Alignment.bottomRight,
                               ),
@@ -312,7 +312,12 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  Widget _buildPlotMenuItem(String imagePath, String label, VoidCallback onTap, {Alignment alignment = Alignment.center}) {
+  Widget _buildPlotMenuItem(
+      String imagePath,
+      String label,
+      VoidCallback onTap, {
+        Alignment alignment = Alignment.center,
+      }) {
     return Align(
       alignment: alignment,
       child: GestureDetector(
@@ -328,7 +333,7 @@ class _DashboardState extends State<Dashboard> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha:0.25),
+                    color: Colors.black.withValues(alpha: 0.25),
                     blurRadius: 8,
                     spreadRadius: 2,
                     offset: const Offset(0, 4),
@@ -344,25 +349,31 @@ class _DashboardState extends State<Dashboard> {
               ),
             ),
             const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha:0.1),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
+            SizedBox(
+              width: 72,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.primary,
                   ),
-                ],
-              ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppColor.primary,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
@@ -371,7 +382,6 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-
   void _onPlotMenuItemTap(int menuIndex) {
     debugPrint('Plot menu item tapped: $menuIndex');
 

@@ -1114,8 +1114,6 @@ class _MaterialStoreState extends State<MaterialStore>
                   ],
                 ),
               ),
-
-              // Name + code + arrow
               Padding(
                 padding: EdgeInsets.fromLTRB(
                     10.w, 10.h, 10.w, 10.h),

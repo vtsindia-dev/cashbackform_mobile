@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:cashback_farms/features/bank_details/screen/bank_details_form.dart';
 import 'package:cashback_farms/features/material_store/screens/add_materials_screen.dart';
 import 'package:cashback_farms/features/service/screen/add_service_screen.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import '../../../common/route/router.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../bank_details/screen/bank_details_list_screen.dart';
 import '../../gift_coupon_and_encashment/screen/encashment_screen.dart';
 import '../../gift_coupon_and_encashment/screen/gift_screen.dart';
 import '../../menu/screens/about_us.dart';
@@ -654,7 +656,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       ),
     );
   }
-  
+
   Widget _buildWalletCard() {
     final walletBalance = double.tryParse(
         dashboardController.profile.value?.walletBalance ?? "0") ??
@@ -729,7 +731,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
       ),
     );
   }
-  
+
   Widget _buildCumulativeDashboardCard() {
     final settings = dashboardController.businessSettings.value;
     final cumulativeAmount = double.tryParse(
@@ -1107,7 +1109,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
     );
   }
 
- 
+
   Widget _buildSectionLabel(String title) {
     return Text(
       title,
@@ -1128,7 +1130,9 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         _menuTile(Icons.wallet, "My Wallet",
                 () => Get.toNamed("/walletScreen")),
         _menuTile(
-            Icons.verified_user, "Kyc", () => Get.toNamed("/kycScreen")),
+            Icons.verified_user, "KYC", () => Get.toNamed("/kycScreen")),
+        _menuTile(
+            Icons.verified_user, "Bank Details", () => Get.to(()=> BankDetailsListScreen())),
         _menuTile(Icons.notification_add_outlined, "Notification",
                 () => Get.toNamed("/NotificationsPage")),
         _menuTile(Icons.card_giftcard, "Gift/Payment Coupon",

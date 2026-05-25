@@ -1,5 +1,3 @@
-// models/gioo_plot.dart
-
 class GiooPlot {
   final int id;
   final String name;
@@ -13,7 +11,7 @@ class GiooPlot {
   final String area;
   final String price;
   final String description;
-  final dynamic unitSplit; // Changed from int to dynamic to match JSON
+  final dynamic unitSplit;
   final List<String> images;
   final String plotImage;
   final String work;
@@ -22,6 +20,7 @@ class GiooPlot {
   final DateTime createdAt;
   final DateTime updatedAt;
   final PropertyType? propertyType;
+  final int? soldStatus;
 
   GiooPlot({
     required this.id,
@@ -45,6 +44,7 @@ class GiooPlot {
     required this.createdAt,
     required this.updatedAt,
     required this.propertyType,
+    this.soldStatus
   });
 
   factory GiooPlot.fromJson(Map<String, dynamic> json) {
@@ -78,6 +78,7 @@ class GiooPlot {
       work: json['work']?.toString() ?? '',
       agentId: json['agent_id']?.toString(),
       status: json['status'] as int? ?? 0,
+        soldStatus : json['sold_status'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
       propertyType: json['property_type'] != null ? PropertyType.fromJson(json['property_type']) : null,
@@ -361,91 +362,153 @@ class NearbyPlace {
 }
 
 class User {
-  final int id;
-  final int role; // This might be null in JSON but we need int
-  final int isVendor;
-  final int isAgent;
-  final int isServices;
-  final String name;
-  final String email;
-  final DateTime? emailVerifiedAt;
-  final String dob;
-  final String avatar;
-  final String pin;
-  final int gender;
-  final String address;
-  final String phone;
-  final int status;
-  final int agentRequest;
-  final int vendorRequest;
-  final int serviceRequest;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final dynamic fcmToken;
+  int? id;
+  int? isVendor;
+  int? isAgent;
+  int? isServices;
+  String? name;
+  String? email;
+  int? referenceId;
+  String? code;
+  String? dob;
+  String? avatar;
+  String? pin;
+  int? gender;
+  String? address;
+  String? phone;
+  int? status;
+  int? agentRequest;
+  int? vendorRequest;
+  int? serviceRequest;
+  String? createdAt;
+  String? updatedAt;
+  String? fcmToken;
+  int? isDeleted;
+  String? walletBalance;
+  int? countryId;
+  int? stateId;
+  int? cityId;
+  String? cumulativeAmount;
+  String? firstName;
+  String? lastName;
+  List<GioTransaction>? gioTransaction;
 
-  User({
-    required this.id,
-    required this.role,
-    required this.isVendor,
-    required this.isAgent,
-    required this.isServices,
-    required this.name,
-    required this.email,
-    this.emailVerifiedAt,
-    required this.dob,
-    required this.avatar,
-    required this.pin,
-    required this.gender,
-    required this.address,
-    required this.phone,
-    required this.status,
-    required this.agentRequest,
-    required this.vendorRequest,
-    required this.serviceRequest,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.fcmToken,
-  });
+  User(
+      {this.id,
+        this.isVendor,
+        this.isAgent,
+        this.isServices,
+        this.name,
+        this.email,
+        this.referenceId,
+        this.code,
+        this.dob,
+        this.avatar,
+        this.pin,
+        this.gender,
+        this.address,
+        this.phone,
+        this.status,
+        this.agentRequest,
+        this.vendorRequest,
+        this.serviceRequest,
+        this.createdAt,
+        this.updatedAt,
+        this.fcmToken,
+        this.isDeleted,
+        this.walletBalance,
+        this.countryId,
+        this.stateId,
+        this.cityId,
+        this.cumulativeAmount,
+        this.firstName,
+        this.lastName,
+        this.gioTransaction});
 
-  factory User.fromJson(Map<String, dynamic> json) {
-    // Safely parse role which might be null, string, or int
-    final dynamic roleData = json['role'];
-    int parsedRole = 0;
-    if (roleData != null) {
-      if (roleData is int) {
-        parsedRole = roleData;
-      } else if (roleData is String) {
-        parsedRole = int.tryParse(roleData) ?? 0;
-      }
+  User.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    isVendor = json['is_vendor'];
+    isAgent = json['is_agent'];
+    isServices = json['is_services'];
+    name = json['name'];
+    email = json['email'];
+    referenceId = json['reference_id'];
+    code = json['code'];
+    dob = json['dob'];
+    avatar = json['avatar'];
+    pin = json['pin'];
+    gender = json['gender'];
+    address = json['address'];
+    phone = json['phone'];
+    status = json['status'];
+    agentRequest = json['agent_request'];
+    vendorRequest = json['vendor_request'];
+    serviceRequest = json['service_request'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+    fcmToken = json['fcm_token'];
+    isDeleted = json['is_deleted'];
+    walletBalance = json['wallet_balance'];
+    countryId = json['country_id'];
+    stateId = json['state_id'];
+    cityId = json['city_id'];
+    cumulativeAmount = json['cumulative_amount'];
+    firstName = json['first_name'];
+    lastName = json['last_name'];
+    if (json['gio_transaction'] != null) {
+      gioTransaction = <GioTransaction>[];
+      json['gio_transaction'].forEach((v) {
+        gioTransaction!.add(new GioTransaction.fromJson(v));
+      });
     }
-
-    return User(
-      id: json['id'] ?? 0,
-      role: parsedRole, // Use the parsed value
-      isVendor: json['is_vendor'] ?? 0,
-      isAgent: json['is_agent'] ?? 0,
-      isServices: json['is_services'] ?? 0,
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      emailVerifiedAt: json['email_verified_at'] != null
-          ? DateTime.tryParse(json['email_verified_at'].toString())
-          : null,
-      dob: json['dob'] ?? '',
-      avatar: json['avatar'] ?? '',
-      pin: json['pin'] ?? '',
-      gender: json['gender'] ?? 0,
-      address: json['address'] ?? '',
-      phone: json['phone'] ?? '',
-      status: json['status'] ?? 0,
-      agentRequest: json['agent_request'] ?? 0,
-      vendorRequest: json['vendor_request'] ?? 0,
-      serviceRequest: json['service_request'] ?? 0,
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
-      fcmToken: json['fcm_token'],
-    );
   }
-}class WeeklyGraph {
+}
+
+class GioTransaction {
+  int? id;
+  int? propertyId;
+  int? userId;
+  String? units;
+  String? amount;
+  String? walletAmount;
+  String? onlineAmount;
+  String? createdAt;
+  String? updatedAt;
+  String? specialDiscount;
+  String? afterAmount;
+  String? afterTwoYear;
+
+  GioTransaction(
+      {this.id,
+        this.propertyId,
+        this.userId,
+        this.units,
+        this.amount,
+        this.walletAmount,
+        this.onlineAmount,
+        this.createdAt,
+        this.updatedAt,
+        this.specialDiscount,
+        this.afterAmount,
+        this.afterTwoYear});
+
+  GioTransaction.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    propertyId = json['property_id'];
+    userId = json['user_id'];
+    units = json['units'];
+    amount = json['amount']?.toString();
+    walletAmount = json['wallet_amount']?.toString();
+    onlineAmount = json['online_amount']?.toString();
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+    specialDiscount = json['special_discount']?.toString();
+    afterAmount = json['after_amount']?.toString();
+    afterTwoYear = json['after_two_year'];
+  }
+}
+
+class WeeklyGraph {
   final String day;
   final int total;
 

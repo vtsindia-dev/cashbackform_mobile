@@ -1,3 +1,4 @@
+import 'package:cashback_farms/features/gioo_plots/widget/blue_print.dart';
 import 'package:cashback_farms/features/plot_market/widget/about_plot.dart';
 import 'package:cashback_farms/features/plot_market/widget/plotmarket_details_widgets/common_facility_widget.dart';
 import 'package:cashback_farms/features/plot_market/widget/plotmarket_details_widgets/description_widget.dart';
@@ -9,7 +10,6 @@ import '../../../common/widget/loader.dart';
 import '../controller/plot_market_controller.dart';
 import '../widget/plot_market_blueprint.dart';
 import '../widget/plotmarket_details_widgets/mapset.dart';
-import '../widget/plotmarket_details_widgets/three_d_image_view_widget.dart';
 import '../widget/plotmarket_nearby.dart';
 
 
@@ -87,8 +87,11 @@ class _PlotMarketDetailsState extends State<PlotMarketDetails> {
                 ),
                 SizedBox(height: 10.h),
               ],
-
-              Plot360ViewWidget(marketPlotDetail: detail),
+              BluePrint(
+                title: "Aerial View",
+                imageUrl: detail.threeDImage??'',
+              ),
+              // Plot360ViewWidget(marketPlotDetail: detail),
               PlotMarketBlueprint(),
             ],
           ),

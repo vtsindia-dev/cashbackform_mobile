@@ -80,10 +80,6 @@ class _ResidentialPropertiesScreenState
   }
 }
 
-// =============================================================================
-// LOCATION INDICATOR BADGE
-// Use on any property list card: LocationIndicatorBadge(property: property)
-// =============================================================================
 
 class LocationIndicatorBadge extends StatelessWidget {
   final Property property;
@@ -91,7 +87,7 @@ class LocationIndicatorBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDubai = property.isDubai; // was: property.isIndia (wrong!)
+    final bool isDubai = property.isDubai;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
       decoration: BoxDecoration(
@@ -128,9 +124,6 @@ class LocationIndicatorBadge extends StatelessWidget {
     );
   }
 }
-// =============================================================================
-// COMPACT FILTER BAR — with live autocomplete overlay
-// =============================================================================
 
 class _CompactFilterSection extends StatefulWidget {
   final ResidentialPropertyController controller;

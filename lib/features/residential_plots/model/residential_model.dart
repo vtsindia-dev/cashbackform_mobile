@@ -196,6 +196,7 @@ class Property {
   final List<AmenityItem> amenitiesAll;
   final PropertyCategory? category;
 
+
   // FIX: Added sold_status and sold_amount fields from API response
   final int soldStatus;
   final double? soldAmount;

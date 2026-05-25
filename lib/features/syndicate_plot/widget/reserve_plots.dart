@@ -40,13 +40,8 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
           print('💰 Screen - Selected: $selectedCount, Price per plot: $pricePerPlot, Total: $totalAmount');
         }
 
-
-        final amountWithGst = totalAmount;
         final plotAreas = controller.getPlotAreas();
         final totalArea = plotAreas.fold(0.0, (sum, area) => sum + area);
-
-        final canProceedToPayment = !isSoldOut && selectedCount > 0 && controller.isTermsAccepted.value;
-
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.symmetric(vertical: 10.h),
@@ -351,22 +346,24 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                isSoldOut
-                                    ? "Sold Out"
-                                    : (selectedCount > 0
-                                    ? "Pay ₹${amountWithGst.toStringAsFixed(2)}"
-                                    : "Select Plots to Reserve"),
-                                style: TextStyle(
-                                  color: selectedCount > 0 || isSoldOut
-                                      ? Colors.white
-                                      : Colors.grey,
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-
+                              Obx(() {
+                                final displayAmount = controller.syndicateFinalPayable.value > 0
+                                    ? controller.syndicateFinalPayable.value
+                                    : totalAmount;
+                                return Text(
+                                  isSoldOut
+                                      ? "Sold Out"
+                                      : (selectedCount > 0
+                                      ? "Pay ₹${displayAmount.toStringAsFixed(2)}"
+                                      : "Select Plots to Reserve"),
+                                  style: TextStyle(
+                                    color: selectedCount > 0 || isSoldOut ? Colors.white : Colors.grey,
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                );
+                              }),
                               if (!isSoldOut &&
                                   selectedCount > 0 &&
                                   !controller.isTermsAccepted.value) ...[

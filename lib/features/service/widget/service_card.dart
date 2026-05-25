@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ServiceCard extends StatelessWidget {
   final String imageUrl;
@@ -7,6 +8,7 @@ class ServiceCard extends StatelessWidget {
   final double height;
   final VoidCallback? onTap;
   final bool isAsset;
+  final String? materialCode;
 
   const ServiceCard({
     super.key,
@@ -16,6 +18,7 @@ class ServiceCard extends StatelessWidget {
     this.height = 230,
     this.onTap,
     this.isAsset = false,
+    this.materialCode
   });
 
   @override
@@ -40,7 +43,6 @@ class ServiceCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           child: Stack(
             children: [
-              // IMAGE: network or asset
               isAsset
                   ? Image.asset(
                 imageUrl,
@@ -90,6 +92,20 @@ class ServiceCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (materialCode != null &&
+                  materialCode!.isNotEmpty) ...[
+                SizedBox(height: 4.h),
+                Text(
+                  "Code: ${materialCode}",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

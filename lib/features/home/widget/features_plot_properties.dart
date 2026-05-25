@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -14,7 +13,6 @@ class FeaturesPlotProperties extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<HomeController>(
       builder: (controller) {
-        // Show loading state
         if (controller.isLoadingMarket.value) {
           return SizedBox(
             height: 230,
@@ -23,8 +21,6 @@ class FeaturesPlotProperties extends StatelessWidget {
             ),
           );
         }
-
-        // Show error state
         if (controller.marketError.value.isNotEmpty) {
           return SizedBox(
             height: 230,
@@ -49,7 +45,6 @@ class FeaturesPlotProperties extends StatelessWidget {
           );
         }
 
-        // Show empty state
         if (controller.featuredMarketProperties.isEmpty) {
           return SizedBox(
             height: 230,
@@ -94,7 +89,6 @@ class FeaturesPlotProperties extends StatelessWidget {
                       (controller.marketHasMore.value ? 1 : 0),
                   separatorBuilder: (_, __) => const SizedBox(width: 10),
                   itemBuilder: (context, index) {
-                    // Load more indicator
                     if (index == controller.featuredMarketProperties.length) {
                       return SizedBox(
                         width: 170,
@@ -103,12 +97,11 @@ class FeaturesPlotProperties extends StatelessWidget {
                         ),
                       );
                     }
-
                     final property = controller.featuredMarketProperties[index];
-
                     return SizedBox(
                       width: 170,
                       child: PropertyCard(
+                        soldStatus: property.soldStatus,
                         imageUrl: property.thumbnailImage,
                         title: property.name,
                         price: property.formattedPrice,
@@ -116,7 +109,6 @@ class FeaturesPlotProperties extends StatelessWidget {
                         location: property.address,
                         description: property.description,
                         onTap: () {
-                          print("View: ${property.name}");
                           Get.toNamed(AppRoutes.plotMarketDetails, arguments: {"id": property.id});
                         },
                       )
@@ -144,8 +136,6 @@ class FeaturesPlotProperties extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Pagination indicators (optional)
             if (controller.marketPagination.value != null)
               Padding(
                 padding: const EdgeInsets.only(top: 10),

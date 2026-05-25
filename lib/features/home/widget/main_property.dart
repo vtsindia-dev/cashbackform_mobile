@@ -44,7 +44,7 @@ class PropertyMain extends StatelessWidget {
       "asset": "assets/images/home-categories-4.png",
     },
     {
-      "title": "Gio Nano Plots",
+      "title": "Gioo Nano Plots",
       "icon": Images.featuredGioo,
       "color": Color(0xFFE8E5FF),
       "iconColor": Color(0xFF6A5AE0),

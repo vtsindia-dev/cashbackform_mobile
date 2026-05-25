@@ -1,6 +1,3 @@
-// widgets/syndicate_buying_list_widget.dart
-import 'dart:async';
-
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,15 +20,14 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
   final SyndicatePlotController controller = Get.put(SyndicatePlotController());
   final ScrollController _scrollController = ScrollController();
 
-  // Syndicate-specific colors
-  final Color _primaryColor = const Color(0xff92AF5D); // Indigo
-  final Color _secondaryColor = const Color(0xffC7DD94); // Violet
-  final Color _accentColor = const Color(0xFF06B6D4); // Cyan
-  final Color _successColor = const Color(0xFF10B981); // Emerald
-  final Color _warningColor = const Color(0xFFF59E0B); // Amber
-  final Color _dangerColor = const Color(0xFFEF4444); // Red
-  final Color _neutralDark = const Color(0xFF1E293B); // Slate 800
-  final Color _neutralLight = const Color(0xFFF8FAFC); // Slate 50
+  final Color _primaryColor = const Color(0xff92AF5D);
+  final Color _secondaryColor = const Color(0xffC7DD94);
+  final Color _accentColor = const Color(0xFF06B6D4);
+  final Color _successColor = const Color(0xFF10B981);
+  final Color _warningColor = const Color(0xFFF59E0B);
+  final Color _dangerColor = const Color(0xFFEF4444);
+  final Color _neutralDark = const Color(0xFF1E293B);
+  final Color _neutralLight = const Color(0xFFF8FAFC);
 
   @override
   void initState() {
@@ -76,11 +72,9 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
           controller.buyingList.isEmpty) {
         return _buildLoading();
       }
-
       if (controller.buyingList.isEmpty) {
         return _buildEmptyState();
       }
-
       return _buildInvestmentList();
     });
   }
@@ -125,7 +119,6 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Icon with gradient
               Container(
                 width: 120.w,
                 height: 120.w,
@@ -170,57 +163,24 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                   ),
                 ),
               ),
-              40.h.verticalSpace,
-
-              // Gradient button
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_primaryColor, _secondaryColor],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+              30.h.verticalSpace,
+              ElevatedButton.icon(
+                onPressed: () => controller.fetchSyndicateBuyingList(),
+                icon: const Icon(Icons.refresh,color: Colors.white,),
+                label: const Text('Refresh',style: TextStyle(color: Colors.white),),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24.w,
+                    vertical: 12.h,
                   ),
-                  borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _primaryColor.withValues(alpha:0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.back(); // Go back to syndicate list
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 32.w,
-                      vertical: 14.h,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.add_chart, color: Colors.white, size: 20.w),
-                      12.w.horizontalSpace,
-                      Text(
-                        'Explore Syndicates',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
+                  backgroundColor: AppColor.primary,
                 ),
               ),
+
+
             ],
           ),
         ),
@@ -342,7 +302,6 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
           borderRadius: BorderRadius.circular(24.r),
           child: Stack(
             children: [
-              // Top accent bar with gradient
               Positioned(
                 top: 0,
                 left: 0,
@@ -364,11 +323,9 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header row
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Property icon
                         Container(
                           width: 60.w,
                           height: 60.w,
@@ -392,8 +349,6 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                           ),
                         ),
                         16.w.horizontalSpace,
-
-                        // Property details
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,8 +365,6 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               6.h.verticalSpace,
-
-                              // Location
                               Row(
                                 children: [
                                   Icon(
@@ -437,8 +390,6 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                             ],
                           ),
                         ),
-
-                        // Status badge
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 12.w,
@@ -460,10 +411,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                         ),
                       ],
                     ),
-
                     24.h.verticalSpace,
-
-                    // Investment stats
                     Container(
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
@@ -500,8 +448,6 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                     ),
 
                     20.h.verticalSpace,
-
-                    // Transaction summary
                     Container(
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
@@ -537,9 +483,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                 ),
                                 2.h.verticalSpace,
                                 Text(
-                                  investment.transaction.transactionId
-                                          .toString() ??
-                                      "N/A",
+                                  investment.transaction.transactionId.toString(),
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w700,
@@ -560,8 +504,6 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                         ],
                       ),
                     ),
-
-                    // Action buttons (only if active)
                     if (investment.transaction.status.toLowerCase() ==
                         'completed')
                       16.h.verticalSpace,

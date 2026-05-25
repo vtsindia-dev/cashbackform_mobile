@@ -281,24 +281,22 @@ class _MyMaterialListState extends State<MyMaterialList>
             style: TextStyle(fontSize: 13.sp,
                 color: _muted, height: 1.6))
             .animate().fadeIn(delay: 220.ms),
-        const SizedBox(height: 30),
-        GestureDetector(
-          onTap: () => Get.back(),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 13),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                  colors: [_h1, _h2],
-                  begin: Alignment.centerLeft, end: Alignment.centerRight),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [BoxShadow(color: _h1.withOpacity(0.35),
-                  blurRadius: 12, offset: const Offset(0, 5))],
+        const SizedBox(height: 20),
+        ElevatedButton.icon(
+          onPressed: () =>  controller.fetchMaterialEnquiries(loadMore: false),
+          icon: const Icon(Icons.refresh,color: Colors.white,),
+          label: const Text('Refresh',style: TextStyle(color: Colors.white),),
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: 24.w,
+              vertical: 12.h,
             ),
-            child: const Text('Browse Materials',
-                style: TextStyle(color: Colors.white,
-                    fontWeight: FontWeight.w700, fontSize: 14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            backgroundColor: _h1,
           ),
-        ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
+        ),
       ]),
     ),
   );

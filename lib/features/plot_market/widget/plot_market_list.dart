@@ -56,8 +56,6 @@ class PlotMarketList extends StatelessWidget {
                 },
               ),
             ),
-
-            // Load more indicator at bottom
             if (controller.isLoadMore.value)
               Padding(
                 padding: EdgeInsets.all(16.r),
@@ -71,8 +69,9 @@ class PlotMarketList extends StatelessWidget {
 
   Widget _buildAnimatedPlotCard(MarketPlot plot, int index) {
     return PropertyCard(
-      imageUrl: plot.images.isNotEmpty ? plot.images[0] : '', // Use first image from list
+      imageUrl: plot.images.isNotEmpty ? plot.images[0] : '',
       title: plot.name,
+      soldStatus: plot.soldStatus,
       price: plot.formattedPrice,
       area: plot.formattedArea,
       location: plot.location,
@@ -80,7 +79,6 @@ class PlotMarketList extends StatelessWidget {
       onTap: () {
         Get.toNamed(AppRoutes.plotMarketDetails, arguments: {"id": plot.id, "title": plot.name});
       },
-
     )
         .animate()
         .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)

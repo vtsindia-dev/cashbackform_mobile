@@ -173,10 +173,6 @@ class AboutPlot extends StatelessWidget {
                 // ── Enquiry / Book button — blocked when sold out ──────────
                 _buildSimpleEnquiryButton(controller, property),
 
-                // ── Document payment button — blocked when sold out ─────────
-                if (!_isSoldOut && property.hasPaidForDocuments == false)
-                  _buildDocumentPaymentButton(controller, property),
-
                 SizedBox(height: 15.h),
               ],
             ),
@@ -248,77 +244,6 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  // ==========================================================================
-  // DOCUMENT PAYMENT BUTTON (only when NOT sold out AND docs not yet paid)
-  // ==========================================================================
-
-  Widget _buildDocumentPaymentButton(
-      RentalYieldController controller,
-      RentalDetailProperty property,
-      ) {
-    // Already paid — nothing to show
-    if (property.hasPaidForDocuments) return const SizedBox.shrink();
-    // Sold out — blocked
-    if (_isSoldOut) return const SizedBox.shrink();
-    // No documents uploaded by admin — nothing to pay for
-    if (property.documents.isEmpty) return const SizedBox.shrink();
-
-    final double amount = property.totalDocumentPrice;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 6.h),
-      child: GestureDetector(
-        onTap: () {
-          // Call your document payment flow here
-          // e.g. controller.initiateDocumentPayment(property);
-        },
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 18.w),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.blue.shade600, Colors.blue.shade400],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(35.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.blue.withValues(alpha:0.25),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: EdgeInsets.all(6.sp),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha:0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.credit_card_rounded,
-                    size: 16.sp, color: Colors.white),
-              ),
-              SizedBox(width: 10.w),
-              Text(
-                amount > 0
-                    ? 'Pay ₹${amount.toStringAsFixed(0)} for Documents'
-                    : 'Pay for Documents',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   // ==========================================================================
   // ENQUIRY BUTTON — sold-out aware

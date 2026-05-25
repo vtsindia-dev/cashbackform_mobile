@@ -76,6 +76,7 @@ class SyndicatePlotList extends StatelessWidget {
       area: plot.formattedArea,
       location: plot.location,
       description: plot.description,
+      soldStatus: plot.soldStatus,
       onTap: () {
         Get.toNamed('/syndicateDetails', arguments: {"id": plot.id, "title": plot.name,});
       },

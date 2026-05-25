@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../Properties/widget/property_card.dart';
 import '../controller/residential_controller.dart';
 import '../model/residential_model.dart';
+
 class ResidentialPropertyList extends StatelessWidget {
   ResidentialPropertyList({super.key});
 
@@ -23,16 +24,15 @@ class ResidentialPropertyList extends StatelessWidget {
       }
 
       final rowCount = (properties.length / 2).ceil();
-      // +1 for the load-more/end indicator row
       final itemCount = rowCount + 1;
 
       return NotificationListener<ScrollNotification>(
         onNotification: (scroll) {
-          if (scroll is! ScrollEndNotification) return false; // only fire on scroll end
+          if (scroll is! ScrollEndNotification) return false;
           if (!controller.hasMoreData.value) return false;
-          if (controller.isLoadMore.value) return false; // prevent duplicate calls
+          if (controller.isLoadMore.value) return false;
           if (scroll.metrics.pixels >=
-              scroll.metrics.maxScrollExtent - 200) { // 200px before end
+              scroll.metrics.maxScrollExtent - 200) {
             controller.loadMoreProperties();
           }
           return false;
@@ -41,7 +41,6 @@ class ResidentialPropertyList extends StatelessWidget {
           padding: EdgeInsets.all(16.r),
           itemCount: itemCount,
           itemBuilder: (context, index) {
-            // Last item — load more indicator or end message
             if (index == rowCount) {
               if (controller.isLoadMore.value) {
                 return const Padding(
@@ -65,11 +64,8 @@ class ResidentialPropertyList extends StatelessWidget {
               }
               return const SizedBox.shrink();
             }
-
             final leftIndex = index * 2;
             final rightIndex = leftIndex + 1;
-
-            // Guard against out-of-bounds during load
             if (leftIndex >= properties.length) return const SizedBox.shrink();
 
             final leftProperty = properties[leftIndex];
@@ -100,7 +96,6 @@ class ResidentialPropertyList extends StatelessWidget {
   Widget _buildPropertyCard(Property property) {
     return Stack(
       children: [
-        // Existing property card — untouched
         PropertyCard(
           imageUrl: property.galleryImages.isNotEmpty
               ? property.galleryImages[0]
@@ -108,6 +103,7 @@ class ResidentialPropertyList extends StatelessWidget {
               ? property.thumbnail
               : ''),
           title: property.propertyName,
+          soldStatus: property.soldStatus,
           price: property.formattedPrice,
           area: property.formattedArea,
           location: property.location,
@@ -127,8 +123,6 @@ class ResidentialPropertyList extends StatelessWidget {
                 });
           },
         ),
-
-        // India / Dubai badge — top-left corner over the card
         Positioned(
           top: 8,
           left: 8,
@@ -139,9 +133,6 @@ class ResidentialPropertyList extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// Location badge widget
-// -----------------------------------------------------------------------------
 
 class _LocationBadge extends StatelessWidget {
   final Property property;
@@ -155,8 +146,8 @@ class _LocationBadge extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
       decoration: BoxDecoration(
         color: isDubai
-            ? const Color(0xFFFFF3E0)   // warm amber for Dubai
-            : const Color(0xFFE8F5E9),  // soft green for India
+            ? const Color(0xFFFFF3E0)
+            : const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
           color: isDubai

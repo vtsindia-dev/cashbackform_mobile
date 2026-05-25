@@ -100,4 +100,6 @@ class ApiUrl {
   static const String serviceTypeApi = '$baseUrl/api/v2/services_all';
   static const String vendorServicesRequestApi = '$baseUrl/api/v2/vendor_services_request';
   static const String vendorServiceDelete = '$baseUrl/api/v2/vendor-service/delete';
+  static const String bankDetails = '$baseUrl/api/v2/bank-details';
+  static const String listOfBankDetails = '$baseUrl/api/v2/admin/bank-details';
 }

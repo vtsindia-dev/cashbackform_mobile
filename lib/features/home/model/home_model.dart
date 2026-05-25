@@ -220,6 +220,9 @@ class FeaturedMarketProperty {
   final DateTime createdAt;
   final DateTime updatedAt;
   final FeaturedPropertyType? propertyType;
+  final int? soldStatus;
+
+
   FeaturedMarketProperty({
     required this.id,
     required this.name,
@@ -238,6 +241,8 @@ class FeaturedMarketProperty {
     required this.createdAt,
     required this.updatedAt,
     this.propertyType,
+    this.soldStatus
+
   });
 
   factory FeaturedMarketProperty.fromJson(Map<String, dynamic> json) {
@@ -260,6 +265,7 @@ class FeaturedMarketProperty {
       state: json['state'] != null ? FeaturedState.fromJson(json['state']) : null,
       area: json['area']?.toString() ?? '',
       price: json['price']?.toString() ?? '',
+      soldStatus : json['sold_status'],
       description: json['description'] ?? '',
       images: imagesList,
       verifyStatus: json['verify_status'] ?? 0,
@@ -272,7 +278,6 @@ class FeaturedMarketProperty {
     );
   }
 
-  // Helper methods
   String get thumbnailImage => images.isNotEmpty ? images.first : '';
 
   String get formattedPrice {

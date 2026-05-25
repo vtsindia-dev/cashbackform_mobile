@@ -301,20 +301,20 @@ class _MyServicesListState extends State<MyServicesList> {
                   height: 1.5),
             ),
             SizedBox(height: 28.h),
-            ElevatedButton(
-              onPressed: () => Get.back(),
+            ElevatedButton.icon(
+              onPressed: () =>  controller.fetchServiceEnquiries(loadMore: false),
+              icon: const Icon(Icons.refresh,color: Colors.white,),
+              label: const Text('Refresh',style: TextStyle(color: Colors.white),),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.primary,
-                foregroundColor: Colors.white,
-                padding:
-                EdgeInsets.symmetric(horizontal: 28.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 24.w,
+                  vertical: 12.h,
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r)),
-                elevation: 0,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                backgroundColor: AppColor.primary,
               ),
-              child: Text('Browse Services',
-                  style: TextStyle(
-                      fontSize: 13.sp, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -433,12 +433,15 @@ class _MyServicesListState extends State<MyServicesList> {
   String _formatDate(DateTime date) {
     final diff = DateTime.now().difference(date);
     if (diff.inDays > 7) return '${date.day}/${date.month}/${date.year}';
-    if (diff.inDays > 0)
+    if (diff.inDays > 0) {
       return '${diff.inDays}d ago';
-    if (diff.inHours > 0)
+    }
+    if (diff.inHours > 0) {
       return '${diff.inHours}h ago';
-    if (diff.inMinutes > 0)
+    }
+    if (diff.inMinutes > 0) {
       return '${diff.inMinutes}m ago';
+    }
     return 'Just now';
   }
 }

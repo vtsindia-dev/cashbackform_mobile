@@ -111,6 +111,40 @@ class ApiService {
       rethrow;
     }
   }
+  static Future<Response> putRequestWithHeaders(
+      String url, {
+        required Map<String, dynamic> data,
+        Map<String, String>? headers,
+      }) async {
+    try {
+      final options = Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...?headers,
+        },
+      );
+      return await dio.put(url, data: jsonEncode(data), options: options);
+    } catch (e) {
+      if (e is DioException && e.response != null) return e.response!;
+      rethrow;
+    }
+  }
+
+  /// DELETE with optional auth headers (used by BankDetailsController)
+  static Future<Response> deleteRequestWithHeaders(
+      String url, {
+        Map<String, String>? headers,
+      }) async {
+    try {
+      final options = headers != null ? Options(headers: headers) : null;
+      return await dio.delete(url, options: options);
+    } catch (e) {
+      if (e is DioException && e.response != null) return e.response!;
+      rethrow;
+    }
+  }
+
   static Future<Response> putMultipart(String url, FormData formData) async {
     try {
       return await dio.put(url, data: formData);

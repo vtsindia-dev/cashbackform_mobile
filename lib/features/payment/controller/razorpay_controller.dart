@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:cashback_farms/common/model/logger_model.dart';
 import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +45,6 @@ class RazorpayController extends GetxController {
   var marketPlotId = 0.obs;
   var residentialPlotId = 0.obs;
 
-  // REMOVED: var rentalPropertyId = 0.obs; // Not needed - use propertyId instead
 
   @override
   void onInit() {
@@ -65,11 +63,11 @@ class RazorpayController extends GetxController {
     String propertyName = '',
     List<Map<String, dynamic>>? unitDetails,
   }) {
-    this.propertyType.value = type;
+    propertyType.value = type;
     this.propertyId.value = propertyId;
-    this.selectedUnits.value = List.from(units);
+    selectedUnits.value = List.from(units);
     this.propertyName.value = propertyName;
-    this.totalAmount.value = amount;
+    totalAmount.value = amount;
     this.unitDetails.value = unitDetails != null ? List.from(unitDetails) : [];
 
     if (type == 'syndicate') {
@@ -95,7 +93,7 @@ class RazorpayController extends GetxController {
     this.propertyId.value = propertyId;
     this.documentId.value = documentId;
     this.documentType.value = documentType;
-    this.documentAmount.value = amount;
+    documentAmount.value = amount;
     currentPaymentType.value = PaymentType.documentPayment;
     _currentPaymentUrl.value =
         '${ApiUrl.baseUrl}/api/v2/syndicate_document_pay';
@@ -112,7 +110,7 @@ class RazorpayController extends GetxController {
     required String propertyName,
   }) {
     this.marketPlotId.value = marketPlotId;
-    this.totalAmount.value = amount;
+    totalAmount.value = amount;
     this.propertyName.value = propertyName;
     currentPaymentType.value = PaymentType.marketVerification;
     _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/market_pay';
@@ -125,7 +123,7 @@ class RazorpayController extends GetxController {
     required String propertyName,
   }) {
     this.residentialPlotId.value = residentialPlotId;
-    this.totalAmount.value = amount;
+    totalAmount.value = amount;
     this.propertyName.value = propertyName;
     currentPaymentType.value = PaymentType.residentialVerification;
     _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/residential_pay';
@@ -243,7 +241,7 @@ class RazorpayController extends GetxController {
     }
   }
 
-  // Add this method to your RazorpayController class, alongside the other setup methods
+
   void setupRentalDocumentPayment({
     required int propertyId,
     required int documentId,
@@ -254,23 +252,12 @@ class RazorpayController extends GetxController {
     this.propertyId.value = propertyId;
     this.documentId.value = documentId;
     this.documentType.value = documentType;
-    this.documentAmount.value = amount;
+    documentAmount.value = amount;
     this.propertyName.value = propertyName;
     currentPaymentType.value = PaymentType.rentalDocumentPayment;
 
-    // FIXED: Use the correct API endpoint for rental document payments
     _currentPaymentUrl.value = '${ApiUrl.baseUrl}/api/v2/rental_document_pay';
     isTermsAccepted.value = false;
-
-    print('🔧 setupRentalDocumentPayment:');
-    print('   propertyId: $propertyId');
-    print('   documentId: $documentId');
-    print('   documentType: $documentType');
-    print('   amount: $amount');
-    print('   propertyName: $propertyName');
-    print('✅ Payment setup complete:');
-    print('   currentPaymentType: ${currentPaymentType.value}');
-    print('   API URL: ${_currentPaymentUrl.value}');
   }
 
   Future<void> _handleSyndicatePaymentSuccess(
@@ -442,7 +429,6 @@ class RazorpayController extends GetxController {
             responseData['status'] == true ||
             responseData['success'] == true) {
           print('✅ Syndicate document payment synced successfully');
-          // Refresh syndicate plots if needed
           try {
             final syndicateController = Get.find<SyndicatePlotController>();
             await syndicateController.fetchSyndicatePlots();
@@ -462,7 +448,6 @@ class RazorpayController extends GetxController {
     }
   }
 
-  // FIXED: Handle rental document payment success
   Future<void> _handleRentalDocumentPaymentSuccess(
     PaymentSuccessResponse response,
     String token,
@@ -477,28 +462,21 @@ class RazorpayController extends GetxController {
     print('🌐 API URL: ${_currentPaymentUrl.value}');
 
     try {
-      // Prepare the payload exactly as you specified
       final payload = {
         'status': 'success',
         'payment_id': response.paymentId,
-        // Assuming response.paymentId contains transactionId
         'transaction_details': 'test',
-        // Hardcoded as "test" per your requirement
         'amount': documentAmount.value.toStringAsFixed(2),
-        // Formatted amount
         'property_id': propertyId.value.toString(),
-        // Additional fields for document context
         'document_id': documentId.value > 0 ? documentId.value.toString() : '0',
         'document_type': documentType.value,
         'property_name': propertyName.value,
       };
 
-      print('📤 Sending payload: $payload');
-
       final apiResponse = await ApiService.postRequestWithToken(
         _currentPaymentUrl.value,
         token: token,
-        data: payload, // Use the new payload structure
+        data: payload,
       );
 
       print('📥 Rental Document Payment API Response:');
@@ -513,7 +491,6 @@ class RazorpayController extends GetxController {
             responseData['success'] == true) {
           print('✅ Rental document payment synced successfully');
 
-          // Show success message if available
           if (responseData['message'] != null) {
             print('📝 API Message: ${responseData['message']}');
             Get.snackbar(
@@ -523,8 +500,6 @@ class RazorpayController extends GetxController {
               colorText: Colors.white,
             );
           }
-
-          // Refresh rental properties if needed
           try {
             final rentalController = Get.find<RentalYieldController>();
             await rentalController.fetchProperties();
@@ -562,10 +537,6 @@ class RazorpayController extends GetxController {
         },
       );
 
-      print('📥 Market Verification API Response:');
-      print('   Status: ${apiResponse.statusCode}');
-      print('   Data: ${apiResponse.data}');
-
       if (apiResponse.statusCode == 200) {
         final responseData = apiResponse.data;
 
@@ -574,12 +545,10 @@ class RazorpayController extends GetxController {
             responseData['success'] == true) {
           print('✅ Market verification payment synced successfully');
 
-          // Show success message if available
           if (responseData['message'] != null) {
             print('📝 API Message: ${responseData['message']}');
           }
 
-          // Refresh market plots list
           try {
             final marketController = Get.find<PlotMarketController>();
             await marketController.fetchMarketPlots();
@@ -625,7 +594,6 @@ class RazorpayController extends GetxController {
       if (apiResponse.statusCode == 200) {
         final responseData = apiResponse.data;
 
-        // Check all possible success indicators
         if (responseData['status'] == 200 ||
             responseData['status'] == true ||
             responseData['success'] == true ||
@@ -633,12 +601,10 @@ class RazorpayController extends GetxController {
                 responseData['message'].toString().contains('Successfully'))) {
           print('✅ Residential verification payment synced successfully');
 
-          // Show success message from API
           if (responseData['message'] != null) {
             print('📝 API Message: ${responseData['message']}');
           }
 
-          // Refresh properties
           try {
             final residentialController =
                 Get.find<ResidentialPropertyFormController>();
@@ -648,7 +614,6 @@ class RazorpayController extends GetxController {
             print('⚠️ Could not find residential controller: $e');
           }
 
-          // Return success - don't throw exception
           return;
         } else {
           throw Exception(responseData['message'] ?? 'Verification failed');
@@ -658,10 +623,8 @@ class RazorpayController extends GetxController {
       }
     } catch (e) {
       print('❌ Residential verification error: $e');
-      // Only rethrow if it's not a success message
       if (e.toString().contains('Successfully')) {
         print('⚠️ This is actually a success message, not an error');
-        // It's actually a success, so we should return without throwing
         return;
       }
       throw Exception('Residential verification sync failed: $e');
@@ -704,8 +667,6 @@ class RazorpayController extends GetxController {
                   ),
                 ),
                 SizedBox(height: 24.h),
-
-                // ✅ Title
                 Text(
                   isZeroPay
                       ? "Processing Free Booking"
@@ -718,10 +679,7 @@ class RazorpayController extends GetxController {
                     decoration: TextDecoration.none,
                   ),
                 ),
-
                 SizedBox(height: 8.h),
-
-                // ✅ Description
                 Text(
                   isZeroPay
                       ? "Applying discounts and confirming your booking. This will only take a moment."
@@ -825,7 +783,7 @@ class RazorpayController extends GetxController {
                 children: [
                   _buildErrorRow(
                     "Payment ID",
-                    paymentID ?? "N/A",
+                    paymentID,
                     isCopyable: true,
                   ),
                   const Divider(height: 24),
@@ -868,7 +826,6 @@ class RazorpayController extends GetxController {
                   child: ElevatedButton(
                     onPressed: () {
                       Get.back();
-                      // Try to manually refresh based on payment type
                       _refreshAfterPayment();
                     },
                     style: ElevatedButton.styleFrom(
@@ -1046,9 +1003,7 @@ class RazorpayController extends GetxController {
         case PaymentType.giooPayment:
           description = "Plot Payment for ${propertyName.value}";
           break;
-        default:
-          description = "Payment for ${propertyName.value}";
-      }
+        }
 
       openCheckout(
         customerName: "${userData['first_name']} ${userData['last_name']}",
