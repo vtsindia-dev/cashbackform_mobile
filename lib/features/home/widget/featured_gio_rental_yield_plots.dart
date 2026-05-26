@@ -90,6 +90,7 @@ class FeaturedGioRentalYieldPlots extends StatelessWidget {
                     return SizedBox(
                       width: 170,
                       child: ProductCard(
+                        soldStatus: item.soldStatus,
                         rentalAmount: item.rentAmount?.toString(),
                         yieldAmount: item.yieldAmount?.toString(),
                         imageUrl: item.files?.first??'',
@@ -103,8 +104,6 @@ class FeaturedGioRentalYieldPlots extends StatelessWidget {
                           Get.toNamed(AppRoutes.rentalDetails, arguments: {'id': item.id, 'title': item.name,},);
                         },
                         isFavourite: true,
-                        onFavToggle: () {},
-                        onAddToCart: () {},
                       ),
                     );
                   },

@@ -112,6 +112,7 @@ class FeaturesGiooPlots extends StatelessWidget {
                     return SizedBox(
                       width: 170,
                       child: ProductCard(
+                         soldStatus: plot.soldStatus,
                         imageUrl: plot.thumbnailImage,
                         title: plot.name,
                         price: plot.formattedPrice,
@@ -123,14 +124,6 @@ class FeaturesGiooPlots extends StatelessWidget {
                           Get.toNamed('/giooDetails', arguments: {"id": plot.id, "title": plot.name});
                         },
                         isFavourite: true,
-                        onFavToggle: () {
-                          print("Fav Toggled for: ${plot.name}");
-                          // Add to favorites logic here
-                        },
-                        onAddToCart: () {
-                          print("Add to Cart: ${plot.name}");
-                          // Add to cart logic here
-                        },
                       )
                           .animate()
                           .slideX(

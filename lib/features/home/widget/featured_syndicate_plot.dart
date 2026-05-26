@@ -112,6 +112,7 @@ class FeaturesSyndicateProperties extends StatelessWidget {
                     return SizedBox(
                       width: 170,
                       child: ProductCard(
+                        soldStatus: syndicate.soldStatus,
                         imageUrl: syndicate.thumbnailImage,
                         title: syndicate.name,
                         price: syndicate.formattedPrice,
@@ -125,14 +126,6 @@ class FeaturesSyndicateProperties extends StatelessWidget {
 
                         },
                         isFavourite: true,
-                        onFavToggle: () {
-                          print("Fav Toggled for: ${syndicate.name}");
-                          // Add to favorites logic here
-                        },
-                        onAddToCart: () {
-                          print("Add to Cart: ${syndicate.name}");
-                          // Add to cart logic here
-                        },
                       )
                           .animate()
                           .slideX(

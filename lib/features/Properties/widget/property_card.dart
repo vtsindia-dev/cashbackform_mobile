@@ -26,6 +26,7 @@ class PropertyCard extends StatelessWidget {
     this.soldStatus,
   });
 
+
   bool get isSoldOut => soldStatus == 1;
 
   @override

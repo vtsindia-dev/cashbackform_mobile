@@ -47,6 +47,14 @@
     <true/>
     <key>FlutterDeepLinkingEnabled</key>
     <true/>
-
+  <key>NSUserNotificationsUsageDescription</key>
+    <string>We use notifications to keep you updated on your investments and transactions.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+    <key>NSUserNotificationAlertStyle</key>
+    <string>alert</string>
 </dict>
 </plist>

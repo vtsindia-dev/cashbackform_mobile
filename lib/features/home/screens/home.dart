@@ -70,7 +70,6 @@ class _HomeState extends State<Home> {
             child: GifLoader(message: "Loading...", size: 100),
           );
         }
-
         return RefreshIndicator(
           onRefresh: () async {
             await controller.refreshAllData();

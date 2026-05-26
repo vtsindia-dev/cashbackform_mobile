@@ -129,6 +129,7 @@ class FeaturedFlatsVillasProperties extends StatelessWidget {
                         child:
                             ProductCard(
                                   imageUrl: imageUrl,
+                                  soldStatus: plot.soldStatus,
                                   title: title,
                                   price: plot.price ?? '₹0',
                                   location: location,
@@ -143,12 +144,6 @@ class FeaturedFlatsVillasProperties extends StatelessWidget {
                                     );
                                   },
                                   isFavourite: false,
-                                  onFavToggle: () {
-                                    print('Fav toggled: ${plot.propertyName}');
-                                  },
-                                  onAddToCart: () {
-                                    print('Add to cart: ${plot.propertyName}');
-                                  },
                                 )
                                 .animate()
                                 .slideX(

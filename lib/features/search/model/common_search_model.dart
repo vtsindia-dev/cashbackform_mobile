@@ -19,6 +19,7 @@ class CommonSearchModel {
   PropertyType? propertyType;
   double? rentAmount;
   double? yieldAmount;
+  int? soldStatus;
 
 
   CommonSearchModel({
@@ -41,7 +42,8 @@ class CommonSearchModel {
     this.areaSqft,
     this.areaSqftPrice,
     this.city,
-    this.rentAmount
+    this.rentAmount,
+    this.soldStatus
   });
 
   CommonSearchModel.fromJson(Map<String, dynamic> json) {
@@ -50,6 +52,7 @@ class CommonSearchModel {
     area = json['area']?.toString();
     type = json['type']?.toString();
     address = json['address'];
+    soldStatus = json['sold_status'];
     price = parseToDouble(json['price']);
     yieldAmount = parseToDouble(json['yield_amount']?.toString());
     rentAmount = parseToDouble(json['rent_amount']?.toString());

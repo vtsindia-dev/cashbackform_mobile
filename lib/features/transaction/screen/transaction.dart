@@ -188,27 +188,7 @@ class _TransactionScreenState extends State<TransactionScreen>
               style: TextStyle(color: Colors.grey[700], fontSize: 11.sp, fontWeight: FontWeight.w600),
             ),
           ),
-          GestureDetector(
-            onTap: () => _showAddTransactionSheet(type, tabLabel, null),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: AppColor.primary,
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add, size: 14.sp, color: Colors.white),
-                  SizedBox(width: 4.w),
-                  Text(
-                    'Add',
-                    style: TextStyle(color: Colors.white, fontSize: 11.sp, fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
-            ),
-          ),
+
         ],
       ),
     );
@@ -232,6 +212,7 @@ class _TransactionScreenState extends State<TransactionScreen>
     );
   }
 
+/*
   Widget _buildModernCard(Transaction transaction) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
@@ -339,6 +320,8 @@ class _TransactionScreenState extends State<TransactionScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                if (_getTransactionTypeFromTab() == TransactionType.syndicate ||
+                    _getTransactionTypeFromTab() == TransactionType.rental)
                 GestureDetector(
                   onTap: () => _showAddTransactionSheet(
                       _getTransactionTypeFromTab(),
@@ -358,7 +341,7 @@ class _TransactionScreenState extends State<TransactionScreen>
                         Icon(Icons.shopping_cart_outlined, size: 12, color: Colors.green.shade700),
                         SizedBox(width: 4.w),
                         Text(
-                          'Add Purchase',
+                          'Add Transaction',
                           style: TextStyle(
                             color: Colors.green.shade700,
                             fontWeight: FontWeight.w600,
@@ -401,11 +384,517 @@ class _TransactionScreenState extends State<TransactionScreen>
       ),
     );
   }
+*/
+/*
+  Widget _buildModernCard(Transaction transaction) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(14.w),
+            child: Row(
+              children: [
+                Container(
+                  width: 46.w,
+                  height: 46.w,
+                  decoration: BoxDecoration(
+                    color: AppColor.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  child: Icon(
+                    _getPaymentIcon(transaction.paymentType),
+                    color: AppColor.primary,
+                    size: 22.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        transaction.propertyName.isNotEmpty
+                            ? transaction.propertyName
+                            : transaction.propertyType,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.sp,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 3.h),
+                      Row(
+                        children: [
+                          Icon(Icons.person_outline_rounded, size: 10.sp, color: Colors.grey[400]),
+                          SizedBox(width: 3.w),
+                          Text(
+                            transaction.userName.isNotEmpty ? transaction.userName : 'User',
+                            style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
+                          ),
+                          SizedBox(width: 8.w),
+                          Container(
+                            width: 3.w,
+                            height: 3.w,
+                            decoration: const BoxDecoration(
+                              color: Colors.grey,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Icon(Icons.payment_outlined, size: 10.sp, color: Colors.grey[400]),
+                          SizedBox(width: 3.w),
+                          Text(
+                            transaction.paymentType,
+                            style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '₹${transaction.amount}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15.sp,
+                        color: AppColor.primary,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      _formatDate(transaction.createdAt),
+                      style: TextStyle(fontSize: 9.sp, color: Colors.grey[400]),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (_getTransactionTypeFromTab() == TransactionType.syndicate ||
+                    _getTransactionTypeFromTab() == TransactionType.rental)
+                GestureDetector(
+                  onTap: () => _showAddTransactionSheet(
+                      _getTransactionTypeFromTab(),
+                      _tabLabels[_tabController.index],
+                      transaction
+                  ),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(30.r),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.shopping_cart_outlined, size: 12, color: Colors.green.shade700),
+                        SizedBox(width: 4.w),
+                        Text(
+                          'Add Transaction',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => controller.downloadInvoice(transaction.invoiceUrl),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+                    decoration: BoxDecoration(
+                      color: AppColor.primary,
+                      borderRadius: BorderRadius.circular(30.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.open_in_browser_rounded, size: 14, color: Colors.white),
+                        SizedBox(width: 5.w),
+                        Text(
+                          'View Receipt',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+*/
 
   TransactionType _getTransactionTypeFromTab() {
     return _tabTypes[_tabController.index];
   }
+  Widget _buildModernCard(Transaction transaction) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // ── Top Row (unchanged) ──────────────────────────────
+          Padding(
+            padding: EdgeInsets.all(14.w),
+            child: Row(
+              children: [
+                Container(
+                  width: 46.w,
+                  height: 46.w,
+                  decoration: BoxDecoration(
+                    color: AppColor.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  child: Icon(
+                    _getPaymentIcon(transaction.paymentType),
+                    color: AppColor.primary,
+                    size: 22.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        transaction.propertyName.isNotEmpty
+                            ? transaction.propertyName
+                            : transaction.propertyType,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.sp,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 3.h),
+                      Row(
+                        children: [
+                          Icon(Icons.person_outline_rounded, size: 10.sp, color: Colors.grey[400]),
+                          SizedBox(width: 3.w),
+                          Text(
+                            transaction.userName.isNotEmpty ? transaction.userName : 'User',
+                            style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
+                          ),
+                          SizedBox(width: 8.w),
+                          Container(
+                            width: 3.w,
+                            height: 3.w,
+                            decoration: const BoxDecoration(
+                              color: Colors.grey,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Icon(Icons.payment_outlined, size: 10.sp, color: Colors.grey[400]),
+                          SizedBox(width: 3.w),
+                          Text(
+                            transaction.paymentType,
+                            style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '₹${transaction.amount}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15.sp,
+                        color: AppColor.primary,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      _formatDate(transaction.createdAt),
+                      style: TextStyle(fontSize: 9.sp, color: Colors.grey[400]),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
 
+          Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+
+          // ── ✅ Tracking → Processing Status Bar ─────────────
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Status',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 5.w,
+                            height: 5.w,
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade500,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            'Processing',
+                            style: TextStyle(
+                              fontSize: 9.sp,
+                              color: Colors.orange.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10.h),
+
+                // ── Step indicators ──────────────────────────
+                Row(
+                  children: [
+                    // Step 1 — Tracking (done ✅)
+                    _buildStep(
+                      icon: Icons.radar_rounded,
+                      label: 'Tracking',
+                      isActive: true,
+                      isDone: true,
+                    ),
+
+                    // Connector line
+                    Expanded(
+                      child: Stack(
+                        alignment: Alignment.centerLeft,
+                        children: [
+                          Container(height: 2.h, color: Colors.grey.shade200),
+                          FractionallySizedBox(
+                            widthFactor: 0.5,
+                            child: Container(
+                              height: 2.h,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Colors.green.shade400, Colors.orange.shade400],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Step 2 — Processing (active 🔄)
+                    _buildStep(
+                      icon: Icons.autorenew_rounded,
+                      label: 'Processing',
+                      isActive: true,
+                      isDone: false,
+                    ),
+
+                    // Connector line
+                    Expanded(
+                      child: Container(height: 2.h, color: Colors.grey.shade200),
+                    ),
+
+                    // Step 3 — Completed (pending)
+                    _buildStep(
+                      icon: Icons.check_circle_outline_rounded,
+                      label: 'Completed',
+                      isActive: false,
+                      isDone: false,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+
+          // ── Bottom Buttons (unchanged) ───────────────────────
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (_getTransactionTypeFromTab() == TransactionType.syndicate ||
+                    _getTransactionTypeFromTab() == TransactionType.rental)
+                  GestureDetector(
+                    onTap: () => _showAddTransactionSheet(
+                      _getTransactionTypeFromTab(),
+                      _tabLabels[_tabController.index],
+                      transaction,
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(30.r),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.shopping_cart_outlined, size: 12, color: Colors.green.shade700),
+                          SizedBox(width: 4.w),
+                          Text(
+                            'Add Transaction',
+                            style: TextStyle(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                GestureDetector(
+                  onTap: () => controller.downloadInvoice(transaction.invoiceUrl),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+                    decoration: BoxDecoration(
+                      color: AppColor.primary,
+                      borderRadius: BorderRadius.circular(30.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.open_in_browser_rounded, size: 14, color: Colors.white),
+                        SizedBox(width: 5.w),
+                        Text(
+                          'View Receipt',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+// ── ✅ Helper: Step Widget ────────────────────────────────────
+  Widget _buildStep({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required bool isDone,
+  }) {
+    final Color activeColor = isDone ? Colors.green.shade500 : Colors.orange.shade500;
+    final Color bgColor = isDone
+        ? Colors.green.shade50
+        : isActive
+        ? Colors.orange.shade50
+        : Colors.grey.shade100;
+    final Color iconColor = isDone
+        ? Colors.green.shade600
+        : isActive
+        ? Colors.orange.shade600
+        : Colors.grey.shade400;
+
+    return Column(
+      children: [
+        Container(
+          width: 32.w,
+          height: 32.w,
+          decoration: BoxDecoration(
+            color: bgColor,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isActive || isDone ? activeColor : Colors.grey.shade300,
+              width: 1.5,
+            ),
+          ),
+          child: Icon(icon, size: 15.sp, color: iconColor),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 8.sp,
+            fontWeight: isActive || isDone ? FontWeight.w600 : FontWeight.w400,
+            color: isActive || isDone ? Colors.black87 : Colors.grey[400],
+          ),
+        ),
+      ],
+    );
+  }
   Widget _buildEmptyState(TransactionType type, String tabLabel) {
     return Center(
       child: Column(
@@ -630,7 +1119,6 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     super.initState();
     if (widget.existingTransaction != null) {
       _propertyIdController.text = widget.existingTransaction!.id.toString();
-      _amountController.text = widget.existingTransaction!.amount;
     }
   }
 
@@ -647,32 +1135,74 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   }
 
   Future<void> _pickDate() async {
+    if (_selectedDates.length >= 3) {
+      Get.snackbar(
+        'Limit Reached',
+        'Maximum 3 registration dates allowed',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.orange.shade50,
+        colorText: Colors.orange.shade800,
+      );
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+
+    final DateTime blockedUntil = today.add(const Duration(days: 6));
+    final DateTime firstDate = blockedUntil.add(const Duration(days: 1));
+    final DateTime lastDate = DateTime(today.year + 5, today.month, today.day);
+
+    DateTime initialDate = firstDate;
+    for (int i = 0; i <= 365 * 5; i++) {
+      final DateTime candidate = firstDate.add(Duration(days: i));
+      final bool alreadySelected = _selectedDates.any(
+            (date) =>
+        date.year == candidate.year &&
+            date.month == candidate.month &&
+            date.day == candidate.day,
+      );
+      if (!alreadySelected) {
+        initialDate = candidate;
+        break;
+      }
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      selectableDayPredicate: (DateTime day) {
+        final DateTime checkDay = DateTime(day.year, day.month, day.day);
+        if (!checkDay.isAfter(blockedUntil)) return false;
+        final bool alreadySelected = _selectedDates.any(
+              (date) =>
+          date.year == checkDay.year &&
+              date.month == checkDay.month &&
+              date.day == checkDay.day,
+        );
+        return !alreadySelected;
+      },
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(primary: AppColor.primary),
+            colorScheme: ColorScheme.light(
+              primary: AppColor.primary,
+            ),
           ),
           child: child!,
         );
       },
     );
+
     if (picked != null) {
-      final isDuplicate = _selectedDates.any((date) =>
-      DateFormat('yyyy-MM-dd').format(date) == DateFormat('yyyy-MM-dd').format(picked)
-      );
-      if (!isDuplicate) {
-        setState(() => _selectedDates.add(picked));
-      } else {
-        Get.snackbar('Duplicate Date', 'This date is already added',
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.orange.shade50,
-            colorText: Colors.orange);
-      }
+      setState(() {
+        _selectedDates.add(
+          DateTime(picked.year, picked.month, picked.day),
+        );
+        _selectedDates.sort();
+      });
     }
   }
 
@@ -782,7 +1312,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     }
 
     final formData = {
-      'property_id': _propertyIdController.text.trim(),
+      if (widget.existingTransaction != null) 'property_id': widget.existingTransaction!.id.toString(),
       'amount': amountText,
       'payment_mode': _selectedPaymentMode,
       'other_details': paymentDetails.isNotEmpty ? paymentDetails : _otherDetailsController.text.trim(),
@@ -893,16 +1423,16 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 16.h),
-
-                    _buildLabel('Property ID *', Icons.home_work_outlined, isMandatory: true),
-                    SizedBox(height: 6.h),
-                    _buildTextField(
-                      controller: _propertyIdController,
-                      hint: 'Enter property ID',
-                      keyboardType: TextInputType.number,
-                      validator: (v) => (v == null || v.isEmpty) ? 'Property ID is required' : null,
-                    ),
+                    // SizedBox(height: 16.h),
+                    //
+                    // _buildLabel('Property ID *', Icons.home_work_outlined, isMandatory: true),
+                    // SizedBox(height: 6.h),
+                    // _buildTextField(
+                    //   controller: _propertyIdController,
+                    //   hint: 'Enter property ID',
+                    //   keyboardType: TextInputType.number,
+                    //   validator: (v) => (v == null || v.isEmpty) ? 'Property ID is required' : null,
+                    // ),
                     SizedBox(height: 16.h),
 
                     _buildLabel('Amount (₹) *', Icons.currency_rupee_rounded, isMandatory: true),
@@ -1088,7 +1618,10 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                         child: Center(
                           child: Text(
                             'No dates selected',
-                            style: TextStyle(color: Colors.grey[400], fontSize: 12.sp),
+                            style: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: 12.sp,
+                            ),
                           ),
                         ),
                       )
@@ -1098,18 +1631,17 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                         runSpacing: 8.h,
                         children: _selectedDates.asMap().entries.map((entry) {
                           final date = entry.value;
-                          final isFutureDate = date.isAfter(DateTime.now());
+
                           return Container(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 6.h,
+                            ),
                             decoration: BoxDecoration(
-                              color: isFutureDate
-                                  ? Colors.red.shade50
-                                  : AppColor.primary.withOpacity(0.08),
+                              color: AppColor.primary.withOpacity(0.08),
                               borderRadius: BorderRadius.circular(20.r),
                               border: Border.all(
-                                color: isFutureDate
-                                    ? Colors.red.shade200
-                                    : AppColor.primary.withOpacity(0.2),
+                                color: AppColor.primary.withOpacity(0.2),
                               ),
                             ),
                             child: Row(
@@ -1118,43 +1650,37 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                                 Icon(
                                   Icons.event_rounded,
                                   size: 12.sp,
-                                  color: isFutureDate ? Colors.red.shade700 : AppColor.primary,
+                                  color: AppColor.primary,
                                 ),
                                 SizedBox(width: 5.w),
+
                                 Text(
                                   DateFormat('dd MMM yyyy').format(date),
                                   style: TextStyle(
                                     fontSize: 11.sp,
-                                    color: isFutureDate ? Colors.red.shade700 : AppColor.primary,
+                                    color: AppColor.primary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                if (isFutureDate) ...[
-                                  SizedBox(width: 5.w),
-                                  Icon(Icons.warning_rounded, size: 10.sp, color: Colors.red.shade700),
-                                ],
+
                                 SizedBox(width: 6.w),
+
                                 GestureDetector(
-                                  onTap: () => setState(() => _selectedDates.removeAt(entry.key)),
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedDates.removeAt(entry.key);
+                                    });
+                                  },
                                   child: Icon(
                                     Icons.close_rounded,
                                     size: 12.sp,
-                                    color: isFutureDate ? Colors.red.shade700 : AppColor.primary,
+                                    color: AppColor.primary,
                                   ),
                                 ),
                               ],
                             ),
                           );
                         }).toList(),
-                      ),
-
-                    if (_selectedDates.any((date) => date.isAfter(DateTime.now())))
-                      Padding(
-                        padding: EdgeInsets.only(top: 8.h),
-                        child: Text(
-                          '⚠️ Future dates are not allowed',
-                          style: TextStyle(fontSize: 10.sp, color: Colors.red.shade600),
-                        ),
                       ),
 
                     SizedBox(height: 16.h),

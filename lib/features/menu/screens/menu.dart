@@ -1132,7 +1132,7 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
         _menuTile(
             Icons.verified_user, "KYC", () => Get.toNamed("/kycScreen")),
         _menuTile(
-            Icons.verified_user, "Bank Details", () => Get.to(()=> BankDetailsListScreen())),
+            Icons.account_balance, "Bank Details", () => Get.to(()=> BankDetailsListScreen())),
         _menuTile(Icons.notification_add_outlined, "Notification",
                 () => Get.toNamed("/NotificationsPage")),
         _menuTile(Icons.card_giftcard, "Gift/Payment Coupon",

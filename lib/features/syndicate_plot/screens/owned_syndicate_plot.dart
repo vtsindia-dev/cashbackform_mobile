@@ -1,10 +1,12 @@
 import 'package:cashback_farms/common/colours.dart';
+import 'package:cashback_farms/features/bank_details/screen/bank_details_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../common/widget/appbar.dart';
+import '../../bank_details/controller/bank_details_controller.dart';
 import '../controller/syndicate_controller.dart';
 import '../model/syndicate_model.dart';
 
@@ -1475,16 +1477,36 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
     );
   }
 
-  void _showCancelPlotConfirmation(SyndicateBuyingDetail detail) {
-    // Determine status based on your model (similar to Gioo logic)
-    // Assuming SyndicateBuyingDetail has cancelStatus and refundStatus fields
+  void _showCancelPlotConfirmation(SyndicateBuyingDetail detail) async {
+
+    final BankDetailsController bankCtrl = Get.isRegistered<BankDetailsController>()
+        ? Get.find<BankDetailsController>()
+        : Get.put(BankDetailsController());
+
+    Get.dialog(
+      const Center(
+        child: CircularProgressIndicator(),
+      ),
+      barrierDismissible: false,
+      barrierColor: Colors.black26,
+    );
+
+    try {
+      await bankCtrl.fetchBankDetails();
+    } catch (_) {
+    } finally {
+      if (Get.isDialogOpen ?? false) Get.back();
+    }
+
+    final hasActiveBank = bankCtrl.allBankDetails.any((b) => b.isActive);
+    if (!hasActiveBank) {
+      _showNoBankDialog(bankCtrl.allBankDetails.isEmpty);
+      return;
+    }
+
     final int cancelStatus = detail.cancelStatus ?? 0;
     final int refundStatus = detail.refundStatus ?? 0;
-    final bool isActive = cancelStatus == 0;
-    final bool isRequestSent = cancelStatus == 1;
-    final bool isCancelled = cancelStatus == 2;
 
-    // Status text and color logic
     String bookingStatusText;
     Color bookingStatusColor;
 
@@ -1510,7 +1532,6 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
       bookingStatusColor = Colors.grey;
     }
 
-    // Only show cancellation for active plots
     if (cancelStatus != 0) {
       Get.snackbar(
         'Cannot Cancel',
@@ -1525,6 +1546,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
       return;
     }
 
+    // Show bottom sheet (unchanged)
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.all(24.w),
@@ -1535,7 +1557,6 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Grabber bar
             Container(
               width: 40.w,
               height: 4.h,
@@ -1545,12 +1566,10 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               ),
             ),
             24.h.verticalSpace,
-
-            // Warning icon
             Container(
               padding: EdgeInsets.all(20.r),
               decoration: BoxDecoration(
-                color: _dangerColor.withValues(alpha:0.1),
+                color: _dangerColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -1560,8 +1579,6 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               ),
             ),
             20.h.verticalSpace,
-
-            // Title & description
             Text(
               'Confirm Cancellation',
               style: TextStyle(
@@ -1571,7 +1588,6 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               ),
             ),
             12.h.verticalSpace,
-
             RichText(
               textAlign: TextAlign.center,
               text: TextSpan(
@@ -1590,21 +1606,18 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                     ),
                   ),
                   const TextSpan(
-                    text:
-                        '? This action will release the plot back to the syndicate pool.',
+                    text: '? This action will release the plot back to the syndicate pool.',
                   ),
                 ],
               ),
             ),
             24.h.verticalSpace,
-
-            // Refund info box
             Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
-                color: _accentColor.withValues(alpha:0.1),
+                color: _accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: _accentColor.withValues(alpha:0.3)),
+                border: Border.all(color: _accentColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -1638,10 +1651,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 4.h,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(6.r),
@@ -1659,8 +1669,6 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               ),
             ),
             32.h.verticalSpace,
-
-            // Action buttons
             Row(
               children: [
                 Expanded(
@@ -1715,6 +1723,135 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+    );
+  }
+
+// ✅ Add this No Bank Dialog (same as Gioo version)
+  void _showNoBankDialog(bool noAccountAtAll) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  noAccountAtAll
+                      ? Icons.account_balance_outlined
+                      : Icons.block_rounded,
+                  color: Colors.orange.shade700,
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                noAccountAtAll ? 'No Bank Account Found' : 'Bank Account Inactive',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                noAccountAtAll
+                    ? 'You need to add an active bank account before requesting a cancellation. Refunds are processed to your registered bank account.'
+                    : 'Your bank account is currently inactive. Please activate it before requesting a cancellation so we can process your refund.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.blueGrey.shade600,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 16, color: Colors.orange.shade700),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Refunds are transferred only to an active bank account.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange.shade800,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Colors.blueGrey.shade600,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        Get.to(
+                              () => const BankDetailsListScreen(),
+                          transition: Transition.rightToLeft,
+                          duration: const Duration(milliseconds: 300),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade600,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        noAccountAtAll ? 'Add Account' : 'Manage Account',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
     );
   }
 
@@ -1841,6 +1978,8 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
       statusText = 'Unknown';
       statusColor = Colors.grey;
     }
+
+    print('userTransactionId${detail.bookingSyndicate?.first.transactionUserId }');
 
     return Container(
       margin: EdgeInsets.fromLTRB(24.w, 0, 24.w, 16.h),
@@ -2029,6 +2168,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       ],
                     ),
                   ),
+
               ],
             ),
           ),
@@ -2095,7 +2235,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                                 ),
                                 4.h.verticalSpace,
                                 Text(
-                                  'Refund will be processed within 2-3 business days',
+                                  'Your Amount Refund',
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w600,
@@ -2180,6 +2320,42 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                if ((detail.bookingSyndicate?.isNotEmpty ?? false) &&
+                    (detail.bookingSyndicate!.first.transactionUserId?.isNotEmpty ?? false) && (isCancelled && !isRefunded)) ...[
+                  10.h.verticalSpace,
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: Colors.green.shade100),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Refund Transaction ID",
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        6.h.verticalSpace,
+                        SelectableText(
+                          detail.bookingSyndicate!.first.transactionUserId??'',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.green.shade900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

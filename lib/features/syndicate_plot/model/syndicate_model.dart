@@ -725,6 +725,7 @@ class SyndicateBuyingDetail {
   final DateTime updatedAt;
   final Transaction transaction;
   final SyndicateProperty property;
+  List<BookingSyndicate>? bookingSyndicate;
 
   SyndicateBuyingDetail({
     required this.id,
@@ -740,6 +741,7 @@ class SyndicateBuyingDetail {
     required this.updatedAt,
     required this.transaction,
     required this.property,
+    this.bookingSyndicate
   });
 
   factory SyndicateBuyingDetail.fromJson(Map<String, dynamic> json) {
@@ -759,6 +761,11 @@ class SyndicateBuyingDetail {
       updatedAt: DateTime.parse(json['updated_at'] ?? ''),
       transaction: Transaction.fromJson(json['transaction'] ?? {}),
       property: SyndicateProperty.fromJson(json['property'] ?? {}),
+        bookingSyndicate: json['booking_syndicate'] != null
+            ? (json['booking_syndicate'] as List)
+            .map((v) => BookingSyndicate.fromJson(v))
+            .toList()
+            : [],
     );
   }
 
@@ -800,6 +807,54 @@ class SyndicateBuyingListResponse {
     );
   }
 }
+
+class BookingSyndicate {
+  int? id;
+  int? propertyId;
+  int? userId;
+  int? transactionId;
+  String? amount;
+  int? status;
+  int? cancelStatus;
+  String? refundAmount;
+  String? createdAt;
+  String? updatedAt;
+  int? dtdcCancelled;
+  int? bankDetailsId;
+  String? transactionUserId;
+
+  BookingSyndicate(
+      {this.id,
+        this.propertyId,
+        this.userId,
+        this.transactionId,
+        this.amount,
+        this.status,
+        this.cancelStatus,
+        this.refundAmount,
+        this.createdAt,
+        this.updatedAt,
+        this.dtdcCancelled,
+        this.bankDetailsId,
+        this.transactionUserId});
+
+  BookingSyndicate.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    propertyId = json['property_id'];
+    userId = json['user_id'];
+    transactionId = json['transaction_id'];
+    amount = json['amount'];
+    status = json['status'];
+    cancelStatus = json['cancel_status'];
+    refundAmount = json['refund_amount'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+    dtdcCancelled = json['dtdc_cancelled'];
+    bankDetailsId = json['bank_details_id'];
+    transactionUserId = json['transaction_user_id'];
+  }
+}
+
 
 class SyndicateBuyingDetailResponse {
   final bool status;

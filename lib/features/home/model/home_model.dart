@@ -130,6 +130,7 @@ class FeaturedSyndicate {
   final DateTime createdAt;
   final DateTime updatedAt;
   final FeaturedPropertyType propertyType;
+  final int? soldStatus;
 
   FeaturedSyndicate({
     required this.id,
@@ -150,6 +151,7 @@ class FeaturedSyndicate {
     required this.createdAt,
     required this.updatedAt,
     required this.propertyType,
+    this.soldStatus
   });
 
   factory FeaturedSyndicate.fromJson(Map<String, dynamic> json) {
@@ -176,6 +178,7 @@ class FeaturedSyndicate {
       unitSpilt: json['unit_spilt'] ?? 0,
       images: imagesList,
       plotImage: json['plot_image'],
+      soldStatus : json['sold_status'],
       work: json['work'],
       createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
       updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
@@ -409,6 +412,7 @@ class GiooPlot {
   final String uldNo;
   final int adminBlock;
   final FeaturedPropertyType propertyType;
+  final int? soldStatus;
 
   GiooPlot({
     required this.id,
@@ -437,6 +441,7 @@ class GiooPlot {
     required this.uldNo,
     required this.adminBlock,
     required this.propertyType,
+    this.soldStatus
   });
 
   factory GiooPlot.fromJson(Map<String, dynamic> json) {
@@ -469,6 +474,7 @@ class GiooPlot {
       updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
       aminities: json['aminities']?.toString() ?? '',
       bluePrint: json['blue_print'],
+      soldStatus : json['sold_status'],
       totalPrice: json['total_price']?.toString() ?? '',
       uldNo: json['uld_no']?.toString() ?? '',
       adminBlock: json['admin_block'] ?? 0,

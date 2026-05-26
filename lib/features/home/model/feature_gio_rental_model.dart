@@ -43,6 +43,7 @@ class FeaturedRentalProperty {
   List<String>? files;
   double? rentAmount;
   double? yieldAmount;
+  int? soldStatus;
 
   FeaturedRentalProperty({
     required this.id,
@@ -65,6 +66,7 @@ class FeaturedRentalProperty {
     this.files,
     this.rentAmount,
     this.yieldAmount,
+    this.soldStatus
   });
 
   factory FeaturedRentalProperty.fromJson(Map<String, dynamic> json) {
@@ -89,6 +91,7 @@ class FeaturedRentalProperty {
       price: json['price']?.toString() ?? '',
       description: json['description'] ?? '',
       images: imagesList,
+      soldStatus : json['sold_status'],
       verifyStatus: json['verify_status'] ?? 0,
       uldNo: json['uld_no']?.toString() ?? '',
       createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),

@@ -2,7 +2,7 @@ import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../common/images.dart';
+
 
 class ProductCard extends StatelessWidget {
   final String imageUrl;
@@ -12,10 +12,9 @@ class ProductCard extends StatelessWidget {
   final String description;
   final VoidCallback onTap;
   final bool isFavourite;
-  final VoidCallback onFavToggle;
-  final VoidCallback onAddToCart;
   final String? rentalAmount;
   final String? yieldAmount;
+  final int? soldStatus;
 
   const ProductCard({
     super.key,
@@ -26,11 +25,12 @@ class ProductCard extends StatelessWidget {
     required this.description,
     required this.onTap,
     required this.isFavourite,
-    required this.onFavToggle,
-    required this.onAddToCart,
     this.yieldAmount,
-    this.rentalAmount
+    this.rentalAmount,
+    this.soldStatus,
   });
+
+  bool get isSoldOut => soldStatus == 1;
 
   @override
   Widget build(BuildContext context) {
@@ -64,72 +64,77 @@ class ProductCard extends StatelessWidget {
                     height: 120.h,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    // ✅ Greyscale when sold
+                    color: isSoldOut ? Colors.grey : null,
+                    colorBlendMode: isSoldOut ? BlendMode.saturation : null,
                   ),
                 ),
-                // Positioned(
-                //   top: 8.h,
-                //   right: 8.w,
-                //   child: InkWell(
-                //     onTap: onFavToggle,
-                //     child: Container(
-                //       padding: EdgeInsets.all(6.r),
-                //       decoration: BoxDecoration(
-                //         color: AppColor.white,
-                //         shape: BoxShape.circle,
-                //         boxShadow: [
-                //           BoxShadow(
-                //             color: Colors.black12,
-                //             blurRadius: 2.r,
-                //             offset: Offset(0, 1.h),
-                //           )
-                //         ],
-                //       ),
-                //       child: Icon(
-                //         isFavourite ? Icons.favorite : Icons.favorite_border,
-                //         color: AppColor.primary,
-                //         size: 18.sp,
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                //
-                // Positioned(
-                //   top: 8.h,
-                //   left: 8.w,
-                //   child: InkWell(
-                //     onTap: onAddToCart,
-                //     child: Container(
-                //       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                //       decoration: BoxDecoration(
-                //         color: AppColor.primary,
-                //         borderRadius: BorderRadius.circular(8.r),
-                //         boxShadow: [
-                //           BoxShadow(
-                //             color: Colors.black12,
-                //             blurRadius: 2.r,
-                //             offset: Offset(0, 1.h),
-                //           )
-                //         ],
-                //       ),
-                //       child: Row(
-                //         children: [
-                //           Icon(Icons.shopping_cart_outlined,
-                //               color: Colors.white, size: 14.sp),
-                //           SizedBox(width: 3.w),
-                //           Text(
-                //             "Add",
-                //             style: TextStyle(
-                //                 color: Colors.white,
-                //                 fontSize: 10.sp,
-                //                 fontWeight: FontWeight.w600),
-                //           )
-                //         ],
-                //       ),
-                //     ),
-                //   ),
-                // ),
+
+                // ✅ Dark overlay when sold
+                if (isSoldOut)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(10.r),
+                        topRight: Radius.circular(10.r),
+                      ),
+                      child: Container(
+                        color: Colors.black.withOpacity(0.50),
+                      ),
+                    ),
+                  ),
+
+                // ✅ SOLD OUT stamp
+                if (isSoldOut)
+                  Positioned.fill(
+                    child: Center(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10.w, vertical: 5.h),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade700,
+                          borderRadius: BorderRadius.circular(6.r),
+                          border: Border.all(color: Colors.white, width: 1.5.w),
+                        ),
+                        child: Text(
+                          "SOLD OUT",
+                          style: GoogleFonts.poppins(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // ✅ Available badge when NOT sold
+                if (!isSoldOut)
+                  Positioned(
+                    top: 6.h,
+                    left: 6.w,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 7.w, vertical: 3.h),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade600,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        "Available",
+                        style: GoogleFonts.poppins(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
+
+            // ── Card body (unchanged except button) ───────────────
             Padding(
               padding: EdgeInsets.all(8.w),
               child: Column(
@@ -140,102 +145,109 @@ class ProductCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
+                      // ✅ Grey title when sold
+                      color: isSoldOut ? Colors.grey.shade500 : Colors.black,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 4.h),
-                  if(rentalAmount==null && yieldAmount==null)
-                  Row(
-                    children: [
-                      // Image.asset(
-                      //   Images.price,
-                      //   height: 13.h,
-                      //   width: 13.w,
-                      //   color: AppColor.primary,
-                      // ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        price,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.primary,
+                  if (rentalAmount == null && yieldAmount == null)
+                    Row(
+                      children: [
+                        SizedBox(width: 4.w),
+                        Text(
+                          price,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            // ✅ Grey price when sold
+                            color: isSoldOut
+                                ? Colors.grey.shade400
+                                : AppColor.primary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  if (rentalAmount != null && yieldAmount != null)
-                    ...[
-                      Row(
-                        children: [
-                          Flexible(
-                            flex: 1,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "₹ $rentalAmount",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                      ],
+                    ),
+                  if (rentalAmount != null && yieldAmount != null) ...[
+                    Row(
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "₹ $rentalAmount",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  // ✅ Grey when sold
+                                  color: isSoldOut
+                                      ? Colors.grey.shade400
+                                      : Colors.black,
                                 ),
-                                const SizedBox(height: 2),
-                                const Text(
-                                  "Rental Amount",
-                                  style: TextStyle(fontSize: 10, color: Colors.grey),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                "Rental Amount",
+                                style:
+                                TextStyle(fontSize: 10, color: Colors.grey),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-
-                          /// Divider
-                          Container(
-                            height: 28,
-                            width: 1,
-                            color: Colors.orange,
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
-                          ),
-
-                          Flexible(
-                            flex: 1,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "₹ $yieldAmount",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                        ),
+                        Container(
+                          height: 28,
+                          width: 1,
+                          color: Colors.orange,
+                          margin: const EdgeInsets.symmetric(horizontal: 6),
+                        ),
+                        Flexible(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "₹ $yieldAmount",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  // ✅ Grey when sold
+                                  color: isSoldOut
+                                      ? Colors.grey.shade400
+                                      : Colors.black,
                                 ),
-                                const SizedBox(height: 2),
-                                const Text(
-                                  "Yield Amount",
-                                  style: TextStyle(fontSize: 10, color: Colors.grey),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                "Yield Amount",
+                                style:
+                                TextStyle(fontSize: 10, color: Colors.grey),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 2.h),
-                    ],
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 2.h),
+                  ],
                   SizedBox(height: 3.h),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 6.w, vertical: 4.h),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.location_on, size: 12.sp, color: Colors.grey),
+                        Icon(Icons.location_on,
+                            size: 12.sp, color: Colors.grey),
                         SizedBox(width: 3.w),
                         Expanded(
                           child: Text(
@@ -251,7 +263,6 @@ class ProductCard extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   SizedBox(height: 5.h),
                   Text(
                     description,
@@ -262,27 +273,49 @@ class ProductCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-
                   SizedBox(height: 8.h),
+
+                  // ✅ View / Sold Out button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       SizedBox(
                         height: 28.h,
-                        child: ElevatedButton(
+                        child: isSoldOut
+                            ? Container(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 4.h, horizontal: 6.w),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(
+                                color: Colors.red.shade300,
+                                width: 0.8.w),
+                          ),
+                          child: Text(
+                            "Sold Out",
+                            style: GoogleFonts.poppins(
+                              color: Colors.red.shade600,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        )
+                            : ElevatedButton(
                           onPressed: onTap,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
-                            padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 6.w),
+                            padding: EdgeInsets.symmetric(
+                                vertical: 4.h, horizontal: 6.w),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8.r),
                               side: BorderSide(
-                                color: AppColor.primary,
-                                width: 0.8.w,
-                              ),
+                                  color: AppColor.primary,
+                                  width: 0.8.w),
                             ),
                             minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            tapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
                             elevation: 0,
                           ),
                           child: Text(
@@ -296,7 +329,7 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),

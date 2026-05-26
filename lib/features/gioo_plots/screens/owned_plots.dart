@@ -1338,7 +1338,42 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                ]
+                ],
+                if (detail.userTransactionId != null &&
+                    detail.userTransactionId!.isNotEmpty && refundStatus == 1) ...[
+                  10.h.verticalSpace,
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: Colors.green.shade100),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Refund Transaction ID",
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        6.h.verticalSpace,
+                        SelectableText(
+                          detail.userTransactionId!,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.green.shade900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1402,10 +1437,26 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
       ),
     );
   }
-  void _checkBankAndCancel(GiooBuyingDetail detail) {
+  void _checkBankAndCancel(GiooBuyingDetail detail) async {
     final BankDetailsController bankCtrl = Get.isRegistered<BankDetailsController>()
         ? Get.find<BankDetailsController>()
         : Get.put(BankDetailsController());
+
+    Get.dialog(
+      const Center(
+        child: CircularProgressIndicator(),
+      ),
+      barrierDismissible: false,
+      barrierColor: Colors.black26,
+    );
+
+    try {
+      await bankCtrl.fetchBankDetails();
+    } catch (_) {
+    } finally {
+      if (Get.isDialogOpen ?? false) Get.back();
+    }
+
     final hasActiveBank = bankCtrl.allBankDetails.any((b) => b.isActive);
     if (hasActiveBank) {
       _showCancelConfirmation(detail);
@@ -1423,7 +1474,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -1439,8 +1489,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Title
               Text(
                 noAccountAtAll
                     ? 'No Bank Account Found'
@@ -1453,8 +1501,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-
-              // Message
               Text(
                 noAccountAtAll
                     ? 'You need to add an active bank account before requesting a cancellation. Refunds are processed to your registered bank account.'
@@ -1467,8 +1513,6 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-
-              // Info pill
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
@@ -1494,11 +1538,8 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Buttons
               Row(
                 children: [
-                  // Cancel / dismiss
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Get.back(),
@@ -1517,12 +1558,10 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-
-                  // Go to bank details
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Get.back(); // close dialog
+                        Get.back();
                         Get.to(
                               () => const BankDetailsListScreen(),
                           transition: Transition.rightToLeft,

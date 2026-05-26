@@ -469,6 +469,8 @@ class _SearchScreenState extends State<SearchScreen> {
         ? item.image!.first
         : "";
 
+    final bool isSoldOut = item.soldStatus == 1;
+
     return GestureDetector(
       onTap: () => _navigateByTitle(item),
       child: Container(
@@ -499,6 +501,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           ? Image.network(
                         imageUrl,
                         fit: BoxFit.cover,
+                        color: isSoldOut ? Colors.grey : null,
+                        colorBlendMode: isSoldOut ? BlendMode.saturation : null,
                         errorBuilder: (c, e, s) => Image.asset(
                           'assets/images/no-image.jpg',
                           fit: BoxFit.cover,
@@ -523,6 +527,34 @@ class _SearchScreenState extends State<SearchScreen> {
                         ),
                       ),
                     ),
+                    if (isSoldOut)
+                      Positioned.fill(
+                        child: Container(color: Colors.black.withOpacity(0.45)),
+                      ),
+                    if (isSoldOut)
+                      Positioned.fill(
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade700,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            child: const Text(
+                              "SOLD OUT",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
                     Positioned(
                       top: 10,
                       left: 10,
@@ -562,20 +594,19 @@ class _SearchScreenState extends State<SearchScreen> {
                               : item.name ?? "",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
-                            color: Color(0xFF1A1A1A),
+                            color: isSoldOut
+                                ? Colors.grey.shade400
+                                : const Color(0xFF1A1A1A),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(
-                              Icons.location_on_outlined,
-                              color: Colors.grey,
-                              size: 14,
-                            ),
+                            const Icon(Icons.location_on_outlined,
+                                color: Colors.grey, size: 14),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -598,49 +629,40 @@ class _SearchScreenState extends State<SearchScreen> {
                     if (item.type == "rental") ...[
                       Flexible(
                         child: Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: "Rent: ",
-                                style: TextStyle(
+                          TextSpan(children: [
+                            TextSpan(
+                              text: "Rent: ",
+                              style: TextStyle(
                                   color: Colors.grey.shade600,
                                   fontSize: 11,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              TextSpan(
-                                text: "₹${item.rentAmount ?? '0'}",
-                                style: const TextStyle(
+                                  fontWeight: FontWeight.w400),
+                            ),
+                            TextSpan(
+                              text: "₹${item.rentAmount ?? '0'}",
+                              style: const TextStyle(
                                   color: AppColor.primary,
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ]),
                         ),
                       ),
                       Flexible(
                         child: Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: "Yield: ",
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 11,
-                                ),
-                              ),
-                              TextSpan(
-                                text: "₹${item.yieldAmount ?? '0'}",
-                                style: const TextStyle(
+                          TextSpan(children: [
+                            TextSpan(
+                              text: "Yield: ",
+                              style: TextStyle(
+                                  color: Colors.grey.shade600, fontSize: 11),
+                            ),
+                            TextSpan(
+                              text: "₹${item.yieldAmount ?? '0'}",
+                              style: const TextStyle(
                                   color: Colors.green,
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ]),
                         ),
                       ),
                     ],
@@ -650,8 +672,10 @@ class _SearchScreenState extends State<SearchScreen> {
                         if (item.type != "rental")
                           Text(
                             "₹${item.price ?? item.startingPrice ?? 0}",
-                            style: const TextStyle(
-                              color: AppColor.primary,
+                            style: TextStyle(
+                              color: isSoldOut
+                                  ? Colors.grey.shade400
+                                  : AppColor.primary,
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
                             ),
@@ -667,29 +691,24 @@ class _SearchScreenState extends State<SearchScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 11,
-                              ),
+                                  color: Colors.grey.shade600, fontSize: 11),
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            "•",
-                            style: TextStyle(
-                              color: Colors.grey.shade400,
-                              fontSize: 12,
-                            ),
-                          ),
+                          Text("•",
+                              style: TextStyle(
+                                  color: Colors.grey.shade400, fontSize: 12)),
                           const SizedBox(width: 4),
                         ],
                         Text(
-                          item.type == "rental" || item.type == "synticate" || item.type == "geo" || item.type == "market"
+                          item.type == "rental" ||
+                              item.type == "synticate" ||
+                              item.type == "geo" ||
+                              item.type == "market"
                               ? '${item.area} /sq.ft'
                               : '${item.areaSqftPrice} /sq.ft',
                           style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 11,
-                          ),
+                              color: Colors.grey.shade600, fontSize: 11),
                         ),
                       ],
                     ),
@@ -702,7 +721,6 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
     );
   }
-
   Widget _buildTag({
     required String title,
     required Color bgColor,

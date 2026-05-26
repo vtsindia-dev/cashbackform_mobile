@@ -1156,6 +1156,7 @@ class GiooBuyingDetail {
   final DateTime updatedAt;
   final Transaction transaction;
   final Property? property;
+  final String? userTransactionId;
 
   GiooBuyingDetail({
     required this.id,
@@ -1172,12 +1173,14 @@ class GiooBuyingDetail {
     required this.updatedAt,
     required this.transaction,
      this.property,
+    this.userTransactionId
   });
 
   factory GiooBuyingDetail.fromJson(Map<String, dynamic> json) {
     return GiooBuyingDetail(
       id: json['id'] ?? 0,
       transactionId: json['transaction_id'] ?? 0,
+      userTransactionId : json['user_transaction_id'],
       propertyId: json['property_id'] ?? 0,
       unit: json['unit'] ?? 0,
       cancelStatus: json['cancel_status'] ?? 0,
