@@ -18,6 +18,7 @@ class CommonFacility {
   }
 }
 
+// ─────────────────────────────────────────────
 class SyndicatePlot {
   final int id;
   final String name;
@@ -37,7 +38,7 @@ class SyndicatePlot {
   final String work;
   final String? agentId;
   final int status;
-  final int soldStatus; // ✅ Added
+  final int soldStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
   final dynamic propertyType;
@@ -87,11 +88,16 @@ class SyndicatePlot {
       work: json['work']?.toString() ?? '',
       agentId: json['agent_id']?.toString(),
       status: json['status'] as int? ?? 0,
-      soldStatus: json['sold_status'] as int? ?? 0, // ✅
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? ''),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? ''),
+      soldStatus: json['sold_status'] as int? ?? 0,
+      createdAt: _parseDate(json['created_at']),   // ← fixed
+      updatedAt: _parseDate(json['updated_at']),   // ← fixed
       propertyType: json['property_type'],
     );
+  }
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null || value.toString().isEmpty) return DateTime.now();
+    return DateTime.tryParse(value.toString()) ?? DateTime.now();
   }
 
   static List<String> _parseImages(dynamic imageData) {
@@ -109,7 +115,8 @@ class SyndicatePlot {
   bool get isSoldOut => soldStatus == 1;
   String get formattedPrice => _formatNumber(price);
   String get formattedArea => '$area sq.ft';
-  String get location => '${city?.cityName ?? ''}, ${state?.stateName ?? ''}'.trim();
+  String get location =>
+      '${city?.cityName ?? ''}, ${state?.stateName ?? ''}'.trim();
   String get firstImage => images.isNotEmpty ? images.first : '';
   List<String> get allImages => images;
 
@@ -117,7 +124,8 @@ class SyndicatePlot {
     try {
       final numValue = double.tryParse(number);
       if (numValue == null) return number;
-      if (numValue >= 100000) return '${(numValue / 100000).toStringAsFixed(1)}L';
+      if (numValue >= 100000)
+        return '${(numValue / 100000).toStringAsFixed(1)}L';
       if (numValue >= 1000) return '${(numValue / 1000).toStringAsFixed(1)}K';
       return number;
     } catch (_) {
@@ -126,6 +134,7 @@ class SyndicatePlot {
   }
 }
 
+// ─────────────────────────────────────────────
 class City {
   final int id;
   final int stateId;
@@ -149,6 +158,7 @@ class City {
   }
 }
 
+// ─────────────────────────────────────────────
 class AppState {
   final int id;
   final String stateName;
@@ -168,6 +178,8 @@ class AppState {
     );
   }
 }
+
+// ─────────────────────────────────────────────
 class SyndicateDetail {
   final int id;
   final String name;
@@ -191,12 +203,12 @@ class SyndicateDetail {
   final String work;
   final String agentId;
   final int status;
-  final int soldStatus; // ✅ Added
+  final int soldStatus;
   final String aminities;
   final String uldNo;
   final String startingPrice;
   final List<Amenity> amenities;
-  final List<CommonFacility> commonFacilities; // ✅ Added
+  final List<CommonFacility> commonFacilities;
   final List<Document> documents;
   final List<Booking> bookings;
   final List<User> users;
@@ -290,64 +302,73 @@ class SyndicateDetail {
       work: safeString(json['work']),
       agentId: safeString(json['agent_id']),
       status: safeInt(json['status']),
-      soldStatus: safeInt(json['sold_status']), // ✅
+      soldStatus: safeInt(json['sold_status']),
       aminities: safeString(json['aminities'] ?? ''),
       share: json['share']?.toString(),
       uldNo: safeString(json['uld_no'] ?? ''),
-      propertyBooked : json['property_booked'],
-        kycVerified : json['kyc_verified'],
-        transactionId : json['transaction_id'],
+      propertyBooked: json['property_booked'],
+      kycVerified: json['kyc_verified'],
+      transactionId: json['transaction_id'],
       youtubeLink: json['youtube_link']?.toString(),
       startingPrice: safeString(json['starting_price'] ?? '0'),
       amenities: (json['amenity'] is List)
-          ? (json['amenity'] as List).map((e) => Amenity.fromJson(e)).toList()
+          ? (json['amenity'] as List)
+          .map((e) => Amenity.fromJson(e))
+          .toList()
           : [],
-      commonFacilities: (json['commonfacility'] is List) // ✅
+      commonFacilities: (json['commonfacility'] is List)
           ? (json['commonfacility'] as List)
           .map((e) => CommonFacility.fromJson(e))
           .toList()
           : [],
       documents: (json['documents'] is List)
-          ? (json['documents'] as List).map((e) => Document.fromJson(e)).toList()
+          ? (json['documents'] as List)
+          .map((e) => Document.fromJson(e))
+          .toList()
           : [],
       bookings: (json['booking'] is List)
-          ? (json['booking'] as List).map((e) => Booking.fromJson(e)).toList()
+          ? (json['booking'] as List)
+          .map((e) => Booking.fromJson(e))
+          .toList()
           : [],
       users: (json['user'] is List)
           ? (json['user'] as List).map((e) => User.fromJson(e)).toList()
           : [],
       documentPayment: safeString(json['documentPayment'] ?? ''),
       adminBlockAmount: safeString(json['admin_block_amount'] ?? '0'),
-      nearbyLocations: (json['nearbyLocations'] ?? json['nearby_locations']) is List
+      nearbyLocations:
+      (json['nearbyLocations'] ?? json['nearby_locations']) is List
           ? ((json['nearbyLocations'] ?? json['nearby_locations']) as List)
           .map((e) => NearbyLocation.fromJson(e))
           .toList()
           : [],
     );
   }
+
   bool get isSoldOut => soldStatus == 1;
+
   List<double> get unitAreas {
     try {
       if (unit.isEmpty) return List.filled(unitSpilt, 0.0);
-      return unit.split(',').map((e) => double.tryParse(e.trim()) ?? 0.0).toList();
+      return unit
+          .split(',')
+          .map((e) => double.tryParse(e.trim()) ?? 0.0)
+          .toList();
     } catch (_) {
       return List.filled(unitSpilt, 0.0);
     }
   }
+
   double get pricePerSqFt =>
       double.tryParse(price.replaceAll(',', '')) ?? 0.0;
   double get documentPriceValue =>
       double.tryParse(adminDocumentPrice.replaceAll(',', '')) ?? 0.0;
   double get adminDocumentPriceValue => documentPriceValue;
-
   double get totalDocumentPrice => adminDocumentPriceValue;
-
   double get plotBookingPrice =>
       double.tryParse((adminBlockAmount ?? '0').replaceAll(',', '')) ?? 0.0;
-
   String get formattedTotalDocumentPrice =>
       '₹${totalDocumentPrice.toStringAsFixed(2)}';
-
   String get formattedPlotBookingPrice =>
       '₹${plotBookingPrice.toStringAsFixed(2)}';
 
@@ -362,6 +383,7 @@ class SyndicateDetail {
   }
 }
 
+// ─────────────────────────────────────────────
 class PropertyType {
   final int id;
   final String categoryName;
@@ -382,6 +404,7 @@ class PropertyType {
   }
 }
 
+// ─────────────────────────────────────────────
 class Amenity {
   final int id;
   final String title;
@@ -398,6 +421,7 @@ class Amenity {
   }
 }
 
+// ─────────────────────────────────────────────
 class Document {
   final int id;
   final int propertyId;
@@ -424,6 +448,7 @@ class Document {
   }
 }
 
+// ─────────────────────────────────────────────
 class Booking {
   final int id;
   final int propertyId;
@@ -457,6 +482,7 @@ class Booking {
   }
 }
 
+// ─────────────────────────────────────────────
 class User {
   final int id;
   final int role;
@@ -501,6 +527,7 @@ class User {
   }
 }
 
+// ─────────────────────────────────────────────
 class NearbyLocation {
   final int id;
   final String title;
@@ -523,10 +550,10 @@ class NearbyLocation {
     );
   }
 
-  double get distance =>
-      double.tryParse(pivot?.distance ?? '0') ?? 0.0;
+  double get distance => double.tryParse(pivot?.distance ?? '0') ?? 0.0;
 }
 
+// ─────────────────────────────────────────────
 class Pivot {
   final String distance;
 
@@ -537,70 +564,85 @@ class Pivot {
   }
 }
 
-// ──────────────────────────────────────────
-// Buying-list models (unchanged)
-// ──────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Shared safe date parser (used by all models below)
+// ─────────────────────────────────────────────
+DateTime _parseDate(dynamic value) {
+  if (value == null || value.toString().isEmpty) return DateTime.now();
+  return DateTime.tryParse(value.toString()) ?? DateTime.now();
+}
 
-class SyndicateBuyingList {
+// ─────────────────────────────────────────────
+class Transaction {
   final int id;
+  final String transactionId;
+  final String? paymentMode;        // ← nullable
+  final String? transactionDetails; // ← nullable
+  final String amount;
+  final dynamic isCompleted;
+  final String status;
   final int propertyId;
   final int userId;
-  final String units;
-  final dynamic amount;
-  final dynamic transactionId;
-  final double? returnAmount;
-  final DateTime? returnDate;
+  final String type;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final Transaction transaction;
-  final SyndicateProperty property;
+  final Map<String, dynamic> user;
+  final String? serviceCharge;
+  final String? totalAmount;
+  final String? igst;
 
-  SyndicateBuyingList({
+  Transaction({
     required this.id,
+    required this.transactionId,
+    this.paymentMode,
+    this.transactionDetails,
+    required this.amount,
+    required this.isCompleted,
+    required this.status,
     required this.propertyId,
     required this.userId,
-    required this.units,
-    required this.amount,
-    required this.transactionId,
-    this.returnAmount,
-    this.returnDate,
+    required this.type,
     required this.createdAt,
     required this.updatedAt,
-    required this.transaction,
-    required this.property,
+    required this.user,
+    this.serviceCharge,
+    this.totalAmount,
+    this.igst,
   });
 
-  factory SyndicateBuyingList.fromJson(Map<String, dynamic> json) {
-    return SyndicateBuyingList(
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
       id: json['id'] ?? 0,
+      transactionId: json['transaction_id']?.toString() ?? '',
+      paymentMode: json['payment_mode']?.toString(),
+      transactionDetails: json['transaction_details']?.toString(),
+      amount: json['amount']?.toString() ?? '0',
+      isCompleted: json['is_completed'],
+      status: json['status']?.toString() ?? '',
       propertyId: json['property_id'] ?? 0,
       userId: json['user_id'] ?? 0,
-      units: json['units']?.toString() ?? '',
-      amount: json['amount'],
-      transactionId: json['transaction_id'],
-      returnAmount: json['return_amount'] != null
-          ? double.tryParse(json['return_amount'].toString())
-          : null,
-      returnDate: json['return_date'] != null
-          ? DateTime.tryParse(json['return_date'].toString())
-          : null,
-      createdAt: DateTime.parse(json['created_at'] ?? ''),
-      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
-      transaction: Transaction.fromJson(json['transaction'] ?? {}),
-      property: SyndicateProperty.fromJson(json['property'] ?? {}),
+      type: json['type']?.toString() ?? '',
+      createdAt: _parseDate(json['created_at']),   // ← fixed
+      updatedAt: _parseDate(json['updated_at']),   // ← fixed
+      user: json['user'] is Map
+          ? Map<String, dynamic>.from(json['user'])
+          : {},
+      serviceCharge: json['service_charge']?.toString(),
+      totalAmount: json['total_amount']?.toString(),
+      igst: json['igst']?.toString(),
     );
   }
 
-  double get amountValue {
-    if (amount is String) return double.tryParse(amount as String) ?? 0.0;
-    if (amount is int) return (amount as int).toDouble();
-    if (amount is double) return amount as double;
-    return 0.0;
-  }
-
-  String get transactionIdString => transactionId?.toString() ?? '';
+  double get amountValue => double.tryParse(amount) ?? 0.0;
+  double get totalAmountValue => double.tryParse(totalAmount ?? '') ?? 0.0;
+  double get serviceChargeValue =>
+      double.tryParse(serviceCharge ?? '') ?? 0.0;
+  String get userName => user['name']?.toString() ?? '';
+  String get userEmail => user['email']?.toString() ?? '';
+  String get userPhone => user['phone']?.toString() ?? '';
 }
 
+// ─────────────────────────────────────────────
 class SyndicateProperty {
   final int id;
   final String name;
@@ -612,10 +654,15 @@ class SyndicateProperty {
   final int unitSpilt;
   final String? unit;
   final String? image;
+  final String? plotImage;       // ← added
+  final String? description;    // ← added
+  final String? uldNo;          // ← added
+  final double? startingPrice;  // ← added
   final int status;
-  final int soldStatus; // ✅ Added
+  final int soldStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<NearbyPlace> nearbyPlaces;  // ← added
 
   SyndicateProperty({
     required this.id,
@@ -628,161 +675,162 @@ class SyndicateProperty {
     required this.unitSpilt,
     this.unit,
     this.image,
+    this.plotImage,
+    this.description,
+    this.uldNo,
+    this.startingPrice,
     required this.status,
     required this.soldStatus,
     required this.createdAt,
     required this.updatedAt,
+    required this.nearbyPlaces,
   });
 
   factory SyndicateProperty.fromJson(Map<String, dynamic> json) {
     return SyndicateProperty(
       id: json['id'] ?? 0,
-      name: json['name'] ?? '',
+      name: json['name']?.toString() ?? '',
       type: json['type'],
-      map: json['map'],
-      address: json['address'] ?? '',
+      map: json['map']?.toString(),
+      address: json['address']?.toString() ?? '',
       area: json['area']?.toString(),
       price: json['price']?.toString(),
       unitSpilt: json['unit_spilt'] ?? 0,
       unit: json['unit']?.toString(),
       image: json['image']?.toString(),
+      plotImage: json['plot_image']?.toString(),
+      description: json['description']?.toString(),
+      uldNo: json['uld_no']?.toString(),
+      startingPrice: json['starting_price'] != null
+          ? double.tryParse(json['starting_price'].toString())
+          : null,
       status: json['status'] ?? 0,
-      soldStatus: json['sold_status'] as int? ?? 0, // ✅
-      createdAt: DateTime.parse(json['created_at'] ?? ''),
-      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
+      soldStatus: json['sold_status'] as int? ?? 0,
+      createdAt: _parseDate(json['created_at']),   // ← fixed
+      updatedAt: _parseDate(json['updated_at']),   // ← fixed
+      nearbyPlaces: (json['nearby_places'] as List? ?? [])
+          .map((e) => NearbyPlace.fromJson(e))
+          .toList(),
     );
   }
 
-  bool get isSoldOut => soldStatus == 1; // ✅
+  bool get isSoldOut => soldStatus == 1;
+
+  String get fullImageUrl {
+    if (image == null || image!.isEmpty) return '';
+    if (image!.startsWith('http')) return image!;
+    return 'https://admin.cashbackfarms.com/public/$image';
+  }
 }
 
-class Transaction {
+// ─────────────────────────────────────────────
+class NearbyPlace {
+  final int placeId;
+  final double distance;
+
+  NearbyPlace({required this.placeId, required this.distance});
+
+  factory NearbyPlace.fromJson(Map<String, dynamic> json) {
+    return NearbyPlace(
+      placeId: json['place_id'] ?? 0,
+      distance: (json['distance'] ?? 0).toDouble(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+class SyndicateBuyingList {
   final int id;
-  final String transactionId;
-  final String paymentMode;
-  final String transactionDetails;
-  final String amount;
-  final dynamic isCompleted;
-  final String status;
   final int propertyId;
   final int userId;
-  final String type;
+  final String? units;           // ← nullable
+  final dynamic amount;
+  final dynamic transactionId;
+  final double? returnAmount;
+  final DateTime? returnDate;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final Map<String, dynamic> user;
+  final Transaction? transaction;       // ← nullable
+  final SyndicateProperty? property;   // ← nullable
+  final int cancelStatus;
+  final int refundAmount;
+  final int? bankDetailsId;
+  final String? transactionUserId;
+  final String downloadInvoice;
+  final double finalAmount;
 
-  Transaction({
+  SyndicateBuyingList({
     required this.id,
-    required this.transactionId,
-    required this.paymentMode,
-    required this.transactionDetails,
-    required this.amount,
-    required this.isCompleted,
-    required this.status,
     required this.propertyId,
     required this.userId,
-    required this.type,
+    this.units,
+    required this.amount,
+    required this.transactionId,
+    this.returnAmount,
+    this.returnDate,
     required this.createdAt,
     required this.updatedAt,
-    required this.user,
+    this.transaction,
+    this.property,
+    required this.cancelStatus,
+    required this.refundAmount,
+    this.bankDetailsId,
+    this.transactionUserId,
+    required this.downloadInvoice,
+    required this.finalAmount,
   });
 
-  factory Transaction.fromJson(Map<String, dynamic> json) {
-    return Transaction(
+  factory SyndicateBuyingList.fromJson(Map<String, dynamic> json) {
+    return SyndicateBuyingList(
       id: json['id'] ?? 0,
-      transactionId: json['transaction_id']?.toString() ?? '',
-      paymentMode: json['payment_mode']?.toString() ?? '',
-      transactionDetails: json['transaction_details']?.toString() ?? '',
-      amount: json['amount']?.toString() ?? '0',
-      isCompleted: json['is_completed'],
-      status: json['status']?.toString() ?? '',
       propertyId: json['property_id'] ?? 0,
       userId: json['user_id'] ?? 0,
-      type: json['type']?.toString() ?? '',
-      createdAt: DateTime.parse(json['created_at'] ?? ''),
-      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
-      user: json['user'] is Map
-          ? Map<String, dynamic>.from(json['user'])
-          : {},
-    );
-  }
-
-  double get amountValue => double.tryParse(amount) ?? 0.0;
-  String get userName => user['name']?.toString() ?? '';
-}
-
-class SyndicateBuyingDetail {
-  final int id;
-  final int transactionId;
-  final int propertyId;
-  final String unit;
-  final int cancelStatus;
-  final DateTime? refundDate;
-  final int refundStatus;
-  final String amount;
-  final dynamic refundAmount;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final Transaction transaction;
-  final SyndicateProperty property;
-  List<BookingSyndicate>? bookingSyndicate;
-
-  SyndicateBuyingDetail({
-    required this.id,
-    required this.transactionId,
-    required this.propertyId,
-    required this.unit,
-    required this.cancelStatus,
-    this.refundDate,
-    required this.refundStatus,
-    required this.amount,
-    this.refundAmount,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.transaction,
-    required this.property,
-    this.bookingSyndicate
-  });
-
-  factory SyndicateBuyingDetail.fromJson(Map<String, dynamic> json) {
-    return SyndicateBuyingDetail(
-      id: json['id'] ?? 0,
-      transactionId: json['transaction_id'] ?? 0,
-      propertyId: json['property_id'] ?? 0,
-      unit: json['unit']?.toString() ?? '',
-      cancelStatus: json['cancel_status'] ?? 0,
-      refundDate: json['refund_date'] != null
-          ? DateTime.tryParse(json['refund_date'].toString())
+      units: json['units']?.toString(),
+      amount: json['amount'],
+      transactionId: json['transaction_id'],
+      returnAmount: json['return_amount'] != null
+          ? double.tryParse(json['return_amount'].toString())
           : null,
-      refundStatus: json['refund_status'] ?? 0,
-      amount: json['amount']?.toString() ?? '0',
-      refundAmount: json['refund_amount'],
-      createdAt: DateTime.parse(json['created_at'] ?? ''),
-      updatedAt: DateTime.parse(json['updated_at'] ?? ''),
-      transaction: Transaction.fromJson(json['transaction'] ?? {}),
-      property: SyndicateProperty.fromJson(json['property'] ?? {}),
-        bookingSyndicate: json['booking_syndicate'] != null
-            ? (json['booking_syndicate'] as List)
-            .map((v) => BookingSyndicate.fromJson(v))
-            .toList()
-            : [],
+      returnDate: json['return_date'] != null
+          ? DateTime.tryParse(json['return_date'].toString())
+          : null,
+      createdAt: _parseDate(json['created_at']),      // ← fixed
+      updatedAt: _parseDate(json['updated_at']),      // ← fixed
+      transaction: json['transaction'] != null        // ← null guard
+          ? Transaction.fromJson(json['transaction'])
+          : null,
+      property: json['property'] != null             // ← null guard
+          ? SyndicateProperty.fromJson(json['property'])
+          : null,
+      cancelStatus: json['cancel_status'] ?? 0,
+      refundAmount: json['refund_amount'] ?? 0,
+      bankDetailsId: json['bank_details_id'],
+      transactionUserId: json['transaction_user_id']?.toString(),
+      downloadInvoice: json['download_invoice']?.toString() ?? '',
+      finalAmount: (json['final_amount'] ?? 0).toDouble(),
     );
   }
 
-  double get amountValue => double.tryParse(amount) ?? 0.0;
-
-  double get refundAmountValue {
-    if (refundAmount is String) return double.tryParse(refundAmount as String) ?? 0.0;
-    if (refundAmount is int) return (refundAmount as int).toDouble();
-    if (refundAmount is double) return refundAmount as double;
+  double get amountValue {
+    if (amount is String) return double.tryParse(amount as String) ?? 0.0;
+    if (amount is int) return (amount as int).toDouble();
+    if (amount is double) return amount as double;
     return 0.0;
   }
 
-  bool get canCancel => cancelStatus == 0;
-  bool get isCancelled => cancelStatus == 1;
-  bool get hasRefund => refundAmount != null;
+  String get transactionIdString => transactionId?.toString() ?? '';
+
+  List<String> get unitList {
+    if (units == null || units!.trim().isEmpty) return [];
+    return units!
+        .split(',')
+        .map((u) => u.trim())
+        .where((u) => u.isNotEmpty)
+        .toList();
+  }
 }
 
+// ─────────────────────────────────────────────
 class SyndicateBuyingListResponse {
   final bool status;
   final String message;
@@ -808,54 +856,81 @@ class SyndicateBuyingListResponse {
   }
 }
 
-class BookingSyndicate {
-  int? id;
-  int? propertyId;
-  int? userId;
-  int? transactionId;
-  String? amount;
-  int? status;
-  int? cancelStatus;
-  String? refundAmount;
-  String? createdAt;
-  String? updatedAt;
-  int? dtdcCancelled;
-  int? bankDetailsId;
-  String? transactionUserId;
+// ─────────────────────────────────────────────
+class SyndicateBuyingDetail {
+  final int id;
+  final int transactionId;
+  final int propertyId;
+  final String unit;
+  final int cancelStatus;
+  final DateTime? refundDate;
+  final int refundStatus;
+  final String amount;
+  final dynamic refundAmount;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Transaction transaction;
+  final SyndicateProperty property;
+  final List<BookingSyndicate>? bookingSyndicate;
 
-  BookingSyndicate(
-      {this.id,
-        this.propertyId,
-        this.userId,
-        this.transactionId,
-        this.amount,
-        this.status,
-        this.cancelStatus,
-        this.refundAmount,
-        this.createdAt,
-        this.updatedAt,
-        this.dtdcCancelled,
-        this.bankDetailsId,
-        this.transactionUserId});
+  SyndicateBuyingDetail({
+    required this.id,
+    required this.transactionId,
+    required this.propertyId,
+    required this.unit,
+    required this.cancelStatus,
+    this.refundDate,
+    required this.refundStatus,
+    required this.amount,
+    this.refundAmount,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.transaction,
+    required this.property,
+    this.bookingSyndicate,
+  });
 
-  BookingSyndicate.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    propertyId = json['property_id'];
-    userId = json['user_id'];
-    transactionId = json['transaction_id'];
-    amount = json['amount'];
-    status = json['status'];
-    cancelStatus = json['cancel_status'];
-    refundAmount = json['refund_amount'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    dtdcCancelled = json['dtdc_cancelled'];
-    bankDetailsId = json['bank_details_id'];
-    transactionUserId = json['transaction_user_id'];
+  factory SyndicateBuyingDetail.fromJson(Map<String, dynamic> json) {
+    return SyndicateBuyingDetail(
+      id: json['id'] ?? 0,
+      transactionId: json['transaction_id'] ?? 0,
+      propertyId: json['property_id'] ?? 0,
+      unit: json['unit']?.toString() ?? '',
+      cancelStatus: json['cancel_status'] ?? 0,
+      refundDate: json['refund_date'] != null
+          ? DateTime.tryParse(json['refund_date'].toString())
+          : null,
+      refundStatus: json['refund_status'] ?? 0,
+      amount: json['amount']?.toString() ?? '0',
+      refundAmount: json['refund_amount'],
+      createdAt: _parseDate(json['created_at']),   // ← fixed
+      updatedAt: _parseDate(json['updated_at']),   // ← fixed
+      transaction: Transaction.fromJson(json['transaction'] ?? {}),
+      property: SyndicateProperty.fromJson(json['property'] ?? {}),
+      bookingSyndicate: json['booking_syndicate'] != null
+          ? (json['booking_syndicate'] as List)
+          .map((v) => BookingSyndicate.fromJson(v))
+          .toList()
+          : [],
+    );
   }
+
+  double get amountValue => double.tryParse(amount) ?? 0.0;
+
+  double get refundAmountValue {
+    if (refundAmount is String)
+      return double.tryParse(refundAmount as String) ?? 0.0;
+    if (refundAmount is int) return (refundAmount as int).toDouble();
+    if (refundAmount is double) return refundAmount as double;
+    return 0.0;
+  }
+
+  bool get canCancel => cancelStatus == 0;
+  bool get isCancelled => cancelStatus == 1;
+  bool get hasRefund => refundAmount != null;
 }
 
-
+// ─────────────────────────────────────────────
 class SyndicateBuyingDetailResponse {
   final bool status;
   final String message;
@@ -881,6 +956,58 @@ class SyndicateBuyingDetailResponse {
   }
 }
 
+// ─────────────────────────────────────────────
+class BookingSyndicate {
+  final int? id;
+  final int? propertyId;
+  final int? userId;
+  final int? transactionId;
+  final String? amount;
+  final int? status;
+  final int? cancelStatus;
+  final String? refundAmount;
+  final String? createdAt;
+  final String? updatedAt;
+  final int? dtdcCancelled;
+  final int? bankDetailsId;
+  final String? transactionUserId;
+
+  BookingSyndicate({
+    this.id,
+    this.propertyId,
+    this.userId,
+    this.transactionId,
+    this.amount,
+    this.status,
+    this.cancelStatus,
+    this.refundAmount,
+    this.createdAt,
+    this.updatedAt,
+    this.dtdcCancelled,
+    this.bankDetailsId,
+    this.transactionUserId,
+  });
+
+  factory BookingSyndicate.fromJson(Map<String, dynamic> json) {
+    return BookingSyndicate(
+      id: json['id'],
+      propertyId: json['property_id'],
+      userId: json['user_id'],
+      transactionId: json['transaction_id'],
+      amount: json['amount']?.toString(),
+      status: json['status'],
+      cancelStatus: json['cancel_status'],
+      refundAmount: json['refund_amount']?.toString(),
+      createdAt: json['created_at']?.toString(),
+      updatedAt: json['updated_at']?.toString(),
+      dtdcCancelled: json['dtdc_cancelled'],
+      bankDetailsId: json['bank_details_id'],
+      transactionUserId: json['transaction_user_id']?.toString(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
 class Pagination {
   final int currentPage;
   final int lastPage;

@@ -14,7 +14,7 @@ class KYCDocument {
   final DateTime createdAt;
   final DateTime updatedAt;
   final int isDeleted;
-  final String? transactionId;
+  final int? transactionId;
 
   KYCDocument({
     required this.id,

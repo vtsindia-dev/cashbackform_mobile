@@ -600,7 +600,6 @@ class PlotMarketController extends GetxController {
   submitMarketPlot({
     required Map<String, dynamic> formData,
     List<File> images = const [],
-    File? plotImage,
     File? bluePrint,
     File? threeDImage,
     File? video,
@@ -640,7 +639,6 @@ class PlotMarketController extends GetxController {
       // ── Add multiple images to 'plot_image[]' field ──
       for (int i = 0; i < images.length; i++) {
         String extension = images[i].path.split('.').last;
-        // Only add if it's an image file
         if (['jpg', 'jpeg', 'png', 'webp'].contains(extension.toLowerCase())) {
           formDataToSend.files.add(MapEntry(
             'image[]',
@@ -652,11 +650,10 @@ class PlotMarketController extends GetxController {
         }
       }
 
-      // ── Add video to a separate field (adjust field name as per your backend) ──
       if (video != null) {
         String extension = video.path.split('.').last;
         formDataToSend.files.add(MapEntry(
-          'image[]', // Try this field name
+          'image[]',
           await dio.MultipartFile.fromFile(
             video.path,
             filename: 'property_video.$extension',
@@ -664,7 +661,6 @@ class PlotMarketController extends GetxController {
         ));
       }
 
-      // ── Add 3D image ──
       if (threeDImage != null) {
         formDataToSend.files.add(MapEntry(
           'three_d_image',
@@ -675,10 +671,9 @@ class PlotMarketController extends GetxController {
         ));
       }
 
-      // ── Add plot image (blueprint) ──
       if (bluePrint != null) {
         formDataToSend.files.add(MapEntry(
-          'document',
+          'plot_image',
           await dio.MultipartFile.fromFile(
             bluePrint.path,
             filename: 'plot_image.${bluePrint.path.split('.').last}',
@@ -688,6 +683,21 @@ class PlotMarketController extends GetxController {
 
       final token = await SessionManager.getToken();
       final url = isUpdate ? ApiUrl.marketPlotEdit : ApiUrl.marketPlotAdd;
+
+
+      print('================ FINAL FIELDS ================');
+
+      for (var field in formDataToSend.fields) {
+        print('${field.key} : ${field.value}');
+      }
+
+      print('================ FINAL FILES ================');
+
+      for (var file in formDataToSend.files) {
+        print(
+          '${file.key} : ${file.value.filename}',
+        );
+      }
 
       final dioInstance = dio.Dio();
       final response = await dioInstance.post(

@@ -215,84 +215,131 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                     if (!isSoldOut && selectedCount > 0) ...[
                       SizedBox(height: 15.h),
                       Obx(() {
+                        final theme = Theme.of(context);
                         final base = controller.getFixedBookingAmount();
-                        // Trigger recalculation to populate Rx breakdown values
-                        controller.calculateSelectedPlotsAmount();
                         final serviceCharge = controller.syndicateServiceChargeAmount.value;
                         final igst = controller.syndicateIgstAmount.value;
                         final servicePct = controller.syndicateServiceChargePercent.value;
                         final igstPct = controller.syndicateIgstPercent.value;
                         final finalTotal = controller.syndicateFinalPayable.value;
 
+                        final labelStyle = TextStyle(
+                          fontSize: 13.sp,
+                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                          fontWeight: FontWeight.w500,
+                        );
+
+                        final valueStyle = TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color,
+                        );
+
                         return Container(
-                          padding: EdgeInsets.all(12.w),
+                          padding: EdgeInsets.all(16.w),
                           decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(10.r),
-                            border: Border.all(color: Colors.blue[100]!),
+                            color: Colors.yellow.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.15)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text("Payment Summary",
-                                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: Colors.blue[800])),
-                              SizedBox(height: 8.h),
-
-                              // Base
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text("Booking Fee", style: TextStyle(fontSize: 12.sp, color: Colors.grey[700])),
-                                  Text("₹${base.toStringAsFixed(2)}",
-                                      style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: Colors.green)),
+                                  Icon(Icons.receipt_long_rounded, size: 18.w, color: theme.colorScheme.primary),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    "Payment Summary",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.primary,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
                                 ],
                               ),
-
-                              // Service charge (only if > 0)
-                              if (serviceCharge > 0) ...[
-                                SizedBox(height: 6.h),
+                              SizedBox(height: 12.h),
+                              if (!isSoldOut && selectedCount > 0) ...[
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text("Service Charge (${servicePct.toStringAsFixed(0)}%)",
-                                        style: TextStyle(fontSize: 12.sp, color: Colors.grey[700])),
-                                    Text("+ ₹${serviceCharge.toStringAsFixed(2)}",
-                                        style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600,
-                                            color: Colors.orange.shade700)),
+                                    Text("Selected Plots", style: labelStyle),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6.r),
+                                      ),
+                                      child: Text(
+                                        "$selectedCount",
+                                        style: valueStyle.copyWith(color: theme.colorScheme.primary, fontSize: 12.sp),
+                                      ),
+                                    ),
                                   ],
                                 ),
+                                SizedBox(height: 8.h),
                               ],
-
-                              // IGST (only if > 0)
-                              if (igst > 0) ...[
-                                SizedBox(height: 6.h),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("IGST (${igstPct.toStringAsFixed(0)}%)",
-                                        style: TextStyle(fontSize: 12.sp, color: Colors.grey[700])),
-                                    Text("+ ₹${igst.toStringAsFixed(2)}",
-                                        style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600,
-                                            color: Colors.orange.shade700)),
-                                  ],
-                                ),
-                              ],
-
-                              Divider(height: 14.h),
-
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text("Total Payable",
-                                      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
-                                  Text("₹${finalTotal.toStringAsFixed(2)}",
-                                      style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.green)),
+                                  Text("Booking Fee", style: labelStyle),
+                                  Text("₹${base.toStringAsFixed(2)}", style: valueStyle),
+                                ],
+                              ),
+                              if (serviceCharge > 0) ...[
+                                SizedBox(height: 8.h),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("Service Charge (${servicePct.toStringAsFixed(0)}%)", style: labelStyle),
+                                    Text("+ ₹${serviceCharge.toStringAsFixed(2)}",
+                                        style: valueStyle.copyWith(color: Colors.orange.shade800, fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                              ],
+                              if (igst > 0) ...[
+                                SizedBox(height: 8.h),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("IGST (${igstPct.toStringAsFixed(0)}%)", style: labelStyle),
+                                    Text("+ ₹${igst.toStringAsFixed(2)}",
+                                        style: valueStyle.copyWith(color: Colors.orange.shade800, fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                              ],
+                              Padding(
+                                padding: EdgeInsets.only(top : 12.h),
+                                child: Divider(
+                                  height: 1,
+                                  color: theme.dividerColor.withOpacity(0.4),
+                                  thickness: 1,
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Total Payable",
+                                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+                                  ),
+                                  Text(
+                                    "₹${finalTotal.toStringAsFixed(2)}",
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.green.shade700,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
                           ),
                         );
-                      }),
+                      })
                     ],
 
                     SizedBox(height: 8.h),
@@ -413,18 +460,7 @@ class _ReservePlotsScreenState extends State<ReservePlotsScreen> {
                         ),
                       ),
                     ),
-                    if (!isSoldOut && selectedCount > 0) ...[
-                      SizedBox(height: 10.h),
-                      Center(
-                        child: Text(
-                          "(${selectedCount} plots × ₹${pricePerPlot.toStringAsFixed(2)})",
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ),
-                    ],
+
                     SizedBox(height: 20.h),
                   ],
                 ),

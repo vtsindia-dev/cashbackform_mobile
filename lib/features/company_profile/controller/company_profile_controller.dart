@@ -536,16 +536,17 @@ class VendorStoreController extends GetxController {
       SnackBarHelper.showError('Please enter a valid email');
       return false;
     }
-    if (websiteController.text.trim().isEmpty) {
-      SnackBarHelper.showError('Please enter website');
-      return false;
+
+    if (websiteController.text.trim().isNotEmpty) {
+      final websiteUrl = websiteController.text.trim();
+      if (!_isValidWebsiteUrl(websiteUrl)) {
+        SnackBarHelper.showError(
+            'Please enter a valid website URL'
+        );
+        return false;
+      }
     }
 
-    final websiteUrl = websiteController.text.trim();
-    if (!_isValidWebsiteUrl(websiteUrl)) {
-      SnackBarHelper.showError('Please enter a valid website URL (e.g., https://example.com or www.example.com)');
-      return false;
-    }
     if (addressController.text.trim().isEmpty) {
       SnackBarHelper.showError('Please select address from map');
       return false;

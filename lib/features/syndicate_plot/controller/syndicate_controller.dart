@@ -1926,7 +1926,7 @@ class SyndicatePlotController extends GetxController {
   }
 
   bool canCancelBooking(SyndicateBuyingList booking) {
-    return booking.transaction.status.toLowerCase() != 'cancelled';
+    return booking.transaction?.status.toLowerCase() != 'cancelled';
   }
 
   double calculateRefundAmount(SyndicateBuyingList booking, double cancellationChargePercent) {

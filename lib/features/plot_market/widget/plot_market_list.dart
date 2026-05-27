@@ -7,10 +7,33 @@ import '../../Properties/widget/property_card.dart';
 import '../controller/plot_market_controller.dart';
 import '../model/plot_market.dart';
 
-class PlotMarketList extends StatelessWidget {
-  final PlotMarketController controller = Get.put(PlotMarketController());
+class PlotMarketList extends StatefulWidget {
+  const PlotMarketList({super.key});
 
-  PlotMarketList({super.key});
+  @override
+  State<PlotMarketList> createState() => _PlotMarketListState();
+}
+
+class _PlotMarketListState extends State<PlotMarketList> {
+  final PlotMarketController controller = Get.put(PlotMarketController());
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        controller.loadMore();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,46 +46,44 @@ class PlotMarketList extends StatelessWidget {
         return const Center(child: Text('No market plots found'));
       }
 
-      return NotificationListener<ScrollNotification>(
-        onNotification: (scrollNotification) {
-          if (scrollNotification is ScrollEndNotification) {
-            final metrics = scrollNotification.metrics;
-            if (metrics.atEdge && metrics.pixels != 0) {
-              controller.loadMore();
-            }
+      final productList = controller.marketPlots;
+
+      return ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        controller: _scrollController,
+        padding: EdgeInsets.only(bottom: 100.h, left: 10.w, right: 10.w, top: 10.h),
+        itemCount: (productList.length / 2).ceil() +
+            (controller.isLoadMore.value && controller.hasMoreData.value ? 1 : 0),
+        itemBuilder: (context, rowIndex) {
+          // Loading indicator row
+          if (rowIndex == (productList.length / 2).ceil()) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 30),
+              child: Center(child: CircularProgressIndicator()),
+            );
           }
-          return false;
-        },
-        child: Column(
-          children: [
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _getCrossAxisCount(),
-                  crossAxisSpacing: 12.w,
-                  mainAxisSpacing: 12.h,
-                  childAspectRatio: _getChildAspectRatio(),
+
+          final leftIndex = rowIndex * 2;
+          final rightIndex = leftIndex + 1;
+          final leftPlot = productList[leftIndex];
+          final rightPlot =
+          rightIndex < productList.length ? productList[rightIndex] : null;
+
+          return Padding(
+            padding: EdgeInsets.only(bottom: 10.h),
+            child: Row(
+              children: [
+                Expanded(child: _buildAnimatedPlotCard(leftPlot, leftIndex)),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: rightPlot != null
+                      ? _buildAnimatedPlotCard(rightPlot, rightIndex)
+                      : const SizedBox.shrink(),
                 ),
-                padding: EdgeInsets.all(16.r),
-                itemCount: controller.marketPlots.length + (controller.hasMoreData.value ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == controller.marketPlots.length) {
-                    return _buildLoadMoreButton();
-                  }
-
-                  final plot = controller.marketPlots[index];
-
-                  return _buildAnimatedPlotCard(plot, index);
-                },
-              ),
+              ],
             ),
-            if (controller.isLoadMore.value)
-              Padding(
-                padding: EdgeInsets.all(16.r),
-                child: const CircularProgressIndicator(),
-              ),
-          ],
-        ),
+          );
+        },
       );
     });
   }
@@ -77,45 +98,27 @@ class PlotMarketList extends StatelessWidget {
       location: plot.location,
       description: plot.description,
       onTap: () {
-        Get.toNamed(AppRoutes.plotMarketDetails, arguments: {"id": plot.id, "title": plot.name});
+        Get.toNamed(
+          AppRoutes.plotMarketDetails,
+          arguments: {"id": plot.id, "title": plot.name},
+        );
       },
     )
         .animate()
-        .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
+        .scale(
+      begin: const Offset(0.8, 0.8),
+      end: const Offset(1, 1),
+      duration: 600.ms,
+      curve: Curves.easeOutBack,
+    )
         .fadeIn(duration: 500.ms)
-        .slide(begin: const Offset(0, 0.3), end: Offset.zero, duration: 600.ms, curve: Curves.easeOutCubic)
+        .slide(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+      duration: 600.ms,
+      curve: Curves.easeOutCubic,
+    )
         .then(delay: (index % 6 * 100).ms)
         .shimmer(duration: 1000.ms, color: Colors.white.withOpacity(0.2));
-  }
-
-  Widget _buildLoadMoreButton() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(16.r),
-        child: controller.isLoadMore.value
-            ? const CircularProgressIndicator()
-            : ElevatedButton(
-          onPressed: controller.loadMore,
-          child: const Text('Load More'),
-        )
-            .animate()
-            .fadeIn(duration: 400.ms)
-            .scale(begin: const Offset(0.9, 0.9), duration: 400.ms),
-      ),
-    );
-  }
-
-  int _getCrossAxisCount() {
-    if (1.sw > 1200) return 4;
-    if (1.sw > 800) return 3;
-    if (1.sw > 600) return 2;
-    return 2;
-  }
-
-  double _getChildAspectRatio() {
-    if (1.sw > 1200) return 0.8;
-    if (1.sw > 800) return 0.75;
-    if (1.sw > 600) return 0.7;
-    return 0.71;
   }
 }

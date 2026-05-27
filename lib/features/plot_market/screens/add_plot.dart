@@ -2097,8 +2097,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
       final result = await controller.submitMarketPlot(
         formData: formData,
         images: _selectedImages,
-        plotImage: _plotImage,
-        bluePrint: null,
+        bluePrint: _plotImage,
         threeDImage: _upload3dImage,
         video: _selectedVideo,
         selectedFacilityIds: controller.selectedFacilityIds,

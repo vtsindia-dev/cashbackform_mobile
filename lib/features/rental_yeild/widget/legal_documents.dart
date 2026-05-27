@@ -146,7 +146,7 @@ class _RentalLegalDocumentsScreenState
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            "Rental Document Verification",
+                            "Property Document Verification",
                             style: TextStyle(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w800,

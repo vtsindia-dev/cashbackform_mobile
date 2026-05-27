@@ -49,7 +49,6 @@ class PropertyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Image + sold overlay ──────────────────────────────────
             ClipRRect(
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(10.r),
@@ -57,7 +56,6 @@ class PropertyCard extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  // Property image
                   Image.network(
                     imageUrl,
                     height: 100.h,
@@ -93,16 +91,12 @@ class PropertyCard extends StatelessWidget {
                       );
                     },
                   ),
-
-                  // ✅ Sold out dim overlay
                   if (isSoldOut)
                     Positioned.fill(
                       child: Container(
                         color: Colors.black.withOpacity(0.55),
                       ),
                     ),
-
-                  // ✅ Sold out centre stamp
                   if (isSoldOut)
                     Positioned.fill(
                       child: Center(
@@ -131,8 +125,6 @@ class PropertyCard extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                  // ✅ Available green badge (top-left) when NOT sold
                   if (!isSoldOut)
                     Positioned(
                       top: 6.h,
@@ -159,8 +151,6 @@ class PropertyCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // ── Card body ─────────────────────────────────────────────
             Padding(
               padding: EdgeInsets.all(8.w),
               child: Column(
@@ -171,7 +161,6 @@ class PropertyCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
-                      // ✅ Grey out title when sold
                       color: isSoldOut ? Colors.grey.shade500 : Colors.black,
                     ),
                     maxLines: 1,
@@ -180,7 +169,6 @@ class PropertyCard extends StatelessWidget {
                   SizedBox(height: 4.h),
                   Row(
                     children: [
-                      // Price
                       Expanded(
                         flex: 1,
                         child: Row(
@@ -195,7 +183,6 @@ class PropertyCard extends StatelessWidget {
                                   style: GoogleFonts.poppins(
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.bold,
-                                    // ✅ Grey price when sold
                                     color: isSoldOut
                                         ? Colors.grey.shade400
                                         : AppColor.primary,
@@ -206,10 +193,7 @@ class PropertyCard extends StatelessWidget {
                           ],
                         ),
                       ),
-
                       SizedBox(width: 10.w),
-
-                      // Area
                       Expanded(
                         flex: 1,
                         child: Row(
@@ -245,8 +229,6 @@ class PropertyCard extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 6.h),
-
-                  // Location
                   Container(
                     padding: EdgeInsets.symmetric(
                         horizontal: 6.w, vertical: 4.h),
@@ -274,8 +256,6 @@ class PropertyCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 5.h),
-
-                  // Description
                   Text(
                     description,
                     style: GoogleFonts.poppins(
@@ -284,67 +264,6 @@ class PropertyCard extends StatelessWidget {
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 8.h),
-
-                  // ── View / Sold button ────────────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      SizedBox(
-                        height: 28.h,
-                        child: isSoldOut
-                        // ✅ Disabled "Sold Out" button
-                            ? Container(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 4.h, horizontal: 6.w),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(
-                              color: Colors.red.shade300,
-                              width: 0.8.w,
-                            ),
-                          ),
-                          child: Text(
-                            "Sold Out",
-                            style: GoogleFonts.poppins(
-                              color: Colors.red.shade600,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        )
-                        // ✅ Normal "View" button
-                            : ElevatedButton(
-                          onPressed: onTap,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            padding: EdgeInsets.symmetric(
-                                vertical: 4.h, horizontal: 6.w),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                              side: BorderSide(
-                                color: AppColor.primary,
-                                width: 0.8.w,
-                              ),
-                            ),
-                            minimumSize: Size.zero,
-                            tapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            "View",
-                            style: GoogleFonts.poppins(
-                              color: AppColor.primary,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),

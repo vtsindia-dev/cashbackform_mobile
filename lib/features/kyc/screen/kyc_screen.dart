@@ -48,7 +48,7 @@ class KYCListScreen extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 AppColor.primary,
-                AppColor.primary.withOpacity(0.85),
+                AppColor.primary.withValues(alpha: 0.85),
               ],
             ),
           ),
@@ -72,7 +72,7 @@ class KYCListScreen extends StatelessWidget {
                   Obx(() => Text(
                     '${controller.kycList.length} verification record${controller.kycList.length == 1 ? '' : 's'}',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.75),
+                      color: Colors.white.withValues(alpha:0.75),
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                     ),
@@ -112,6 +112,7 @@ class KYCListScreen extends StatelessWidget {
     if (controller.isLoading.value) {
       return SliverFillRemaining(child: _buildLoadingState());
     }
+    
     if (controller.errorMessage.value.isNotEmpty && controller.kycList.isEmpty) {
       return SliverFillRemaining(child: _buildErrorState());
     }
@@ -136,7 +137,7 @@ class KYCListScreen extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.08),
+              color: AppColor.primary.withValues(alpha:0.08),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -170,7 +171,7 @@ class KYCListScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColor.error.withOpacity(0.08),
+                color: AppColor.error.withValues(alpha:0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.wifi_off_rounded, size: 48, color: AppColor.error),
@@ -219,7 +220,7 @@ class KYCListScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: AppColor.primary.withOpacity(0.08),
+                color: AppColor.primary.withValues(alpha:0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.shield_outlined, size: 56, color: AppColor.primary),
@@ -276,7 +277,7 @@ class KYCListScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -307,7 +308,7 @@ class KYCListScreen extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.12),
+              color: accentColor.withValues(alpha:0.12),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
@@ -341,7 +342,7 @@ class KYCListScreen extends StatelessWidget {
                 Row(
                   children: [
                     Icon(Icons.credit_card_rounded,
-                        size: 12, color: accentColor.withOpacity(0.7)),
+                        size: 12, color: accentColor.withValues(alpha:0.7)),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
@@ -390,7 +391,7 @@ class KYCListScreen extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColor.error.withOpacity(0.08),
+              color: AppColor.error.withValues(alpha:0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
@@ -425,7 +426,7 @@ class KYCListScreen extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha:0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, size: 17, color: color),
@@ -445,9 +446,9 @@ class KYCListScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.08),
+                color: accentColor.withValues(alpha:0.08),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: accentColor.withOpacity(0.2)),
+                border: Border.all(color: accentColor.withValues(alpha:0.2)),
               ),
               child: Text(
                 'View Details',
@@ -500,7 +501,7 @@ class KYCListScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: AppColor.primary.withOpacity(0.08),
+                          color: AppColor.primary.withValues(alpha:0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -590,7 +591,7 @@ class KYCListScreen extends StatelessWidget {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColor.error,
                             side: BorderSide(
-                                color: AppColor.error.withOpacity(0.4)),
+                                color: AppColor.error.withValues(alpha:0.4)),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)),
                             padding: const EdgeInsets.symmetric(vertical: 11),
@@ -680,10 +681,10 @@ class KYCListScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: hasDoc ? color.withOpacity(0.07) : const Color(0xFFF3F4F6),
+          color: hasDoc ? color.withValues(alpha:0.07) : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: hasDoc ? color.withOpacity(0.25) : const Color(0xFFE5E7EB),
+            color: hasDoc ? color.withValues(alpha:0.25) : const Color(0xFFE5E7EB),
           ),
         ),
         child: Column(
@@ -693,7 +694,7 @@ class KYCListScreen extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: hasDoc ? color.withOpacity(0.12) : const Color(0xFFE5E7EB),
+                color: hasDoc ? color.withValues(alpha:0.12) : const Color(0xFFE5E7EB),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -719,7 +720,7 @@ class KYCListScreen extends StatelessWidget {
               hasDoc ? 'Tap to view' : 'Not added',
               style: TextStyle(
                 fontSize: 8,
-                color: hasDoc ? color.withOpacity(0.7) : const Color(0xFFD1D5DB),
+                color: hasDoc ? color.withValues(alpha:0.7) : const Color(0xFFD1D5DB),
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -899,7 +900,7 @@ class KYCListScreen extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: enabled ? color.withOpacity(0.1) : const Color(0xFFF3F4F6),
+          color: enabled ? color.withValues(alpha:0.1) : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon,

@@ -64,13 +64,10 @@ class ProductCard extends StatelessWidget {
                     height: 120.h,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    // ✅ Greyscale when sold
                     color: isSoldOut ? Colors.grey : null,
                     colorBlendMode: isSoldOut ? BlendMode.saturation : null,
                   ),
                 ),
-
-                // ✅ Dark overlay when sold
                 if (isSoldOut)
                   Positioned.fill(
                     child: ClipRRect(
@@ -84,7 +81,6 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
 
-                // ✅ SOLD OUT stamp
                 if (isSoldOut)
                   Positioned.fill(
                     child: Center(
@@ -109,7 +105,6 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
 
-                // ✅ Available badge when NOT sold
                 if (!isSoldOut)
                   Positioned(
                     top: 6.h,
@@ -133,8 +128,6 @@ class ProductCard extends StatelessWidget {
                   ),
               ],
             ),
-
-            // ── Card body (unchanged except button) ───────────────
             Padding(
               padding: EdgeInsets.all(8.w),
               child: Column(
@@ -145,7 +138,6 @@ class ProductCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
-                      // ✅ Grey title when sold
                       color: isSoldOut ? Colors.grey.shade500 : Colors.black,
                     ),
                     maxLines: 1,
@@ -161,7 +153,6 @@ class ProductCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
-                            // ✅ Grey price when sold
                             color: isSoldOut
                                 ? Colors.grey.shade400
                                 : AppColor.primary,
@@ -182,7 +173,6 @@ class ProductCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
-                                  // ✅ Grey when sold
                                   color: isSoldOut
                                       ? Colors.grey.shade400
                                       : Colors.black,
@@ -215,7 +205,6 @@ class ProductCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
-                                  // ✅ Grey when sold
                                   color: isSoldOut
                                       ? Colors.grey.shade400
                                       : Colors.black,
@@ -274,62 +263,6 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 8.h),
-
-                  // ✅ View / Sold Out button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      SizedBox(
-                        height: 28.h,
-                        child: isSoldOut
-                            ? Container(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 4.h, horizontal: 6.w),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(
-                                color: Colors.red.shade300,
-                                width: 0.8.w),
-                          ),
-                          child: Text(
-                            "Sold Out",
-                            style: GoogleFonts.poppins(
-                              color: Colors.red.shade600,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        )
-                            : ElevatedButton(
-                          onPressed: onTap,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            padding: EdgeInsets.symmetric(
-                                vertical: 4.h, horizontal: 6.w),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                              side: BorderSide(
-                                  color: AppColor.primary,
-                                  width: 0.8.w),
-                            ),
-                            minimumSize: Size.zero,
-                            tapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            "View",
-                            style: GoogleFonts.poppins(
-                              color: AppColor.primary,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),

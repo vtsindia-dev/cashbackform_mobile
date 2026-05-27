@@ -54,7 +54,7 @@ class FeaturedGioRentalYieldPlots extends StatelessWidget {
         return Column(
           children: [
             SizedBox(
-              height: 270,
+              height: 252,
               child: NotificationListener<ScrollNotification>(
                 onNotification: (scrollNotification) {
 
@@ -70,7 +70,6 @@ class FeaturedGioRentalYieldPlots extends StatelessWidget {
                 },
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   itemCount: controller.rentalList.length +
                       (controller.rentalHasMore ? 1 : 0),
                   separatorBuilder: (_, __) =>

@@ -130,7 +130,7 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                       hint: 'https://yourstore.com',
                       icon: Icons.language_rounded,
                       keyboardType: TextInputType.url,
-                      required: true,
+                      required: false,
                     ),
                   ],
                 ),

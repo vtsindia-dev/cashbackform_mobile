@@ -279,7 +279,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
   Widget _buildInvestmentCard(SyndicateBuyingList investment) {
     final units = _parseUnits(investment.units);
     final dateFormat = DateFormat('dd MMM yyyy');
-    final statusColor = _getStatusColor(investment.transaction.status);
+    final statusColor = _getStatusColor(investment.transaction?.status);
     final property = investment.property;
 
     return Container(
@@ -402,7 +402,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
-                            investment.transaction.status.toUpperCase(),
+                            investment.transaction?.status.toUpperCase()??'',
                             style: TextStyle(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w800,
@@ -485,7 +485,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                 ),
                                 2.h.verticalSpace,
                                 Text(
-                                  investment.transaction.transactionId.toString(),
+                                  investment.transaction?.transactionId.toString()??"",
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w700,
@@ -506,7 +506,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                         ],
                       ),
                     ),
-                    if (investment.transaction.status.toLowerCase() ==
+                    if (investment.transaction?.status.toLowerCase() ==
                         'completed')
                       16.h.verticalSpace,
                     Row(
@@ -643,8 +643,8 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
     }
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
       case 'completed':
         return _successColor;
       case 'pending':
@@ -658,9 +658,13 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
     }
   }
 
-  List<String> _parseUnits(String units) {
+  List<String> _parseUnits(String? units) {
     try {
-      return units.split(',').map((unit) => unit.trim()).toList();
+      return units
+          ?.split(',')
+          .map((unit) => unit.trim())
+          .toList() ??
+          [];
     } catch (e) {
       return [];
     }
@@ -700,7 +704,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
   final Color _neutralLight = const Color(0xFFF8FAFC); // Slate 50
 
   SyndicateInvestmentDetailsWidget({super.key, required this.investment}) {
-    controller.selectedTransactionId.value = investment.transaction.id;
+    controller.selectedTransactionId.value = investment.transaction?.id;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.fetchSyndicateBuyingListDetails();
     });
@@ -1084,7 +1088,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
   Widget _buildTransactionSection() {
     final transaction = investment.transaction;
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
-    final statusColor = _getStatusColor(transaction.status);
+    final statusColor = _getStatusColor(transaction?.status);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(24.w, 32.h, 24.w, 16.h),
@@ -1161,7 +1165,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                           ),
                           4.h.verticalSpace,
                           Text(
-                            '₹${transaction.amount}',
+                            '₹${transaction?.amount}',
                             style: TextStyle(
                               fontSize: 28.sp,
                               fontWeight: FontWeight.w900,
@@ -1196,7 +1200,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                             ),
                             8.w.horizontalSpace,
                             Text(
-                              transaction.status.toUpperCase(),
+                              transaction?.status.toUpperCase()??"",
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w800,
@@ -1218,20 +1222,22 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       _detailRow(
                         icon: Icons.credit_card_rounded,
                         label: 'Transaction ID',
-                        value: transaction.transactionId,
+                        value: transaction?.transactionId,
                         isCopyable: true,
                       ),
                       20.h.verticalSpace,
                       _detailRow(
                         icon: Icons.payment_rounded,
                         label: 'Payment Method',
-                        value: transaction.paymentMode ?? 'N/A',
+                        value: transaction?.paymentMode ?? 'N/A',
                       ),
                       20.h.verticalSpace,
                       _detailRow(
                         icon: Icons.access_time_rounded,
                         label: 'Transaction Time',
-                        value: dateFormat.format(transaction.createdAt),
+                        value: transaction?.createdAt != null
+                            ? dateFormat.format(transaction!.createdAt!)
+                            : 'N/A',
                       ),
                     ],
                   ),
@@ -1247,7 +1253,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
   Widget _detailRow({
     required IconData icon,
     required String label,
-    required String value,
+    required String? value,
     bool isCopyable = false,
   }) {
     return Row(
@@ -1271,7 +1277,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
               GestureDetector(
                 onTap: isCopyable
                     ? () {
-                        Clipboard.setData(ClipboardData(text: value));
+                        Clipboard.setData(ClipboardData(text: value??''));
 
                         Get.snackbar(
                           'Copied',
@@ -1287,7 +1293,7 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        value,
+                        value??"",
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w700,
@@ -2380,16 +2386,23 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
     }
   }
 
-  List<String> _parseUnits(String units) {
+  List<String> _parseUnits(String? units) {
     try {
-      return units.split(',').map((unit) => unit.trim()).toList();
+      if (units == null || units.trim().isEmpty) {
+        return [];
+      }
+
+      return units
+          .split(',')
+          .map((unit) => unit.trim())
+          .toList();
     } catch (e) {
       return [];
     }
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
       case 'completed':
         return _successColor;
       case 'pending':

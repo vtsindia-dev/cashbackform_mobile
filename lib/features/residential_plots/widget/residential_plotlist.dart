@@ -93,6 +93,7 @@ class ResidentialPropertyList extends StatelessWidget {
       );
     });
   }
+
   Widget _buildPropertyCard(Property property) {
     return Stack(
       children: [
@@ -115,7 +116,6 @@ class ResidentialPropertyList extends StatelessWidget {
                   : property.aboutProperty.length)
               : '',
           onTap: () {
-            print("View Property: ${property.propertyName}");
             Get.toNamed('residentialDetails',
                 arguments: {
                   "id": property.id,

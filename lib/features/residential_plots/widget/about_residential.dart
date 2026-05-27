@@ -390,6 +390,124 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
     super.initState();
   }
 
+  Widget _centerEnquiryButton(ResidentialPropertyController controller) {
+    return Obx(() {
+      // Get the current property from your controller
+      final property = controller.propertyDetail.value; // Adjust based on your controller
+      final bool isSoldOut = property?.soldStatus == 1; // Or property?.isSoldOut if you have that field
+
+      // Check if button should be disabled
+      final bool isDisabled = isSoldOut || controller.isEnquiryLoading.value || controller.enquirySent.value;
+
+      // Determine button text and colors based on state
+      String buttonText;
+      Gradient buttonGradient;
+
+      if (isSoldOut) {
+        buttonText = "Sold Out";
+        buttonGradient = LinearGradient(
+          colors: [Colors.grey, Colors.grey.shade600],
+        );
+      } else if (controller.isEnquiryLoading.value) {
+        buttonText = "Sending...";
+        buttonGradient = LinearGradient(
+          colors: [AppColor.primary, AppColor.primarylite],
+        );
+      } else if (controller.enquirySent.value) {
+        buttonText = "Enquiry Sent";
+        buttonGradient = LinearGradient(
+          colors: [Colors.green, Colors.greenAccent],
+        );
+      } else {
+        buttonText = "Send Enquiry";
+        buttonGradient = LinearGradient(
+          colors: [AppColor.primary, AppColor.primarylite],
+        );
+      }
+
+      Widget buttonWidget = Center(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30.r),
+          onTap: isDisabled
+              ? null
+              : () {
+            controller.sendEnquiry();
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              gradient: buttonGradient,
+              borderRadius: BorderRadius.circular(30.r),
+              boxShadow: [
+                BoxShadow(
+                  color: isDisabled
+                      ? Colors.grey.withOpacity(0.3)
+                      : controller.isEnquiryLoading.value
+                      ? AppColor.primary.withOpacity(0.5)
+                      : Colors.black.withOpacity(0.2),
+                  blurRadius: isDisabled ? 0 : (controller.isEnquiryLoading.value ? 15 : 8),
+                  spreadRadius: 0,
+                  offset: Offset(0, isDisabled ? 0 : (controller.isEnquiryLoading.value ? 0 : 3)),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (controller.isEnquiryLoading.value && !isSoldOut)
+                  SizedBox(
+                    height: 18.sp,
+                    width: 18.sp,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                if (controller.isEnquiryLoading.value && !isSoldOut) SizedBox(width: 8.w),
+                if (controller.enquirySent.value && !isSoldOut)
+                  Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 18.sp,
+                  ),
+                if (controller.enquirySent.value && !isSoldOut) SizedBox(width: 8.w),
+                if (isSoldOut)
+                  Icon(
+                    Icons.shopping_cart,
+                    color: Colors.white,
+                    size: 18.sp,
+                  ),
+                if (isSoldOut) SizedBox(width: 8.w),
+                Text(
+                  buttonText,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Apply shake animation only when loading and not sold out
+      return (controller.isEnquiryLoading.value && !isSoldOut)
+          ? buttonWidget.animate(
+        autoPlay: true,
+        onPlay: (controller) => controller.repeat(),
+      ).shake(
+        hz: 3,
+        offset: const Offset(4, 0),
+        duration: 1000.ms,
+        curve: Curves.easeInOut,
+      )
+          : buttonWidget;
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final ResidentialPropertyController controller =
@@ -729,8 +847,8 @@ class _AboutResidentialPropertyState extends State<AboutResidentialProperty> {
                       ],
                     ),
                   ),
-
-                // Description
+                _centerEnquiryButton(controller),
+                SizedBox(height: 10.h),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
