@@ -1273,7 +1273,9 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                         icon: Icons.access_time_rounded,
                         label: 'Transaction Time',
                         value: transaction?.createdAt != null
-                            ? dateFormat.format(transaction!.createdAt!)
+                            ? dateFormat.format(
+                          transaction!.createdAt!.toLocal(),
+                        )
                             : 'N/A',
                       ),
                     ],

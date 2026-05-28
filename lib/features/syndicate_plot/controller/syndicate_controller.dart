@@ -1166,7 +1166,7 @@ class SyndicatePlotController extends GetxController {
                         icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 18),
                         child: Text(
                           "Slide to Confirm Payment",
-                          style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
                         ),
                         action: (controller) async {
                           if (!isTermsAccepted) {
@@ -1190,7 +1190,7 @@ class SyndicatePlotController extends GetxController {
               GestureDetector(
                 onTap: () => Get.back(),
                 child: Text("Cancel and Return",
-                    style: TextStyle(color: Colors.grey[500], fontSize: 14.sp, decoration: TextDecoration.underline)),
+                    style: TextStyle(color: Colors.grey[500], fontSize: 13.sp, decoration: TextDecoration.underline)),
               ),
             ],
           ),

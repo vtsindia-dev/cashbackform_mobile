@@ -908,7 +908,11 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
                       16.h.verticalSpace,
                       _ledgerRow(
                         label: 'Timestamp',
-                        value: dateFormat.format(bookingTransaction.createdAt),
+                        value: bookingTransaction.createdAt != null
+                            ? dateFormat.format(
+                          bookingTransaction.createdAt!.toLocal(),
+                        )
+                            : 'N/A',
                         icon: Icons.access_time_rounded,
                       ),
                     ],

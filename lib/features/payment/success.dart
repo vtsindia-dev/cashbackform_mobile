@@ -340,9 +340,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                           padding: EdgeInsets.symmetric(vertical: 20.h),
                           child: const Divider(thickness: 1.2),
                         ),
-
                         _buildDetailRow(
-                            "Payment Mode", _getPaymentTypeName()),
+                            "Payment Mode", "RAZORPAY"),
+                        // _buildDetailRow(
+                        //     "Payment Mode", _getPaymentTypeName()),
                         SizedBox(height: 15.h),
                         _buildDetailRow("Status", "COMPLETED",
                             color: Colors.green),

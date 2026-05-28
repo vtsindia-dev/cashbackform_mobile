@@ -45,6 +45,7 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
         ),
       ),
       body: Obx(() {
+
         if (controller.isLoadingEnquiries.value) {
           return Center(
             child: CircularProgressIndicator(
@@ -69,7 +70,7 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
             itemBuilder: (context, index) {
               final enquiry = controller.rentalEnquiries[index];
               final property = enquiry.property;
-              return _buildEnquiryCard(enquiry, property!);
+              return _buildEnquiryCard(enquiry, property);
             },
           ),
         );
@@ -77,7 +78,8 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
     );
   }
 
-  Widget _buildEnquiryCard(RentalEnquiry enquiry, RentalEnquiryProperty property) {
+  Widget _buildEnquiryCard(RentalEnquiry enquiry, RentalEnquiryProperty? property) {
+
     return Container(
       margin: EdgeInsets.only(bottom: 18.h),
       decoration: BoxDecoration(
@@ -147,7 +149,7 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15.r),
                   child: Image.network(
-                    property.thumbnail,
+                    property?.thumbnail??'',
                     width: 100.w,
                     height: 100.h,
                     fit: BoxFit.cover,
@@ -186,7 +188,7 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        property.name,
+                        property?.name??"",
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w700,
@@ -202,7 +204,7 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
                           SizedBox(width: 4.w),
                           Expanded(
                             child: Text(
-                              property.address,
+                              property?.address??"",
                               style: TextStyle(
                                 fontSize: 11.sp,
                                 color: AppColor.textSecondary,
@@ -229,7 +231,7 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
                                 Icon(Iconsax.dollar_circle, size: 12.sp, color: AppColor.primary),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  property.formattedRent,
+                                  property?.formattedRent??"",
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.w700,
@@ -242,7 +244,7 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
                           SizedBox(width: 8.w),
 
                           // Yield if available
-                          if (property.yieldAmount != null && property.yieldAmount!.isNotEmpty)
+                          if ((property?.yieldAmount?.isNotEmpty ?? false))
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                               decoration: BoxDecoration(
@@ -254,7 +256,7 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
                                   Icon(Iconsax.chart_3, size: 12.sp, color: AppColor.accent),
                                   SizedBox(width: 4.w),
                                   Text(
-                                    "${property.yieldAmount}% Yield",
+                                    "${property?.yieldAmount}% Yield",
                                     style: TextStyle(
                                       fontSize: 10.sp,
                                       fontWeight: FontWeight.w600,
@@ -329,12 +331,12 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
     if (counts >= 3) return "Active Interest - Good response";
     return "New Enquiry - Recently received";
   }
-  void _viewPropertyDetails(RentalEnquiryProperty property) {
+  void _viewPropertyDetails(RentalEnquiryProperty? property) {
     Get.toNamed(
       '/rentalDetails',
       arguments: {
-        'id': property.id,
-        'title': property.name,
+        'id': property?.id,
+        'title': property?.name,
       },
     );
   }

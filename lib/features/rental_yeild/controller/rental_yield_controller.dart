@@ -889,7 +889,7 @@ class RentalYieldController extends GetxController {
                     "Cancel",
                     style: TextStyle(
                       color: Colors.grey[600],
-                      fontSize: 15.sp,
+                      fontSize: 11.sp,
                     ),
                   ),
                 ),
@@ -918,7 +918,7 @@ class RentalYieldController extends GetxController {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 15.sp,
+                      fontSize: 11.sp,
                     ),
                   ),
                 ),
