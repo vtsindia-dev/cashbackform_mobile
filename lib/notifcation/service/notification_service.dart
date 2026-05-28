@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:cashback_farms/common/route/router.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 
@@ -127,4 +129,11 @@ Future<void> requestNotificationPermission() async {
   }
 }
 
-void handleNavigation(Map<String, dynamic> data) {}
+void handleNavigation(Map<String, dynamic> data) {
+  try {
+    debugPrint('🔔 handleNavigation → navigating to notifications');
+    Get.toNamed(AppRoutes.notification);
+  } catch (e) {
+    debugPrint('❌ handleNavigation error: $e');
+  }
+}

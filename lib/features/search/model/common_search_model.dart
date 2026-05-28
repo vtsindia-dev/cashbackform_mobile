@@ -20,6 +20,8 @@ class CommonSearchModel {
   double? rentAmount;
   double? yieldAmount;
   int? soldStatus;
+   String? totalPrice;
+   String? pricePerSqft;
 
 
   CommonSearchModel({
@@ -43,7 +45,9 @@ class CommonSearchModel {
     this.areaSqftPrice,
     this.city,
     this.rentAmount,
-    this.soldStatus
+    this.soldStatus,
+    this.totalPrice,
+    this.pricePerSqft
   });
 
   CommonSearchModel.fromJson(Map<String, dynamic> json) {
@@ -70,6 +74,8 @@ class CommonSearchModel {
         ? PropertyType.fromJson(json['property_type'])
         : null;
     city = json['city'] != null ? City.fromJson(json['city']) : null;
+    totalPrice = json['total_price']?.toString();
+    pricePerSqft = json['price_per_sqft']?.toString();
   }
 }
 

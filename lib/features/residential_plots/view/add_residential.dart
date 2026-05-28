@@ -659,52 +659,147 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
   }
 
   Widget _buildLocationSelection() {
-    return Row(children: [
-      Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _buildLabel('State', required: true),
-          SizedBox(height: 6.h),
-          Obx(() {
-            if (_controller.isLoading.value && _controller.statesList.isEmpty) return _buildShimmerLoader(height: 50.h);
-            if (_controller.statesList.isEmpty) return _buildRetryField('No states', () => _controller.fetchStates());
-            return _buildStyledDropdown<int>(
-              value: _controller.selectedStateId.value > 0 ? _controller.selectedStateId.value : null,
-              hint: 'Select state',
-              items: _controller.statesList.map((s) => DropdownMenuItem(value: s.id, child: Padding(padding: EdgeInsets.symmetric(horizontal: 12.w), child: Text(s.stateName)))).toList(),
-              onChanged: (v) { if (v != null) _controller.onStateChanged(v); },
-            );
-          }),
-        ]),
-      ),
-      SizedBox(width: 10.w),
-      Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _buildLabel('City', required: true),
-          SizedBox(height: 6.h),
-          Obx(() {
-            if (_controller.selectedStateId.value == 0) {
-              return Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: Text('Select state first', style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 13.sp)),
-              );
-            }
-            if (_controller.isLoading.value && _controller.citiesList.isEmpty) return _buildShimmerLoader(height: 50.h);
-            if (_controller.citiesList.isEmpty) return _buildRetryField('No cities', () => _controller.fetchCitiesByState(_controller.selectedStateId.value));
-            return _buildStyledDropdown<int>(
-              value: _controller.selectedCityId.value > 0 ? _controller.selectedCityId.value : null,
-              hint: 'Select city',
-              items: _controller.citiesList.map((c) => DropdownMenuItem(value: c.id, child: Padding(padding: EdgeInsets.symmetric(horizontal: 12.w), child: Text(c.name)))).toList(),
-              onChanged: (v) { if (v != null) _controller.onCityChanged(v); },
-            );
-          }),
-        ]),
-      ),
-    ]);
+    return Row(
+      children: [
+        // ── State ────────────────────────────────────────────────────
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildLabel('State', required: true),
+              SizedBox(height: 6.h),
+              Obx(() {
+                // ✅ Show shimmer while states are loading initially
+                if (_controller.isLoading.value &&
+                    _controller.statesList.isEmpty) {
+                  return _buildShimmerLoader(height: 50.h);
+                }
+                if (_controller.statesList.isEmpty) {
+                  return _buildRetryField(
+                    'No states available',
+                        () => _controller.fetchStates(),
+                  );
+                }
+                return _buildStyledDropdown<int>(
+                  value: _controller.selectedStateId.value > 0
+                      ? _controller.selectedStateId.value
+                      : null,
+                  hint: 'Select state',
+                  items: _controller.statesList
+                      .map((s) => DropdownMenuItem(
+                    value: s.id,
+                    child: Padding(
+                      padding:
+                      EdgeInsets.symmetric(horizontal: 12.w),
+                      child: Text(s.stateName),
+                    ),
+                  ))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) _controller.onStateChanged(v);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+
+        SizedBox(width: 10.w),
+
+        // ── City ─────────────────────────────────────────────────────
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildLabel('City', required: true),
+              SizedBox(height: 6.h),
+              Obx(() {
+                // ✅ State not selected yet
+                if (_controller.selectedStateId.value == 0) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 12.w, vertical: 14.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Text(
+                      'Select state first',
+                      style: TextStyle(
+                          color: const Color(0xFF9CA3AF), fontSize: 13.sp),
+                    ),
+                  );
+                }
+
+                // ✅ Show loading spinner while cities are being fetched
+                if (_controller.isCityLoading.value) {
+                  return Container(
+                    height: 50.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(width: 12.w),
+                        SizedBox(
+                          width: 16.w,
+                          height: 16.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColor.primary,
+                          ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Text(
+                          'Loading cities...',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // ✅ No cities found after loading
+                if (_controller.citiesList.isEmpty) {
+                  return _buildRetryField(
+                    'No cities found',
+                        () => _controller
+                        .fetchCitiesByState(_controller.selectedStateId.value),
+                  );
+                }
+
+                // ✅ Normal dropdown
+                return _buildStyledDropdown<int>(
+                  value: _controller.selectedCityId.value > 0
+                      ? _controller.selectedCityId.value
+                      : null,
+                  hint: 'Select city',
+                  items: _controller.citiesList
+                      .map((c) => DropdownMenuItem(
+                    value: c.id,
+                    child: Padding(
+                      padding:
+                      EdgeInsets.symmetric(horizontal: 12.w),
+                      child: Text(c.name),
+                    ),
+                  ))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) _controller.onCityChanged(v);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildStyledDropdown<T>({

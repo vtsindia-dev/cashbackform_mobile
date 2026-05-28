@@ -90,8 +90,8 @@ class FeaturedGioRentalYieldPlots extends StatelessWidget {
                       width: 170,
                       child: ProductCard(
                         soldStatus: item.soldStatus,
-                        rentalAmount: item.rentAmount?.toString(),
-                        yieldAmount: item.yieldAmount?.toString(),
+                        rentalAmount: item.totalPrice?? "N/A",
+                        yieldAmount:'${item.pricePerSqft?? 'N/A'} sq.ft',
                         imageUrl: item.files?.first??'',
                         title: item.name,
                         price: item.formattedPrice,

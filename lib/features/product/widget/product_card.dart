@@ -181,7 +181,7 @@ class ProductCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               const Text(
-                                "Rental Amount",
+                                "Total Amount",
                                 style:
                                 TextStyle(fontSize: 10, color: Colors.grey),
                                 overflow: TextOverflow.ellipsis,
@@ -213,7 +213,7 @@ class ProductCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               const Text(
-                                "Yield Amount",
+                                "Per sqft",
                                 style:
                                 TextStyle(fontSize: 10, color: Colors.grey),
                                 overflow: TextOverflow.ellipsis,

@@ -376,10 +376,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildList(CommonSearchController controller) {
     final list = controller.searchList;
+
     if (controller.isLoading) {
-      return Expanded(
-        child: Center(child: GifLoader(message: "Loading...", size: 100)),
-      );
+      return Center(child: GifLoader(message: "Loading...", size: 100));
     }
 
     if (list.isEmpty) {
@@ -403,47 +402,45 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       );
     }
-    return Expanded(
-      child: RefreshIndicator(
-        color: AppColor.primary,
-        onRefresh: () async => controller.resetSearch(),
-        child: ListView.separated(
-          separatorBuilder: (context, i) => const SizedBox(height: 10),
-          controller: _scrollController,
-          padding: const EdgeInsets.all(12),
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: (list.length / 2).ceil() + (controller.isLoadMore ? 1 : 0),
-          itemBuilder: (context, rowIndex) {
-            if (rowIndex == (list.length / 2).ceil()) {
-              return const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(
-                  child: CircularProgressIndicator(color: AppColor.primary),
-                ),
-              );
-            }
-
-            final leftIndex = rowIndex * 2;
-            final rightIndex = leftIndex + 1;
-
-            final leftItem = list[leftIndex];
-            final rightItem = rightIndex < list.length
-                ? list[rightIndex]
-                : null;
-
-            return Row(
-              children: [
-                Expanded(child: _buildCard(leftItem, controller)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: rightItem != null
-                      ? _buildCard(rightItem, controller)
-                      : const SizedBox(),
-                ),
-              ],
+    return RefreshIndicator(
+      color: AppColor.primary,
+      onRefresh: () async => controller.resetSearch(),
+      child: ListView.separated(
+        separatorBuilder: (context, i) => const SizedBox(height: 10),
+        controller: _scrollController,
+        padding: const EdgeInsets.all(12),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: (list.length / 2).ceil() + (controller.isLoadMore ? 1 : 0),
+        itemBuilder: (context, rowIndex) {
+          if (rowIndex == (list.length / 2).ceil()) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColor.primary),
+              ),
             );
-          },
-        ),
+          }
+
+          final leftIndex = rowIndex * 2;
+          final rightIndex = leftIndex + 1;
+
+          final leftItem = list[leftIndex];
+          final rightItem = rightIndex < list.length
+              ? list[rightIndex]
+              : null;
+
+          return Row(
+            children: [
+              Expanded(child: _buildCard(leftItem, controller)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: rightItem != null
+                    ? _buildCard(rightItem, controller)
+                    : const SizedBox(),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -631,14 +628,14 @@ class _SearchScreenState extends State<SearchScreen> {
                         child: Text.rich(
                           TextSpan(children: [
                             TextSpan(
-                              text: "Rent: ",
+                              text: "Total Amount: ",
                               style: TextStyle(
                                   color: Colors.grey.shade600,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w400),
                             ),
                             TextSpan(
-                              text: "₹${item.rentAmount ?? '0'}",
+                              text: "₹${item.totalPrice ?? '0'}",
                               style: const TextStyle(
                                   color: AppColor.primary,
                                   fontSize: 14,
@@ -651,12 +648,12 @@ class _SearchScreenState extends State<SearchScreen> {
                         child: Text.rich(
                           TextSpan(children: [
                             TextSpan(
-                              text: "Yield: ",
+                              text: "Per sqft: ",
                               style: TextStyle(
                                   color: Colors.grey.shade600, fontSize: 11),
                             ),
                             TextSpan(
-                              text: "₹${item.yieldAmount ?? '0'}",
+                              text: "₹${item.pricePerSqft ?? '0'}",
                               style: const TextStyle(
                                   color: Colors.green,
                                   fontSize: 14,

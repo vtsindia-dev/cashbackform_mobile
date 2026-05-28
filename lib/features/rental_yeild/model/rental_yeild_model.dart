@@ -301,6 +301,9 @@ class RentalListProperty {
   final DateTime createdAt;
   final DateTime updatedAt;
   final int? soldStatus;
+  final String? totalPrice;
+  final String? pricePerSqft;
+
 
   // Get images list (files as images)
   List<String> get images => files;
@@ -372,7 +375,9 @@ class RentalListProperty {
     required this.verifyStatus,
     required this.createdAt,
     required this.updatedAt,
-    this.soldStatus
+    this.soldStatus,
+    this.totalPrice,
+    this.pricePerSqft
   });
 
   factory RentalListProperty.fromJson(Map<String, dynamic> json) {
@@ -492,6 +497,8 @@ class RentalListProperty {
       verifyStatus: json['verify_status'] is int ? json['verify_status'] : int.tryParse(json['verify_status'].toString() ?? '0') ?? 0,
       createdAt: parseDate(json['created_at']),
       updatedAt: parseDate(json['updated_at']),
+      totalPrice : json['total_price'],
+        pricePerSqft : json['price_per_sqft'],
     );
   }
 }
@@ -570,6 +577,10 @@ class RentalDetailProperty {
   final double amountPay;
   final int? transactionId;
   final String? youtubeLink;
+  final String? ulpnNo;
+  PropertyCategory? propertyCategory;
+  final String? totalPrice;
+  final String? pricePerSqft;
 
 
   // Get images list
@@ -640,7 +651,11 @@ class RentalDetailProperty {
     this.booked,
     this.isAnyoneBooked,
     this.transactionId,
-    this.youtubeLink
+    this.youtubeLink,
+    this.ulpnNo,
+    this.propertyCategory,
+    this.totalPrice,
+    this.pricePerSqft
   });
 
   factory RentalDetailProperty.fromJson(Map<String, dynamic> json) {
@@ -773,8 +788,38 @@ class RentalDetailProperty {
       isAnyoneBooked: json['is_anyone_booked'],
         transactionId : json['transaction_id'],
       youtubeLink:  json['youtube_link'],
+        ulpnNo : json['ulpn_no'],
+        propertyCategory : json['property_category'] != null
+            ? new PropertyCategory.fromJson(json['property_category'])
+            : null,
+      totalPrice : json['total_price'],
+      pricePerSqft : json['price_per_sqft'],
     );
   }
+}
+
+class PropertyCategory {
+  int? id;
+  String? categoryName;
+  int? status;
+  String? createdAt;
+  String? updatedAt;
+
+  PropertyCategory(
+      {this.id,
+        this.categoryName,
+        this.status,
+        this.createdAt,
+        this.updatedAt});
+
+  PropertyCategory.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    categoryName = json['category_name'];
+    status = json['status'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+  }
+
 }
 
 // Nearby Location detail model for DETAIL API

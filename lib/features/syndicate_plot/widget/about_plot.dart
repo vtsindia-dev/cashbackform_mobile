@@ -275,63 +275,58 @@ class AboutPlot extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         SizedBox(height: 6.h),
-
-        // ── Core details ──
-        _buildDetailRow(
+        buildDetailRow(
             label: 'Property Type',
             value: detail.propertyType?.categoryName ?? 'N/A',
             delay: 0.ms,
             index: 0,
             valueColor: AppColor.primary),
         SizedBox(height: 8.h),
-        _buildDetailRow(
+        buildDetailRow(
             label: 'Project Name',
             value: detail.name,
             delay: 50.ms,
             index: 1),
         SizedBox(height: 8.h),
-        _buildDetailRow(
+        buildDetailRow(
             label: 'Location',
             value: detail.address,
             delay: 100.ms,
             index: 2),
         SizedBox(height: 8.h),
-        _buildDetailRow(
+        buildDetailRow(
             label: 'Total Layout',
             value: detail.area,
             delay: 150.ms,
             index: 3),
         SizedBox(height: 8.h),
-        _buildDetailRow(
+        buildDetailRow(
             label: 'Plot Count',
             value: '${detail.unitSpilt} Plots',
             delay: 200.ms,
             index: 4),
         SizedBox(height: 8.h),
-        _buildDetailRow(
+        buildDetailRow(
             label: 'Price / Sq.Ft',
             value: '₹ ${detail.price} per sq.ft',
             delay: 250.ms,
             index: 5),
         SizedBox(height: 8.h),
-        _buildDetailRow(
+        buildDetailRow(
             label: 'Starting Price',
             value: '₹ ${detail.startingPrice} onwards',
             delay: 300.ms,
             index: 6),
         SizedBox(height: 8.h),
-        _buildDetailRow(
+        buildDetailRow(
             label: 'ULPIN',
             value: detail.uldNo.isNotEmpty ? detail.uldNo : 'Not Available',
             delay: 350.ms,
             index: 7),
-
-        // ── Sold-out status row ──
         if (detail.isSoldOut) ...[
           SizedBox(height: 8.h),
-          _buildDetailRow(
+          buildDetailRow(
             label: 'Availability',
             value: 'SOLD OUT',
             delay: 400.ms,
@@ -339,13 +334,12 @@ class AboutPlot extends StatelessWidget {
             valueColor: Colors.red.shade700,
           ),
         ],
-
         SizedBox(height: 14.h),
       ],
     );
   }
 
-  // ────────────────────────────────────────
+
   Widget _buildSectionDivider(String label) {
     return Row(
       children: [
@@ -371,89 +365,91 @@ class AboutPlot extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow({
-    required String label,
-    required String value,
-    required Duration delay,
-    required int index,
-    Color? valueColor,
-  }) {
-    final bool isProjectName = label == 'Project Name';
-    return isProjectName
-        ? _buildProjectNameHeader(value, delay)
-        : _buildRegularRow(label, value, delay, valueColor);
-  }
 
-  Widget _buildProjectNameHeader(String value, Duration delay) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 8.h),
-      decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12.r),
+}
+
+Widget buildDetailRow({
+  required String label,
+  required String value,
+  required Duration delay,
+  required int index,
+  Color? valueColor,
+}) {
+  final bool isProjectName = label == 'Project Name';
+  return isProjectName
+      ? _buildProjectNameHeader(value, delay)
+      : _buildRegularRow(label, value, delay, valueColor);
+}
+
+Widget _buildProjectNameHeader(String value, Duration delay) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(vertical: 8.h),
+    decoration: BoxDecoration(
+      color: AppColor.primary.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12.r),
+    ),
+    child: Text(
+      value,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 18.sp,
+        color: AppColor.primary,
+        fontWeight: FontWeight.bold,
+        height: 1.2,
       ),
-      child: Text(
-        value,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 18.sp,
-          color: AppColor.primary,
-          fontWeight: FontWeight.bold,
-          height: 1.2,
-        ),
-      )
-          .animate()
-          .slideX(begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
-          .fadeIn(duration: 500.ms)
-          .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
-          .then(delay: delay)
-          .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3)),
-    );
-  }
-
-  Widget _buildRegularRow(
-      String label, String value, Duration delay, Color? valueColor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 110.w,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColor.primary,
-              fontWeight: FontWeight.bold,
-              height: 1.2,
-            ),
-          ),
-        ),
-        SizedBox(width: 6.w),
-        Text(':',
-            style: TextStyle(
-                fontSize: 13.sp,
-                color: AppColor.black,
-                fontWeight: FontWeight.w600,
-                height: 1.2)),
-        SizedBox(width: 6.w),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: valueColor ?? AppColor.black,
-              fontWeight: FontWeight.bold,
-              height: 1.2,
-            ),
-          ),
-        ),
-      ],
     )
         .animate()
         .slideX(begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
         .fadeIn(duration: 500.ms)
         .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
         .then(delay: delay)
-        .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3));
-  }
+        .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3)),
+  );
+}
+
+Widget _buildRegularRow(
+    String label, String value, Duration delay, Color? valueColor) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(
+        width: 110.w,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: AppColor.primary,
+            fontWeight: FontWeight.bold,
+            height: 1.2,
+          ),
+        ),
+      ),
+      SizedBox(width: 6.w),
+      Text(':',
+          style: TextStyle(
+              fontSize: 13.sp,
+              color: AppColor.black,
+              fontWeight: FontWeight.w600,
+              height: 1.2)),
+      SizedBox(width: 6.w),
+      Expanded(
+        child: Text(
+          value,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: valueColor ?? AppColor.black,
+            fontWeight: FontWeight.bold,
+            height: 1.2,
+          ),
+        ),
+      ),
+    ],
+  )
+      .animate()
+      .slideX(begin: 0.5, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
+      .fadeIn(duration: 500.ms)
+      .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
+      .then(delay: delay)
+      .shimmer(duration: 800.ms, color: Colors.white.withOpacity(0.3));
 }

@@ -278,8 +278,19 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
 
   Widget _buildInvestmentCard(SyndicateBuyingList investment) {
     final units = _parseUnits(investment.units);
+
+    final DateTime createdAt =
+        investment.createdAt?.toLocal() ?? DateTime.now();
+
     final dateFormat = DateFormat('dd MMM yyyy');
-    final statusColor = _getStatusColor(investment.transaction?.status);
+    final timeFormat = DateFormat('hh:mm a');
+
+    final transaction = investment.transaction;
+
+    final status = transaction?.status ?? 'Pending';
+
+    final statusColor = _getStatusColor(status);
+
     final property = investment.property;
 
     return Container(
@@ -289,13 +300,16 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: _neutralDark.withValues(alpha:0.05),
+            color: _neutralDark.withValues(alpha: 0.05),
             blurRadius: 25,
             spreadRadius: 0,
             offset: const Offset(0, 10),
           ),
         ],
-        border: Border.all(color: Colors.grey.shade100, width: 1),
+        border: Border.all(
+          color: Colors.grey.shade100,
+          width: 1,
+        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.r),
@@ -321,10 +335,16 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
               ),
 
               Padding(
-                padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 20.h),
+                padding: EdgeInsets.fromLTRB(
+                  20.w,
+                  24.h,
+                  20.w,
+                  20.h,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    /// HEADER
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -334,13 +354,14 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                _primaryColor.withValues(alpha:0.1),
-                                _secondaryColor.withValues(alpha:0.1),
+                                _primaryColor.withValues(alpha: 0.1),
+                                _secondaryColor.withValues(alpha: 0.1),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
-                            borderRadius: BorderRadius.circular(16.r),
+                            borderRadius:
+                            BorderRadius.circular(16.r),
                           ),
                           child: Center(
                             child: Icon(
@@ -350,13 +371,17 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                             ),
                           ),
                         ),
+
                         16.w.horizontalSpace,
+
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
                             children: [
                               Text(
-                                property?.name ?? "Syndicate Property",
+                                property?.name ??
+                                    "Syndicate Property",
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.w800,
@@ -366,7 +391,9 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
+
                               6.h.verticalSpace,
+
                               Row(
                                 children: [
                                   Icon(
@@ -374,7 +401,9 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                     size: 14.w,
                                     color: _accentColor,
                                   ),
+
                                   4.w.horizontalSpace,
+
                                   Expanded(
                                     child: Text(
                                       property?.address ??
@@ -384,7 +413,8 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                         color: Colors.grey.shade600,
                                       ),
                                       maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      overflow:
+                                      TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -392,17 +422,20 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                             ],
                           ),
                         ),
+
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 12.w,
                             vertical: 6.h,
                           ),
                           decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha:0.1),
-                            borderRadius: BorderRadius.circular(20.r),
+                            color:
+                            statusColor.withValues(alpha: 0.1),
+                            borderRadius:
+                            BorderRadius.circular(20.r),
                           ),
                           child: Text(
-                            investment.transaction?.status.toUpperCase()??'',
+                            status.toUpperCase(),
                             style: TextStyle(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w800,
@@ -413,19 +446,24 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                         ),
                       ],
                     ),
+
                     24.h.verticalSpace,
+
+                    /// STATS
                     Container(
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
                         color: _neutralLight,
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius:
+                        BorderRadius.circular(16.r),
                         border: Border.all(
                           color: Colors.grey.shade200,
                           width: 1,
                         ),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        mainAxisAlignment:
+                        MainAxisAlignment.spaceAround,
                         children: [
                           _buildStatItem(
                             icon: Icons.grid_view,
@@ -433,16 +471,20 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                             value: units.length.toString(),
                             color: _primaryColor,
                           ),
+
                           _buildStatItem(
                             icon: Icons.attach_money_rounded,
                             label: "Investment",
-                            value: "₹${_formatNumber(investment.amount)}",
+                            value:
+                            "₹${_formatNumber(investment.amount ?? 0)}",
                             color: _successColor,
                           ),
+
                           _buildStatItem(
                             icon: Icons.calendar_today,
-                            label: "Date",
-                            value: dateFormat.format(investment.createdAt),
+                            label: "Date & Time",
+                            value:
+                            '${dateFormat.format(createdAt)}\n${timeFormat.format(createdAt)}',
                             color: _accentColor,
                           ),
                         ],
@@ -450,18 +492,21 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                     ),
 
                     20.h.verticalSpace,
+
+                    /// TRANSACTION BOX
                     Container(
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            _primaryColor.withValues(alpha:0.03),
-                            _secondaryColor.withValues(alpha:0.03),
+                            _primaryColor.withValues(alpha: 0.03),
+                            _secondaryColor.withValues(alpha: 0.03),
                           ],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                         ),
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius:
+                        BorderRadius.circular(16.r),
                       ),
                       child: Row(
                         children: [
@@ -470,10 +515,13 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                             size: 20.w,
                             color: _primaryColor,
                           ),
+
                           12.w.horizontalSpace,
+
                           Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   "Transaction ID",
@@ -483,9 +531,13 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
+
                                 2.h.verticalSpace,
+
                                 Text(
-                                  investment.transaction?.transactionId.toString()??"",
+                                  transaction?.transactionId
+                                      ?.toString() ??
+                                      "N/A",
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w700,
@@ -493,11 +545,13 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                                     fontFamily: 'RobotoMono',
                                   ),
                                   maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  overflow:
+                                  TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
                           ),
+
                           Icon(
                             Icons.chevron_right_rounded,
                             color: Colors.grey.shade400,
@@ -506,46 +560,29 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
                         ],
                       ),
                     ),
-                    if (investment.transaction?.status.toLowerCase() ==
-                        'completed')
+
+                    if (status.toLowerCase() == 'completed')
                       16.h.verticalSpace,
+
+                    /// BUTTON
                     Row(
                       children: [
-                        // Expanded(
-                        //   child: OutlinedButton.icon(
-                        //     onPressed: () => _showCancelConfirmation(investment),
-                        //     style: OutlinedButton.styleFrom(
-                        //       side: BorderSide(color: _dangerColor.withValues(alpha:0.3)),
-                        //       padding: EdgeInsets.symmetric(vertical: 12.h),
-                        //       shape: RoundedRectangleBorder(
-                        //         borderRadius: BorderRadius.circular(12.r),
-                        //       ),
-                        //     ),
-                        //     icon: Icon(
-                        //       Icons.close_rounded,
-                        //       size: 18.w,
-                        //       color: _dangerColor,
-                        //     ),
-                        //     label: Text(
-                        //       'Request Cancel',
-                        //       style: TextStyle(
-                        //         fontSize: 14.sp,
-                        //         fontWeight: FontWeight.w600,
-                        //         color: _dangerColor,
-                        //       ),
-                        //     ),
-                        //   ),
-                        // ),
                         12.w.horizontalSpace,
+
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => _showInvestmentDetails(investment),
+                            onPressed: () =>
+                                _showInvestmentDetails(
+                                    investment),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _primaryColor,
                               foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              padding: EdgeInsets.symmetric(
+                                vertical: 12.h,
+                              ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
+                                borderRadius:
+                                BorderRadius.circular(12.r),
                               ),
                               elevation: 0,
                               shadowColor: Colors.transparent,
@@ -609,7 +646,7 @@ class _SyndicateBuyingListWidgetState extends State<SyndicateBuyingListWidget> {
         Text(
           value,
           style: TextStyle(
-            fontSize: 14.sp,
+            fontSize: 12.sp,
             fontWeight: FontWeight.w800,
             color: _neutralDark,
           ),

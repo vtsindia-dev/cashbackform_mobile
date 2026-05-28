@@ -44,6 +44,8 @@ class FeaturedRentalProperty {
   double? rentAmount;
   double? yieldAmount;
   int? soldStatus;
+  final String? totalPrice;
+  final String? pricePerSqft;
 
   FeaturedRentalProperty({
     required this.id,
@@ -66,7 +68,9 @@ class FeaturedRentalProperty {
     this.files,
     this.rentAmount,
     this.yieldAmount,
-    this.soldStatus
+    this.soldStatus,
+    this.totalPrice,
+    this.pricePerSqft
   });
 
   factory FeaturedRentalProperty.fromJson(Map<String, dynamic> json) {
@@ -102,6 +106,8 @@ class FeaturedRentalProperty {
       propertyType: json['property_type'] != null
           ? FeaturedPropertyType.fromJson(json['property_type'])
           : null,
+      totalPrice : json['total_price'],
+      pricePerSqft : json['price_per_sqft'],
     );
   }
 

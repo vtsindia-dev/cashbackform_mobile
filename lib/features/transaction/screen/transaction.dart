@@ -613,33 +613,7 @@ class _TransactionScreenState extends State<TransactionScreen>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 3.h),
-                      Row(
-                        children: [
-                          Icon(Icons.person_outline_rounded, size: 10.sp, color: Colors.grey[400]),
-                          SizedBox(width: 3.w),
-                          Text(
-                            transaction.userName.isNotEmpty ? transaction.userName : 'User',
-                            style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
-                          ),
-                          SizedBox(width: 8.w),
-                          Container(
-                            width: 3.w,
-                            height: 3.w,
-                            decoration: const BoxDecoration(
-                              color: Colors.grey,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          Icon(Icons.payment_outlined, size: 10.sp, color: Colors.grey[400]),
-                          SizedBox(width: 3.w),
-                          Text(
-                            transaction.paymentType,
-                            style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
-                          ),
-                        ],
-                      ),
+
                     ],
                   ),
                 ),
@@ -654,129 +628,149 @@ class _TransactionScreenState extends State<TransactionScreen>
                         color: AppColor.primary,
                       ),
                     ),
-                    SizedBox(height: 3.h),
-                    Text(
-                      _formatDate(transaction.createdAt),
-                      style: TextStyle(fontSize: 9.sp, color: Colors.grey[400]),
-                    ),
+
                   ],
                 ),
               ],
             ),
           ),
-
-          Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
-
-          // ── ✅ Tracking → Processing Status Bar ─────────────
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding:  EdgeInsets.symmetric(horizontal: 15.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    Icon(Icons.payment_outlined, size: 10.sp, color: Colors.grey[400]),
+                    SizedBox(width: 3.w),
                     Text(
-                      'Status',
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.grey[500],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        borderRadius: BorderRadius.circular(20.r),
-                        border: Border.all(color: Colors.orange.shade200),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 5.w,
-                            height: 5.w,
-                            decoration: BoxDecoration(
-                              color: Colors.orange.shade500,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            'Processing',
-                            style: TextStyle(
-                              fontSize: 9.sp,
-                              color: Colors.orange.shade700,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                      transaction.paymentType,
+                      style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
                     ),
                   ],
                 ),
-                SizedBox(height: 10.h),
-
-                // ── Step indicators ──────────────────────────
-                Row(
-                  children: [
-                    // Step 1 — Tracking (done ✅)
-                    _buildStep(
-                      icon: Icons.radar_rounded,
-                      label: 'Tracking',
-                      isActive: true,
-                      isDone: true,
-                    ),
-
-                    // Connector line
-                    Expanded(
-                      child: Stack(
-                        alignment: Alignment.centerLeft,
-                        children: [
-                          Container(height: 2.h, color: Colors.grey.shade200),
-                          FractionallySizedBox(
-                            widthFactor: 0.5,
-                            child: Container(
-                              height: 2.h,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [Colors.green.shade400, Colors.orange.shade400],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Step 2 — Processing (active 🔄)
-                    _buildStep(
-                      icon: Icons.autorenew_rounded,
-                      label: 'Processing',
-                      isActive: true,
-                      isDone: false,
-                    ),
-
-                    // Connector line
-                    Expanded(
-                      child: Container(height: 2.h, color: Colors.grey.shade200),
-                    ),
-
-                    // Step 3 — Completed (pending)
-                    _buildStep(
-                      icon: Icons.check_circle_outline_rounded,
-                      label: 'Completed',
-                      isActive: false,
-                      isDone: false,
-                    ),
-                  ],
+                Text(
+                  _formatDate(transaction.createdAt),
+                  style: TextStyle(fontSize: 9.sp, color: Colors.grey[400]),
                 ),
               ],
             ),
           ),
+          SizedBox(height: 5.h,),
+          if (_getTransactionTypeFromTab() == TransactionType.syndicate ||
+              _getTransactionTypeFromTab() == TransactionType.rental)
+            ...[
+              Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Status',
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(20.r),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 5.w,
+                                height: 5.w,
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade500,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'Processing',
+                                style: TextStyle(
+                                  fontSize: 9.sp,
+                                  color: Colors.orange.shade700,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10.h),
 
-          Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+                    // ── Step indicators ──────────────────────────
+                    Row(
+                      children: [
+                        // Step 1 — Tracking (done ✅)
+                        _buildStep(
+                          icon: Icons.radar_rounded,
+                          label: 'Tracking',
+                          isActive: true,
+                          isDone: true,
+                        ),
+
+                        // Connector line
+                        Expanded(
+                          child: Stack(
+                            alignment: Alignment.centerLeft,
+                            children: [
+                              Container(height: 2.h, color: Colors.grey.shade200),
+                              FractionallySizedBox(
+                                widthFactor: 0.5,
+                                child: Container(
+                                  height: 2.h,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Colors.green.shade400, Colors.orange.shade400],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Step 2 — Processing (active 🔄)
+                        _buildStep(
+                          icon: Icons.autorenew_rounded,
+                          label: 'Processing',
+                          isActive: true,
+                          isDone: false,
+                        ),
+
+                        // Connector line
+                        Expanded(
+                          child: Container(height: 2.h, color: Colors.grey.shade200),
+                        ),
+
+                        // Step 3 — Completed (pending)
+                        _buildStep(
+                          icon: Icons.check_circle_outline_rounded,
+                          label: 'Completed',
+                          isActive: false,
+                          isDone: false,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+            ],
 
           // ── Bottom Buttons (unchanged) ───────────────────────
           Padding(

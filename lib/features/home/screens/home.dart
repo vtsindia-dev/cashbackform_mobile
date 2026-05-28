@@ -2,6 +2,7 @@ import 'package:cashback_farms/common/route/router.dart';
 import 'package:cashback_farms/common/widget/carousel.dart';
 import 'package:cashback_farms/features/home/widget/featured_gio_rental_yield_plots.dart';
 import 'package:cashback_farms/features/home/widget/features_flats_villas_properties.dart';
+import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:cashback_farms/features/plot_market/controller/plot_market_controller.dart';
 import 'package:cashback_farms/features/residential_plots/controller/residential_add_controller.dart';
 import 'package:cashback_farms/features/residential_plots/view/add_residential.dart';
@@ -21,6 +22,7 @@ import '../widget/material_category.dart';
 import '../widget/searchbar.dart';
 import '../widget/sub_title.dart';
 import '../widget/top_professional_service.dart';
+import 'package:cashback_farms/common/widget/service_material_banner_widget.dart' as service_material_banner_widget;
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -32,6 +34,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   final HomeController controller = Get.put(HomeController());
+  DashboardController dashboardController = Get.put(DashboardController());
 
   final PlotMarketController plotMarketController = Get.put(PlotMarketController());
   final ResidentialPropertyFormController residentialPropertyFormController = Get.put(ResidentialPropertyFormController());
@@ -213,7 +216,28 @@ class _HomeState extends State<Home> {
                   ),
                   const SizedBox(height: 10),
 
-                  // ── BestSelling Products ──────────────────────────────
+                  Obx(() {
+                    final profile = dashboardController.profile.value;
+                    final bool isService = profile?.isServices == 1;
+                    if (!isService) return const SizedBox.shrink();
+
+                    final banners = controller.serviceMaterialBanners;
+                    final hasService = banners.any((b) => b.isService);
+                    if (!hasService) return const SizedBox.shrink();
+                    return Column(
+                      children: [
+                        SubtitleWidget(
+                          showViewAll: false,
+                          title: "Our Services",
+                          highlightWord: "Services",
+                        ),
+                        const SizedBox(height: 10),
+                        service_material_banner_widget.ServiceBanner(banners: banners),
+                        const SizedBox(height: 20),
+                      ],
+                    );
+                  }),
+
                   Column(
                     children: [
                       SubtitleWidget(
@@ -225,6 +249,28 @@ class _HomeState extends State<Home> {
                       MaterialCategory(),
                     ],
                   ),
+                  Obx(() {
+                    final profile = dashboardController.profile.value;
+                    final bool isVendor = profile?.isVendor == 1;
+                    if (!isVendor) return const SizedBox.shrink();
+                    final banners = controller.serviceMaterialBanners;
+                    final hasMaterial = banners.any((b) => b.isMaterial);
+                    if (!hasMaterial) return const SizedBox.shrink();
+
+                    return Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        SubtitleWidget(
+                          showViewAll: false,
+                          title: "Our Materials",
+                          highlightWord: "Materials",
+                        ),
+                        const SizedBox(height: 10),
+                        service_material_banner_widget.MaterialBanner(banners: banners),
+                        const SizedBox(height: 20),
+                      ],
+                    );
+                  }),
                   const SizedBox(height: 15),
                 ],
               ),

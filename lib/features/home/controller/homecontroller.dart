@@ -2,6 +2,7 @@ import 'package:cashback_farms/common/model/logger_model.dart';
 import 'package:cashback_farms/features/home/model/feature_gio_rental_model.dart';
 import 'package:cashback_farms/features/home/model/featured_plot_model.dart';
 import 'package:cashback_farms/features/home/model/home_category_model.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
@@ -9,6 +10,7 @@ import 'package:geocoding/geocoding.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/widget/api_service.dart';
 import '../model/home_model.dart';
+import 'package:cashback_farms/common/widget/service_material_banner_widget.dart' as service_material_banner_widget;
 
 class HomeController extends GetxController {
   // ========== LOCATION VARIABLES ==========
@@ -87,8 +89,34 @@ class HomeController extends GetxController {
     super.onInit();
     // Load initial data
     _initializeData();
+    fetchServiceMaterialBanners();
   }
 
+
+  var serviceMaterialBanners = <service_material_banner_widget.ServiceMaterialBanner>[].obs;
+  var isLoadingServiceBanners = false.obs;
+
+  Future<void> fetchServiceMaterialBanners() async {
+    try {
+      isLoadingServiceBanners(true);
+      final response = await ApiService.getRequest(ApiUrl.serviceMaterialBanners);
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        // API returns {"status":200,"data":[...]}
+        if (data['data'] != null && data['data'] is List) {
+          final List list = data['data'] as List;
+          serviceMaterialBanners.assignAll(
+            list.map((e) => service_material_banner_widget.ServiceMaterialBanner.fromJson(e)).toList(),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Failed to fetch service/material banners: $e');
+    } finally {
+      isLoadingServiceBanners(false);
+    }
+  }
 
   bool isHomeCategoryLoading = false;
    void isUpdateLoading(bool value) {

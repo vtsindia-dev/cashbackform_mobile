@@ -1,0 +1,165 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../animations/arrowlines.dart';
+import '../../../common/colours.dart';
+import '../../../common/images.dart';
+import '../../home/widget/sub_title.dart';
+
+
+class RentalOverview extends StatelessWidget {
+  final String? price;
+
+  const RentalOverview({super.key, this.price});
+
+  List<Map<String, dynamic>> get _schemeItems => [
+    {
+      'image': Images.getPayment,
+      'title': 'Pay ${price ?? "0"}rs for Land Document Verification',
+    },
+    {
+      'image': Images.selectSlot,
+      'title': 'Request Details About this land',
+    },
+    {
+      'image': Images.registrationProcess,
+      'title': 'Reserve and proceed to purchase your desired slot',
+    },
+    {
+      'image': Images.plotRegistered,
+      'title': 'Refer Friends and Earn Rewards!',
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.all(8.w),
+          child: SubtitleWidget(
+            showViewAll: false,
+            title: "How it's Work",
+            highlightWord: "Work",
+            onViewAllTap: () {
+              print("View All clicked");
+            },
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                blurRadius: 8.r,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            image: DecorationImage(
+              image: AssetImage(Images.appbarBg),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: _buildTimeline(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimeline() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 60.h,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned(
+                top: 25.h,
+                bottom: 25.h,
+                left: 25.w,
+                right: 25.w,
+                child: ArrowLine(),
+              ),
+              Positioned.fill(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: List.generate(
+                    _schemeItems.length,
+                        (i) => _buildAvatar(_schemeItems[i], i),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: List.generate(_schemeItems.length, (index) {
+            return Expanded(
+              child: Center(
+                child: Text(
+                  _schemeItems[index]['title'],
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.black,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                )
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: 0.2, end: 0)
+                    .then(delay: (index * 200).ms),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAvatar(Map<String, dynamic> item, int index) {
+    return Container(
+      width: 50.w,
+      height: 50.h,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColor.primary, width: 2.w),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.primary.withOpacity(0.3),
+            blurRadius: 8.r,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: CircleAvatar(
+        radius: 28,
+        backgroundColor: AppColor.white,
+        child: ClipOval(
+          child: Image.asset(
+            item['image'],
+            width: 30,
+            height: 30,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    )
+        .animate()
+        .scale(begin: const Offset(0.3, 0.3), end: const Offset(1, 1))
+        .fadeIn(duration: 400.ms)
+        .then(delay: (index * 200).ms);
+  }
+}

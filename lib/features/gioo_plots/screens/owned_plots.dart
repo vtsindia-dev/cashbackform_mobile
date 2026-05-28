@@ -207,9 +207,18 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
 
   Widget _buildBookingCard(GiooBuyingList booking) {
     final units = controller.getUnitsList(booking.units);
+
+    final DateTime createdAt =
+        booking.createdAt?.toLocal() ?? DateTime.now();
+
     final dateFormat = DateFormat('dd MMM yyyy');
     final timeFormat = DateFormat('hh:mm a');
-    final statusColor = controller.getStatusColor(booking.transaction.status);
+
+    final transaction = booking.transaction;
+
+    final status = transaction?.status ?? 'Pending';
+
+    final statusColor = controller.getStatusColor(status);
 
     return Container(
       margin: EdgeInsets.only(bottom: 20.h, left: 4.w, right: 4.w),
@@ -240,87 +249,130 @@ class _GiooBuyingListWidgetState extends State<GiooBuyingListWidget> {
                   color: statusColor,
                 ),
               ),
+
               Padding(
                 padding: EdgeInsets.fromLTRB(20.w, 16.h, 16.w, 16.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- HEADER ---
+                    // HEADER
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Text(
-                            booking.property?.name??'No Property Name',
+                            booking.property?.name ?? 'No Property Name',
                             style: TextStyle(
                               fontSize: 17.sp,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFF1E293B), // Deep Navy Slate
+                              color: const Color(0xFF1E293B),
                               letterSpacing: -0.5,
                             ),
                           ),
                         ),
-                        _customStatusBadge(statusColor, booking.transaction.status),
+
+                        _customStatusBadge(statusColor, status),
                       ],
                     ),
+
                     6.h.verticalSpace,
+
                     Row(
                       children: [
-                        Icon(Icons.location_on_rounded, size: 14.w, color: statusColor.withOpacity(0.7)),
+                        Icon(
+                          Icons.location_on_rounded,
+                          size: 14.w,
+                          color: statusColor.withOpacity(0.7),
+                        ),
+
                         6.w.horizontalSpace,
+
                         Expanded(
                           child: Text(
-                            booking.property?.address??'No Address',
-                            style: TextStyle(fontSize: 12.sp, color: Colors.blueGrey.shade400),
+                            booking.property?.address ?? 'No Address',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.blueGrey.shade400,
+                            ),
                           ),
                         ),
                       ],
                     ),
 
-                    Divider(height: 32.h, thickness: 1, color: Colors.grey.shade100),
+                    Divider(
+                      height: 32.h,
+                      thickness: 1,
+                      color: Colors.grey.shade100,
+                    ),
 
-                    // --- INFO ROW ---
+                    // INFO ROW
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _modernInfoTile(Icons.grid_view_rounded, "Units", "${units.length} Plots"),
-                        _modernInfoTile(Icons.account_balance_wallet_rounded, "Paid", "₹${booking.amount.toInt()}", isBold: true),
+                        _modernInfoTile(
+                          Icons.grid_view_rounded,
+                          "Units",
+                          "${units.length} Plots",
+                        ),
+
+                        _modernInfoTile(
+                          Icons.account_balance_wallet_rounded,
+                          "Paid",
+                          "₹${booking.amount?.toInt() ?? 0}",
+                          isBold: true,
+                        ),
                       ],
                     ),
 
                     20.h.verticalSpace,
 
-                    // --- TRANSACTION BOX ---
+                    // TRANSACTION BOX
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 12.h,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        border: Border.all(
+                          color: const Color(0xFFF1F5F9),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "TXN: ${booking.transaction.transactionId.toUpperCase()}",
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontFamily: 'Monospace',
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueGrey.shade700,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "TXN: ${(transaction?.transactionId ?? 'N/A').toUpperCase()}",
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    fontFamily: 'Monospace',
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blueGrey.shade700,
+                                  ),
                                 ),
-                              ),
-                              4.h.verticalSpace,
-                              Text(
-                                '${dateFormat.format(booking.createdAt)} • ${timeFormat.format(booking.createdAt)}',
-                                style: TextStyle(fontSize: 11.sp, color: Colors.blueGrey.shade400),
-                              ),
-                            ],
+
+                                4.h.verticalSpace,
+
+                                Text(
+                                  '${dateFormat.format(createdAt)} • ${timeFormat.format(createdAt)}',
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: Colors.blueGrey.shade400,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          const Spacer(),
-                          Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.grey.shade400,
+                          ),
                         ],
                       ),
                     ),

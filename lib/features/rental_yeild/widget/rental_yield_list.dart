@@ -122,9 +122,6 @@ class RentalYieldList extends StatelessWidget {
         ? property.images[0]
         : 'https://via.placeholder.com/300x200.png?text=Property';
 
-    final area = property.areaDouble;
-    final description = '${area != null ? '${area.toInt()} sq.ft • ' : ''}Yield: ${annualYield.toStringAsFixed(1)}%';
-
     final location = property.address;
     final cityState = [
       if (property.cityName.isNotEmpty) property.cityName,
@@ -137,10 +134,10 @@ class RentalYieldList extends StatelessWidget {
       imageUrl: imageUrl,
       soldStatus: property.soldStatus,
       title: property.name,
-      price: '₹${monthlyRentInK.toStringAsFixed(1)}K/mo',
-      area: '${property.areaDouble?.toInt() ?? 0} sq.ft',
+      price: '₹${property.totalPrice??"N/A"}',
+      area: '${property.pricePerSqft??'N/A'} sq.ft',
       location: fullLocation,
-      description: description,
+      description: property.description,
       onTap: () {
         Get.toNamed(
           '/rentalDetails',

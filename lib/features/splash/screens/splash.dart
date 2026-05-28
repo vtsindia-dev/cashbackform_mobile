@@ -28,30 +28,9 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
-    _setupNotifications();
   }
 
 
-  Future<void> _setupNotifications() async {
-    await LocalNotificationService.initialize(context);
-
-    FirebaseMessaging.instance.getInitialMessage().then((message) {
-      if (message != null) {
-        debugPrint('🔔 App launched from terminated via notification');
-        handleNavigation(message.data);
-      }
-    });
-
-    FirebaseMessaging.onMessage.listen((message) {
-      debugPrint('🔔 Foreground notification received');
-      LocalNotificationService.display(message);
-    });
-
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      debugPrint('🔔 App opened from background via notification');
-      handleNavigation(message.data);
-    });
-  }
 
   void _initializeAnimations() {
     _animationController = AnimationController(

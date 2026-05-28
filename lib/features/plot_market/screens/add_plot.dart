@@ -908,6 +908,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
     required void Function(T?) onChanged,
     bool isRequired = false,
     bool isEnabled = true,
+    bool isLoading = false, // ✅ Add this parameter
   }) {
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -929,50 +930,83 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
             ),
           ),
           SizedBox(height: 6.h),
-          DropdownButtonFormField<T>(
-            value: value,
-            items: [
-              DropdownMenuItem<T>(
-                value: null,
-                child: Text('Select $label',
-                    style: TextStyle(color: Colors.grey[500])),
-              ),
-              ...items.map((item) => DropdownMenuItem<T>(
-                value: item,
-                child: Text(displayText(item),
-                    overflow: TextOverflow.ellipsis),
-              )),
-            ],
-            onChanged: isEnabled ? onChanged : null,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: isEnabled ? Colors.white : Colors.grey[100],
-              border: OutlineInputBorder(
+
+          // ✅ Show loading indicator instead of dropdown when loading
+          if (isLoading)
+            Container(
+              height: 50.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(10.r),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                border: Border.all(color: Colors.grey[200]!),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.r),
-                borderSide: BorderSide(color: Colors.grey[200]!),
+              child: Row(
+                children: [
+                  SizedBox(width: 14.w),
+                  SizedBox(
+                    width: 16.w,
+                    height: 16.w,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColor.primary,
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Text(
+                    'Loading $label...',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.r),
-                borderSide:
-                BorderSide(color: AppColor.primary, width: 1.5),
+            )
+          else
+            DropdownButtonFormField<T>(
+              value: value,
+              items: [
+                DropdownMenuItem<T>(
+                  value: null,
+                  child: Text('Select $label',
+                      style: TextStyle(color: Colors.grey[500])),
+                ),
+                ...items.map((item) => DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(displayText(item),
+                      overflow: TextOverflow.ellipsis),
+                )),
+              ],
+              onChanged: isEnabled ? onChanged : null,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: isEnabled ? Colors.white : Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: BorderSide(color: Colors.grey[200]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide:
+                  BorderSide(color: AppColor.primary, width: 1.5),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                    horizontal: 14.w, vertical: 12.h),
               ),
-              contentPadding: EdgeInsets.symmetric(
-                  horizontal: 14.w, vertical: 12.h),
+              style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+              validator: isRequired
+                  ? (v) => v == null ? 'Please select $label' : null
+                  : null,
+              isExpanded: true,
+              icon: Icon(Icons.keyboard_arrow_down_rounded,
+                  color: AppColor.primary),
+              dropdownColor: Colors.white,
+              menuMaxHeight: 300.h,
             ),
-            style: TextStyle(fontSize: 14.sp, color: Colors.black87),
-            validator: isRequired
-                ? (v) => v == null ? 'Please select $label' : null
-                : null,
-            isExpanded: true,
-            icon: Icon(Icons.keyboard_arrow_down_rounded,
-                color: AppColor.primary),
-            dropdownColor: Colors.white,
-            menuMaxHeight: 300.h,
-          ),
         ],
       ),
     );
@@ -2192,6 +2226,7 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                             items: states,
                             value: _selectedState,
                             displayText: (s) => s.stateName,
+                            isLoading: _isLoadingData && states.isEmpty,
                             onChanged: (s) async {
                               if (mounted) {
                                 setState(() {
@@ -2201,11 +2236,9 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                                 });
                               }
                               if (s != null) {
-                                await controller
-                                    .fetchCitiesForState(s.id);
+                                await controller.fetchCitiesForState(s.id);
                                 if (mounted) {
-                                  setState(() => cities = List.from(
-                                      controller.cities));
+                                  setState(() => cities = List.from(controller.cities));
                                 }
                               }
                             },
@@ -2214,19 +2247,20 @@ class _MarketPlotFormState extends State<MarketPlotForm> {
                         ),
                         SizedBox(width: 12.w),
                         Expanded(
-                          child: _buildDropdown<City>(
+                          child: Obx(() => _buildDropdown<City>(
                             label: 'City',
                             items: cities,
                             value: _selectedCity,
                             displayText: (c) => c.cityName,
+                            isLoading: controller.isCityLoading.value,
                             onChanged: (c) {
                               if (mounted) {
                                 setState(() => _selectedCity = c);
                               }
                             },
                             isRequired: true,
-                            isEnabled: _selectedState != null,
-                          ),
+                            isEnabled: _selectedState != null && !controller.isCityLoading.value,
+                          )),
                         ),
                       ],
                     ),

@@ -1,5 +1,7 @@
 import 'package:cashback_farms/common/api_constant.dart';
 import 'package:cashback_farms/common/widget/share_action_button_widget.dart';
+import 'package:cashback_farms/features/rental_yeild/widget/rental_overview.dart';
+import 'package:cashback_farms/features/syndicate_plot/widget/about_plot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -146,37 +148,30 @@ class AboutPlot extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 10.h),
-                // ── SOLD OUT banner (always visible when sold) ──────────────
                 if (_isSoldOut) _buildSoldOutBanner(),
-
-                // View Details toggle
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [_buildViewDetailsButton(controller)],
                 ),
-
-                // Expandable details
-                Obx(
-                      () => _buildExpandableSection(
-                    controller,
-                    propertyName: property.name,
-                    fullLocation: fullLocation,
-                    description: property.description,
-                    monthlyRent: '₹ ${property.rentAmount}',
-                    annualYield: property.yieldAmount,
-                    property: property,
-                  ),
-                ),
-
+                _buildExpandedContent(property,fullLocation,property.description),
+                // Obx(
+                //       () => _buildExpandableSection(
+                //     controller,
+                //     propertyName: property.name,
+                //     fullLocation: fullLocation,
+                //     description: property.description,
+                //     monthlyRent: '₹ ${property.rentAmount}',
+                //     annualYield: property.yieldAmount,
+                //     property: property,
+                //   ),
+                // ),
                 SizedBox(height: 15.h),
-
-                // ── Enquiry / Book button — blocked when sold out ──────────
                 _buildSimpleEnquiryButton(controller, property),
-
-                SizedBox(height: 15.h),
               ],
             ),
           ),
+          RentalOverview(price: property.totalDocumentPrice.toString(),),
+          SizedBox(height: 10.h),
           if (property.lat != null && property.lng != null) ...[
             SizedBox(height: 10.h),
             _buildHeaderWithMap(property.lat!, property.lng!, fullLocation),
@@ -198,9 +193,75 @@ class AboutPlot extends StatelessWidget {
     });
   }
 
-  // ==========================================================================
-  // SOLD OUT BANNER
-  // ==========================================================================
+  Widget _buildExpandedContent(RentalDetailProperty? property,String? fullLocation,String? description) {
+    if (property == null) return const SizedBox();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 6.h),
+          // buildDetailRow(
+          //     label: 'Property Type',
+          //     value: property.propertyType?.categoryName ?? 'N/A',
+          //     delay: 0.ms,
+          //     index: 0,
+          //     valueColor: AppColor.primary),
+          // SizedBox(height: 8.h),
+          buildDetailRow(
+              label: 'Project Name',
+              value: property.name,
+              delay: 50.ms,
+              index: 1),
+          SizedBox(height: 8.h),
+          buildDetailRow(
+              label: 'Total Amount',
+              value: '₹ ${property.totalPrice}',
+              delay: 250.ms,
+              index: 5),
+          SizedBox(height: 8.h),
+          buildDetailRow(
+              label: 'Per Sq.Ft',
+              value: '₹ ${property.amountPay} sq.ft',
+              delay: 250.ms,
+              index: 5),
+          SizedBox(height: 8.h),
+          buildDetailRow(
+              label: 'Plot Area',
+              value: property.area ?? 'N/A',
+              delay: 150.ms,
+              index: 3),
+          SizedBox(height: 8.h),
+          buildDetailRow(
+              label: 'Plot Type',
+              value: property.propertyCategory?.categoryName ?? 'N/A',
+              delay: 150.ms,
+              index: 3),
+          SizedBox(height: 8.h),
+          buildDetailRow(
+              label: 'ULPIN',
+              value: property.ulpnNo ??"",
+              delay: 350.ms,
+              index: 7),
+          if (property.soldStatus ==1) ...[
+            SizedBox(height: 8.h),
+            buildDetailRow(
+              label: 'Availability',
+              value: 'SOLD OUT',
+              delay: 400.ms,
+              index: 8,
+              valueColor: Colors.red.shade700,
+            ),
+          ],
+          Divider(color: Colors.grey.withValues(alpha: 0.2),),
+          _buildDescriptionWithSeeMore(description??''),
+          SizedBox(height: 14.h),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildSoldOutBanner() {
     return Container(
@@ -628,10 +689,10 @@ class AboutPlot extends StatelessWidget {
     return ValueListenableBuilder<bool>(
       valueListenable: showAll,
       builder: (context, showAllValue, child) {
-        final displayText =
-        showAllValue || description.length <= maxChars
+        final isLong = description.length > maxChars;
+        final displayText = showAllValue || !isLong
             ? description
-            : '${description.substring(0, maxChars)}...';
+            : '${description.substring(0, maxChars)}…';
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -640,39 +701,59 @@ class AboutPlot extends StatelessWidget {
             SizedBox(height: 8.h),
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(12.w),
+              padding: EdgeInsets.all(10.w),
               decoration: BoxDecoration(
                 color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: Colors.grey),
+                border: Border.all(color: Colors.grey.shade200),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(displayText,
-                      style: TextStyle(fontSize: 14.sp, height: 1.5)),
-                  if (description.length > maxChars)
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                    child: Text(
+                      displayText,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        height: 1.65,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                  if (isLong) ...[
+                    SizedBox(height: 4.h),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () =>
-                        showAll.value = !showAllValue,
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize:
-                          MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          showAllValue ? 'Show Less' : 'See More',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColor.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      child: GestureDetector(
+                        onTap: () => showAll.value = !showAllValue,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              showAllValue ? 'Show less' : 'See more',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColor.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: 2.w),
+                            AnimatedRotation(
+                              turns: showAllValue ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 300),
+                              child: Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 16.sp,
+                                color: AppColor.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+                  ],
                 ],
               ),
             ),

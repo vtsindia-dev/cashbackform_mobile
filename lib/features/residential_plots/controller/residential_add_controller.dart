@@ -313,7 +313,7 @@ class ResidentialPropertyFormController extends GetxController {
     threeDImageUrl.value = '';
     update();
   }
-
+  var isCityLoading = false.obs;
   // ==================== PROPERTY LOADING ====================
 
   Future<String?> loadPropertyForEditing(int propertyId) async {
@@ -723,15 +723,21 @@ class ResidentialPropertyFormController extends GetxController {
 
   Future<void> fetchCitiesByState(int stateId) async {
     try {
+      isCityLoading(true); // ✅ dedicated city loader
+      citiesList.clear();
       final response = await ApiService.getRequest('${ApiUrl.baseUrl}/api/v2/city/$stateId');
       if (response.statusCode == 200 && response.data['status'] == 200) {
-        citiesList.assignAll((response.data['data'] as List).map((i) => CityModel.fromJson(i)).toList());
+        citiesList.assignAll(
+          (response.data['data'] as List).map((i) => CityModel.fromJson(i)).toList(),
+        );
       } else {
         citiesList.clear();
       }
     } catch (e) {
       print('❌ Error fetching cities: $e');
       citiesList.clear();
+    } finally {
+      isCityLoading(false); // ✅ always reset
     }
   }
 
