@@ -128,7 +128,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
       case PaymentType.giooPayment:
         return '/ownedplotlist';
       case PaymentType.rentalDocumentPayment:
-        return '/rentalYieldList';
+        return '/rentalEnquiry';
       default:
         return '/home';
     }

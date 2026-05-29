@@ -29,8 +29,11 @@ class _RentalPropertyDetailsScreenState
   @override
   void initState() {
     super.initState();
-    _fetchPropertyDetails();
-    controller.isExpanded.value = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      controller.isExpanded.value = true;
+      await _fetchPropertyDetails();
+    });
   }
 
   Future<void> _fetchPropertyDetails() async {

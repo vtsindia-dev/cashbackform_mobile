@@ -39,7 +39,7 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
           actions: [
             IconButton(
               onPressed: controller.refreshRentalEnquiries,
-              icon: Icon(Iconsax.refresh, size: 20.sp),
+              icon: Icon(Iconsax.refresh, size: 18.sp),
             ),
           ],
         ),
