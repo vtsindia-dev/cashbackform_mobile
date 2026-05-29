@@ -1560,7 +1560,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('Other Details', Icons.notes_rounded, optional: true),
+                          _buildLabel('Bank Details', Icons.notes_rounded, optional: true),
                           SizedBox(height: 6.h),
                           _buildTextField(
                             controller: _otherDetailsController,
