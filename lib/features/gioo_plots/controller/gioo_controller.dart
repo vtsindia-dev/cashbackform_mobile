@@ -1634,7 +1634,7 @@ class GiooPlotController extends GetxController {
 
   String formatDate(DateTime? date) {
     if (date == null) return 'N/A';
-    return DateFormat('dd MMM yyyy hh:mm a').format(date);
+    return DateFormat('dd MMM yyyy hh:mm a').format(date.toLocal());
   }
 
   String getStatusText(String status) {

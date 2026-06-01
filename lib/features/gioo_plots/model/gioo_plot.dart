@@ -79,8 +79,8 @@ class GiooPlot {
       agentId: json['agent_id']?.toString(),
       status: json['status'] as int? ?? 0,
         soldStatus : json['sold_status'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
       propertyType: json['property_type'] != null ? PropertyType.fromJson(json['property_type']) : null,
     );
   }
@@ -135,8 +135,8 @@ class PropertyType {
       id: json['id'] ?? 0,
       categoryName: json['category_name']?.toString() ?? '',
       status: json['status'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
     );
   }
 }
@@ -164,8 +164,8 @@ class City {
       stateId: json['state_id'] ?? 0,
       cityName: json['city_name']?.toString() ?? '',
       status: json['status'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
     );
   }
 }
@@ -190,8 +190,8 @@ class AppState {
       id: json['id'] ?? 0,
       stateName: json['state_name']?.toString() ?? '',
       status: json['status'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
     );
   }
 }
@@ -326,8 +326,8 @@ class Property {
       agentId: json['agent_id']?.toString() ?? '',
       status: json['status'] ?? 0,
       featured: json['featured'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
       aminities: json['aminities'] ?? '',
       bluePrint: json['blue_print'],
       totalPrice: json['total_price']?.toString() ?? '0',
@@ -600,8 +600,8 @@ class NearbyLocation {
       id: json['id'] ?? 0,
       title: json['title'] ?? '',
       image: json['image'] ?? '',
-      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(json['created_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']?.toString() ?? DateTime.now().toIso8601String()).toLocal(),
       pivot: Pivot.fromJson(json['pivot'] ?? {}),
     );
   }
@@ -637,8 +637,8 @@ class Pivot {
       geoPropertyId: json['geo_property_id'] ?? 0,
       nearbyLocationId: json['nearby_location_id'] ?? 0,
       distance: parsedDistance, // Use the parsed value
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
     );
   }
 }
@@ -832,10 +832,10 @@ class GiooPlotDetail {
       threeDImage: json['three_d_image']?.toString(),
       youtubeLink: json['youtube_link']?.toString(),
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'].toString())
+          ? DateTime.parse(json['created_at'].toString()).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'].toString())
+          ? DateTime.parse(json['updated_at'].toString()).toLocal()
           : DateTime.now(),
     );
   }
@@ -909,8 +909,8 @@ class Booking {
       transactionId: json['transaction_id'] as int? ?? 0,
       returnAmount: json['return_amount'] as String?,
       returnDate: json['return_date'] as String?,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) ?? DateTime.now() : DateTime.now(),
-      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at']) ?? DateTime.now() : DateTime.now(),
+      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'])?.toLocal() ?? DateTime.now() : DateTime.now(),
+      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at'])?.toLocal() ?? DateTime.now() : DateTime.now(),
     );
   }
 }class Amenity {
@@ -1006,10 +1006,10 @@ class GiooBuyingList {
           ? double.tryParse(json['return_amount'].toString())
           : null,
       returnDate: json['return_date'] != null
-          ? DateTime.tryParse(json['return_date'].toString())
+          ? DateTime.tryParse(json['return_date'].toString())?.toLocal()
           : null,
-      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] ?? '')?.toLocal() ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at'] ?? '')?.toLocal() ?? DateTime.now(),
       transaction: Transaction.fromJson(json['transaction'] ?? {}),
       property: json['property'] != null
           ? Property.fromJson(json['property'])
@@ -1086,8 +1086,8 @@ class Transaction {
       propertyId: parsedPropertyId,
       userId: parsedUserId,
       type: json['type']?.toString() ?? '',
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
       user: User.fromJson(json['user'] ?? {}),
     );
   }
@@ -1185,7 +1185,7 @@ class GiooBuyingDetail {
       unit: json['unit'] ?? 0,
       cancelStatus: json['cancel_status'] ?? 0,
       refundDate: json['refund_date'] != null
-          ? DateTime.parse(json['refund_date'])
+          ? DateTime.parse(json['refund_date']).toLocal()
           : null,
       refundStatus: json['refund_status'] ?? 0,
       amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
@@ -1193,8 +1193,8 @@ class GiooBuyingDetail {
           ? double.tryParse(json['refund_amount'].toString())
           : null,
       returnStatus: json['return_status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']).toLocal(),
       transaction: Transaction.fromJson(json['transaction']),
       property: json['property'] != null ? Property.fromJson(json['property']) : null, // Handle null property
     );

@@ -1160,6 +1160,7 @@ class ResidentialPropertyFormController extends GetxController {
               if (item is Map<String, dynamic> && item['plot'] is Map<String, dynamic>) {
                 final plotData = Map<String, dynamic>.from(item['plot']);
                 if (item.containsKey('id')) plotData['enquiry_id'] = item['id'];
+                if (item.containsKey('created_at')) plotData['created_at'] = item['created_at'];
                 return Property.fromJson(plotData);
               }
             } catch (e) { print('❌ Error parsing enquiry: $e'); }

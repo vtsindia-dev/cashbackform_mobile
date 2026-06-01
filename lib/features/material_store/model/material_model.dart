@@ -96,8 +96,8 @@ class Vendor {
       estimateDate: json['estimate_date'],
       taxNumber: json['tax_number'],
       whatsapp: json['whatsapp'],
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       reviewsCount: json['reviews_count'] ?? 0,
       reviewsAvgRating: json['reviews_avg_rating']?.toString(),
       fax: json['fax'],
@@ -173,8 +173,8 @@ class ServiceCategory {
       gallery: json['gallery'],
       status: json['status'] ?? 0,
       featured: json['featured'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
     );
   }
 }
@@ -211,8 +211,8 @@ class Review {
       rating: json['rating']?.toString() ?? '0',
       review: json['review'] ?? '',
       status: json['status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       user: ReviewUser.fromJson(json['user'] ?? {}),
     );
   }
@@ -294,8 +294,8 @@ class VendorMaterial {
       id: json['id'] ?? 0,
       userId: json['user_id'] ?? 0,
       materialId: json['material_id'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       material: Material.fromJson(json['material'] ?? {}),
     );
   }
@@ -347,8 +347,8 @@ class Material {
       image: json['image'] != null ? List<String>.from(json['image']) : [],
       status: json['status'] ?? 0,
       featured: json['featured'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       gallery: json['gallery'],
     );
   }
@@ -377,8 +377,8 @@ class VendorService {
       id: json['id'] ?? 0,
       userId: json['user_id'] ?? 0,
       serviceId: json['service_id'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       service: ServiceCategory.fromJson(json['service'] ?? {}),
     );
   }
@@ -457,8 +457,8 @@ class MaterialEnquiry {
       unitId: json['unit_id'],
       quantity: json['quantity'],
       status: json['status'] ?? 'pending',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       material: json['material'] != null ? Material.fromJson(json['material']) : null,
       user: json['user'] != null ? User.fromJson(json['user']) : null,
     );
@@ -502,8 +502,8 @@ class ServiceEnquiry {
       datePreference: json['date_preference'] ?? '',
       timePreference: json['time_preference'] ?? '',
       status: json['status'] ?? 'pending',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       service: json['service'] != null ? ServiceCategory.fromJson(json['service']) : null,
       user: json['user'] != null ? User.fromJson(json['user']) : null,
     );
@@ -597,8 +597,8 @@ class City {
       stateId: json['state_id'] ?? 0,
       cityName: json['city_name'] ?? '',
       status: json['status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
     );
   }
 }
@@ -623,8 +623,8 @@ class State {
       id: json['id'] ?? 0,
       stateName: json['state_name'] ?? '',
       status: json['status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
     );
   }
 }

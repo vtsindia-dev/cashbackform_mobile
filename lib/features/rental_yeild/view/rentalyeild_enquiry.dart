@@ -126,12 +126,18 @@ class _RentalEnquiryScreenState extends State<RentalEnquiryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      DateFormat('dd MMM yyyy').format(enquiry.createdAt),
+                      DateFormat('dd MMM yyyy').format(enquiry.createdAt.toLocal()),
                       style: TextStyle(fontSize: 10.sp, color: AppColor.grey),
                     ),
                     Text(
-                      DateFormat('hh:mm a').format(enquiry.createdAt),
-                      style: TextStyle(fontSize: 9.sp, color: AppColor.grey),
+                      enquiry.createdAt != null
+                          ? DateFormat('hh:mm a')
+                          .format(enquiry.createdAt!.toLocal())
+                          : '--',
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        color: AppColor.grey,
+                      ),
                     ),
                   ],
                 ),

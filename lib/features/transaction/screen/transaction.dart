@@ -1024,7 +1024,7 @@ class _TransactionScreenState extends State<TransactionScreen>
 
   String _formatDate(String date) {
     try {
-      return DateFormat('dd MMM yyyy • hh:mm a').format(DateTime.parse(date));
+      return DateFormat('dd MMM yyyy • hh:mm a').format(DateTime.parse(date).toLocal());
     } catch (_) {
       return date;
     }
@@ -1118,6 +1118,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _propertyIdController.dispose();
     _amountController.dispose();
     _otherDetailsController.dispose();
@@ -1246,20 +1247,38 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     );
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+  final _scrollController = ScrollController();
+  final _paymentModeKey = GlobalKey();
+  final _datesKey = GlobalKey();
+  final _amountKey = GlobalKey();
 
-    if (_selectedPaymentMode == null) {
-      Get.snackbar('Required', 'Please select a payment mode',
+  void _scrollToKey(GlobalKey key) {
+    final context = key.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        alignment: 0.3,
+      );
+    }
+  }
+
+  Future<void> _submit() async {
+
+    final amountText = _amountController.text.trim();
+    if (amountText.isEmpty) {
+      _scrollToKey(_amountKey);
+      Get.snackbar('Error', 'Amount is required',
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade50,
           colorText: Colors.red);
       return;
     }
 
-    final amountText = _amountController.text.trim();
-    if (amountText.isEmpty) {
-      Get.snackbar('Error', 'Amount is required',
+    if (_selectedPaymentMode == null) {
+      _scrollToKey(_paymentModeKey);
+      Get.snackbar('Required', 'Please select a payment mode',
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade50,
           colorText: Colors.red);
@@ -1275,13 +1294,26 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
       return;
     }
 
-    final today = DateTime.now();
-    final futureDates = _selectedDates.where((date) => date.isAfter(today)).toList();
-    if (futureDates.isNotEmpty) {
-      Get.snackbar('Invalid Date', 'Registration dates cannot be in the future',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red.shade50,
-          colorText: Colors.red);
+    if (_selectedDates.isEmpty) {
+      _scrollToKey(_datesKey);
+      Get.snackbar(
+        'Dates Required',
+        'Please select registration dates (max 3)',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.shade50,
+        colorText: Colors.red,
+      );
+      return;
+    }
+    if (_selectedDates.length < 3) {
+      _scrollToKey(_datesKey);
+      Get.snackbar(
+        'Add More Dates',
+        'You selected ${_selectedDates.length} date(s). Please select ${3 - _selectedDates.length} more',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.orange.shade50,
+        colorText: Colors.orange.shade800,
+      );
       return;
     }
 
@@ -1393,6 +1425,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
           Divider(height: 1, color: Colors.grey[100]),
           Flexible(
             child: SingleChildScrollView(
+              controller: _scrollController,
               padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 20.h),
               child: Form(
                 key: _formKey,
@@ -1428,7 +1461,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                     //   validator: (v) => (v == null || v.isEmpty) ? 'Property ID is required' : null,
                     // ),
                     SizedBox(height: 16.h),
-
+                    SizedBox(key: _amountKey, height: 0),
                     _buildLabel('Amount (₹) *', Icons.currency_rupee_rounded, isMandatory: true),
                     SizedBox(height: 6.h),
                     _buildTextField(
@@ -1438,7 +1471,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                       validator: (v) => (v == null || v.isEmpty) ? 'Amount is required' : null,
                     ),
                     SizedBox(height: 16.h),
-
+                    SizedBox(key: _paymentModeKey, height: 0),
                     _buildLabel('Payment Mode *', Icons.payment_rounded, isMandatory: true),
                     SizedBox(height: 10.h),
                     Wrap(
@@ -1570,11 +1603,25 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                           SizedBox(height: 16.h),
                         ],
                       ),
-
                     Row(
+                      key: _datesKey,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildLabel('Registration Dates', Icons.calendar_today_outlined, optional: true),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Registration Dates *', Icons.calendar_today_outlined, optional: false, isMandatory: true),
+                            Text(
+                              'Select up to 3 registration dates',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 9.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+
                         GestureDetector(
                           onTap: _pickDate,
                           child: Container(

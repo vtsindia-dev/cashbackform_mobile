@@ -140,8 +140,8 @@ class Profile {
       serviceRequest: json['service_request'] ?? 0,
       firstName: json['first_name'] ?? '',
       lastName: json['last_name'] ?? '',
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']).toLocal(),
       fcmToken: json['fcm_token'],
       isDeleted: json['is_deleted'] ?? 0,
       walletBalance: json['wallet_balance']?.toString() ?? '0',
@@ -170,8 +170,8 @@ class Role {
     return Role(
       id: json['id'],
       role: json['role'] ?? '',
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']).toLocal(),
     );
   }
 }
@@ -220,8 +220,8 @@ class SyndicateBooked {
       status: json['status'] ?? 0,
       cancelStatus: json['cancel_status'] ?? 0,
       refundAmount: json['refund_amount']?.toString() ?? '0',
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']).toLocal(),
       dtdcId: json['dtdc_id'],
       trackingId: json['tracking_id'],
       dtdcCancelled: json['dtdc_cancelled'] ?? 0,
@@ -274,8 +274,8 @@ class GiooBooked {
       transactionId: json['transaction_id'],
       returnAmount: json['return_amount']?.toString(),
       returnDate: json['return_date'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']).toLocal(),
       couponId: json['coupon_id'],
       specialDiscount: json['special_discount']?.toString() ?? '0',
     );
@@ -309,8 +309,8 @@ class MarketEnquiry {
       propertyId: json['property_id'],
       counts: (json['counts'] ?? 0).toInt(), // Ensure int
       sold: (json['sold'] ?? 0).toInt(),     // Ensure int
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']).toLocal(),
       property: json['property'],
     );
   }
@@ -363,8 +363,8 @@ class MaterialEnquiry {
       quantity: json['quantity'],
       assignedVendor: json['assigned_vendor'],
       accepted: json['accepted'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']).toLocal(),
       material: Material.fromJson(json['material']),
       user: Profile.fromJson(json['user']),
     );
@@ -426,8 +426,8 @@ class Material {
       status: json['status'] ?? 0,
       isDeleted: json['is_deleted'] ?? 0,
       featured: json['featured'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']).toLocal(),
       gallery: json['gallery'],
       countryId: json['country_id'],
       stateId: json['state_id'],
@@ -496,8 +496,8 @@ class TermsPage {
       title: json['title'] ?? 'Terms & Conditions',
       slug: json['slug'] ?? '',
       content: json['content'] ?? '',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
     );
   }
 }
@@ -744,10 +744,10 @@ class BusinessSettings {
       youtube: json['youtube'] as String?,
       whatsapp: json['whatsapp'] as String?,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
+          ? DateTime.parse(json['created_at'] as String).toLocal()
           : null,
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
+          ? DateTime.parse(json['updated_at'] as String).toLocal()
           : null,
       discountMaxCost: json['discount_max_cost'] as String?,
       discountPercentage: json['discount_percentage'] != null

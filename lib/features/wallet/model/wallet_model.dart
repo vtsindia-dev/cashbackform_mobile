@@ -54,7 +54,7 @@ class WalletTransaction {
       credit: double.tryParse(json['credit']?.toString() ?? '0') ?? 0,
       debit: double.tryParse(json['debit']?.toString() ?? '0') ?? 0,
       balance: double.tryParse(json['balance']?.toString() ?? '0') ?? 0,
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
     );
   }
 

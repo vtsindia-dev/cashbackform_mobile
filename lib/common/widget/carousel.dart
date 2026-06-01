@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CarouselWidget extends StatefulWidget {
   final List<String> images;
@@ -123,22 +124,29 @@ class _CarouselWidgetState extends State<CarouselWidget> {
     final bool isNetwork = path.startsWith('http') || path.startsWith('https');
 
     if (isNetwork) {
-      return Image.network(
-        path,
+      return CachedNetworkImage(
+        imageUrl: path,
         width: double.infinity,
         height: double.infinity,
         fit: widget.imageFit,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return _buildShimmer();
-        },
-        errorBuilder: (context, error, stackTrace) {
+
+        placeholder: (context, url) => _buildShimmer(),
+
+        errorWidget: (context, url, error) {
           widget.onError?.call(index, error);
+
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) setState(() => _imageErrorMap[index] = true);
+            if (mounted) {
+              setState(() => _imageErrorMap[index] = true);
+            }
           });
+
           return _buildErrorPlaceholder();
         },
+
+        fadeInDuration: const Duration(milliseconds: 300),
+        memCacheWidth: 1200,
+        maxWidthDiskCache: 1200,
       );
     } else {
       return Image.asset(

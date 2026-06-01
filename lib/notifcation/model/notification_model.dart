@@ -33,8 +33,8 @@ class NotificationModel {
       type: json['type'],
       referenceId: json['reference_id'],
       isRead: json['is_read'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at']).toLocal(),
     );
   }
 

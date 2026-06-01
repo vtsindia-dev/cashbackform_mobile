@@ -486,7 +486,6 @@ class ContactUsScreen extends StatelessWidget {
             ),
             child: Image.asset(
               assetPath,
-              color: color, // Optional: Removes original image colors to match your theme
               fit: BoxFit.contain,
             ),
           ),
