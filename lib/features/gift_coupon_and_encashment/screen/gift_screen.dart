@@ -981,7 +981,7 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
 
   String _fmtDate(String? raw) {
     if (raw == null || raw.isEmpty) return '—';
-    try { return DateFormat('dd MMM yyyy').format(DateTime.parse(raw)); }
+    try { return DateFormat('dd MMM yyyy').format(DateTime.parse(raw).toLocal()); }
     catch (_) { return raw; }
   }
 

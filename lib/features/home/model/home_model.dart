@@ -20,8 +20,8 @@ class FeaturedBanner {
       id: json['id'] ?? 0,
       image: json['image'] ?? '',
       redirectUrl: json['redirect_url'],
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
     );
   }
 }
@@ -50,8 +50,8 @@ class FeaturedCity {
       stateId: json['state_id'] ?? 0,
       cityName: json['city_name'] ?? '',
       status: json['status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
     );
   }
 }
@@ -77,8 +77,8 @@ class FeaturedState {
       id: json['id'] ?? 0,
       stateName: json['state_name'] ?? '',
       status: json['status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
     );
   }
 }
@@ -104,8 +104,8 @@ class FeaturedPropertyType {
       id: json['id'] ?? 0,
       categoryName: json['category_name'] ?? '',
       status: json['status'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
     );
   }
 }
@@ -180,8 +180,8 @@ class FeaturedSyndicate {
       plotImage: json['plot_image'],
       soldStatus : json['sold_status'],
       work: json['work'],
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       propertyType: FeaturedPropertyType.fromJson(json['property_type'] ?? {}),
     );
   }
@@ -273,8 +273,8 @@ class FeaturedMarketProperty {
       images: imagesList,
       verifyStatus: json['verify_status'] ?? 0,
       uldNo: json['uld_no']?.toString() ?? '',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       propertyType: json['property_type'] != null
           ? FeaturedPropertyType.fromJson(json['property_type'])
           : null,
@@ -470,8 +470,8 @@ class GiooPlot {
       agentId: json['agent_id']?.toString(),
       status: json['status'] ?? 0,
       featured: json['featured'] ?? 0,
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()),
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toString()).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toString()).toLocal(),
       aminities: json['aminities']?.toString() ?? '',
       bluePrint: json['blue_print'],
       soldStatus : json['sold_status'],

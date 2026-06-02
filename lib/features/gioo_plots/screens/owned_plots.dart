@@ -715,7 +715,7 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
             children: [
               _headerStatPill(
                 label: "Date",
-                value: dateFormat.format(booking.createdAt),
+                value: dateFormat.format(booking.createdAt.toLocal()),
                 icon: Icons.calendar_today_rounded,
               ),
               12.w.horizontalSpace,

@@ -212,7 +212,7 @@ class AboutPlot extends StatelessWidget {
   // Helper method to format date
   String _formatDate(DateTime? dateTime) {
     if (dateTime == null) return 'Not Available';
-    return DateFormat('dd/MM/yyyy').format(dateTime);
+    return DateFormat('dd/MM/yyyy').format(dateTime.toLocal());
   }
 
   Widget _buildCarousel(List<String> images, String shareLink, bool isSoldOut) {

@@ -175,10 +175,10 @@ class MarketPlot {
           : int.tryParse(json['verify_status'].toString()) ?? 0)
           : 0,
       createdAt: DateTime.tryParse(
-          json['created_at']?.toString() ?? '') ??
+          json['created_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       updatedAt: DateTime.tryParse(
-          json['updated_at']?.toString() ?? '') ??
+          json['updated_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       threeDImage: json['three_d_image']?.toString(),
       propertyType: json['property_type'] != null && json['property_type'] is Map
@@ -296,10 +296,10 @@ class City {
           ? json['status']
           : int.tryParse(json['status']?.toString() ?? '') ?? 0,
       createdAt:
-      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       updatedAt:
-      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
     );
   }
@@ -489,10 +489,10 @@ class MarketPlotDetail {
       documents: parseDocuments(json['documents']),
       nearbyLocations: parseNearbyLocations(json['nearby_locations']),
       createdAt:
-      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       updatedAt:
-      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       marketPlotAmount: parseMarketPlotAmount(json['market_plot_amount']),
       documentVerified: parseDocumentVerified(json['document_verified']),
@@ -605,9 +605,9 @@ class MarketPlotDetail {
   }
 
   String get formattedCreatedDate =>
-      DateFormat('dd/MM/yyyy').format(createdAt);
+      DateFormat('dd/MM/yyyy').format(createdAt.toLocal());
   String get formattedUpdatedDate =>
-      DateFormat('dd/MM/yyyy').format(updatedAt);
+      DateFormat('dd/MM/yyyy').format(updatedAt.toLocal());
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -699,10 +699,10 @@ class Document {
       type: json['type']?.toString() ?? '',
       docType: json['douc_type']?.toString(),
       createdAt:
-      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       updatedAt:
-      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       downloadUrl: json['download_url']?.toString() ?? '',
     );
@@ -736,10 +736,10 @@ class Amenity {
       title: json['title']?.toString() ?? '',
       image: json['image']?.toString() ?? '',
       createdAt:
-      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       updatedAt:
-      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
     );
   }
@@ -774,10 +774,10 @@ class NearbyLocation {
       title: json['title']?.toString() ?? '',
       image: json['image']?.toString() ?? '',
       createdAt:
-      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       updatedAt:
-      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       pivot: json['pivot'] != null ? Pivot.fromJson(json['pivot']) : null,
     );
@@ -822,10 +822,10 @@ class Pivot {
           : int.tryParse(json['nearby_location_id']?.toString() ?? '') ?? 0,
       distance: parseDistance(json['distance']),
       createdAt:
-      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       updatedAt:
-      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
     );
   }
@@ -894,10 +894,10 @@ class PropertyType {
           ? json['status']
           : int.tryParse(json['status']?.toString() ?? '') ?? 0,
       createdAt:
-      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       updatedAt:
-      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+      DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
     );
   }
@@ -933,10 +933,10 @@ class MarketPlotEnquiry {
       propertyId: json['property_id'],
       counts: json['counts'] ?? 1,
       createdAt: DateTime.tryParse(
-          json['created_at']?.toString() ?? '') ??
+          json['created_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       updatedAt: DateTime.tryParse(
-          json['updated_at']?.toString() ?? '') ??
+          json['updated_at']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       property: json['property'] != null
           ? MarketPlotEnquiryProperty.fromJson(json['property'])
@@ -944,8 +944,8 @@ class MarketPlotEnquiry {
     );
   }
 
-  String get formattedDate => DateFormat('dd MMM yyyy').format(createdAt);
-  String get formattedTime => DateFormat('hh:mm a').format(createdAt);
+  String get formattedDate => DateFormat('dd MMM yyyy').format(createdAt.toLocal());
+  String get formattedTime => DateFormat('hh:mm a').format(createdAt.toLocal());
   String get enquiryStatus {
     if (counts >= 5) return 'High Priority';
     if (counts >= 3) return 'Active';

@@ -45,8 +45,8 @@ class KYCDocument {
       aadharDoc: json['aadhar_doc'] ?? '',
       signDoc: json['sign_doc'],
       type: json['type'],
-      createdAt: DateTime.parse(json['created_at'] ?? '1970-01-01'),
-      updatedAt: DateTime.parse(json['updated_at'] ?? '1970-01-01'),
+      createdAt: DateTime.parse(json['created_at'] ?? '1970-01-01').toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] ?? '1970-01-01').toLocal(),
       isDeleted: json['is_deleted'] ?? 0,
       transactionId: json['transaction_id'],
     );

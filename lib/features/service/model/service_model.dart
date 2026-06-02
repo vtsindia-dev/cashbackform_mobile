@@ -122,10 +122,10 @@ class Vendor {
       taxNumber: json['tax_number']?.toString(),
       whatsapp: json['whatsapp']?.toString(),
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
       reviewsCount: json['reviews_count']?.toInt() ?? 0,
       reviewsAvgRating: json['reviews_avg_rating']?.toString(),
@@ -208,10 +208,10 @@ class ServiceCategory {
       status: json['status']?.toInt() ?? 0,
       featured: json['featured']?.toInt() ?? 0,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
     );
   }
@@ -250,10 +250,10 @@ class Review {
       review: json['review']?.toString() ?? '',
       status: json['status']?.toInt() ?? 0,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
       user: ReviewUser.fromJson(json['user'] ?? {}),
     );
@@ -338,10 +338,10 @@ class VendorMaterial {
       userId: json['user_id']?.toInt() ?? 0,
       materialId: json['material_id']?.toInt() ?? 0,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
       material: Material.fromJson(json['material'] ?? {}),
     );
@@ -405,10 +405,10 @@ class Material {
       isDeleted: json['is_deleted']?.toInt() ?? 0,
       featured: json['featured']?.toInt() ?? 0,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
       gallery: json['gallery']?.toString(),
       countryId: json['country_id']?.toInt(),
@@ -442,10 +442,10 @@ class VendorService {
       userId: json['user_id']?.toInt() ?? 0,
       serviceId: json['service_id']?.toInt() ?? 0,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
       service: ServiceCategory.fromJson(json['service'] ?? {}),
     );
@@ -548,10 +548,10 @@ class MaterialEnquiry {
       assignedVendor: json['assigned_vendor']?.toInt(),
       accepted: json['accepted']?.toInt() ?? 0,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
       agentname: json['agentname']?.toString() ?? '',
       shopName: json['shop_name']?.toString() ?? '',
@@ -663,10 +663,10 @@ class ServiceEnquiry {
       datePreference: json['date_preference']?.toString(),
       timePreference: json['time_preference']?.toString(),
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
       agentname: json['agentname']?.toString() ?? '',
       shopName: json['shop_name']?.toString() ?? '',
@@ -800,10 +800,10 @@ class City {
       cityName: json['city_name']?.toString() ?? '',
       status: json['status']?.toInt() ?? 0,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
     );
   }
@@ -831,10 +831,10 @@ class State {
       stateName: json['state_name']?.toString() ?? '',
       status: json['status']?.toInt() ?? 0,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at']).toLocal()
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at']).toLocal()
           : DateTime.now(),
     );
   }

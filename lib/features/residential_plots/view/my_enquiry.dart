@@ -109,7 +109,7 @@ class _PlotEnquiryScreenState extends State<PlotEnquiryScreen> {
                   ],
                 ),
                 Text(
-                  "Enquired on ${DateFormat('dd/MM/yyyy').format(DateTime.parse(property.createdAt.toString()))}",
+                  "Enquired on ${DateFormat('dd/MM/yyyy').format(DateTime.parse(property.createdAt.toString()).toLocal())}",
                   style: TextStyle(fontSize: 11.sp, color: AppColor.grey),
                 ),
               ],
