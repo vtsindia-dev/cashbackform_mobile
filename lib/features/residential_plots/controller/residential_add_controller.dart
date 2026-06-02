@@ -121,7 +121,7 @@ class ResidentialPropertyFormController extends GetxController {
         fetchPropertyCategories(),
         fetchAvailableAmenities(),
         fetchStates(),
-        getCurrentLocation(),
+     //   getCurrentLocation(),
         fetchNearbyPlaces(),
       ]);
     } catch (e) {

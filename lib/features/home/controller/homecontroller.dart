@@ -241,7 +241,7 @@ class HomeController extends GetxController {
       if (status.isPermanentlyDenied) {
         updateLocationText("Enable location in Settings");
         locationError('Location permission permanently denied');
-        openAppSettings();
+        _showOpenSettingsDialog();
         return;
       }
 
@@ -259,6 +259,32 @@ class HomeController extends GetxController {
       isLoadingLocation(false);
       _isFetchingLocation = false;
     }
+  }
+
+  void _showOpenSettingsDialog() {
+    if (Get.context == null) return;
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Location Permission'),
+        content: const Text(
+          'Location permission is required to show nearby properties. Please enable it in Settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
   }
 
   Future<void> fetchLocationFromDevice() async {
