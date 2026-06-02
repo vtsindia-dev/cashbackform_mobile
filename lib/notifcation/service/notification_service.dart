@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:cashback_farms/common/route/router.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
@@ -45,21 +44,20 @@ class LocalNotificationService {
     );
   }
 
-  static Future<void> display(RemoteMessage message) async {
+  static Future<void> display({
+    required String? title,
+    required String? body,
+    Map<String, dynamic>? data,
+  }) async {
     try {
       debugPrint("================ NOTIFICATION RECEIVED ================");
-      debugPrint("Full Message:");
-      debugPrint(message.toMap().toString());
-      debugPrint("Title: ${message.notification?.title}");
-      debugPrint("Body: ${message.notification?.body}");
-      debugPrint("Data Payload: ${message.data}");
-      message.data.forEach((key, value) {
-        debugPrint("Key: $key  Value: $value");
-      });
+      debugPrint("Title: $title");
+      debugPrint("Body: $body");
+      debugPrint("Data Payload: $data");
       debugPrint("======================================================");
       Random random = Random();
       int notificationId = random.nextInt(100000);
-      String? imageUrl = message.data['image'];
+      String? imageUrl = data?['image'];
       BigPictureStyleInformation? bigPictureStyleInformation;
       if (imageUrl != null && imageUrl.isNotEmpty) {
         try {
@@ -75,8 +73,8 @@ class LocalNotificationService {
             bigPictureStyleInformation = BigPictureStyleInformation(
               bigPicture,
               largeIcon: bigPicture,
-              contentTitle: message.notification?.title ?? "",
-              summaryText: message.notification?.body ?? "",
+              contentTitle: title ?? "",
+              summaryText: body ?? "",
             );
 
             debugPrint("Big Image Loaded Successfully");
@@ -103,10 +101,10 @@ class LocalNotificationService {
       );
       await _flutterLocalNotificationsPlugin.show(
         notificationId,
-        message.notification?.title ?? "Notification",
-        message.notification?.body ?? "",
+        title ?? "Notification",
+        body ?? "",
         notificationDetails,
-        payload: jsonEncode(message.data),
+        payload: data != null ? jsonEncode(data) : null,
       );
       debugPrint("Notification Displayed Successfully ID: $notificationId");
     } catch (e) {
@@ -131,9 +129,9 @@ Future<void> requestNotificationPermission() async {
 
 void handleNavigation(Map<String, dynamic> data) {
   try {
-    debugPrint('🔔 handleNavigation → navigating to notifications');
+    debugPrint('handleNavigation: navigating to notifications');
     Get.toNamed(AppRoutes.notification);
   } catch (e) {
-    debugPrint('❌ handleNavigation error: $e');
+    debugPrint('handleNavigation error: $e');
   }
 }

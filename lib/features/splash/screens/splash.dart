@@ -1,6 +1,4 @@
 import 'package:cashback_farms/common/colours.dart';
-import 'package:cashback_farms/notifcation/service/notification_service.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/app_constant.dart';

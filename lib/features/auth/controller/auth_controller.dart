@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:cashback_farms/features/auth/models/location_model.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:permission_handler/permission_handler.dart';
@@ -64,45 +63,6 @@ class AuthController extends GetxController with CodeAutoFill {
     _checkPermissions();
     listenForCode();
     fetchCountries();
-    _getFcmToken();
-    _listenFcmTokenRefresh();
-  }
-
-  // ─── FCM ──────────────────────────────────────────────────────────────────────
-
-  Future<void> _getFcmToken() async {
-    try {
-      NotificationSettings settings =
-      await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-
-      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional) {
-        String? token = await FirebaseMessaging.instance.getToken();
-        if (token != null && token.isNotEmpty) {
-          fcmToken.value = token;
-          print("✅ FCM Token: $token");
-        } else {
-          print("⚠️ FCM Token is null");
-        }
-      } else {
-        print("⚠️ Notification permission denied");
-      }
-    } catch (e) {
-      print("❌ Error getting FCM token: $e");
-    }
-  }
-
-  void _listenFcmTokenRefresh() {
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-      fcmToken.value = newToken;
-      print("🔄 FCM Token refreshed: $newToken");
-      // Just save locally — sent to backend on next login
-      await SessionManager.saveFcmToken(newToken);
-    });
   }
 
   // ─── OTP AUTO FILL ────────────────────────────────────────────────────────────
@@ -290,22 +250,18 @@ class AuthController extends GetxController with CodeAutoFill {
       if (otp == serverOtp.value) {
         SnackBarHelper.showSuccess("OTP verified successfully!");
 
-        // Refresh FCM token before login to ensure latest token
-        await _getFcmToken();
-
         final loginResponse = await ApiService.postRequest(
           ApiUrl.login,
           {
             "phone": phoneNumber.value,
             "otp": otp,
-            "fcm_token": fcmToken.value, // ✅ FCM token sent to backend
+            "fcm_token": fcmToken.value,
           },
         );
 
         print("=== FULL LOGIN RESPONSE ===");
         print("Status: ${loginResponse.statusCode}");
         print("Data: ${loginResponse.data}");
-        print("FCM Token sent: ${fcmToken.value}");
         print("=== END RESPONSE ===");
 
         if (loginResponse.statusCode == 200) {
@@ -337,7 +293,6 @@ class AuthController extends GetxController with CodeAutoFill {
 
           // Save session and FCM token locally
           await SessionManager.saveUserSession(userData, token: token);
-          await SessionManager.saveFcmToken(fcmToken.value);
 
           final savedToken = await SessionManager.getToken();
           if (savedToken != null && savedToken.isNotEmpty) {
@@ -429,9 +384,6 @@ class AuthController extends GetxController with CodeAutoFill {
 
       isLoading(true);
 
-      // Refresh FCM token before register
-      await _getFcmToken();
-
       var formData = dio.FormData.fromMap({
         'first_name': firstNameController.text.trim(),
         'last_name': lastNameController.text.trim(),
@@ -494,7 +446,6 @@ class AuthController extends GetxController with CodeAutoFill {
         print('Token: $token');
 
         await SessionManager.saveUserSession(userData, token: token);
-        await SessionManager.saveFcmToken(fcmToken.value);
 
         final isLoggedIn = await SessionManager.isLoggedIn();
         print('After registration - isLoggedIn: $isLoggedIn');
