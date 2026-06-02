@@ -115,16 +115,95 @@ class LocalNotificationService {
 
 Future<void> requestNotificationPermission() async {
   var status = await Permission.notification.status;
-  if (status.isDenied) {
-    final result = await Permission.notification.request();
-    if (result.isGranted) {
-      debugPrint("Notification permission granted!");
-    } else if (result.isPermanentlyDenied) {
-      openAppSettings();
-    }
-  } else if (status.isPermanentlyDenied) {
-    openAppSettings();
+
+  if (status.isDenied || status.isRestricted) {
+    status = await Permission.notification.request();
   }
+
+  if (status.isPermanentlyDenied) {
+    _showNotificationSettingsDialog();
+    return;
+  }
+
+  if (status.isGranted) {
+    debugPrint("Notification permission granted!");
+  } else {
+    debugPrint("Notification permission denied by user.");
+  }
+}
+
+void _showNotificationSettingsDialog() {
+  if (Get.context == null) return;
+
+  Get.dialog(
+    AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      elevation: 5,
+      titlePadding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 24.0),
+      actionsPadding: const EdgeInsets.fromLTRB(0, 0, 16.0, 16.0),
+      title: Row(
+        children: [
+          Icon(
+            Icons.notifications_rounded,
+            color: Theme.of(Get.context!).primaryColor,
+            size: 28,
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            'Notification Permission',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      content: const Text(
+        'Notification permission is required to receive important updates. Please enable it in your device settings.',
+        style: TextStyle(
+          fontSize: 15,
+          color: Colors.black87,
+          height: 1.4,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            foregroundColor: Colors.grey[600],
+          ),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Get.back();
+            openAppSettings();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(Get.context!).primaryColor,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+          ),
+          child: const Text(
+            'Open Settings',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    ),
+    barrierDismissible: false,
+  );
 }
 
 void handleNavigation(Map<String, dynamic> data) {

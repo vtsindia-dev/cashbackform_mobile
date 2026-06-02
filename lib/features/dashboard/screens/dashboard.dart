@@ -1,5 +1,6 @@
 import 'package:cashback_farms/common/colours.dart';
 import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
+import 'package:cashback_farms/notifcation/service/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/images.dart';
@@ -42,6 +43,7 @@ class _DashboardState extends State<Dashboard> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       dashboardController.fetchDashboard();
+      requestNotificationPermission();
     });
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 3000),
