@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:cashback_farms/common/route/router.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
@@ -13,51 +14,52 @@ class LocalNotificationService {
 
   static Future<void> initialize(BuildContext context) async {
     const AndroidInitializationSettings androidInitializationSettings =
-        AndroidInitializationSettings("@mipmap/ic_launcher");
+    AndroidInitializationSettings("@mipmap/ic_launcher");
     const InitializationSettings initializationSettings =
-        InitializationSettings(android: androidInitializationSettings);
+    InitializationSettings(android: androidInitializationSettings);
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse:
           (NotificationResponse notificationResponse) async {
-            try {
-              String? payload = notificationResponse.payload;
-              debugPrint(
-                "================ NOTIFICATION CLICKED ================",
-              );
-              debugPrint("Raw Payload: $payload");
-              if (payload != null && payload.isNotEmpty) {
-                Map<String, dynamic> data = jsonDecode(payload);
-                handleNavigation(data);
-                debugPrint("Decoded Payload: $data");
-                data.forEach((key, value) {
-                  debugPrint("Key: $key  Value: $value");
-                });
-              }
-              debugPrint(
-                "======================================================",
-              );
-            } catch (e) {
-              debugPrint("Notification Click Error: $e");
-            }
-          },
+        try {
+          String? payload = notificationResponse.payload;
+          debugPrint(
+            "================ NOTIFICATION CLICKED ================",
+          );
+          debugPrint("Raw Payload: $payload");
+          if (payload != null && payload.isNotEmpty) {
+            Map<String, dynamic> data = jsonDecode(payload);
+            handleNavigation(data);
+            debugPrint("Decoded Payload: $data");
+            data.forEach((key, value) {
+              debugPrint("Key: $key  Value: $value");
+            });
+          }
+          debugPrint(
+            "======================================================",
+          );
+        } catch (e) {
+          debugPrint("Notification Click Error: $e");
+        }
+      },
     );
   }
 
-  static Future<void> display({
-    required String? title,
-    required String? body,
-    Map<String, dynamic>? data,
-  }) async {
+  static Future<void> display(RemoteMessage message) async {
     try {
       debugPrint("================ NOTIFICATION RECEIVED ================");
-      debugPrint("Title: $title");
-      debugPrint("Body: $body");
-      debugPrint("Data Payload: $data");
+      debugPrint("Full Message:");
+      debugPrint(message.toMap().toString());
+      debugPrint("Title: ${message.notification?.title}");
+      debugPrint("Body: ${message.notification?.body}");
+      debugPrint("Data Payload: ${message.data}");
+      message.data.forEach((key, value) {
+        debugPrint("Key: $key  Value: $value");
+      });
       debugPrint("======================================================");
       Random random = Random();
       int notificationId = random.nextInt(100000);
-      String? imageUrl = data?['image'];
+      String? imageUrl = message.data['image'];
       BigPictureStyleInformation? bigPictureStyleInformation;
       if (imageUrl != null && imageUrl.isNotEmpty) {
         try {
@@ -67,14 +69,14 @@ class LocalNotificationService {
 
           if (response.statusCode == 200) {
             final ByteArrayAndroidBitmap bigPicture =
-                ByteArrayAndroidBitmap.fromBase64String(
-                  base64Encode(response.bodyBytes),
-                );
+            ByteArrayAndroidBitmap.fromBase64String(
+              base64Encode(response.bodyBytes),
+            );
             bigPictureStyleInformation = BigPictureStyleInformation(
               bigPicture,
               largeIcon: bigPicture,
-              contentTitle: title ?? "",
-              summaryText: body ?? "",
+              contentTitle: message.notification?.title ?? "",
+              summaryText: message.notification?.body ?? "",
             );
 
             debugPrint("Big Image Loaded Successfully");
@@ -84,27 +86,27 @@ class LocalNotificationService {
         }
       }
       final AndroidNotificationDetails androidNotificationDetails =
-          AndroidNotificationDetails(
-            "mychannel",
-            "My Channel",
-            channelDescription: "This is notification channel",
-            importance: Importance.max,
-            priority: Priority.high,
-            playSound: true,
-            enableVibration: true,
-            ticker: "ticker",
-            icon: '@mipmap/ic_launcher',
-            styleInformation: bigPictureStyleInformation,
-          );
+      AndroidNotificationDetails(
+        "mychannel",
+        "My Channel",
+        channelDescription: "This is notification channel",
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        ticker: "ticker",
+        icon: '@mipmap/ic_launcher',
+        styleInformation: bigPictureStyleInformation,
+      );
       final NotificationDetails notificationDetails = NotificationDetails(
         android: androidNotificationDetails,
       );
       await _flutterLocalNotificationsPlugin.show(
         notificationId,
-        title ?? "Notification",
-        body ?? "",
+        message.notification?.title ?? "Notification",
+        message.notification?.body ?? "",
         notificationDetails,
-        payload: data != null ? jsonEncode(data) : null,
+        payload: jsonEncode(message.data),
       );
       debugPrint("Notification Displayed Successfully ID: $notificationId");
     } catch (e) {
@@ -208,9 +210,9 @@ void _showNotificationSettingsDialog() {
 
 void handleNavigation(Map<String, dynamic> data) {
   try {
-    debugPrint('handleNavigation: navigating to notifications');
+    debugPrint('🔔 handleNavigation → navigating to notifications');
     Get.toNamed(AppRoutes.notification);
   } catch (e) {
-    debugPrint('handleNavigation error: $e');
+    debugPrint('❌ handleNavigation error: $e');
   }
 }

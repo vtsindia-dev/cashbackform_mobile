@@ -28,6 +28,10 @@
 	<true/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+		<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We use your location to show nearby properties and provide location-based recommendations.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We use your location to show nearby properties and provide location-based recommendations.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We use your location to show nearby properties and provide location-based recommendations.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

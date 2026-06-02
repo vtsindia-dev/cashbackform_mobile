@@ -8,8 +8,19 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'deeplink/deeplink_service/service.dart';
+import 'firebase_option.dart';
 
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  debugPrint('🔔 Background FCM: ${message.notification?.title}');
+}
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -29,6 +40,28 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
+
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
   await DeepLinkService().init();
 
   runApp(const MyApp());
@@ -42,6 +75,33 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    _initFCMListeners();
+  }
+
+  Future<void> _initFCMListeners() async {
+    final RemoteMessage? initialMessage =
+    await FirebaseMessaging.instance.getInitialMessage();
+
+    if (initialMessage != null) {
+      debugPrint('🔔 Killed-state launch: ${initialMessage.notification?.title}');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.toNamed(AppRoutes.notification);
+      });
+    }
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      debugPrint('🔔 Background-tap: ${message.notification?.title}');
+      Get.toNamed(AppRoutes.notification);
+    });
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('🔔 Foreground FCM: ${message.notification?.title}');
+      LocalNotificationService.display(message);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
