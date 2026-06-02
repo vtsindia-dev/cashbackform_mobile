@@ -263,23 +263,71 @@ class HomeController extends GetxController {
 
   void _showOpenSettingsDialog() {
     if (Get.context == null) return;
+
     Get.dialog(
       AlertDialog(
-        title: const Text('Location Permission'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        elevation: 5,
+        titlePadding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 24.0),
+        actionsPadding: const EdgeInsets.fromLTRB(0, 0, 16.0, 16.0),
+        title: Row(
+          children: [
+            Icon(
+              Icons.location_on_rounded,
+              color: Theme.of(Get.context!).primaryColor,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Location Permission',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         content: const Text(
-          'Location permission is required to show nearby properties. Please enable it in Settings.',
+          'Location permission is required to discover nearby properties. Please enable it in your device settings.',
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.black87,
+            height: 1.4,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Cancel'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              foregroundColor: Colors.grey[600],
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               Get.back();
               openAppSettings();
             },
-            child: const Text('Open Settings'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(Get.context!).primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            child: const Text(
+              'Open Settings',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
