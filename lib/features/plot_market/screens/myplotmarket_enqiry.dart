@@ -632,17 +632,6 @@ class _MarketPlotEnquiryScreenState extends State<MarketPlotEnquiryScreen> {
       confirmTextColor: Colors.white,
       buttonColor: Colors.red,
       cancelTextColor: AppColor.textSecondary,
-      // onConfirm: () async {
-      //   Get.back();
-      //   final success = await controller.deleteMarketEnquiry(enquiry.id);
-      //   if (success) {
-      //     SnackBarHelper.showSuccess("Enquiry deleted successfully");
-      //     // Clear search if needed
-      //     if (_isSearching) {
-      //       _clearSearch();
-      //     }
-      //   }
-      // },
     );
   }
 

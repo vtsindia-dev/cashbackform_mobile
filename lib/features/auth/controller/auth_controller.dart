@@ -28,7 +28,6 @@ class AuthController extends GetxController with CodeAutoFill {
   var hoveredGender = (-1).obs;
   var fcmToken = ''.obs;
 
-  // Referral code variables
   var isReferralCodeValid = false.obs;
   var referralCodeError = ''.obs;
 

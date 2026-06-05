@@ -276,28 +276,6 @@ class _MaterialEnquirySheetState extends State<MaterialEnquirySheet> {
     );
   }
 
-  // Future<void> _submitEnquiry() async {
-  //   FocusScope.of(context).unfocus();
-  //   if (_formKey.currentState!.validate()) {
-  //     _formKey.currentState!.save();
-  //     final success = await controller.submitMaterialEnquiry(
-  //       materialId: widget.materialId,
-  //       requirement: _requirement,
-  //       unitId: _unitId,
-  //       quantity: _quantity,
-  //       userId: 1, // Replace with actual user ID
-  //     );
-  //
-  //     if (success) {
-  //       Future.delayed(const Duration(seconds: 2), () {
-  //         if (mounted) widget.onSubmitted(true);
-  //       });
-  //     } else {
-  //       widget.onSubmitted(false);
-  //     }
-  //   }
-  // }
-
   @override
   void dispose() {
     _requirementFocusNode.dispose();

@@ -942,15 +942,6 @@ class RazorpayController extends GetxController {
     sc.update();
   }
 
-    // void _markGiooUnitsAsBooked() {
-    //   final gc = Get.find<GiooPlotController>();
-    //   for (var id in selectedUnits) {
-    //     int idx = gc.units.indexWhere((u) => u.id == id);
-    //     if (idx != -1) gc.units[idx] = gc.units[idx].copyWith(status: 'Booked');
-    //   }
-    //   gc.units.refresh();
-    // }
-
   void _handleError(PaymentFailureResponse response) {
     isProcessing.value = false;
     Loggers.error('❌ Payment Error: ${response.message}');

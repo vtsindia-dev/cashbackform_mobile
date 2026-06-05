@@ -17,7 +17,7 @@ import '../../features/kyc/screen/kyc_screen.dart';
 import '../../features/material_store/screens/material_vendor_details_screen.dart';
 import '../../features/material_store/screens/material_vendor_list.dart';
 import '../../features/menu/content_screens/contactus.dart';
-import '../../features/plot_market/screens/myplot_list.dart' hide MyPlotsScreen;
+import '../../features/plot_market/screens/myplot_list.dart';
 import '../../features/plot_market/screens/myplotmarket_enqiry.dart';
 import '../../features/plot_market/screens/plot_market.dart';
 import '../../features/plot_market/screens/plotmarket_details.dart';

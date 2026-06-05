@@ -7,14 +7,12 @@ import '../../../common/colours.dart';
 import '../model/service_model.dart';
 
 class ServiceCard extends StatelessWidget {
-  // final Service service;
   final VoidCallback onTap;
   final VoidCallback onShare;
   final VoidCallback onEnquiry;
 
   ServiceCard({
     super.key,
-    // required this.service,
     required this.onTap,
     required this.onShare,
     required this.onEnquiry,
@@ -177,24 +175,6 @@ class ServiceCard extends StatelessWidget {
                   ).animate().fade(duration: 300.ms).slideY(begin: 0.1),
 
                   SizedBox(height: 5.h),
-                  // if (service.description != null && service.description!.isNotEmpty)
-                  //   Padding(
-                  //     padding: EdgeInsets.only(bottom: 4.h),
-                  //     child: Text(
-                  //       service.description!,
-                  //       style: GoogleFonts.poppins(
-                  //         fontSize: 11.sp,
-                  //         fontWeight: FontWeight.bold,
-                  //         color: AppColor.primary,
-                  //       ),
-                  //       maxLines: 2,
-                  //       overflow: TextOverflow.ellipsis,
-                  //     ),
-                  //   ),
-                  // _infoRow(Icons.location_on,
-                  //     service.category.categoryName),
-                  // _infoRow(Icons.email,
-                  //     service.description ?? "No email available"),
                   _infoRow(Icons.language,
                       "greenheapfarms.com"),
                   _linkRow(Icons.directions, "Get Direction"),

@@ -1188,11 +1188,6 @@ class ServiceController extends GetxController {
     _clearMaterialEnquiryForm();
   }
 
-  // void setServiceId(int id) {
-  //   //serviceId.value = id;
-  //   _clearServiceEnquiryForm();
-  // }
-
   void setVendorId(int id) {
     vendorId.value = id;
   }
@@ -1295,11 +1290,6 @@ class ServiceController extends GetxController {
       timeError.value = 'Preferred time is required';
       isValid = false;
     }
-
-    // if (serviceId.value == 0) {
-    //   errorMessage.value = 'Invalid service selection';
-    //   isValid = false;
-    // }
 
     return isValid;
   }

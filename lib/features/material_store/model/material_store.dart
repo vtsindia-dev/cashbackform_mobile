@@ -8,7 +8,6 @@ class MaterialModel {
   final int? subcatId;
   final int? subsubcatId;
   final dynamic brandId;
-  // final int? brandId;
   final int? unitId;
   final String? description;
   final List<String> image;

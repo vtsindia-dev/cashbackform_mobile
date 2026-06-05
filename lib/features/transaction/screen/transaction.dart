@@ -1472,16 +1472,6 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                         ],
                       ),
                     ),
-                    // SizedBox(height: 16.h),
-                    //
-                    // _buildLabel('Property ID *', Icons.home_work_outlined, isMandatory: true),
-                    // SizedBox(height: 6.h),
-                    // _buildTextField(
-                    //   controller: _propertyIdController,
-                    //   hint: 'Enter property ID',
-                    //   keyboardType: TextInputType.number,
-                    //   validator: (v) => (v == null || v.isEmpty) ? 'Property ID is required' : null,
-                    // ),
                     SizedBox(height: 16.h),
                     SizedBox(key: _amountKey, height: 0),
                     _buildLabel('Amount (₹) *', Icons.currency_rupee_rounded, isMandatory: true),

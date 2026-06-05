@@ -257,9 +257,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                       Row(
                         children: [
                           Text(
-                            // chip.status == RoleStatus.rejected
-                            //     ? "Tap to re-apply"
-                            //     : "Tap to apply",
                             "Tap to apply",
                             style: TextStyle(
                               fontSize:6.sp,
@@ -624,22 +621,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 6.h),
-                // Container(
-                //   padding:
-                //   EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
-                //   decoration: BoxDecoration(
-                //     color: Colors.white.withValues(alpha:0.2),
-                //     borderRadius: BorderRadius.circular(20.r),
-                //   ),
-                //   child: Text(
-                //     profile?.role?.role ?? "User",
-                //     style: TextStyle(
-                //       fontSize: 11.sp,
-                //       color: Colors.white,
-                //       fontWeight: FontWeight.w500,
-                //     ),
-                //   ),
-                // ),
               ],
             ),
           ),
@@ -1148,12 +1129,6 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                 () => Get.toNamed("/contactus")),
         _menuTile(Icons.receipt_long, "Transaction Details",
                 () => Get.toNamed("/transactionDeatils")),
-        // _menuTile(Icons.support_agent_rounded, "Support", () async {
-        //   final uri = Uri.parse("https://cashback.vrikshatech.in/");
-        //   if (await canLaunchUrl(uri)) {
-        //     await launchUrl(uri, mode: LaunchMode.externalApplication);
-        //   }
-        // }),
         _menuTile(
           Icons.logout_rounded,
           "Logout",

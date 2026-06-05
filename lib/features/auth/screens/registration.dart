@@ -1,16 +1,14 @@
 import 'package:cashback_farms/common/widget/toster.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
 import '../../legal_and_policies/screen.dart';
 import '../controller/auth_controller.dart';
 import '../models/location_model.dart';
-import 'package:flutter/gestures.dart';  // Add this line
+import 'package:flutter/gestures.dart';  
 
 class Registration extends StatefulWidget {
   final String? phone;
@@ -152,7 +150,7 @@ class _RegistrationState extends State<Registration> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha:0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -168,7 +166,7 @@ class _RegistrationState extends State<Registration> {
                       : Icon(
                     Icons.camera_alt,
                     size: 40,
-                    color: AppColor.primary.withOpacity(0.6),
+                    color: AppColor.primary.withValues(alpha:0.6),
                   ),
                 )
                     .animate()
@@ -301,7 +299,7 @@ class _RegistrationState extends State<Registration> {
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha:0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -551,7 +549,7 @@ class _RegistrationState extends State<Registration> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 6,
-                    shadowColor: AppColor.primary.withOpacity(0.3),
+                    shadowColor: AppColor.primary.withValues(alpha:0.3),
                   ),
                   child: controller.isLoading.value
                       ? const CircularProgressIndicator(color: Colors.white)
@@ -615,7 +613,7 @@ class _RegistrationState extends State<Registration> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha:0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -840,7 +838,7 @@ class _RegistrationState extends State<Registration> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha:0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -919,31 +917,31 @@ class _RegistrationState extends State<Registration> {
                     color: isSelected
                         ? AppColor.primary
                         : isHovered
-                        ? AppColor.primary.withOpacity(0.5)
+                        ? AppColor.primary.withValues(alpha:0.5)
                         : Colors.grey.shade300,
                     width: isSelected ? 3 : (isHovered ? 2.5 : 2),
                   ),
                   color: isSelected
-                      ? AppColor.primary.withOpacity(0.1)
+                      ? AppColor.primary.withValues(alpha:0.1)
                       : isHovered
-                      ? AppColor.primary.withOpacity(0.05)
+                      ? AppColor.primary.withValues(alpha:0.05)
                       : Colors.white,
                   boxShadow: [
                     if (isSelected)
                       BoxShadow(
-                        color: AppColor.primary.withOpacity(0.3),
+                        color: AppColor.primary.withValues(alpha:0.3),
                         blurRadius: 15,
                         offset: const Offset(0, 5),
                       )
                     else if (isHovered)
                       BoxShadow(
-                        color: AppColor.primary.withOpacity(0.2),
+                        color: AppColor.primary.withValues(alpha:0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       )
                     else
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha:0.05),
                         blurRadius: 5,
                         offset: const Offset(0, 2),
                       ),
@@ -966,7 +964,7 @@ class _RegistrationState extends State<Registration> {
                         color: isSelected
                             ? AppColor.primary
                             : isHovered
-                            ? AppColor.primary.withOpacity(0.8)
+                            ? AppColor.primary.withValues(alpha:0.8)
                             : Colors.grey.shade600,
                         fontWeight: isSelected
                             ? FontWeight.bold

@@ -39,33 +39,6 @@ class DeleteAccountController extends GetxController {
         ),
       );
 
-      // Option 2: Send as form data (if your API expects form/multipart)
-      // final response = await dio.Dio().post(
-      //   ApiUrl.removeAccount,
-      //   data: {'id': userId},
-      //   options: dio.Options(
-      //     headers: {
-      //       "Accept": "application/json",
-      //       if (token != null && token.isNotEmpty)
-      //         "Authorization": "Bearer $token",
-      //     },
-      //   ),
-      // );
-
-      // Option 3: Send as raw JSON in body
-      // final response = await dio.Dio().post(
-      //   ApiUrl.removeAccount,
-      //   data: {'id': userId},
-      //   options: dio.Options(
-      //     headers: {
-      //       "Accept": "application/json",
-      //       "Content-Type": "application/json",
-      //       if (token != null && token.isNotEmpty)
-      //         "Authorization": "Bearer $token",
-      //     },
-      //   ),
-      // );
-
       // Check for both 200 and 201 status codes
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           response.data != null &&

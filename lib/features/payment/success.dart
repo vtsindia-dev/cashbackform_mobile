@@ -342,8 +342,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                         ),
                         _buildDetailRow(
                             "Payment Mode", "RAZORPAY"),
-                        // _buildDetailRow(
-                        //     "Payment Mode", _getPaymentTypeName()),
                         SizedBox(height: 15.h),
                         _buildDetailRow("Status", "COMPLETED",
                             color: Colors.green),

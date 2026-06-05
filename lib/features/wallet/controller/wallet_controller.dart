@@ -47,7 +47,6 @@ class WalletController extends GetxController {
         pagination.value = walletResponse.pagination;
         hasMore.value = walletResponse.pagination.hasNextPage;
 
-        // Update wallet balance from latest transaction
         if (walletResponse.data.isNotEmpty) {
           walletBalance.value = walletResponse.data.last.balance;
         }

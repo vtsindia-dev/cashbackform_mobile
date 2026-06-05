@@ -978,30 +978,7 @@ class SyndicatePlotController extends GetxController {
       viewDocument(documentId);
     }
   }
-  // void initiateDocumentPayment(int documentId, String documentType) {
-  //   final detail = syndicateDetail.value;
-  //   if (detail == null) {
-  //     SnackBarHelper.showError("Property details not available");
-  //     return;
-  //   }
-  //
-  //   // Get document price
-  //   final amount = getDocumentPrice();
-  //   if (amount <= 0) {
-  //     SnackBarHelper.showError("Document price not available");
-  //     return;
-  //   }
-  //
-  //   final paymentController = Get.put(RazorpayController());
-  //   paymentController.setupDocumentPayment(
-  //     propertyId: detail.id,
-  //     documentId: documentId,
-  //     documentType: documentType,
-  //     amount: amount,
-  //   );
-  //
-  //   showDocumentPaymentSummaryDialog(amount, documentType);
-  // }
+
   void showPlotPaymentSummaryBottomSheet(double amount, List<Map<String, dynamic>> unitDetails) {
     final razorpayController = Get.find<RazorpayController>();
     final detail = syndicateDetail.value;

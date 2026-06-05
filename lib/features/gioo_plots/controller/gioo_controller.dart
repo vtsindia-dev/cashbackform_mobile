@@ -356,7 +356,6 @@ class GiooPlotController extends GetxController {
       }
 
       // Don't extract cities from plots anymore - we fetch them separately
-      // _extractCitiesFromPlots(data);
 
       print('💰 Price range: ₹${priceMin.value} - ₹${priceMax.value}');
       print('📏 Area range: ${sqftMin.value} - ${sqftMax.value} sqft');

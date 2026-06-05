@@ -356,12 +356,6 @@ class _Property3DImageViewerState extends State<Property3DImageViewer> {
             label: 'Reset',
             onTap: _resetZoom,
           ),
-          // Container(width: 1.w, height: 24.h, color: Colors.grey.shade300),
-          // _buildControlItem(
-          //   icon: Icons.download,
-          //   label: 'Download',
-          //   onTap: () => _downloadImage(),
-          // ),
         ],
       ),
     );

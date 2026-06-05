@@ -83,14 +83,6 @@ class LocationIndicatorBadge extends StatelessWidget {
 // widget. Just add this inside the expanded Column where other detail rows are.
 // Copy-paste the snippet below into AboutResidentialProperty._AboutResidentialPropertyState
 // inside the `if (controller.isExpanded.value)` block, after the 'Posted By' row:
-//
-//   // ② Plot Count  ← ADD THIS
-//   if ((property.plotCount ?? 0) > 0)
-//     _buildDetailRow(
-//       label: 'Plot Count',
-//       value: '${property.plotCount}',
-//       delay: 0,
-//     ),
 // =============================================================================
 
 // =============================================================================

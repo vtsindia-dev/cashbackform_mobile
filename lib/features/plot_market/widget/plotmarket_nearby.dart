@@ -240,9 +240,6 @@ class NearbyPlotMarket extends StatelessWidget {
       final encodedAddress = Uri.encodeComponent(address);
       final googleMapsUrl = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng&query_place_id=$encodedAddress';
 
-      // Alternative: For direct navigation
-      // final googleMapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng';
-
       final uri = Uri.parse(googleMapsUrl);
 
       if (await canLaunchUrl(uri)) {

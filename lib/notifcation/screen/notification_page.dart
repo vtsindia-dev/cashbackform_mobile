@@ -468,22 +468,6 @@ class _NotificationsViewState extends State<_NotificationsView> {
                             ),
                           ),
                         ),
-                        // SizedBox(width: 15.w),
-                        // Expanded(
-                        //   child: ElevatedButton(
-                        //     style: ElevatedButton.styleFrom(
-                        //       backgroundColor: AppColor.primary,
-                        //       padding: EdgeInsets.symmetric(vertical: 15.h),
-                        //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
-                        //       elevation: 0,
-                        //     ),
-                        //     onPressed: () {
-                        //       Navigator.pop(context);
-                        //       controller.navigateToNotification(context, notification);
-                        //     },
-                        //     child: Text("VIEW DETAILS", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15.sp)),
-                        //   ).animate().shimmer(delay: 1.seconds),
-                        // ),
                       ],
                     ),
                     SizedBox(height: 20.h),

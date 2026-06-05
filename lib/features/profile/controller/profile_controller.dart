@@ -343,20 +343,7 @@ class ProfileController extends GetxController {
           (refId == null || refId == 1) && (referId == null || referId == 1);
       isReferralCodeEditable.value = isNotReferred;
     });
-  }  // void _prefillFormData() {
-  //   if (profile.value != null) {
-  //     final p = profile.value!;
-  //     firstNameController.text = p.firstName;
-  //     lastNameController.text = p.lastName;
-  //     emailController.text = p.email;
-  //     phoneController.text = p.phone;
-  //     selectedGender.value = p.gender;
-  //     dobController.text = p.dob ?? '';
-  //     pinCodeController.text = p.pinCode ?? '';
-  //     addressController.text = p.address ?? '';
-  //     profileImageUrl.value = p.profileImage ?? '';
-  //   }
-  // }
+  }
 
   // Validate form
   bool _validateForm() {

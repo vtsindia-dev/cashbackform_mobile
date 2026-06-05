@@ -125,10 +125,6 @@ class _HomeState extends State<Home> {
                   PropertyMain(),
                   const SizedBox(height: 20),
 
-                  // // ── Add My Property Section (NEW) ─────────────────────
-                  // _buildAddMyPropertySection(),
-                  // const SizedBox(height: 20),
-
                   // ── Featured Land Properties ──────────────────────────
                   Column(
                     children: [

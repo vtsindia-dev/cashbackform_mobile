@@ -154,24 +154,6 @@ class _BannerCard extends StatelessWidget {
                 right: 14.w,
                 child: Row(
                   children: [
-                    // Expanded(
-                    //   child: Text(
-                    //     _capitalize(banner.title),
-                    //     style: TextStyle(
-                    //       fontSize: 14.sp,
-                    //       fontWeight: FontWeight.w800,
-                    //       color: Colors.white,
-                    //       shadows: [
-                    //         Shadow(
-                    //           color: Colors.black.withOpacity(0.5),
-                    //           blurRadius: 6,
-                    //         ),
-                    //       ],
-                    //     ),
-                    //     maxLines: 1,
-                    //     overflow: TextOverflow.ellipsis,
-                    //   ),
-                    // ),
                     Container(
                       padding: EdgeInsets.symmetric(
                           horizontal: 12.w, vertical: 6.h),
