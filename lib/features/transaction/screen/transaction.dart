@@ -212,6 +212,7 @@ class _TransactionScreenState extends State<TransactionScreen>
     );
   }
 
+
 /*
   Widget _buildModernCard(Transaction transaction) {
     return Container(
@@ -562,6 +563,8 @@ class _TransactionScreenState extends State<TransactionScreen>
   TransactionType _getTransactionTypeFromTab() {
     return _tabTypes[_tabController.index];
   }
+
+
   Widget _buildModernCard(Transaction transaction) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
@@ -889,52 +892,71 @@ class _TransactionScreenState extends State<TransactionScreen>
       ],
     );
   }
+
   Widget _buildEmptyState(TransactionType type, String tabLabel) {
+    // Clean up the tab label for a more natural sentence flow
+    final formattedLabel = tabLabel.toLowerCase().replaceAll('transactions', '').trim();
+
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.all(20.w),
-            decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.07),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.history_toggle_off_rounded, size: 48.sp, color: AppColor.primary.withOpacity(0.4)),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'No transactions yet',
-            style: TextStyle(fontSize: 15.sp, color: Colors.grey[600], fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            'Add your first transaction for this category',
-            style: TextStyle(fontSize: 12.sp, color: Colors.grey[400]),
-          ),
-          SizedBox(height: 20.h),
-          GestureDetector(
-            onTap: () => _showAddTransactionSheet(type, tabLabel, null),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 32.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Icon Container with Gradient & Soft Shadow
+            Container(
+              padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
-                color: AppColor.primary,
-                borderRadius: BorderRadius.circular(30.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.add, color: Colors.white, size: 18),
-                  SizedBox(width: 6.w),
-                  Text(
-                    'Add Transaction',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13.sp),
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColor.primary.withOpacity(0.08),
+                    AppColor.primary.withOpacity(0.03),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColor.primary.withOpacity(0.04),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
+              child: Icon(
+                Icons.history_toggle_off_rounded,
+                size: 56.sp, // Slightly larger for better visual hierarchy
+                color: AppColor.primary.withOpacity(0.6),
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: 24.h),
+
+            // Main Title
+            Text(
+              'No Transactions Found',
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: Colors.grey[800], // Darker contrast for better readability
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              ),
+            ),
+            SizedBox(height: 8.h),
+
+            // Contextual Subtitle
+            Text(
+              "You haven't made any $formattedLabel transactions yet.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: Colors.grey[500],
+                fontWeight: FontWeight.w400,
+                height: 1.4, // Better line spacing
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1440,9 +1440,6 @@ class PlotMarketController extends GetxController {
             SnackBarHelper.showError("Invalid response from server");
           }
         }
-      } else if (response.statusCode == 401) {
-        myHasMoreData.value = false;
-        SnackBarHelper.showError("Session expired. Please login again");
       } else if (response.statusCode == 404) {
         myHasMoreData.value = false;
         SnackBarHelper.showError("Service temporarily unavailable");
@@ -1573,10 +1570,7 @@ class PlotMarketController extends GetxController {
       }
     } on dio.DioException catch (e) {
       print('❌ Dio Error fetching market enquiries: ${e.message}');
-      if (e.response?.statusCode == 401) {
-        Get.snackbar('Session Expired', 'Please login again',
-            backgroundColor: Colors.red, colorText: Colors.white);
-      } else if (e.response?.statusCode == 404) {
+      if (e.response?.statusCode == 404) {
         Get.snackbar('Endpoint Not Found',
             'Market enquiry endpoint not available',
             backgroundColor: Colors.red, colorText: Colors.white);

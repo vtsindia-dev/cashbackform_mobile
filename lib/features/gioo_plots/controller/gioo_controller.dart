@@ -1475,10 +1475,6 @@ class GiooPlotController extends GetxController {
           print('❌ API Error: ${responseData['message']}');
         }
         return true;
-      } else if (response.statusCode == 401) {
-        print('🔐 Session expired (401) for details');
-        SnackBarHelper.showError("Session expired. Please login again.");
-        return false;
       } else if (response.statusCode == 403) {
         SnackBarHelper.showError(
             "You don't have permission to view these details");
@@ -1581,9 +1577,6 @@ class GiooPlotController extends GetxController {
           SnackBarHelper.showError(responseData['message'] ??
               'Failed to submit cancellation request');
         }
-      } else if (response.statusCode == 401) {
-        print('🔐 Session expired (401) during cancellation');
-        SnackBarHelper.showError("Session expired. Please login again.");
       } else if (response.statusCode == 403) {
         SnackBarHelper.showError(
             "You don't have permission to cancel this booking");

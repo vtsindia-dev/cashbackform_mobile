@@ -594,7 +594,7 @@ class MaterialController extends GetxController {
   int quantity = 1;
   String? selectedUnit;
 
-  Future<void> submitProductEnquiry({required String materialId}) async {
+  Future<void> submitProductEnquiry({required String materialId, required String userId}) async {
     if (productQuoteController.text.trim().isEmpty) {
       SnackBarHelper.showInfo('Please enter your requirement');
       return;
@@ -605,7 +605,6 @@ class MaterialController extends GetxController {
       update();
 
       final String? token = await SessionManager.getToken();
-      final userId = await SessionManager.getUserId();
 
       Map<String, dynamic> data = {
         "material_id": materialId,

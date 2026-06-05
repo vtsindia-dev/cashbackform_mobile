@@ -215,11 +215,6 @@ class ProfileController extends GetxController {
           errorMessage('Invalid response format from server');
           SnackBarHelper.showError('Failed to load profile data');
         }
-      } else if (response.statusCode == 401) {
-        errorMessage('Session expired. Please login again.');
-        SnackBarHelper.showError('Session expired');
-        await SessionManager.clearSession();
-        Get.offAllNamed('/login');
       } else {
         final errorMsg = response.data?['message'] ?? 'Failed to fetch profile';
         errorMessage(errorMsg);

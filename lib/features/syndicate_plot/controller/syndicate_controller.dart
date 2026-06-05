@@ -458,12 +458,6 @@ class SyndicatePlotController extends GetxController {
           SnackBarHelper.showError("Invalid response format");
           print('❌ Invalid response format: $responseData');
         }
-      } else if (response.statusCode == 401) {
-        errorMessage('Session expired. Please login again.');
-        SnackBarHelper.showError("Session expired. Please login again.");
-        print('❌ 401 Unauthorized: Token invalid or expired');
-        await SessionManager.clearSession();
-        Get.offAllNamed('/login');
       } else if (response.statusCode == 403) {
         errorMessage('Authentication required');
         SnackBarHelper.showError("Please login to view details");
@@ -482,11 +476,6 @@ class SyndicatePlotController extends GetxController {
       errorMessage('Network error: $e');
       SnackBarHelper.showError("Network error: $e");
       print('❌ Network error: $e');
-
-      if (e.toString().contains('401') || e.toString().contains('unauthorized')) {
-        await SessionManager.clearSession();
-        Get.offAllNamed('/login');
-      }
     } finally {
       isLoadingDetail(false);
     }
@@ -1649,9 +1638,6 @@ class SyndicatePlotController extends GetxController {
               responseData?['message'] ?? "Failed to fetch syndicate buying list");
           print('❌ API Error: ${responseData?['message']}');
         }
-      } else if (response.statusCode == 401) {
-        print('🔐 Session expired (401) for buying list');
-        SnackBarHelper.showError("Session expired. Please login again.");
       } else if (response.statusCode == 403) {
         SnackBarHelper.showError("You don't have permission to view buying list");
       } else {
@@ -1729,9 +1715,6 @@ class SyndicatePlotController extends GetxController {
               responseData['message'] ?? "Failed to fetch syndicate buying details");
           print('❌ API Error: ${responseData['message']}');
         }
-      } else if (response.statusCode == 401) {
-        print('🔐 Session expired (401) for details');
-        SnackBarHelper.showError("Session expired. Please login again.");
       } else if (response.statusCode == 403) {
         SnackBarHelper.showError("You don't have permission to view these details");
       } else if (response.statusCode == 404) {
@@ -1823,9 +1806,6 @@ class SyndicatePlotController extends GetxController {
           SnackBarHelper.showError(responseData['message'] ??
               'Failed to submit syndicate cancellation request');
         }
-      } else if (response.statusCode == 401) {
-        print('🔐 Session expired (401) during syndicate cancellation');
-        SnackBarHelper.showError("Session expired. Please login again.");
       } else if (response.statusCode == 403) {
         SnackBarHelper.showError(
             "You don't have permission to cancel this syndicate plot");
@@ -1994,16 +1974,6 @@ class SyndicatePlotController extends GetxController {
             'message': responseData['message'] ?? 'Failed to store referral',
           };
         }
-      } else if (response.statusCode == 401) {
-        print('🔐 Unauthorized - Token may be expired');
-        SnackBarHelper.showError('Session expired. Please login again.');
-        await SessionManager.clearSession();
-        Get.offAllNamed('/login');
-
-        return {
-          'success': false,
-          'message': 'Session expired',
-        };
       } else if (response.statusCode == 422) {
         final responseData = response.data;
         final errors = responseData['errors'] ?? {};

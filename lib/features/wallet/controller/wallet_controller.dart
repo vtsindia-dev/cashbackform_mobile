@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:dio/dio.dart';
 import '../../../common/api_constant.dart';
+import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../model/wallet_model.dart';
@@ -13,12 +13,6 @@ class WalletController extends GetxController {
   var currentPage = 1.obs;
   var hasMore = true.obs;
   var walletBalance = 0.0.obs;
-
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiUrl.baseUrl,
-    connectTimeout: const Duration(seconds: 30),
-    receiveTimeout: const Duration(seconds: 30),
-  ));
 
   @override
   void onInit() {
@@ -38,21 +32,13 @@ class WalletController extends GetxController {
 
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
-        SnackBarHelper.showError("Session invalid. Please login again.");
-        await SessionManager.clearSession();
-        Get.offAllNamed('/login');
-        throw Exception('Token not found');
+        ApiService.handleUnauthorized();
+        return;
       }
 
-      final response = await _dio.get(
-        '/api/v2/wallet-transactions',
-        queryParameters: {'page': currentPage.value},
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        ),
+      final response = await ApiService.getAuthenticatedRequest(
+        '${ApiUrl.baseUrl}/api/v2/wallet-transactions?page=${currentPage.value}',
+        token,
       );
 
       if (response.statusCode == 200 && response.data['status'] == true) {
@@ -99,23 +85,16 @@ class WalletController extends GetxController {
     try {
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
-        SnackBarHelper.showError("Session invalid. Please login again.");
-        await SessionManager.clearSession();
-        Get.offAllNamed('/login');
-        throw Exception('Token not found');
+        ApiService.handleUnauthorized();
+        return;
       }
 
       isLoading.value = true;
 
-      final response = await _dio.post(
-        '/api/v2/wallet-withdraw',
+      final response = await ApiService.postRequestWithToken(
+        '${ApiUrl.baseUrl}/api/v2/wallet-withdraw',
         data: {'amount': amount},
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        ),
+        token: token,
       );
 
       if (response.statusCode == 200 && response.data['status'] == true) {

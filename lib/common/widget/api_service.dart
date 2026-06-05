@@ -1,9 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
-
+import 'package:flutter/material.dart';
+import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import '../api_constant.dart';
+import '../route/router.dart';
+import 'sessionhandler.dart';
+
+
 class ApiService {
+  static bool _isHandlingUnauthorized = false;
+
   static final dio = Dio(
     BaseOptions(
       connectTimeout: Duration(seconds: 50),
@@ -11,7 +18,29 @@ class ApiService {
       headers: {"Accept": "application/json"},
       validateStatus: (status) => true,
     ),
-  );
+  )..interceptors.add(_UnauthorizedInterceptor());
+
+  static void handleUnauthorized() {
+    if (_isHandlingUnauthorized) return;
+    _isHandlingUnauthorized = true;
+
+    SessionManager.clearSession();
+
+    Get.snackbar(
+      'Session Expired',
+      'Please log in again.',
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 3),
+    );
+
+    Get.offAllNamed(AppRoutes.login);
+
+    Future.delayed(const Duration(seconds: 30), () {
+      _isHandlingUnauthorized = false;
+    });
+  }
   static Future<Response> getRequest(String url, {Map<String, String>? headers}) async {
     try {
       final options = headers != null ? Options(headers: headers) : null;
@@ -565,4 +594,14 @@ class ApiService {
     }
   }
 
+}
+
+class _UnauthorizedInterceptor extends Interceptor {
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    if (response.statusCode == 401) {
+      ApiService.handleUnauthorized();
+    }
+    handler.next(response);
+  }
 }

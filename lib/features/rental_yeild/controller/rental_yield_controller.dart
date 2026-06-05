@@ -542,9 +542,7 @@ class RentalYieldController extends GetxController {
 
       String errorMessage = 'Unable to send enquiry. Please try again.';
 
-      if (e.response?.statusCode == 401) {
-        errorMessage = 'Session expired. Please login again.';
-      } else if (e.response?.statusCode == 422) {
+      if (e.response?.statusCode == 422) {
         errorMessage = 'Please fill all required fields.';
       }
 
@@ -616,11 +614,7 @@ class RentalYieldController extends GetxController {
       print('❌ Dio Error fetching rental enquiries: ${e.message}');
       print('   Response: ${e.response?.data}');
 
-      if (e.response?.statusCode == 401) {
-        SnackBarHelper.showError('Session expired. Please login again.');
-      } else {
-        SnackBarHelper.showError('Unable to fetch enquiries. Please try again.');
-      }
+      SnackBarHelper.showError('Unable to fetch enquiries. Please try again.');
     } catch (e) {
       print('❌ Error fetching rental enquiries: $e');
       SnackBarHelper.showError('Failed to load enquiries');

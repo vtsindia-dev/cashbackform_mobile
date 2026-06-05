@@ -87,12 +87,12 @@ class _NotificationsViewState extends State<_NotificationsView> {
           height: 55.h,
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           decoration: BoxDecoration(
-            color: AppColor.white.withOpacity(0.8),
+            color: AppColor.white.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(30.r),
-            border: Border.all(color: AppColor.white.withOpacity(0.3)),
+            border: Border.all(color: AppColor.white.withValues(alpha:0.3)),
             boxShadow: [
               BoxShadow(
-                color: AppColor.black.withOpacity(0.05),
+                color: AppColor.black.withValues(alpha:0.05),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               )
@@ -125,7 +125,7 @@ class _NotificationsViewState extends State<_NotificationsView> {
       child: Container(
         padding: EdgeInsets.all(8.r),
         decoration: BoxDecoration(
-          color: AppColor.primary.withOpacity(0.1),
+          color: AppColor.primary.withValues(alpha:0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(Icons.cleaning_services_rounded, size: 18.sp, color: AppColor.primary),
@@ -279,7 +279,7 @@ class _NotificationsViewState extends State<_NotificationsView> {
           SnackBar(
             content: const Text('Notification deleted'),
             action: SnackBarAction(
-              label: 'UNDO',
+              label: '',
               textColor: AppColor.primary,
               onPressed: () {
                 controller.refreshNotifications();
@@ -288,12 +288,9 @@ class _NotificationsViewState extends State<_NotificationsView> {
             duration: const Duration(seconds: 3),
           ),
         );
-
-        // Actually delete from server
         final result = await controller.deleteNotification(notificationId);
 
         if (!result['success'] && mounted) {
-          // If delete fails, reload to restore the item
           await controller.refreshNotifications();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -313,7 +310,7 @@ class _NotificationsViewState extends State<_NotificationsView> {
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: [
               BoxShadow(
-                color: isUnread ? AppColor.primary.withOpacity(0.08) : Colors.black.withOpacity(0.03),
+                color: isUnread ? AppColor.primary.withValues(alpha:0.08) : Colors.black.withValues(alpha:0.03),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               )
@@ -327,7 +324,7 @@ class _NotificationsViewState extends State<_NotificationsView> {
                   width: 50.r,
                   height: 50.r,
                   decoration: BoxDecoration(
-                    color: isUnread ? AppColor.primary.withOpacity(0.1) : AppColor.lightGrey.withOpacity(0.5),
+                    color: isUnread ? AppColor.primary.withValues(alpha:0.1) : AppColor.lightGrey.withValues(alpha:0.5),
                     borderRadius: BorderRadius.circular(15.r),
                   ),
                   child: Icon(getIcon(), color: isUnread ? AppColor.primary : AppColor.grey, size: 24.sp),
@@ -374,14 +371,11 @@ class _NotificationsViewState extends State<_NotificationsView> {
       ).animate(delay: (index * 50).ms).slideX(begin: 0.1, curve: Curves.easeOut),
     );
   }
-
-  // --- NOTIFICATION DETAIL SCREEN (Immersive Modal) ---
+  
   void _showNotificationDetail(BuildContext context, Map<String, dynamic> notification, NotificationController controller) {
-    // Mark as read when opened
     if (!(notification['is_read_local'] ?? false)) {
       controller.markAsRead(notification['id']);
     }
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -408,7 +402,7 @@ class _NotificationsViewState extends State<_NotificationsView> {
                       child: Container(
                         padding: EdgeInsets.all(20.r),
                         decoration: BoxDecoration(
-                          color: AppColor.primary.withOpacity(0.1),
+                          color: AppColor.primary.withValues(alpha:0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(Icons.mark_email_unread_rounded, size: 40.sp, color: AppColor.primary),

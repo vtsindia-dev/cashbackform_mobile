@@ -25,7 +25,7 @@ class _MaterialVendorDetailScreenState
     extends State<MaterialVendorDetailScreen> {
   final MaterialController controller = Get.put(MaterialController());
 
-  // ── Tokens ────────────────────────────────────────────────────────────────
+
   static const _bg      = Color(0xFFF4F1EB);
   static const _card    = Color(0xFFFFFFFF);
   static const _ink     = Color(0xFF1A1A1A);
@@ -50,9 +50,11 @@ class _MaterialVendorDetailScreenState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await controller.fetchVendorDetail(id: widget.vendorId);
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _hasServices = controller.vendorDetail?.vendorServices?.isNotEmpty ?? false;
       });
+      }
     });
   }
 
@@ -75,7 +77,7 @@ class _MaterialVendorDetailScreenState
     _Sec('Brands',  Icons.branding_watermark_rounded),
   ];
 
-  // ── ROOT ──────────────────────────────────────────────────────────────────
+  
   @override
   Widget build(BuildContext context) {
     return GetBuilder<MaterialController>(builder: (ctrl) {
@@ -93,13 +95,11 @@ class _MaterialVendorDetailScreenState
       final initials = v.name.trim().split(' ').take(2).map((w) => w[0].toUpperCase()).join();
 
       return Scaffold(
-        // KEY FIX: background matches header so no black flash
         backgroundColor: _h1,
         body: CustomScrollView(
           controller: _scroll,
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // ── Hero ───────────────────────────────────────────────────────
             SliverAppBar(
               expandedHeight: 240,
               pinned: true,
@@ -112,7 +112,7 @@ class _MaterialVendorDetailScreenState
                 child: Container(
                   margin: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.14),
+                    color: Colors.white.withValues(alpha:0.14),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 15),
@@ -123,8 +123,6 @@ class _MaterialVendorDetailScreenState
                 background: _hero(v, imgUrl, rating, initials),
               ),
             ),
-
-            // ── Everything below hero has _bg background ────────────────────
             SliverToBoxAdapter(
               child: Container(
                 color: _bg,
@@ -154,25 +152,21 @@ class _MaterialVendorDetailScreenState
       );
     });
   }
-
-  // ── Hero ──────────────────────────────────────────────────────────────────
+  
   Widget _hero(vendorModel.Vendor v, String imgUrl, double rating, String initials) {
     return Stack(fit: StackFit.expand, children: [
       imgUrl.isNotEmpty
           ? Image.network(imgUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _heroGrad())
           : _heroGrad(),
-      // Scrim — green tinted, never pure black
       Container(decoration: const BoxDecoration(gradient: LinearGradient(
         begin: Alignment.topCenter, end: Alignment.bottomCenter,
         colors: [Color(0x44000000), Color(0xE6122007)], stops: [0.1, 1.0],
       ))),
-      // Gold accent line
       Positioned(top: 0, left: 0, right: 0,
         child: Container(height: 3, decoration: const BoxDecoration(gradient: LinearGradient(
           colors: [Color(0xFFD4921A), Color(0xFFF5C842), Color(0xFFD4921A)],
         ))),
       ),
-      // Vendor info
       Positioned(bottom: 18, left: 16, right: 16,
         child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Container(width: 54, height: 54,
@@ -180,7 +174,7 @@ class _MaterialVendorDetailScreenState
               gradient: const LinearGradient(colors: [Color(0xFFD4921A), Color(0xFFF5C842)],
                   begin: Alignment.topLeft, end: Alignment.bottomRight),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: _gold.withOpacity(0.55), blurRadius: 14, offset: const Offset(0, 6))],
+              boxShadow: [BoxShadow(color: _gold.withValues(alpha:0.55), blurRadius: 14, offset: const Offset(0, 6))],
             ),
             child: Center(child: Text(initials, style: const TextStyle(
                 color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20))),
@@ -197,7 +191,7 @@ class _MaterialVendorDetailScreenState
                     const Icon(Icons.location_on_rounded, color: _gold, size: 11),
                     const SizedBox(width: 3),
                     Expanded(child: Text(v.address!, style: TextStyle(
-                        color: Colors.white.withOpacity(0.6), fontSize: 11),
+                        color: Colors.white.withValues(alpha:0.6), fontSize: 11),
                         maxLines: 1, overflow: TextOverflow.ellipsis)),
                   ]).animate().fadeIn(delay: 180.ms, duration: 400.ms),
                 ],
@@ -205,7 +199,7 @@ class _MaterialVendorDetailScreenState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(color: _gold, borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: _gold.withOpacity(0.45), blurRadius: 10, offset: const Offset(0, 4))]),
+                boxShadow: [BoxShadow(color: _gold.withValues(alpha:0.45), blurRadius: 10, offset: const Offset(0, 4))]),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.star_rounded, color: Colors.white, size: 13),
               const SizedBox(width: 3),
@@ -221,8 +215,7 @@ class _MaterialVendorDetailScreenState
   Widget _heroGrad() => Container(decoration: const BoxDecoration(
       gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
           colors: [_h1, _h2])));
-
-  // ── Info strip ────────────────────────────────────────────────────────────
+  
   Widget _infoStrip(vendorModel.Vendor v) => Container(
     color: _card,
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
@@ -234,7 +227,7 @@ class _MaterialVendorDetailScreenState
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(color: _greenBg, borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _green.withOpacity(0.2))),
+            border: Border.all(color: _green.withValues(alpha:0.2))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Container(width: 5, height: 5,
               decoration: const BoxDecoration(color: _green, shape: BoxShape.circle)),
@@ -248,7 +241,7 @@ class _MaterialVendorDetailScreenState
   Widget _chip(IconData icon, String label, Color c, Color bg) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.withOpacity(0.15))),
+        border: Border.all(color: c.withValues(alpha:0.15))),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 10, color: c), const SizedBox(width: 4),
       Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: c)),
@@ -270,7 +263,7 @@ class _MaterialVendorDetailScreenState
         const Divider(height: 1, color: _border),
         if (v.phone.isNotEmpty)       _cRow(Icons.phone_rounded,    v.phone,     const Color(0xFF16A34A), const Color(0xFFDCFCE7), () => _call(v.phone)),
         if (v.address?.isNotEmpty??false) _cRow(Icons.location_on_rounded, v.address!,  const Color(0xFFEA580C), const Color(0xFFFFEDD5), () => _map(v.address!)),
-        if (v.email?.isNotEmpty??false)   _cRow(Icons.email_rounded,       v.email!,    const Color(0xFFDC2626), const Color(0xFFFEE2E2), () => _mail(v.email!)),
+        if (v.email.isNotEmpty)   _cRow(Icons.email_rounded,       v.email,    const Color(0xFFDC2626), const Color(0xFFFEE2E2), () => _mail(v.email)),
         if (v.website?.isNotEmpty??false) _cRow(Icons.language_rounded,    v.website!,  const Color(0xFF4F46E5), const Color(0xFFE0E7FF), () => _web(v.website!)),
         if (socials.isNotEmpty) ...[
           const Divider(height: 1, color: _border),
@@ -284,8 +277,8 @@ class _MaterialVendorDetailScreenState
                 child: GestureDetector(
                   onTap: e.value.onTap,
                   child: Container(width: 32, height: 32,
-                    decoration: BoxDecoration(color: e.value.color.withOpacity(0.1),
-                        shape: BoxShape.circle, border: Border.all(color: e.value.color.withOpacity(0.3))),
+                    decoration: BoxDecoration(color: e.value.color.withValues(alpha:0.1),
+                        shape: BoxShape.circle, border: Border.all(color: e.value.color.withValues(alpha:0.3))),
                     child: Center(child: Image.asset(e.value.asset, width: 15, height: 15,
                         color: e.value.color,
                         errorBuilder: (_, __, ___) => Icon(Icons.link, size: 15, color: e.value.color))),
@@ -386,7 +379,7 @@ class _MaterialVendorDetailScreenState
                 color: active ? _gold : _card,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: active ? _gold : _border, width: active ? 0 : 1),
-                boxShadow: active ? [BoxShadow(color: _gold.withOpacity(0.4),
+                boxShadow: active ? [BoxShadow(color: _gold.withValues(alpha:0.4),
                     blurRadius: 10, offset: const Offset(0, 4))] : [],
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -436,8 +429,7 @@ class _MaterialVendorDetailScreenState
         return const SizedBox.shrink();
     }
   }
-
-  // ══ PRODUCTS ══════════════════════════════════════════════════════════════
+  
   Widget _productsSection(vendorModel.Vendor v) {
     final items = v.vendorMaterials ?? [];
     if (items.isEmpty) return _empty('No products listed', Icons.inventory_2_outlined);
@@ -467,7 +459,7 @@ class _MaterialVendorDetailScreenState
                     style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, color: _green))),
           ])),
           const SizedBox(width: 8),
-          _pillBtn('Quote', _gold, _goldBg, () => _productDialog(m.materialName, m.id.toString())),
+          _pillBtn('Quote', _gold, _goldBg, () => _productDialog(m.materialName, m.id.toString(), v.userId.toString())),
         ]),
       ).animate(delay: Duration(milliseconds: i * 50)).fadeIn(duration: 300.ms)
           .slideY(begin: 0.08, curve: Curves.easeOutCubic);
@@ -541,7 +533,7 @@ class _MaterialVendorDetailScreenState
   Widget _factChip(IconData icon, String label, String val, Color c, Color bg) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: c.withOpacity(0.2))),
+        border: Border.all(color: c.withValues(alpha:0.2))),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 12, color: c), const SizedBox(width: 5),
       Text('$label: $val', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c)),
@@ -578,7 +570,7 @@ class _MaterialVendorDetailScreenState
                     child: LinearProgressIndicator(value: frac, minHeight: 5,
                       backgroundColor: Colors.grey.shade100,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                          frac > 0.4 ? _gold : _gold.withOpacity(0.5)),
+                          frac > 0.4 ? _gold : _gold.withValues(alpha:0.5)),
                     ))),
               ]),
             );
@@ -687,7 +679,7 @@ class _MaterialVendorDetailScreenState
   }
 
   // ── Product enquiry dialog ────────────────────────────────────────────────
-  void _productDialog(String title, String materialId) {
+  void _productDialog(String title, String materialId, String userId) {
     showDialog(context: context, builder: (_) => GetBuilder<MaterialController>(
       builder: (ctrl) => Dialog(
         insetPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -750,7 +742,7 @@ class _MaterialVendorDetailScreenState
                   elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
               onPressed: ctrl.isSubmittingEnquiry ? null : () {
                 FocusManager.instance.primaryFocus?.unfocus();
-                ctrl.submitProductEnquiry(materialId: materialId);
+                ctrl.submitProductEnquiry(materialId: materialId, userId: userId);
               },
               child: ctrl.isSubmittingEnquiry
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -844,7 +836,7 @@ class _MaterialVendorDetailScreenState
   );
 
   BoxDecoration _box() => BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16),
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 4))]);
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.05), blurRadius: 12, offset: const Offset(0, 4))]);
 
   Widget _head(IconData icon, String title) => Padding(
     padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
@@ -858,7 +850,7 @@ class _MaterialVendorDetailScreenState
     onTap: tap,
     child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: c.withOpacity(0.4))),
+            border: Border.all(color: c.withValues(alpha:0.4))),
         child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c))),
   );
 

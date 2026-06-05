@@ -1057,14 +1057,24 @@ class ProfileForm extends StatelessWidget {
               icon: Icons.photo_library_rounded,
               title: 'Choose from Gallery',
               color: Colors.blue,
-              onTap: () { Get.back(); controller.pickProfileImage(); },
+              onTap: () {
+                Get.back();
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  controller.pickProfileImage();
+                });
+              },
             ),
             SizedBox(height: 10.h),
             _imageOption(
               icon: Icons.camera_alt_rounded,
               title: 'Take a Photo',
               color: Colors.green,
-              onTap: () { Get.back(); controller.takeProfilePhoto(); },
+              onTap: () {
+                Get.back();
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  controller.takeProfilePhoto();
+                });
+              },
             ),
             SizedBox(height: 10.h),
             TextButton(
