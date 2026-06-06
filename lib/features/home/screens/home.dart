@@ -84,8 +84,6 @@ class _HomeState extends State<Home> {
                 children: [
                   HomeSearchBar(),
                   const SizedBox(height: 20),
-
-                  // ── Banner Carousel ───────────────────────────────────
                   Obx(() {
                     final banners = controller.featuredBanners;
                     final List<String> images = banners.isNotEmpty
@@ -121,11 +119,10 @@ class _HomeState extends State<Home> {
                     );
                   }),
                   const SizedBox(height: 10),
-
                   PropertyMain(),
                   const SizedBox(height: 20),
-
-                  // ── Featured Land Properties ──────────────────────────
+                  _buildAddMyPropertySection(),
+                  const SizedBox(height: 20),
                   Column(
                     children: [
                       SubtitleWidget(
@@ -138,8 +135,6 @@ class _HomeState extends State<Home> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // ── Featured Flats / Villas ───────────────────────────
                   Column(
                     children: [
                       SubtitleWidget(

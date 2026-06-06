@@ -21,6 +21,7 @@ import '../../menu/screens/about_us.dart';
 import '../../menu/controller/dashboard_menu_controller.dart';
 import '../../menu/screens/terms_&_conditions.dart';
 import '../../company_profile/screen/add_company_profile.dart';
+import '../../service/screen/my_received_enquiries_screen.dart';
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -1259,6 +1260,29 @@ class _MenuState extends State<Menu> with SingleTickerProviderStateMixin {
                       Icons.settings_input_component_rounded,
                       "My Material",
                           () => Get.to(() => const AddMaterialsScreen()),
+                      "assets/images/technical-support.png",
+                    ),
+
+                  /// Enquiries received on my services/materials
+                  if (isService)
+                    _subMenuTile(
+                      Icons.inbox_rounded,
+                      "My Service Enquiries",
+                      () => Get.to(() => const MyReceivedEnquiriesScreen(
+                            showServiceTab: true,
+                            showMaterialTab: false,
+                          )),
+                      "assets/images/support1.png",
+                    ),
+
+                  if (isVendor)
+                    _subMenuTile(
+                      Icons.inbox_rounded,
+                      "My Material Enquiries",
+                      () => Get.to(() => const MyReceivedEnquiriesScreen(
+                            showServiceTab: false,
+                            showMaterialTab: true,
+                          )),
                       "assets/images/technical-support.png",
                     ),
                 ],

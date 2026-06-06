@@ -280,7 +280,6 @@ class _MaterialVendorDetailScreenState
                     decoration: BoxDecoration(color: e.value.color.withValues(alpha:0.1),
                         shape: BoxShape.circle, border: Border.all(color: e.value.color.withValues(alpha:0.3))),
                     child: Center(child: Image.asset(e.value.asset, width: 15, height: 15,
-                        color: e.value.color,
                         errorBuilder: (_, __, ___) => Icon(Icons.link, size: 15, color: e.value.color))),
                   ).animate(delay: Duration(milliseconds: e.key * 60))
                       .scale(curve: Curves.elasticOut, duration: 350.ms),

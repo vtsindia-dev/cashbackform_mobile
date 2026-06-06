@@ -10,6 +10,7 @@ import '../../../common/model/logger_model.dart' show Loggers;
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../model/received_enquiry_model.dart';
 import '../model/service_model.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
@@ -23,6 +24,19 @@ class ServiceController extends GetxController {
   var vendors = <Vendor>[].obs;
   var materialEnquiries = <MaterialEnquiry>[].obs;
   var serviceEnquiries = <ServiceEnquiry>[].obs;
+  // Received enquiries (others enquired about MY services/materials)
+  var myServiceEnquiriesReceived = <ReceivedEnquiry>[].obs;
+  var myMaterialEnquiriesReceived = <ReceivedEnquiry>[].obs;
+  var isLoadingServiceReceived = false.obs;
+  var isLoadingMaterialReceived = false.obs;
+  var isLoadMoreServiceReceived = false.obs;
+  var isLoadMoreMaterialReceived = false.obs;
+  var serviceReceivedCurrentPage = 1.obs;
+  var serviceReceivedTotalPages = 1.obs;
+  var serviceReceivedHasMore = false.obs;
+  var materialReceivedCurrentPage = 1.obs;
+  var materialReceivedTotalPages = 1.obs;
+  var materialReceivedHasMore = false.obs;
   var errorMessage = ''.obs;
   var currentPage = 1.obs;
   var totalPages = 1.obs;
@@ -1066,6 +1080,84 @@ class ServiceController extends GetxController {
     } finally {
       isLoading(false);
       isLoadMore(false);
+    }
+  }
+
+  // ==================== Received Enquiry Methods (MY services / materials) ====================
+
+  Future<void> fetchMyServicesEnquiryList({bool loadMore = false}) async {
+    if (loadMore) {
+      if (!serviceReceivedHasMore.value || isLoadMoreServiceReceived.value) return;
+      isLoadMoreServiceReceived(true);
+    } else {
+      if (isLoadingServiceReceived.value) return;
+      isLoadingServiceReceived(true);
+      serviceReceivedCurrentPage.value = 1;
+      serviceReceivedTotalPages.value = 1;
+      serviceReceivedHasMore.value = false;
+      myServiceEnquiriesReceived.clear();
+    }
+    try {
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) return;
+      if (loadMore) serviceReceivedCurrentPage.value++;
+      final url = '${ApiUrl.myServicesEnquiryList}?page=${serviceReceivedCurrentPage.value}';
+      final response = await ApiService.getAuthenticatedRequest(url, token);
+      if (response.statusCode == 200 && response.data != null) {
+        final result = ReceivedEnquiryResponse.fromJson(response.data);
+        if (loadMore) {
+          myServiceEnquiriesReceived.addAll(result.data.enquiries);
+        } else {
+          myServiceEnquiriesReceived.assignAll(result.data.enquiries);
+        }
+        serviceReceivedCurrentPage.value = result.data.pagination.currentPage;
+        serviceReceivedTotalPages.value = result.data.pagination.lastPage;
+        serviceReceivedHasMore.value =
+            result.data.pagination.currentPage < result.data.pagination.lastPage;
+      }
+    } catch (e) {
+      print('❌ fetchMyServicesEnquiryList error: $e');
+    } finally {
+      isLoadingServiceReceived(false);
+      isLoadMoreServiceReceived(false);
+    }
+  }
+
+  Future<void> fetchMyMaterialEnquiryList({bool loadMore = false}) async {
+    if (loadMore) {
+      if (!materialReceivedHasMore.value || isLoadMoreMaterialReceived.value) return;
+      isLoadMoreMaterialReceived(true);
+    } else {
+      if (isLoadingMaterialReceived.value) return;
+      isLoadingMaterialReceived(true);
+      materialReceivedCurrentPage.value = 1;
+      materialReceivedTotalPages.value = 1;
+      materialReceivedHasMore.value = false;
+      myMaterialEnquiriesReceived.clear();
+    }
+    try {
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) return;
+      if (loadMore) materialReceivedCurrentPage.value++;
+      final url = '${ApiUrl.myMaterialEnquiryList}?page=${materialReceivedCurrentPage.value}';
+      final response = await ApiService.getAuthenticatedRequest(url, token);
+      if (response.statusCode == 200 && response.data != null) {
+        final result = ReceivedEnquiryResponse.fromJson(response.data);
+        if (loadMore) {
+          myMaterialEnquiriesReceived.addAll(result.data.enquiries);
+        } else {
+          myMaterialEnquiriesReceived.assignAll(result.data.enquiries);
+        }
+        materialReceivedCurrentPage.value = result.data.pagination.currentPage;
+        materialReceivedTotalPages.value = result.data.pagination.lastPage;
+        materialReceivedHasMore.value =
+            result.data.pagination.currentPage < result.data.pagination.lastPage;
+      }
+    } catch (e) {
+      print('❌ fetchMyMaterialEnquiryList error: $e');
+    } finally {
+      isLoadingMaterialReceived(false);
+      isLoadMoreMaterialReceived(false);
     }
   }
 

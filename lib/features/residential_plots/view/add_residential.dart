@@ -128,7 +128,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
   Future<void> _loadInitialData() async {
     try {
       if (_controller.propertyCategories.isEmpty) await _controller.fetchPropertyCategories();
-      if (_controller.statesList.isEmpty) await _controller.fetchStates();
+      if (_controller.countriesList.isEmpty) await _controller.fetchCountries();
       if (_controller.availableAmenities.isEmpty) await _controller.fetchAvailableAmenities();
       if (_controller.nearbyPlacesList.isEmpty) await _controller.fetchNearbyPlaces();
       await _controller.getCurrentLocation();
@@ -659,144 +659,201 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
   }
 
   Widget _buildLocationSelection() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── State ────────────────────────────────────────────────────
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildLabel('State', required: true),
-              SizedBox(height: 6.h),
-              Obx(() {
-                // ✅ Show shimmer while states are loading initially
-                if (_controller.isLoading.value &&
-                    _controller.statesList.isEmpty) {
-                  return _buildShimmerLoader(height: 50.h);
-                }
-                if (_controller.statesList.isEmpty) {
-                  return _buildRetryField(
-                    'No states available',
-                        () => _controller.fetchStates(),
-                  );
-                }
-                return _buildStyledDropdown<int>(
-                  value: _controller.selectedStateId.value > 0
-                      ? _controller.selectedStateId.value
-                      : null,
-                  hint: 'Select state',
-                  items: _controller.statesList
-                      .map((s) => DropdownMenuItem(
-                    value: s.id,
-                    child: Padding(
-                      padding:
-                      EdgeInsets.symmetric(horizontal: 12.w),
-                      child: Text(s.stateName),
-                    ),
-                  ))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) _controller.onStateChanged(v);
-                  },
-                );
-              }),
-            ],
-          ),
-        ),
+        // ── Country ──────────────────────────────────────────────────
+        _buildLabel('Country', required: true),
+        SizedBox(height: 6.h),
+        Obx(() {
+          if (_controller.isLoading.value && _controller.countriesList.isEmpty) {
+            return _buildShimmerLoader(height: 50.h);
+          }
+          if (_controller.countriesList.isEmpty) {
+            return _buildRetryField(
+              'No countries available',
+              () => _controller.fetchCountries(),
+            );
+          }
+          return _buildStyledDropdown<int>(
+            value: _controller.selectedCountryId.value > 0
+                ? _controller.selectedCountryId.value
+                : null,
+            hint: 'Select country',
+            items: _controller.countriesList
+                .map((c) => DropdownMenuItem(
+                      value: c.id,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12.w),
+                        child: Text(c.countryName),
+                      ),
+                    ))
+                .toList(),
+            onChanged: (v) {
+              if (v != null) _controller.onCountryChanged(v);
+            },
+          );
+        }),
 
-        SizedBox(width: 10.w),
+        SizedBox(height: 12.h),
 
-        // ── City ─────────────────────────────────────────────────────
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildLabel('City', required: true),
-              SizedBox(height: 6.h),
-              Obx(() {
-                // ✅ State not selected yet
-                if (_controller.selectedStateId.value == 0) {
-                  return Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 12.w, vertical: 14.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Text(
-                      'Select state first',
-                      style: TextStyle(
-                          color: const Color(0xFF9CA3AF), fontSize: 13.sp),
-                    ),
-                  );
-                }
-
-                // ✅ Show loading spinner while cities are being fetched
-                if (_controller.isCityLoading.value) {
-                  return Container(
-                    height: 50.h,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(width: 12.w),
-                        SizedBox(
-                          width: 16.w,
-                          height: 16.w,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColor.primary,
-                          ),
+        // ── State + City ──────────────────────────────────────────────
+        Row(
+          children: [
+            // ── State ────────────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('State', required: true),
+                  SizedBox(height: 6.h),
+                  Obx(() {
+                    if (_controller.selectedCountryId.value == 0) {
+                      return Container(
+                        width: MediaQuery.of(context).size.width,
+                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
                         ),
-                        SizedBox(width: 10.w),
-                        Text(
-                          'Loading cities...',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: const Color(0xFF9CA3AF),
-                          ),
+                        child: Text(
+                          'Select country first',
+                          style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 13.sp),
                         ),
-                      ],
-                    ),
-                  );
-                }
+                      );
+                    }
+                    if (_controller.isStateLoading.value) {
+                      return Container(
+                        height: 50.h,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(width: 12.w),
+                            SizedBox(
+                              width: 16.w,
+                              height: 16.w,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColor.primary),
+                            ),
+                            SizedBox(width: 10.w),
+                            Text('Loading states...', style: TextStyle(fontSize: 13.sp, color: const Color(0xFF9CA3AF))),
+                          ],
+                        ),
+                      );
+                    }
+                    if (_controller.statesList.isEmpty) {
+                      return _buildRetryField(
+                        'No states available',
+                        () => _controller.fetchStatesByCountry(_controller.selectedCountryId.value),
+                      );
+                    }
+                    return _buildStyledDropdown<int>(
+                      value: _controller.selectedStateId.value > 0
+                          ? _controller.selectedStateId.value
+                          : null,
+                      hint: 'Select state',
+                      items: _controller.statesList
+                          .map((s) => DropdownMenuItem(
+                                value: s.id,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                                  child: Text(s.stateName),
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) _controller.onStateChanged(v);
+                      },
+                    );
+                  }),
+                ],
+              ),
+            ),
 
-                // ✅ No cities found after loading
-                if (_controller.citiesList.isEmpty) {
-                  return _buildRetryField(
-                    'No cities found',
-                        () => _controller
-                        .fetchCitiesByState(_controller.selectedStateId.value),
-                  );
-                }
+            SizedBox(width: 10.w),
 
-                // ✅ Normal dropdown
-                return _buildStyledDropdown<int>(
-                  value: _controller.selectedCityId.value > 0
-                      ? _controller.selectedCityId.value
-                      : null,
-                  hint: 'Select city',
-                  items: _controller.citiesList
-                      .map((c) => DropdownMenuItem(
-                    value: c.id,
-                    child: Padding(
-                      padding:
-                      EdgeInsets.symmetric(horizontal: 12.w),
-                      child: Text(c.name),
-                    ),
-                  ))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) _controller.onCityChanged(v);
-                  },
-                );
-              }),
-            ],
-          ),
+            // ── City ─────────────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('City', required: true),
+                  SizedBox(height: 6.h),
+                  Obx(() {
+                    if (_controller.selectedStateId.value == 0) {
+                      return Container(
+                        width: MediaQuery.of(context).size.width,
+                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: Text(
+                          'Select state first',
+                          style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 13.sp),
+                        ),
+                      );
+                    }
+
+                    if (_controller.isCityLoading.value) {
+                      return Container(
+                        height: 50.h,
+                        width: MediaQuery.of(context).size.width,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(width: 12.w),
+                            SizedBox(
+                              width: 16.w,
+                              height: 16.w,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColor.primary),
+                            ),
+                            SizedBox(width: 10.w),
+                            Text('Loading cities...', style: TextStyle(fontSize: 13.sp, color: const Color(0xFF9CA3AF))),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (_controller.citiesList.isEmpty) {
+                      return _buildRetryField(
+                        'No cities found',
+                        () => _controller.fetchCitiesByState(_controller.selectedStateId.value),
+                      );
+                    }
+
+                    return _buildStyledDropdown<int>(
+                      value: _controller.selectedCityId.value > 0
+                          ? _controller.selectedCityId.value
+                          : null,
+                      hint: 'Select city',
+                      items: _controller.citiesList
+                          .map((c) => DropdownMenuItem(
+                                value: c.id,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                                  child: Text(c.name),
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) _controller.onCityChanged(v);
+                      },
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -809,6 +866,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     required ValueChanged<T?> onChanged,
   }) {
     return Container(
+      width: MediaQuery.of(context).size.width,
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(10.r),
@@ -841,7 +899,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(message, style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 13.sp)),
+          Expanded(child: Text(message, style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 13.sp),maxLines: 1,overflow: TextOverflow.ellipsis,)),
           GestureDetector(
             onTap: onRetry,
             child: Icon(Icons.refresh_rounded, size: 18.w, color: AppColor.primary),

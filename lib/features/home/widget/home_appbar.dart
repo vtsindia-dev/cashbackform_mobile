@@ -68,8 +68,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildAddPropertyPopup(context),
-                      const SizedBox(width: 10),
+                      // _buildAddPropertyPopup(context),
+                      // const SizedBox(width: 10),
                       _buildIconButton(
                         image: Images.menu,
                         onTap: () => scaffoldKey.currentState?.openDrawer(),

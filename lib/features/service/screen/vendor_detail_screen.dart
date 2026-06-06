@@ -353,7 +353,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: e.value.color.withOpacity(0.3))),
                     child: Center(child: Image.asset(e.value.asset,
-                        width: 15, height: 15, color: e.value.color,
+                        width: 15, height: 15,
                         errorBuilder: (_, __, ___) =>
                             Icon(Icons.link, size: 15, color: e.value.color))),
                   ).animate(delay: Duration(milliseconds: e.key * 60))

@@ -14,6 +14,7 @@ import '../../../common/colours.dart';
 import '../../../common/widget/api_service.dart';
 import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
+import '../../auth/models/location_model.dart' show CountryModel;
 import '../../legal_and_policies/screen.dart';
 import '../../menu/controller/dashboard_menu_controller.dart';
 import '../../payment/controller/razorpay_controller.dart';
@@ -53,7 +54,8 @@ class ResidentialPropertyFormController extends GetxController {
   // Location
   var selectedStateId = 0.obs;
   var selectedCityId = 0.obs;
-  var selectedCountryId = 1.obs;
+  var selectedCountryId = 0.obs;
+  var countriesList = <CountryModel>[].obs;
   var statesList = <StateList>[].obs;
   var citiesList = <CityModel>[].obs;
 
@@ -120,7 +122,7 @@ class ResidentialPropertyFormController extends GetxController {
       await Future.wait([
         fetchPropertyCategories(),
         fetchAvailableAmenities(),
-        fetchStates(),
+        fetchCountries(),
      //   getCurrentLocation(),
         fetchNearbyPlaces(),
       ]);
@@ -162,6 +164,7 @@ class ResidentialPropertyFormController extends GetxController {
 
     selectedCategoryId.value = 0;
     selectedSubCategoryId.value = 0;
+    selectedCountryId.value = 0;
     selectedStateId.value = 0;
     selectedCityId.value = 0;
     currentStep.value = 0;
@@ -173,6 +176,7 @@ class ResidentialPropertyFormController extends GetxController {
   void resetForm() {
     resetFormForEdit();
     propertyCategories.clear();
+    countriesList.clear();
     statesList.clear();
     citiesList.clear();
     facilities.clear();
@@ -314,6 +318,7 @@ class ResidentialPropertyFormController extends GetxController {
     update();
   }
   var isCityLoading = false.obs;
+  var isStateLoading = false.obs;
   // ==================== PROPERTY LOADING ====================
 
   Future<String?> loadPropertyForEditing(int propertyId) async {
@@ -324,7 +329,7 @@ class ResidentialPropertyFormController extends GetxController {
       // ── Step 0: ensure lookup lists are loaded before we set values ──────
       await Future.wait([
         if (propertyCategories.isEmpty) fetchPropertyCategories(),
-        if (statesList.isEmpty) fetchStates(),
+        if (countriesList.isEmpty) fetchCountries(),
         if (availableAmenities.isEmpty) fetchAvailableAmenities(),
         if (nearbyPlacesList.isEmpty) fetchNearbyPlaces(),
       ]);
@@ -361,9 +366,16 @@ class ResidentialPropertyFormController extends GetxController {
       longitude.value = double.tryParse(property.lng ?? '0') ?? 0.0;
       selectedLocation.value = LatLng(latitude.value, longitude.value);
 
-      // ── Step 2: State → load cities → then set city ───────────────────
-      final stateId = property.state ?? 0;
-      final cityId  = property.city  ?? 0;
+      // ── Step 2: Country → State → load cities → then set city ───────────
+      final countryId = property.country ?? 0;
+      final stateId   = property.state ?? 0;
+      final cityId    = property.city  ?? 0;
+      if (countryId > 0) {
+        selectedCountryId.value = countryId;
+        await fetchStatesByCountry(countryId);
+      } else if (stateId > 0) {
+        await fetchStates();
+      }
       if (stateId > 0) {
         selectedStateId.value = stateId;
         await fetchCitiesByState(stateId);   // waits until citiesList is populated
@@ -712,6 +724,45 @@ class ResidentialPropertyFormController extends GetxController {
 
   // ==================== LOCATION ====================
 
+  Future<void> fetchCountries() async {
+    try {
+      final response = await ApiService.getRequest(ApiUrl.countryUrl);
+      if (response.statusCode == 200 && (response.data['status'] == true || response.data['status'] == 200)) {
+        countriesList.assignAll(
+          (response.data['data'] as List).map((i) => CountryModel.fromJson(i)).toList(),
+        );
+      }
+    } catch (e) { print('❌ Error fetching countries: $e'); }
+  }
+
+  void onCountryChanged(int countryId) {
+    selectedCountryId.value = countryId;
+    selectedStateId.value = 0;
+    selectedCityId.value = 0;
+    statesList.clear();
+    citiesList.clear();
+    if (countryId > 0) {
+      isStateLoading.value = true;
+      fetchStatesByCountry(countryId);
+    }
+    update();
+  }
+
+  Future<void> fetchStatesByCountry(int countryId) async {
+    try {
+      isStateLoading.value = true;
+      statesList.clear();
+      final response = await ApiService.getRequest('${ApiUrl.baseUrl}/api/v2/state?country_id=$countryId');
+      if (response.statusCode == 200 && (response.data['status'] == true || response.data['status'] == 200)) {
+        statesList.assignAll((response.data['data'] as List).map((i) => StateList.fromJson(i)).toList());
+      }
+    } catch (e) {
+      print('❌ Error fetching states by country: $e');
+    } finally {
+      isStateLoading.value = false;
+    }
+  }
+
   Future<void> fetchStates() async {
     try {
       final response = await ApiService.getRequest('${ApiUrl.baseUrl}/api/v2/state');
@@ -745,7 +796,10 @@ class ResidentialPropertyFormController extends GetxController {
     selectedStateId.value = stateId;
     selectedCityId.value = 0;
     citiesList.clear();
-    if (stateId > 0) fetchCitiesByState(stateId);
+    if (stateId > 0) {
+      isCityLoading.value = true;
+      fetchCitiesByState(stateId);
+    }
     update();
   }
 
@@ -870,6 +924,7 @@ class ResidentialPropertyFormController extends GetxController {
         if (selectedCategoryId.value <= 0) formErrors['category_id'] = 'Please select a category';
         if (price.value.isEmpty) formErrors['price'] = 'Total price is required';
         if (areaSqft.value.isEmpty) formErrors['area_sqft'] = 'Area is required';
+        if (selectedCountryId.value <= 0) formErrors['country'] = 'Please select a country';
         if (selectedStateId.value <= 0) formErrors['state'] = 'Please select a state';
         if (selectedCityId.value <= 0) formErrors['city'] = 'Please select a city';
         break;
