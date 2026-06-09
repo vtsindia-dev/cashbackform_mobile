@@ -89,8 +89,6 @@ class NearbyProject extends StatelessWidget {
                     ),
                   ),
 
-                  // VIEW MAP BUTTON
-
                 ],
               ),
             ),

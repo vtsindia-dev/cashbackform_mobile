@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:cashback_farms/common/colours.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,7 +36,9 @@ class PlotAvailabilityWidget extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildProfitCard(
-                    title: "Weekly Profit",
+                    title: controller.weeklyProfit.value.toInt() == 1
+                        ? "Booked Customer"
+                        : "Booked Customers",
                     subtitle: "This Week Units booked Range",
                     value: controller.weeklyProfit.value.toInt(),
                     percent: controller.weeklyProfitPercent.value.toInt(),
@@ -111,7 +111,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 4),
           )
@@ -166,112 +166,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
     );
   }
 
-  /*Widget _buildChartWithData(List<String> ranges, List<double> bookedValues, List<double> availableValues) {
-    double maxVal = 0;
-    if (bookedValues.isNotEmpty) maxVal = max(maxVal, bookedValues.reduce(max));
-    if (availableValues.isNotEmpty) maxVal = max(maxVal, availableValues.reduce(max));
 
-    double maxY = (maxVal * 1.2).ceilToDouble();
-    if (maxY < 10) maxY = 100;
-
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: maxY / 4,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: Colors.grey.shade100,
-            strokeWidth: 1,
-          ),
-        ),
-        titlesData: FlTitlesData(
-          show: true,
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: maxY / 4,
-              reservedSize: 35.w,
-              getTitlesWidget: (value, meta) => Text(
-                value.toInt().toString(),
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 10.sp),
-              ),
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30.h,
-              interval: 1,
-              getTitlesWidget: (value, meta) {
-                int index = value.toInt();
-
-                if (value != index.toDouble() || index < 0 || index >= ranges.length) {
-                  return const SizedBox();
-                }
-
-                return Padding(
-                  padding: EdgeInsets.only(top: 8.h),
-                  child: Text(
-                    ranges[index],
-                    style: TextStyle(
-                      color: Colors.grey.shade500,
-                      fontSize: 10.sp,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        borderData: FlBorderData(show: false),
-        minX: 0,
-        maxX: (ranges.length - 1).toDouble(),
-        minY: 0,
-        maxY: maxY,
-        lineBarsData: [
-          LineChartBarData(
-            spots: List.generate(availableValues.length, (i) => FlSpot(i.toDouble(), availableValues[i])),
-            isCurved: true,
-            curveSmoothness: 0.35,
-            color: colorAvailable,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                radius: 4,
-                color: Colors.white,
-                strokeWidth: 2,
-                strokeColor: colorAvailable,
-              ),
-            ),
-            belowBarData: BarAreaData(show: false),
-          ),
-          LineChartBarData(
-            spots: List.generate(bookedValues.length, (i) => FlSpot(i.toDouble(), bookedValues[i])),
-            isCurved: true,
-            curveSmoothness: 0.35,
-            color: colorBooked,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                radius: 4,
-                color: Colors.white,
-                strokeWidth: 2,
-                strokeColor: colorBooked,
-              ),
-            ),
-            belowBarData: BarAreaData(show: false),
-          ),
-        ],
-      ),
-    );
-  }*/
 
   Widget _buildChartWithData(List<String> ranges, List<double> bookedValues, List<double> availableValues) {
     double maxY = 0;
@@ -342,7 +237,6 @@ class PlotAvailabilityWidget extends StatelessWidget {
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          horizontalInterval: maxY / 5,
           getDrawingHorizontalLine: (value) => FlLine(
             color: Colors.grey.shade100,
             strokeWidth: 1,
@@ -471,7 +365,7 @@ class PlotAvailabilityWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 15,
               offset: const Offset(0, 4),
             )
@@ -512,36 +406,10 @@ class PlotAvailabilityWidget extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: colorTextMain),
                   ),
-                  // 4.h.verticalSpace,
-                  // Wrap(
-                  //   crossAxisAlignment: WrapCrossAlignment.center,
-                  //   children: [
-                  //     Text(
-                  //       "$percent% ${percent >= 0 ? '↑' : '↓'} ",
-                  //       style: TextStyle(
-                  //           color: percent >= 0 ? const Color(0xFF2ECC71) : Colors.red,
-                  //           fontSize: 10.sp,
-                  //           fontWeight: FontWeight.bold),
-                  //     ),
-                  //     Text("From previous period",
-                  //         style: TextStyle(
-                  //             fontSize: 9.sp, color: Colors.grey.shade400))
-                  //   ],
-                  // )
                 ],
               ),
             ),
-
             8.w.horizontalSpace,
-
-            // // GAUGE (Fixed Size)
-            // SizedBox(
-            //   height: 70.w,
-            //   width: 70.w,
-            //   child: isDashed
-            //       ? _buildDashedGauge(percent)
-            //       : _buildSolidGauge(percent),
-            // )
           ],
         )
     )
@@ -551,88 +419,6 @@ class PlotAvailabilityWidget extends StatelessWidget {
         .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 600.ms, curve: Curves.easeOutBack)
         .then(delay: 0.ms);
 
-  }
-
-
-  Widget _buildDashedGauge(int percent) {
-    return CustomPaint(
-      painter: DashedRingPainter(
-        percent: percent / 100,
-        activeColor: const Color(0xFF00C853),
-        inactiveColor: Colors.grey.shade100,
-        width: 8.w,
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "$percent%",
-              style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade400),
-            ),
-            Text(
-              "Profit",
-              style: TextStyle(
-                  fontSize: 10.sp,
-                  color: Colors.grey.shade400),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildSolidGauge(int percent) {
-    const Color primaryColor = Color(0xFF8BB55F);
-
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        PieChart(
-          PieChartData(
-            startDegreeOffset: 270,
-            sectionsSpace: 0,
-            centerSpaceRadius: 25.w,
-            sections: [
-              PieChartSectionData(
-                color: primaryColor,
-                value: percent.toDouble(),
-                title: '',
-                radius: 8.w,
-              ),
-              PieChartSectionData(
-                color: Colors.grey.shade100,
-                value: (100 - percent).toDouble(),
-                title: '',
-                radius: 8.w,
-              ),
-            ],
-          ),
-        ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "$percent%",
-              style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade400),
-            ),
-            Text(
-              "Profit",
-              style: TextStyle(
-                  fontSize: 10.sp,
-                  color: Colors.grey.shade400),
-            ),
-          ],
-        ),
-      ],
-    );
   }
 
 
@@ -672,54 +458,3 @@ class PlotAvailabilityWidget extends StatelessWidget {
   }
 }
 
-
-class DashedRingPainter extends CustomPainter {
-  final double percent;
-  final Color activeColor;
-  final Color inactiveColor;
-  final double width;
-
-  DashedRingPainter({
-    required this.percent,
-    required this.activeColor,
-    required this.inactiveColor,
-    required this.width,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - width) / 2;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = width
-      ..strokeCap = StrokeCap.butt;
-
-    const int dashCount = 40;
-    const double startAngle = -pi / 2;
-    const double sweepAngle = 2 * pi;
-    final double dashAngle = sweepAngle / dashCount;
-    const double gapRatio = 0.2;
-    final double segmentAngle = dashAngle * (1 - gapRatio);
-
-    final int activeDashes = (dashCount * percent).round();
-
-    for (int i = 0; i < dashCount; i++) {
-      final double currentAngle = startAngle + (dashAngle * i);
-      paint.color = i < activeDashes ? activeColor : inactiveColor;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        currentAngle,
-        segmentAngle,
-        false,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant DashedRingPainter oldDelegate) {
-    return oldDelegate.percent != percent;
-  }
-}

@@ -10,7 +10,7 @@ import '../model/residential_model.dart';
 import 'add_residential.dart';
 
 class MyPlotsScreen extends StatefulWidget {
-  const MyPlotsScreen({Key? key}) : super(key: key);
+  const MyPlotsScreen({super.key});
 
   @override
   State<MyPlotsScreen> createState() => _MyPlotsScreenState();
@@ -34,7 +34,7 @@ class _MyPlotsScreenState extends State<MyPlotsScreen> {
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.h),
-        child: const DynamicAppBar(
+        child: DynamicAppBar(
           title: "My Flat/Villas",
           showBackButton: true,
         ),
@@ -52,8 +52,7 @@ class _MyPlotsScreenState extends State<MyPlotsScreen> {
           color: AppColor.primary,
           onRefresh: () => controller.fetchMyProperties(),
           child: ListView.builder(
-            padding:
-            EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            padding: EdgeInsets.only(left: 16.w,right: 16.w,top: 12.h,bottom: 80.h),
             itemCount: controller.properties.length,
             physics: const BouncingScrollPhysics(),
             itemBuilder: (context, index) {
@@ -94,11 +93,11 @@ class _MyPlotsScreenState extends State<MyPlotsScreen> {
           Container(
             padding: EdgeInsets.all(24.r),
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.08),
+              color: AppColor.primary.withValues(alpha:0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(Iconsax.house_2,
-                size: 56.sp, color: AppColor.primary.withOpacity(0.5)),
+                size: 56.sp, color: AppColor.primary.withValues(alpha:0.5)),
           ),
           SizedBox(height: 20.h),
           Text(
@@ -137,7 +136,7 @@ class _MyPlotsScreenState extends State<MyPlotsScreen> {
             children: [
               CircleAvatar(
                 radius: 30.r,
-                backgroundColor: Colors.red.withOpacity(0.1),
+                backgroundColor: Colors.red.withValues(alpha:0.1),
                 child: Icon(Icons.delete_sweep_rounded,
                     color: Colors.red, size: 30.sp),
               ),
@@ -201,11 +200,7 @@ class _MyPlotsScreenState extends State<MyPlotsScreen> {
   }
 }
 
-// =============================================================================
-// PROPERTY CARD — redesigned
-// =============================================================================
-
-class _PropertyCard extends StatelessWidget {
+class _PropertyCard extends StatefulWidget {
   final Property property;
   final ResidentialPropertyFormController controller;
   final int index;
@@ -218,19 +213,28 @@ class _PropertyCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  // ── Logic helpers ──────────────────────────────────────────────────────────
+  @override
+  State<_PropertyCard> createState() => _PropertyCardState();
+}
 
-  /// Document payment done → documentVerification == true
+class _PropertyCardState extends State<_PropertyCard> {
+  bool _renewLoading = false;
+
+  Property get property => widget.property;
+  ResidentialPropertyFormController get controller => widget.controller;
+  VoidCallback get onDelete => widget.onDelete;
+
   bool get _docsPaid => property.documentVerification;
-
-  /// Property fully verified by admin → verifyStatus == 1
   bool get _isVerified => property.isVerified;
-
-  /// Sold out → soldStatus == 1
   bool get _isSoldOut => property.isSoldOut;
-
-  /// Show "Pay to Verify" button only when docs NOT yet paid AND not verified
   bool get _showPayButton => !_docsPaid && !_isVerified;
+  bool get _showRenewButton => !property.isActive;
+
+  Future<void> _renew() async {
+    setState(() => _renewLoading = true);
+    await controller.renewProperty(property.id);
+    if (mounted) setState(() => _renewLoading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +245,7 @@ class _PropertyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha:0.06),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -250,16 +254,12 @@ class _PropertyCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Image + overlay badges ───────────────────────────────────────
           _buildImageSection(context),
-
-          // ── Content ─────────────────────────────────────────────────────
           Padding(
             padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name + price
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -287,8 +287,6 @@ class _PropertyCard extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 6.h),
-
-                // Location
                 Row(
                   children: [
                     Icon(Iconsax.location,
@@ -308,8 +306,6 @@ class _PropertyCard extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 12.h),
-
-                // Stats row
                 Row(
                   children: [
                     _statChip(Iconsax.maximize_1,
@@ -326,17 +322,12 @@ class _PropertyCard extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 12.h),
-
-                // ── Status banners ─────────────────────────────────────────
                 _buildStatusBanners(),
-
                 SizedBox(height: 14.h),
                 Divider(
                     height: 1,
                     color: Colors.grey.shade100),
                 SizedBox(height: 12.h),
-
-                // ── Action buttons row ──────────────────────────────────────
                 _buildActionRow(context),
                 SizedBox(height: 14.h),
               ],
@@ -347,7 +338,6 @@ class _PropertyCard extends StatelessWidget {
     );
   }
 
-  // ── Image section ──────────────────────────────────────────────────────────
 
   Widget _buildImageSection(BuildContext context) {
     final imageUrl = property.galleryImages.isNotEmpty
@@ -356,7 +346,6 @@ class _PropertyCard extends StatelessWidget {
 
     return Stack(
       children: [
-        // Main image
         ClipRRect(
           borderRadius:
           BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -382,8 +371,6 @@ class _PropertyCard extends StatelessWidget {
                 : _imagePlaceholder(),
           ),
         ),
-
-        // Dark gradient at bottom of image
         Positioned(
           bottom: 0,
           left: 0,
@@ -397,15 +384,13 @@ class _PropertyCard extends StatelessWidget {
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
                 colors: [
-                  Colors.black.withOpacity(0.45),
+                  Colors.black.withValues(alpha:0.45),
                   Colors.transparent,
                 ],
               ),
             ),
           ),
         ),
-
-        // Top-left: Verified OR Doc-Paid badge
         Positioned(
           top: 10.h,
           left: 10.w,
@@ -420,8 +405,6 @@ class _PropertyCard extends StatelessWidget {
             ],
           ),
         ),
-
-        // Top-right: status pill + sold out
         Positioned(
           top: 10.h,
           right: 10.w,
@@ -436,8 +419,6 @@ class _PropertyCard extends StatelessWidget {
             ],
           ),
         ),
-
-        // Bottom-left: country badge
         Positioned(
           bottom: 8.h,
           left: 10.w,
@@ -463,13 +444,9 @@ class _PropertyCard extends StatelessWidget {
       ),
     );
   }
-
-  // ── Status banners below content ───────────────────────────────────────────
-
+  
   Widget _buildStatusBanners() {
     final List<Widget> banners = [];
-
-    // 1. SOLD OUT
     if (_isSoldOut) {
       banners.add(_infoBanner(
         icon: Icons.block_rounded,
@@ -478,8 +455,6 @@ class _PropertyCard extends StatelessWidget {
         bg: Colors.red.shade50,
       ));
     }
-
-    // 2. FULLY VERIFIED
     if (_isVerified) {
       banners.add(_infoBanner(
         icon: Icons.verified_rounded,
@@ -488,8 +463,6 @@ class _PropertyCard extends StatelessWidget {
         bg: Colors.green.shade50,
       ));
     }
-
-    // 3. DOCS PAID (but not yet admin-verified)
     if (!_isVerified && _docsPaid) {
       banners.add(_infoBanner(
         icon: Icons.credit_card_rounded,
@@ -498,8 +471,6 @@ class _PropertyCard extends StatelessWidget {
         bg: const Color(0xFFE3F2FD),
       ));
     }
-
-    // 4. NOT PAID, NOT VERIFIED
     if (!_isVerified && !_docsPaid) {
       banners.add(_infoBanner(
         icon: Icons.info_outline_rounded,
@@ -533,7 +504,7 @@ class _PropertyCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha:0.3)),
       ),
       child: Row(
         children: [
@@ -553,13 +524,22 @@ class _PropertyCard extends StatelessWidget {
       ),
     );
   }
-
-  // ── Action buttons ─────────────────────────────────────────────────────────
-
+  
   Widget _buildActionRow(BuildContext context) {
     return Row(
       children: [
-        // Pay to Verify — shown only when NOT paid and NOT verified
+        if (_showRenewButton) ...[
+          Expanded(
+            child: _actionButton(
+              label: 'Renew',
+              icon: Icons.autorenew_rounded,
+              color: const Color(0xFF1565C0),
+              isLoading: _renewLoading,
+              onTap: _renewLoading ? null : _renew,
+            ),
+          ),
+          SizedBox(width: 8.w),
+        ],
         if (_showPayButton) ...[
           Expanded(
             child: _actionButton(
@@ -572,8 +552,6 @@ class _PropertyCard extends StatelessWidget {
           ),
           SizedBox(width: 8.w),
         ],
-
-        // Edit
         _circleIcon(
           icon: Iconsax.edit_2,
           color: AppColor.accent,
@@ -581,8 +559,6 @@ class _PropertyCard extends StatelessWidget {
                   () => AddEditPropertyScreen(propertyId: property.id)),
         ),
         SizedBox(width: 10.w),
-
-        // Delete
         _circleIcon(
           icon: Iconsax.trash,
           color: Colors.red,
@@ -596,29 +572,50 @@ class _PropertyCard extends StatelessWidget {
     required String label,
     required IconData icon,
     required Color color,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
+    bool isLoading = false,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10.h),
         decoration: BoxDecoration(
-          color: color,
+          color: isLoading ? color.withValues(alpha: 0.6) : color,
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 15.sp),
-            SizedBox(width: 6.w),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
+            if (isLoading) ...[
+              SizedBox(
+                width: 14.sp,
+                height: 14.sp,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
               ),
-            ),
+              SizedBox(width: 6.w),
+              Text(
+                'Loading...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ] else ...[
+              Icon(icon, color: Colors.white, size: 15.sp),
+              SizedBox(width: 6.w),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -635,21 +632,19 @@ class _PropertyCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(9.w),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha:0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: color, size: 18.sp),
       ),
     );
   }
-
-  // ── Small helpers ──────────────────────────────────────────────────────────
-
+  
   Widget _statChip(IconData icon, String label) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 5.h),
       decoration: BoxDecoration(
-        color: AppColor.primary.withOpacity(0.07),
+        color: AppColor.primary.withValues(alpha:0.07),
         borderRadius: BorderRadius.circular(8.r),
       ),
       child: Row(
@@ -674,11 +669,11 @@ class _PropertyCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.92),
+        color: color.withValues(alpha:0.92),
         borderRadius: BorderRadius.circular(10.r),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha:0.15),
               blurRadius: 4,
               offset: const Offset(0, 2))
         ],
@@ -714,7 +709,7 @@ class _PropertyCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.9),
+        color: color.withValues(alpha:0.9),
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Text(
@@ -733,7 +728,7 @@ class _PropertyCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.55),
+        color: Colors.black.withValues(alpha:0.55),
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Row(

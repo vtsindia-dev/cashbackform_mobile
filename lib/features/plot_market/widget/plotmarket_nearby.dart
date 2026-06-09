@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../common/colours.dart';
+import '../../../common/widget/view_on_map_button.dart';
 import '../controller/plot_market_controller.dart';
 import '../model/plot_market.dart';
 
@@ -193,30 +194,18 @@ class NearbyPlotMarket extends StatelessWidget {
                 colorText: Colors.white,
               );
             },
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
-              decoration: BoxDecoration(
-                color: hasValidCoordinates
-                    ? AppColor.primary.withOpacity(0.7)
-                    : Colors.grey.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.map_outlined,
-                      size: 14.sp,
-                      color: hasValidCoordinates ? Colors.white : Colors.grey[300]),
-                  4.w.horizontalSpace,
-                  Text(
-                    "View on Map",
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: hasValidCoordinates ? Colors.white : Colors.grey[300],
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+            child: ViewOnMapButton(
+              active: hasValidCoordinates,
+              onTap: hasValidCoordinates
+                  ? () => _openGoogleMaps(lat, lng, address)
+                  : () {
+                Get.snackbar(
+                  "Location Unavailable",
+                  "Coordinates not available",
+                  backgroundColor: Colors.orange,
+                  colorText: Colors.white,
+                );
+              },
             ),
           )
               .animate()

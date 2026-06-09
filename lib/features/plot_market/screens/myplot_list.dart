@@ -96,15 +96,9 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                     vertical: 8.h,
                   ),
                   children: [
-                    GridView.builder(
+                    ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12.w,
-                        mainAxisSpacing: 12.h,
-                        childAspectRatio: 0.65,
-                      ),
                       itemCount: controller.myMarketPlots.length,
                       itemBuilder: (context, index) {
                         final plot = controller.myMarketPlots[index];
@@ -118,6 +112,7 @@ class _MyPlotsMArkScreenState extends State<MyPlotsMArkScreen> {
                           onDelete: () => _confirmDelete(plot),
                           onVerify: () =>
                               controller.initiateVerificationPayment(plot),
+                          onRenew: () => controller.renewMarketPlot(plot.id),
                           isOwner: true,
                         );
                       },

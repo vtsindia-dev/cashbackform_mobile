@@ -1,4 +1,3 @@
- import 'package:cashback_farms/features/menu/screens/about_us.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
@@ -10,6 +9,7 @@ import '../../../common/widget/sessionhandler.dart';
 import '../../../common/widget/toster.dart';
 import '../../home/controller/delete_account_controller.dart';
 import '../../profile/controller/profile_controller.dart';
+import '../../../common/widget/general_enquiry_sheet.dart';
 
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
@@ -38,7 +38,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
         isLoading = false;
       });
     } catch (e) {
-      print('Error loading user data: $e');
+      debugPrint('Error loading user data: $e');
       setState(() {
         isLoading = false;
       });
@@ -97,6 +97,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   _menuOption(context, asset: Images.plotRegistered, title: 'Buyed Syndicate Plots', onTap: () => Get.toNamed('/ownedSyndicatePlotList')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Flat/Villas', onTap: () => Get.toNamed('/myResidential')),
                   _menuOption(context, asset: Images.plotRegistered, title: 'My Land', onTap: () => Get.toNamed('/myProperty')),
+                  _menuOption(context, asset: Images.plotRegistered, title: 'General Enquiry', onTap: () {
+                    Navigator.pop(context);
+                    showGeneralEnquirySheet(context);
+                  }),
                   _menuOption(context, asset: Images.contactUs, title: 'Contact Us', onTap: () => Get.toNamed('/contactus')),
                   _menuOption(context, asset: Images.logout, title: 'Logout', onTap: () => _showLogoutConfirmation(context)),
                   _menuOption(context, asset: Images.delete, title: 'Delete Account', delete: true, onTap: () => _showDeleteAccountConfirmation(context),
@@ -122,7 +126,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
           gradient: LinearGradient(
             colors: [
               AppColor.primary,
-              AppColor.primary.withOpacity(0.88),
+              AppColor.primary.withValues(alpha:0.88),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -131,7 +135,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
         child: SafeArea(
           child: Column(
             children: [
-              // Fixed size container for the profile image
               Container(
                 width: 80,
                 height: 80,
@@ -140,8 +143,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   child: _buildProfileImage(),
                 ),
               ),
-
-              // Show loader if profile is loading
               if (isProfileLoading && profile == null)
                 Column(
                   children: [
@@ -150,7 +151,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                       height: 20,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha:0.3),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -161,7 +162,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                       height: 16,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha:0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -201,7 +202,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha:0.9),
                         ),
                       ),
                     ),
@@ -216,20 +217,16 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
   Widget _buildProfileImage() {
     final imageUrl = _userProfileImage;
-
     if (imageUrl.isEmpty) {
-      // Return a placeholder when no image
       return Container(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha:0.2),
         child: Icon(
           Icons.person,
           size: 40,
-          color: Colors.white.withOpacity(0.7),
+          color: Colors.white.withValues(alpha:0.7),
         ),
       );
     }
-
-    // Use ImagePickerWidget if it's properly sized, otherwise use Image.network directly
     return ImagePickerWidget(
       isPicker: false,
       imageUrl: imageUrl,
@@ -319,7 +316,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 height: 80,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColor.primary.withOpacity(0.1),
+                  color: AppColor.primary.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: Image.asset(
@@ -423,7 +420,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   height: 80,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColor.primary.withOpacity(0.1),
+                    color: AppColor.primary.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(40),
                   ),
                   child: Image.asset(Images.delete),
@@ -535,22 +532,22 @@ class _CustomDrawerState extends State<CustomDrawer> {
     }
   }
 
-  Future<void> _performDeleteAccount() async {
-    try {
-      Get.dialog(
-        const Center(
-          child: CircularProgressIndicator(),
-        ),
-        barrierDismissible: false,
-      );
-      await Future.delayed(const Duration(seconds: 2));
-      await SessionManager.clearSession();
-      Get.offAllNamed(AppRoutes.login);
-      SnackBarHelper.showSuccess("Your account has been permanently deleted");
-
-    } catch (e) {
-      Get.back();
-      SnackBarHelper.showError("Failed to delete account:  $e");
-    }
-  }
+  // Future<void> _performDeleteAccount() async {
+  //   try {
+  //     Get.dialog(
+  //       const Center(
+  //         child: CircularProgressIndicator(),
+  //       ),
+  //       barrierDismissible: false,
+  //     );
+  //     await Future.delayed(const Duration(seconds: 2));
+  //     await SessionManager.clearSession();
+  //     Get.offAllNamed(AppRoutes.login);
+  //     SnackBarHelper.showSuccess("Your account has been permanently deleted");
+  //
+  //   } catch (e) {
+  //     Get.back();
+  //     SnackBarHelper.showError("Failed to delete account:  $e");
+  //   }
+  // }
 }

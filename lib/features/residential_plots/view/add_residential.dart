@@ -1,3 +1,4 @@
+import 'package:cashback_farms/common/widget/toster.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -6,7 +7,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:video_player/video_player.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../controller/residential_add_controller.dart';
@@ -44,12 +44,6 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
   final _locationController = TextEditingController();
   final TextEditingController _youtubeLinkController = TextEditingController();
 
-  // Animation controllers
-  late AnimationController _fadeAnimationController;
-  late AnimationController _slideAnimationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
   // Google Maps
   GoogleMapController? _googleMapController;
 
@@ -65,38 +59,15 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     _isDisposed = false;
     _initialDataLoaded = false;
 
-    _fadeAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _slideAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeAnimationController, curve: Curves.easeOut),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
-
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
-      if (!_isDisposed) {
+      if (!_isDisposed && !_tabController.indexIsChanging) {
         _controller.currentStep.value = _tabController.index;
-        _fadeAnimationController.forward(from: 0.0);
-        _slideAnimationController.forward(from: 0.0);
       }
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_isDisposed) {
-        _fadeAnimationController.forward();
-        _slideAnimationController.forward();
         _initializeData();
       }
     });
@@ -151,36 +122,44 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     _controller.yotubeLink.listen((v) => safeUpdate(_youtubeLinkController, v));
 
     _propertyNameController.addListener(() {
-      if (!_isDisposed && _controller.propertyName.value != _propertyNameController.text)
+      if (!_isDisposed && _controller.propertyName.value != _propertyNameController.text) {
         _controller.propertyName.value = _propertyNameController.text;
+      }
     });
     _priceController.addListener(() {
-      if (!_isDisposed && _controller.price.value != _priceController.text)
+      if (!_isDisposed && _controller.price.value != _priceController.text) {
         _controller.price.value = _priceController.text;
+      }
     });
     _plotCountController.addListener(() {
-      if (!_isDisposed && _controller.plotCount.value != _plotCountController.text)
+      if (!_isDisposed && _controller.plotCount.value != _plotCountController.text) {
         _controller.plotCount.value = _plotCountController.text;
+      }
     });
     _pricePerSqftController.addListener(() {
-      if (!_isDisposed && _controller.pricePerSqft.value != _pricePerSqftController.text)
+      if (!_isDisposed && _controller.pricePerSqft.value != _pricePerSqftController.text) {
         _controller.pricePerSqft.value = _pricePerSqftController.text;
+      }
     });
     _areaController.addListener(() {
-      if (!_isDisposed && _controller.areaSqft.value != _areaController.text)
+      if (!_isDisposed && _controller.areaSqft.value != _areaController.text) {
         _controller.areaSqft.value = _areaController.text;
+      }
     });
     _descriptionController.addListener(() {
-      if (!_isDisposed && _controller.aboutProperty.value != _descriptionController.text)
+      if (!_isDisposed && _controller.aboutProperty.value != _descriptionController.text) {
         _controller.aboutProperty.value = _descriptionController.text;
+      }
     });
     _youtubeLinkController.addListener(() {
-      if (!_isDisposed && _controller.yotubeLink.value != _youtubeLinkController.text)
+      if (!_isDisposed && _controller.yotubeLink.value != _youtubeLinkController.text) {
         _controller.yotubeLink.value = _youtubeLinkController.text;
+      }
     });
     _locationController.addListener(() {
-      if (!_isDisposed && _controller.location.value != _locationController.text)
+      if (!_isDisposed && _controller.location.value != _locationController.text) {
         _controller.location.value = _locationController.text;
+      }
     });
   }
 
@@ -232,8 +211,6 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     _isDisposed = true;
     _tabController.dispose();
     _scrollController.dispose();
-    _fadeAnimationController.dispose();
-    _slideAnimationController.dispose();
     _propertyNameController.dispose();
     _priceController.dispose();
     _plotCountController.dispose();
@@ -269,28 +246,22 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
           if (_controller.isLoading.value && widget.propertyId != null) {
             return _buildLoadingScreen();
           }
-          return FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Column(
-                children: [
-                  _buildTabBar(),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        _buildBasicInfoTab(),
-                        _buildFacilitiesTab(),
-                        _buildMediaTab(),
-                        _buildLocationTab(),
-                      ],
-                    ),
-                  ),
-                ],
+          return Column(
+            children: [
+              _buildTabBar(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildBasicInfoTab(),
+                    _buildFacilitiesTab(),
+                    _buildMediaTab(),
+                    _buildLocationTab(),
+                  ],
+                ),
               ),
-            ),
+            ],
           );
         }),
         bottomNavigationBar: _buildBottomBar(),
@@ -345,7 +316,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
           Container(
             width: 80.w, height: 80.w,
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.1),
+              color: AppColor.primary.withValues(alpha:0.1),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -383,8 +354,11 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                   color: const Color(0xFF1A1D2E),
                   onPressed: () async {
                     final hasChanges = await _checkForUnsavedChanges();
-                    if (hasChanges && mounted) await _showExitConfirmationDialog();
-                    else Get.back();
+                    if (hasChanges && mounted) {
+                      await _showExitConfirmationDialog();
+                    } else {
+                      Get.back();
+                    }
                   },
                 ),
                 Expanded(
@@ -417,7 +391,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: const Color(0xFFF0F0F0)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.black.withValues(alpha:0.04), blurRadius: 12, offset: const Offset(0, 3)),
         ],
       ),
       child: TabBar(
@@ -428,7 +402,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
           color: AppColor.primary,
           borderRadius: BorderRadius.circular(11.r),
           boxShadow: [
-            BoxShadow(color: AppColor.primary.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 3)),
+            BoxShadow(color: AppColor.primary.withValues(alpha:0.25), blurRadius: 8, offset: const Offset(0, 3)),
           ],
         ),
         labelColor: Colors.white,
@@ -594,7 +568,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                 Container(
                   width: 32.w, height: 32.w,
                   decoration: BoxDecoration(
-                    color: AppColor.primary.withOpacity(0.1),
+                    color: AppColor.primary.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(icon, size: 16.w, color: AppColor.primary),
@@ -991,10 +965,10 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
         margin: EdgeInsets.only(bottom: 12.h),
         padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
-          color: (hasFile || hasUrl) ? AppColor.primary.withOpacity(0.04) : const Color(0xFFF9FAFB),
+          color: (hasFile || hasUrl) ? AppColor.primary.withValues(alpha:0.04) : const Color(0xFFF9FAFB),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: (hasFile || hasUrl) ? AppColor.primary.withOpacity(0.3) : const Color(0xFFE5E7EB),
+            color: (hasFile || hasUrl) ? AppColor.primary.withValues(alpha:0.3) : const Color(0xFFE5E7EB),
           ),
         ),
         child: Column(
@@ -1013,7 +987,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                 Container(
                   width: 36.w, height: 36.w,
                   decoration: BoxDecoration(
-                    color: AppColor.primary.withOpacity(0.1),
+                    color: AppColor.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(Iconsax.document, color: AppColor.primary, size: 18.w),
@@ -1037,7 +1011,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                     child: Container(
                       width: 32.w, height: 32.w,
                       decoration: BoxDecoration(
-                        color: AppColor.primary.withOpacity(0.1),
+                        color: AppColor.primary.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Icon(Iconsax.eye, size: 16.w, color: AppColor.primary),
@@ -1063,8 +1037,8 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                   height: 80.h, width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(color: AppColor.primary.withOpacity(0.3), style: BorderStyle.solid),
-                    color: AppColor.primary.withOpacity(0.03),
+                    border: Border.all(color: AppColor.primary.withValues(alpha:0.3), style: BorderStyle.solid),
+                    color: AppColor.primary.withValues(alpha:0.03),
                   ),
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Icon(Iconsax.document_upload, size: 24.w, color: AppColor.primary),
@@ -1248,9 +1222,9 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                 margin: EdgeInsets.only(bottom: 10.h),
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColor.primary.withOpacity(0.04) : const Color(0xFFF9FAFB),
+                  color: isSelected ? AppColor.primary.withValues(alpha:0.04) : const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: isSelected ? AppColor.primary.withOpacity(0.4) : const Color(0xFFE5E7EB),
+                  border: Border.all(color: isSelected ? AppColor.primary.withValues(alpha:0.4) : const Color(0xFFE5E7EB),
                       width: isSelected ? 1.5 : 1),
                 ),
                 child: Row(children: [
@@ -1324,7 +1298,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
         width: 44.w, height: 44.w,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10.r),
-          color: AppColor.primary.withOpacity(0.1),
+          color: AppColor.primary.withValues(alpha:0.1),
         ),
         child: Icon(Iconsax.location, color: AppColor.primary, size: 20.w),
       );
@@ -1505,15 +1479,15 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 24.h),
         decoration: BoxDecoration(
-          color: accentColor.withOpacity(0.04),
+          color: accentColor.withValues(alpha:0.04),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: accentColor.withOpacity(0.3), style: BorderStyle.solid),
+          border: Border.all(color: accentColor.withValues(alpha:0.3), style: BorderStyle.solid),
         ),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Container(
             width: 48.w, height: 48.w,
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.12),
+              color: accentColor.withValues(alpha:0.12),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(icon, color: accentColor, size: 22.w),
@@ -1539,9 +1513,9 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: iconBg.withOpacity(0.5),
+        color: iconBg.withValues(alpha:0.5),
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: iconColor.withOpacity(0.2)),
+        border: Border.all(color: iconColor.withValues(alpha:0.2)),
       ),
       child: Row(children: [
         Container(
@@ -1584,14 +1558,17 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
   Widget _buildAddImageButton(int remainingMedia) {
     return GestureDetector(
       onTap: () {
-        if (remainingMedia > 0) _controller.pickGalleryImages();
-        else Get.snackbar('Limit Reached', 'Maximum 10 media files allowed', snackPosition: SnackPosition.BOTTOM);
+        if (remainingMedia > 0) {
+          _controller.pickGalleryImages();
+        } else {
+          Get.snackbar('Limit Reached', 'Maximum 10 media files allowed', snackPosition: SnackPosition.BOTTOM);
+        }
       },
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFF9FAFB),
           borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: remainingMedia > 0 ? AppColor.primary.withOpacity(0.3) : const Color(0xFFE5E7EB)),
+          border: Border.all(color: remainingMedia > 0 ? AppColor.primary.withValues(alpha:0.3) : const Color(0xFFE5E7EB)),
         ),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(Iconsax.gallery_add, color: remainingMedia > 0 ? AppColor.primary : const Color(0xFF9CA3AF), size: 22.w),
@@ -1605,14 +1582,17 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
   Widget _buildAddVideoButton(int remainingMedia) {
     return GestureDetector(
       onTap: () {
-        if (remainingMedia > 0) _controller.pickGalleryVideo();
-        else Get.snackbar('Limit Reached', 'Maximum 10 media files allowed', snackPosition: SnackPosition.BOTTOM);
+        if (remainingMedia > 0) {
+          _controller.pickGalleryVideo();
+        } else {
+          Get.snackbar('Limit Reached', 'Maximum 10 media files allowed', snackPosition: SnackPosition.BOTTOM);
+        }
       },
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFF0FDF4),
           borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: const Color(0xFF22C55E).withOpacity(0.3)),
+          border: Border.all(color: const Color(0xFF22C55E).withValues(alpha:0.3)),
         ),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(Iconsax.video_add, color: const Color(0xFF22C55E), size: 22.w),
@@ -1752,7 +1732,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(color: const Color(0xFFE5E7EB)),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4))],
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.06), blurRadius: 12, offset: const Offset(0, 4))],
                     ),
                     child: Column(
                       children: _controller.locationSearchResults.map((place) => InkWell(
@@ -1841,9 +1821,9 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                 return Container(
                   padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
-                    color: AppColor.primary.withOpacity(0.05),
+                    color: AppColor.primary.withValues(alpha:0.05),
                     borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(color: AppColor.primary.withOpacity(0.2)),
+                    border: Border.all(color: AppColor.primary.withValues(alpha:0.2)),
                   ),
                   child: Row(children: [
                     Icon(Iconsax.location_tick, color: AppColor.primary, size: 18.w),
@@ -1915,7 +1895,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         border: const Border(top: BorderSide(color: Color(0xFFF0F0F0))),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 16, offset: const Offset(0, -4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.06), blurRadius: 16, offset: const Offset(0, -4))],
       ),
       child: ListenableBuilder(
         listenable: _tabController,
@@ -1962,7 +1942,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                       } else {
                         final errors = _controller.validateCurrentStep();
                         if (errors.isNotEmpty) {
-                          Get.snackbar('Validation Error', errors.values.first, snackPosition: SnackPosition.BOTTOM);
+                          SnackBarHelper.showError(errors.values.first);
                         }
                       }
                     }
@@ -1971,9 +1951,9 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen>
                     duration: const Duration(milliseconds: 200),
                     height: 50.h,
                     decoration: BoxDecoration(
-                      color: isLoading ? AppColor.primary.withOpacity(0.7) : AppColor.primary,
+                      color: isLoading ? AppColor.primary.withValues(alpha:0.7) : AppColor.primary,
                       borderRadius: BorderRadius.circular(12.r),
-                      boxShadow: [BoxShadow(color: AppColor.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                      boxShadow: [BoxShadow(color: AppColor.primary.withValues(alpha:0.3), blurRadius: 12, offset: const Offset(0, 4))],
                     ),
                     child: Center(
                       child: isLoading

@@ -5,10 +5,8 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 import '../../../common/api_constant.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/api_service.dart';
@@ -32,8 +30,6 @@ class ResidentialPropertyFormController extends GetxController {
   var isSubmitting = false.obs;
   var editingPropertyId = 0.obs;
   var currentStep = 0.obs;
-
-  // Form fields
   var propertyName = ''.obs;
   var location = ''.obs;
   var latitude = 0.0.obs;
@@ -45,68 +41,42 @@ class ResidentialPropertyFormController extends GetxController {
   var plotCount = ''.obs;
   var userType = ''.obs;
   var yotubeLink = ''.obs;
-
-  // Categories
   var propertyCategories = <PropertyCategory>[].obs;
   var selectedCategoryId = 0.obs;
   var selectedSubCategoryId = 0.obs;
-
-  // Location
   var selectedStateId = 0.obs;
   var selectedCityId = 0.obs;
   var selectedCountryId = 0.obs;
   var countriesList = <CountryModel>[].obs;
   var statesList = <StateList>[].obs;
   var citiesList = <CityModel>[].obs;
-
-  // Facilities
   var facilities = <Facility>[].obs;
   var facilityValues = <int, dynamic>{}.obs;
   var facilityControllers = <int, TextEditingController>{};
-
-  // Documents
   var documents = <Document>[].obs;
   var documentFiles = <int, File?>{}.obs;
   var documentUrls = <int, String?>{}.obs;
-
-  // Amenities
   var availableAmenities = <AmenityItem>[].obs;
   var selectedAmenityIds = <int>[].obs;
-
-  // Nearby Places
   var nearbyPlacesList = <NearbyPlace>[].obs;
   var selectedNearbyPlaces = <Map<String, dynamic>>[].obs;
   var nearbyDistanceControllers = <int, TextEditingController>{};
-
-  // Map (Google Maps)
   var showMap = false.obs;
   var currentPosition = const LatLng(28.6139, 77.2090).obs;
   var selectedLocation = const LatLng(28.6139, 77.2090).obs;
   var isSearchingLocation = false.obs;
   var locationSearchResults = <Place>[].obs;
-
-  // Gallery Images
   var galleryImages = <File>[].obs;
   var galleryImageUrls = <String>[].obs;
-
-  // ── NEW: Gallery Videos ──────────────────────────────────────
   var galleryVideos = <File>[].obs;
   var galleryVideoUrls = <String>[].obs;
-
-  // ── NEW: Blueprint / Floor Plan ──────────────────────────────
   var blueprintFile = Rxn<File>();
   var blueprintUrl = ''.obs;
-
-  // 3D Image
   var threeDImageFile = Rxn<File>();
   var threeDImageUrl = ''.obs;
-
   final ImagePicker _imagePicker = ImagePicker();
-
-  // Validation
   var formErrors = <String, String>{}.obs;
   var completedSteps = <int>[].obs;
-
   var _originalProperty = Rx<Property?>(null);
 
   @override
@@ -132,8 +102,6 @@ class ResidentialPropertyFormController extends GetxController {
       isLoading(false);
     }
   }
-
-  // ==================== RESET METHODS ====================
 
   void resetFormForEdit() {
     galleryImageUrls.clear();
@@ -194,8 +162,6 @@ class ResidentialPropertyFormController extends GetxController {
     update();
   }
 
-  // ==================== VIDEO HANDLING ====================
-
   Future<void> pickGalleryVideo() async {
     try {
       final totalMedia = galleryImages.length + galleryImageUrls.length + galleryVideos.length;
@@ -243,8 +209,6 @@ class ResidentialPropertyFormController extends GetxController {
     }
   }
 
-  // ==================== BLUEPRINT HANDLING ====================
-
   Future<void> pickBlueprint() async {
     try {
       final pickedFile = await _imagePicker.pickImage(
@@ -286,8 +250,6 @@ class ResidentialPropertyFormController extends GetxController {
     SnackBarHelper.showSuccess('Blueprint removed');
   }
 
-  // ==================== 3D IMAGE HANDLING ====================
-
   Future<void> pick3DImage() async {
     try {
       final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 85);
@@ -319,14 +281,10 @@ class ResidentialPropertyFormController extends GetxController {
   }
   var isCityLoading = false.obs;
   var isStateLoading = false.obs;
-  // ==================== PROPERTY LOADING ====================
-
   Future<String?> loadPropertyForEditing(int propertyId) async {
     try {
       isLoading(true);
       editingPropertyId.value = propertyId;
-
-      // ── Step 0: ensure lookup lists are loaded before we set values ──────
       await Future.wait([
         if (propertyCategories.isEmpty) fetchPropertyCategories(),
         if (countriesList.isEmpty) fetchCountries(),
@@ -343,12 +301,9 @@ class ResidentialPropertyFormController extends GetxController {
         SnackBarHelper.showError('Failed to load property details');
         return null;
       }
-
       final rawData = response.data['data'] as Map<String, dynamic>;
       final property = Property.fromJson(rawData);
       _originalProperty.value = property;
-
-      // ── Step 1: basic scalar fields ──────────────────────────────────────
       propertyName.value = property.propertyName;
       price.value        = property.price > 0 ? property.price.toStringAsFixed(0) : '';
       areaSqft.value     = property.areaSqft > 0 ? property.areaSqft.toString() : '';
@@ -365,8 +320,6 @@ class ResidentialPropertyFormController extends GetxController {
       latitude.value  = double.tryParse(property.lat ?? '0') ?? 0.0;
       longitude.value = double.tryParse(property.lng ?? '0') ?? 0.0;
       selectedLocation.value = LatLng(latitude.value, longitude.value);
-
-      // ── Step 2: Country → State → load cities → then set city ───────────
       final countryId = property.country ?? 0;
       final stateId   = property.state ?? 0;
       final cityId    = property.city  ?? 0;
@@ -378,28 +331,19 @@ class ResidentialPropertyFormController extends GetxController {
       }
       if (stateId > 0) {
         selectedStateId.value = stateId;
-        await fetchCitiesByState(stateId);   // waits until citiesList is populated
+        await fetchCitiesByState(stateId);
       }
-      // Set city AFTER citiesList is ready so the dropdown finds the value
       if (cityId > 0) selectedCityId.value = cityId;
-
-      // ── Step 3: Sub-category ─────────────────────────────────────────────
       if (rawData['sub_category_id'] != null) {
         selectedSubCategoryId.value =
             int.tryParse(rawData['sub_category_id'].toString()) ?? 0;
       }
 
-      // ── Step 4: Category → load facilities (bypass onCategoryChanged to
-      //            avoid clearing anything) ──────────────────────────────────
       final categoryId = property.categoryId;
       if (categoryId > 0) {
         selectedCategoryId.value = categoryId;
-        // Load facilities directly; DON'T call onCategoryChanged (it clears data)
         await fetchFacilitiesAndDocumentsByCategory(categoryId);
-
-        // Map saved facility values by facility_id (most reliable key)
         for (final pf in property.facilities) {
-          // pf.facilityId is the FK; match against Facility.id
           final facilityId = pf.facilityId;
           final savedValue = pf.value ?? '';
           if (savedValue.isNotEmpty) {
@@ -407,7 +351,6 @@ class ResidentialPropertyFormController extends GetxController {
             facilityControllers[facilityId]?.text = savedValue;
           }
 
-          // Also match by name as fallback
           if (savedValue.isNotEmpty) {
             final pfName = (pf.name ?? pf.facilityName ?? '').toLowerCase();
             for (final f in facilities) {
@@ -422,19 +365,15 @@ class ResidentialPropertyFormController extends GetxController {
         }
       }
 
-      // ── Step 5: Amenities ────────────────────────────────────────────────
-      // Use amenitiesall from the API response (already parsed into amenitiesAll)
       selectedAmenityIds.clear();
       if (property.amenitiesAll.isNotEmpty) {
         selectedAmenityIds.assignAll(property.amenitiesAll.map((a) => a.id).toList());
         print('✅ Amenities set: ${selectedAmenityIds.toList()}');
       }
 
-      // ── Step 6: Gallery images ───────────────────────────────────────────
       galleryImageUrls.clear();
       for (final img in property.galleryImages) {
         if (img.isEmpty) continue;
-        // gallery_images may be a JSON-encoded string in some entries
         if (img.startsWith('[')) {
           try {
             final list = (jsonDecode(img) as List).cast<String>();
@@ -446,26 +385,16 @@ class ResidentialPropertyFormController extends GetxController {
           galleryImageUrls.add(_fullUrl(img));
         }
       }
-
-      // ── Step 7: 3D image ─────────────────────────────────────────────────
       if (property.threeDImage.isNotEmpty) {
         threeDImageUrl.value = _fullUrl(property.threeDImage);
       }
-
-      // ── Step 8: Blueprint ────────────────────────────────────────────────
       final blueprint = rawData['blueprint']?.toString() ?? '';
       if (blueprint.isNotEmpty) blueprintUrl.value = _fullUrl(blueprint);
-
-      // ── Step 9: Gallery videos ───────────────────────────────────────────
       galleryVideoUrls.clear();
       final rawVideos = rawData['gallery_videos'];
       if (rawVideos is List) {
         galleryVideoUrls.assignAll(rawVideos.map((v) => _fullUrl(v.toString())).toList());
       }
-
-      // ── Step 10: Nearby places ───────────────────────────────────────────
-      // Source: property.nearbyPlaces = [{"place_id":32,"distance":1234}, ...]
-      // distance arrives as int OR double string ("1234.0") — handle both
       selectedNearbyPlaces.clear();
       if (property.nearbyPlaces != null && property.nearbyPlaces!.isNotEmpty) {
         for (final place in property.nearbyPlaces!) {
@@ -473,8 +402,6 @@ class ResidentialPropertyFormController extends GetxController {
           final distance = _asInt(place['distance']) ?? 0;
           if (placeId <= 0) continue;
           selectedNearbyPlaces.add({'place_id': placeId, 'distance': distance});
-
-          // Pre-fill the distance text controller
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (nearbyDistanceControllers.containsKey(placeId)) {
               nearbyDistanceControllers[placeId]!.text = distance.toString();
@@ -483,8 +410,6 @@ class ResidentialPropertyFormController extends GetxController {
         }
         print('✅ Nearby places set: ${selectedNearbyPlaces.toList()}');
       }
-
-      // ── Step 11: Documents ───────────────────────────────────────────────
       documentUrls.clear();
       final rawDocs = rawData['documents'];
       if (rawDocs is List) {
@@ -509,8 +434,6 @@ class ResidentialPropertyFormController extends GetxController {
       isLoading(false);
     }
   }
-
-  /// Normalise any value (int, double, String like "1234.0") to int
   int? _asInt(dynamic v) {
     if (v == null) return null;
     if (v is int) return v;
@@ -519,15 +442,12 @@ class ResidentialPropertyFormController extends GetxController {
     return null;
   }
 
-  /// Ensure URL has base URL prefix
   String _fullUrl(String path) {
     if (path.isEmpty) return path;
     if (path.startsWith('http')) return path;
     final clean = path.startsWith('/') ? path.substring(1) : path;
     return '${ApiUrl.baseUrl}/$clean';
   }
-
-  // ==================== NEARBY PLACES ====================
 
   Future<void> fetchNearbyPlaces() async {
     try {
@@ -572,8 +492,6 @@ class ResidentialPropertyFormController extends GetxController {
     final place = selectedNearbyPlaces.firstWhereOrNull((p) => p['place_id'] == placeId);
     return place?['distance'] as int?;
   }
-
-  // ==================== CATEGORIES ====================
 
   Future<void> fetchPropertyCategories() async {
     try {
@@ -620,7 +538,6 @@ class ResidentialPropertyFormController extends GetxController {
     update();
   }
 
-  // ==================== FACILITIES & DOCUMENTS ====================
 
   Future<void> fetchFacilitiesAndDocumentsByCategory(int categoryId) async {
     try {
@@ -674,8 +591,6 @@ class ResidentialPropertyFormController extends GetxController {
     update(['facility_$facilityId']);
   }
 
-  // ==================== DOCUMENT HANDLING ====================
-
   Future<void> pickDocumentFile(int documentId) async {
     try {
       final document = documents.firstWhereOrNull((d) => d.id == documentId);
@@ -703,8 +618,6 @@ class ResidentialPropertyFormController extends GetxController {
     update();
   }
 
-  // ==================== AMENITIES ====================
-
   Future<void> fetchAvailableAmenities() async {
     try {
       final response = await ApiService.getRequest('${ApiUrl.baseUrl}/api/v2/amenities');
@@ -721,8 +634,6 @@ class ResidentialPropertyFormController extends GetxController {
     else selectedAmenityIds.add(amenityId);
     update();
   }
-
-  // ==================== LOCATION ====================
 
   Future<void> fetchCountries() async {
     try {
@@ -774,7 +685,7 @@ class ResidentialPropertyFormController extends GetxController {
 
   Future<void> fetchCitiesByState(int stateId) async {
     try {
-      isCityLoading(true); // ✅ dedicated city loader
+      isCityLoading(true);
       citiesList.clear();
       final response = await ApiService.getRequest('${ApiUrl.baseUrl}/api/v2/city/$stateId');
       if (response.statusCode == 200 && response.data['status'] == 200) {
@@ -788,7 +699,7 @@ class ResidentialPropertyFormController extends GetxController {
       print('❌ Error fetching cities: $e');
       citiesList.clear();
     } finally {
-      isCityLoading(false); // ✅ always reset
+      isCityLoading(false);
     }
   }
 
@@ -807,8 +718,6 @@ class ResidentialPropertyFormController extends GetxController {
     selectedCityId.value = cityId;
     update();
   }
-
-  // ==================== MAP & GEOLOCATION (Google Maps) ====================
 
   Future<void> getCurrentLocation() async {
     try {
@@ -855,7 +764,6 @@ class ResidentialPropertyFormController extends GetxController {
     } catch (e) { print('❌ Reverse geocode error: $e'); }
   }
 
-  /// Called from the map view's onTap — accepts Google Maps LatLng
   void onMapTap(LatLng point) {
     selectedLocation.value = point;
     latitude.value = point.latitude;
@@ -889,7 +797,6 @@ class ResidentialPropertyFormController extends GetxController {
     update();
   }
 
-  // ==================== IMAGE HANDLING ====================
 
   Future<void> pickGalleryImages() async {
     try {
@@ -913,8 +820,6 @@ class ResidentialPropertyFormController extends GetxController {
       update();
     }
   }
-
-  // ==================== VALIDATION ====================
 
   Map<String, String> validateCurrentStep() {
     formErrors.clear();
@@ -974,8 +879,6 @@ class ResidentialPropertyFormController extends GetxController {
     if (currentStep.value > 0) currentStep.value--;
   }
 
-  // ==================== SUBMIT PROPERTY ====================
-
   Future<void> submitProperty() async {
     try {
       bool allValid = true;
@@ -1019,10 +922,7 @@ class ResidentialPropertyFormController extends GetxController {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       });
-
       if (editingPropertyId.value > 0) request.fields['id'] = editingPropertyId.value.toString();
-
-      // ── Core fields ──────────────────────────────────────────────────
       final coreFields = {
         'property_name': propertyName.value,
         'category_id': selectedCategoryId.value.toString(),
@@ -1042,11 +942,8 @@ class ResidentialPropertyFormController extends GetxController {
 
         if (selectedSubCategoryId.value > 0) 'sub_category_id': selectedSubCategoryId.value.toString(),
         if (selectedAmenityIds.isNotEmpty) 'amenities_data': selectedAmenityIds.map((id) => id.toString()).join(','),
-        // amenities also sent as array below
       };
       coreFields.forEach((k, v) { if (v.isNotEmpty) request.fields[k] = v; });
-
-      // ── Facilities ───────────────────────────────────────────────────
       final facilitiesData = <String, dynamic>{};
       for (var f in facilities) {
         if (f.type != 'file' && f.type != 'document') {
@@ -1058,25 +955,19 @@ class ResidentialPropertyFormController extends GetxController {
         facilitiesData.forEach((k, v) { request.fields['facilities[$k]'] = v.toString(); });
       }
 
-      // ── Nearby places ────────────────────────────────────────────────
       if (selectedNearbyPlaces.isNotEmpty) {
         request.fields['nearby_places'] = jsonEncode(selectedNearbyPlaces.map((p) => {
           'place_id': p['place_id'],
           'distance': p['distance'],
         }).toList());
       }
-
-      // ── Gallery images (new) ─────────────────────────────────────────
       for (int i = 0; i < galleryImages.length; i++) {
         final f = galleryImages[i];
         request.files.add(await http.MultipartFile.fromPath('gallery_images[]', f.path));
       }
-      // existing image URLs
       for (var u in galleryImageUrls) {
         request.fields['gallery_images'] = u;
       }
-
-      // ── Gallery videos (new) ─────────────────────────────────────────
       for (int i = 0; i < galleryVideos.length; i++) {
         final f = galleryVideos[i];
         request.files.add(await http.MultipartFile.fromPath('gallery_images[]', f.path));
@@ -1084,24 +975,18 @@ class ResidentialPropertyFormController extends GetxController {
       for (var u in galleryVideoUrls) {
         request.fields['gallery_images'] = u;
       }
-
-      // ── 3D image ─────────────────────────────────────────────────────
       if (threeDImageFile.value != null) {
         request.files.add(await http.MultipartFile.fromPath('three_d_image', threeDImageFile.value!.path));
       }
       if (editingPropertyId.value > 0 && threeDImageUrl.value.isNotEmpty) {
         request.fields['three_d_image_url'] = threeDImageUrl.value;
       }
-
-      // ── Blueprint ─────────────────────────────────────────────────────
       if (blueprintFile.value != null) {
         request.files.add(await http.MultipartFile.fromPath('blueprint', blueprintFile.value!.path));
       }
       if (editingPropertyId.value > 0 && blueprintUrl.value.isNotEmpty) {
         request.fields['blueprint_url'] = blueprintUrl.value;
       }
-
-      // ── Documents ─────────────────────────────────────────────────────
       for (var entry in documentFiles.entries) {
         if (entry.value != null) {
           request.files.add(await http.MultipartFile.fromPath('documents[${entry.key}]', entry.value!.path));
@@ -1112,8 +997,6 @@ class ResidentialPropertyFormController extends GetxController {
           if (url != null && url.isNotEmpty) request.fields['existing_documents[$docId]'] = url;
         });
       }
-
-      // ── Send ──────────────────────────────────────────────────────────
       final streamedResponse = await request.send().timeout(const Duration(seconds: 90));
       final response = await http.Response.fromStream(streamedResponse);
 
@@ -1150,8 +1033,6 @@ class ResidentialPropertyFormController extends GetxController {
       isSubmitting(false);
     }
   }
-
-  // ==================== OTHER METHODS ====================
 
   Future<void> fetchMyProperties() async {
     try {
@@ -1190,8 +1071,10 @@ class ResidentialPropertyFormController extends GetxController {
   void setFilter(String filter) {
     selectedFilter.value = filter;
     if (filter == 'all') filteredProperties.assignAll(properties);
-    else filteredProperties.assignAll(
+    else {
+      filteredProperties.assignAll(
         properties.where((p) => (p.status ?? '').toLowerCase() == filter.toLowerCase()).toList());
+    }
   }
 
   Future<void> fetchEnquiredProperties() async {
@@ -1231,6 +1114,29 @@ class ResidentialPropertyFormController extends GetxController {
     }
   }
 
+  Future<void> renewProperty(int propertyId) async {
+    try {
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) {
+        SnackBarHelper.showError('Session expired. Please login again.');
+        return;
+      }
+      final response = await ApiService.getAuthenticatedRequest(
+        '${ApiUrl.baseUrl}/api/v2/renew/$propertyId',
+         token,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        SnackBarHelper.showSuccess('Property renewed successfully!');
+        fetchMyProperties();
+      } else {
+        final msg = response.data?['message'] ?? 'Renewal failed. Please try again.';
+        SnackBarHelper.showError(msg.toString());
+      }
+    } catch (e) {
+      SnackBarHelper.showError('Failed to renew property');
+    }
+  }
+
   Future<void> deleteProperty(int propertyId, int index) async {
     try {
       Get.dialog(const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary))),
@@ -1251,43 +1157,23 @@ class ResidentialPropertyFormController extends GetxController {
 
   double getVerificationAmount() {
     try {
-      final dashboardController = Get.put(DashboardController());
 
-      /// Base amount
+      final dashboardController = Get.put(DashboardController());
       double baseAmount = 499.0;
 
-      if (dashboardController
-          .businessSettings.value?.residentialDocumentAmount !=
-          null &&
-          dashboardController
-              .businessSettings.value!.residentialDocumentAmount! >
-              0) {
-        baseAmount = dashboardController
-            .businessSettings.value!.residentialDocumentAmount!;
+      if (dashboardController.businessSettings.value?.residentialDocumentAmount != null && dashboardController.businessSettings.value!.residentialDocumentAmount! > 0) {
+        baseAmount = dashboardController.businessSettings.value!.residentialDocumentAmount!;
       }
 
-      /// Percentage values
-      final double residentialIgst =
-      (dashboardController.businessSettings.value?.residentialIgst ??
-          0)
-          .toDouble();
+      final double residentialIgst = (dashboardController.businessSettings.value?.residentialIgst ?? 0).toDouble();
 
-      final double residentialServiceCharge =
-      (dashboardController
-          .businessSettings.value?.residentialServiceCharge ??
-          0)
-          .toDouble();
+      final double residentialServiceCharge = (dashboardController.businessSettings.value?.residentialServiceCharge ?? 0).toDouble();
 
-      /// Charges calculation
-      final double serviceChargeAmount =
-          (baseAmount * residentialServiceCharge) / 100;
+      final double serviceChargeAmount = (baseAmount * residentialServiceCharge) / 100;
 
-      final double igstAmount =
-          (baseAmount * residentialIgst) / 100;
+      final double igstAmount = (baseAmount * residentialIgst) / 100;
 
-      /// Final total
-      final double totalAmount =
-          baseAmount + serviceChargeAmount + igstAmount;
+      final double totalAmount = baseAmount + serviceChargeAmount + igstAmount;
 
       return totalAmount;
     } catch (e) {
@@ -1300,8 +1186,6 @@ class ResidentialPropertyFormController extends GetxController {
     try {
       final razorpayController = Get.put(RazorpayController());
       final dashboardController = Get.put(DashboardController());
-
-      /// Already verified check
       if (property.isVerified) {
         Get.snackbar(
           "Already Verified",
@@ -1313,7 +1197,6 @@ class ResidentialPropertyFormController extends GetxController {
         return;
       }
 
-      /// Base amount
       double baseAmount = 499.0;
 
       if (dashboardController
@@ -1325,8 +1208,6 @@ class ResidentialPropertyFormController extends GetxController {
         baseAmount = dashboardController
             .businessSettings.value!.residentialDocumentAmount!;
       }
-
-      /// Percentage values
       final double residentialIgst =
       (dashboardController.businessSettings.value?.residentialIgst ??
           0)
@@ -1337,19 +1218,13 @@ class ResidentialPropertyFormController extends GetxController {
           .businessSettings.value?.residentialServiceCharge ??
           0)
           .toDouble();
+      final double serviceChargeAmount = (baseAmount * residentialServiceCharge) / 100;
 
-      /// Charges
-      final double serviceChargeAmount =
-          (baseAmount * residentialServiceCharge) / 100;
-
-      final double igstAmount =
-          (baseAmount * residentialIgst) / 100;
-
-      /// Final total amount
+      final double igstAmount = (baseAmount * residentialIgst) / 100;
       final double amountToCharge =
           baseAmount + serviceChargeAmount + igstAmount;
 
-      /// Razorpay setup
+
       razorpayController.setupResidentialVerificationPayment(
         residentialPlotId: property.id,
         amount: amountToCharge,
@@ -1363,8 +1238,6 @@ class ResidentialPropertyFormController extends GetxController {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.r),
           ),
-
-          /// HEADER
           titlePadding: EdgeInsets.zero,
           title: Container(
             padding: EdgeInsets.symmetric(
@@ -1404,8 +1277,6 @@ class ResidentialPropertyFormController extends GetxController {
               ],
             ),
           ),
-
-          /// CONTENT
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1422,8 +1293,6 @@ class ResidentialPropertyFormController extends GetxController {
                 ),
 
                 SizedBox(height: 16.h),
-
-                /// PROPERTY CARD
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(12.w),
@@ -1481,8 +1350,6 @@ class ResidentialPropertyFormController extends GetxController {
                 ),
 
                 SizedBox(height: 20.h),
-
-                /// BENEFITS
                 _buildBenefitItem(
                   "Priority search ranking for residential listings",
                 ),
@@ -1492,10 +1359,7 @@ class ResidentialPropertyFormController extends GetxController {
                 _buildBenefitItem(
                   "Document validation for buyer confidence",
                 ),
-
                 SizedBox(height: 20.h),
-
-                /// PRICE BREAKDOWN
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
@@ -1510,24 +1374,17 @@ class ResidentialPropertyFormController extends GetxController {
                   ),
                   child: Column(
                     children: [
-
-                      /// Base Fee
                       _buildAmountRow(
                         "Verification Fee",
                         "₹${baseAmount.toStringAsFixed(2)}",
                       ),
 
                       SizedBox(height: 10.h),
-
-                      /// Service Charge
                       _buildAmountRow(
                         "Service Charge (${residentialServiceCharge.toStringAsFixed(0)}%)",
                         "₹${serviceChargeAmount.toStringAsFixed(2)}",
                       ),
-
                       SizedBox(height: 10.h),
-
-                      /// IGST
                       _buildAmountRow(
                         "IGST (${residentialIgst.toStringAsFixed(0)}%)",
                         "₹${igstAmount.toStringAsFixed(2)}",
@@ -1539,8 +1396,6 @@ class ResidentialPropertyFormController extends GetxController {
                         ),
                         child: Divider(),
                       ),
-
-                      /// TOTAL
                       Row(
                         mainAxisAlignment:
                         MainAxisAlignment.spaceBetween,
@@ -1567,8 +1422,6 @@ class ResidentialPropertyFormController extends GetxController {
                 ),
 
                 SizedBox(height: 14.h),
-
-                /// TERMS
                 Obx(
                       () => Row(
                     crossAxisAlignment:
@@ -1646,16 +1499,12 @@ class ResidentialPropertyFormController extends GetxController {
               ],
             ),
           ),
-
-          /// ACTIONS
           actionsPadding:
           EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
 
           actions: [
             Row(
               children: [
-
-                /// CANCEL
                 Expanded(
                   child: TextButton(
                     onPressed: () {
@@ -1675,8 +1524,6 @@ class ResidentialPropertyFormController extends GetxController {
                 ),
 
                 SizedBox(width: 12.w),
-
-                /// PAY
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
@@ -1736,7 +1583,6 @@ class ResidentialPropertyFormController extends GetxController {
     }
   }
 
-  /// BENEFIT ITEM
   Widget _buildBenefitItem(String text) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
@@ -1762,7 +1608,6 @@ class ResidentialPropertyFormController extends GetxController {
     );
   }
 
-  /// AMOUNT ROW
   Widget _buildAmountRow(
       String title,
       String amount,

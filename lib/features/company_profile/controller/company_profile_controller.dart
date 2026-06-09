@@ -41,26 +41,23 @@ class VendorStoreController extends GetxController {
   final searchAddressController = TextEditingController();
   final instagramController = TextEditingController();
   final facebookController = TextEditingController();
-  final whatsappController = TextEditingController();
+  final xController = TextEditingController();
+  final youtubeController = TextEditingController();
 
-  // 🆕 New controllers for company profile details
   final faxController = TextEditingController();
   final taxController = TextEditingController();
   final gstController = TextEditingController();
   final establishedYearController = TextEditingController();
 
-  // ─── Observable mirrors for TextEditingControllers ───────────────────────
   var addressText = ''.obs;
   var latText = ''.obs;
   var langText = ''.obs;
 
-  // 🆕 Observable mirrors for new fields
   var faxText = ''.obs;
   var taxText = ''.obs;
   var gstText = ''.obs;
   var establishedYearText = ''.obs;
 
-  // ─────────────────────────────────────────────────────────────────────────
 
   final userId = 0.obs;
   final ImagePicker _picker = ImagePicker();
@@ -110,9 +107,9 @@ class VendorStoreController extends GetxController {
     searchAddressController.dispose();
     instagramController.dispose();
     facebookController.dispose();
-    whatsappController.dispose();
+    xController.dispose();
+    youtubeController.dispose();
 
-    // 🆕 Dispose new controllers
     faxController.dispose();
     taxController.dispose();
     gstController.dispose();
@@ -122,7 +119,6 @@ class VendorStoreController extends GetxController {
     super.onClose();
   }
 
-  // ==================== PERMISSION METHODS ====================
 
   Future<void> checkLocationPermission() async {
     var status = await Permission.location.status;
@@ -579,6 +575,20 @@ class VendorStoreController extends GetxController {
       }
     }
 
+    final socialFields = {
+      'Instagram': instagramController.text.trim(),
+      'Facebook': facebookController.text.trim(),
+      'X (Twitter)': xController.text.trim(),
+      'YouTube': youtubeController.text.trim(),
+    };
+    for (final entry in socialFields.entries) {
+      final val = entry.value;
+      if (val.isNotEmpty && !_isValidWebsiteUrl(val)) {
+        SnackBarHelper.showError('Please enter a valid ${entry.key} URL');
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -642,14 +652,15 @@ class VendorStoreController extends GetxController {
         'address': addressController.text.trim(),
         'instagram': instagramController.text.trim(),
         'facebook': facebookController.text.trim(),
-        'whatsapp': whatsappController.text.trim().isNotEmpty
-            ? whatsappController.text.trim()
-            : phoneController.text.trim(),
+        'x': xController.text.trim(),
+        'youtube': youtubeController.text.trim(),
         'fax': faxController.text.trim(),
         'tax_number': taxController.text.trim(),
         'gst': gstController.text.trim(),
         'estimate_date': establishedYearController.text.trim(),
       });
+
+
       for (var i = 0; i < storeImages.length; i++) {
         final file = storeImages[i];
         if (await file.exists()) {
@@ -749,7 +760,8 @@ class VendorStoreController extends GetxController {
     websiteController.text = s.website ?? '';
     instagramController.text = s.instagram ?? '';
     facebookController.text = s.facebook ?? '';
-    whatsappController.text = s.whatsapp ?? s.phone ?? '';
+    xController.text = s.x ?? '';
+    youtubeController.text = s.youtube ?? '';
     faxController.text = s.fax ?? '';
     taxController.text = s.tax ?? '';
     gstController.text = s.gst ?? '';
@@ -834,7 +846,8 @@ class VendorStoreController extends GetxController {
     searchAddressController.clear();
     instagramController.clear();
     facebookController.clear();
-    whatsappController.clear();
+    xController.clear();
+    youtubeController.clear();
     faxController.clear();
     taxController.clear();
     gstController.clear();

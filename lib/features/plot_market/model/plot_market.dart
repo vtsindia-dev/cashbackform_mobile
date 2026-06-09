@@ -194,7 +194,6 @@ class MarketPlot {
           : null,
       documentVerification:
       parseDocumentVerification(json['doucment_verficaiton']),
-      // ── FIX: populate commonFacilityIds ──
       commonFacilityIds: parseCommonFacilityIds(json['commonfacility']),
     );
   }

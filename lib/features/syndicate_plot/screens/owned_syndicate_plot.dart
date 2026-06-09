@@ -1529,8 +1529,68 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
         : Get.put(BankDetailsController());
 
     Get.dialog(
-      const Center(
-        child: CircularProgressIndicator(),
+      Material(
+        type: MaterialType.transparency,
+        child: Center(
+          child: Container(
+            width: 220.w,
+            padding: EdgeInsets.symmetric(
+              vertical: 28.h,
+              horizontal: 24.w,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56.w,
+                  height: 56.w,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_primaryColor, _secondaryColor],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                Text(
+                  'Checking Details',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: _neutralDark,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  'Please wait...',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       barrierDismissible: false,
       barrierColor: Colors.black26,
@@ -1591,7 +1651,6 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
       return;
     }
 
-    // Show bottom sheet (unchanged)
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.all(24.w),
@@ -1951,30 +2010,25 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
     );
 
     try {
-      await controller.cancelSyndicateBuyingRequest(detail.id);
+      final errorMessage = await controller.cancelSyndicateBuyingRequest(detail.id);
       if (Navigator.of(Get.context!).canPop()) {
         Navigator.of(Get.context!).pop();
       }
-      Get.snackbar(
-        'Success',
-        'Plot ${detail.unit} cancellation request submitted successfully!',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: _successColor,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-        borderRadius: 12.r,
-        margin: EdgeInsets.all(16.w),
-      );
-
-      // Refresh the details
-      await controller.fetchSyndicateBuyingListDetails();
+      if (errorMessage == null) {
+        Get.showSnackbar(GetSnackBar(
+          message: 'Plot unit ${detail.unit} cancellation request submitted successfully!',
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.green,
+        ));
+        await controller.fetchSyndicateBuyingListDetails();
+      } else {
+        controller.showCancelErrorDialog(errorMessage);
+      }
     } catch (error) {
-      // Close dialog
       if (Navigator.of(Get.context!).canPop()) {
         Navigator.of(Get.context!).pop();
       }
-
-      // Show error message
+      controller.showCancelErrorDialog('Failed to cancel plot: $error');
       Get.snackbar(
         'Error',
         'Failed to cancel plot: $error',
@@ -2097,8 +2151,6 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // Cancel button - only show for active plots
                 if (cancelStatus == 0)
                   Material(
                     color: _dangerColor.withValues(alpha:0.1),
@@ -2119,8 +2171,6 @@ class SyndicateInvestmentDetailsWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                // Status indicators for non-active plots
                 if (cancelStatus == 1)
                   Container(
                     padding: EdgeInsets.symmetric(

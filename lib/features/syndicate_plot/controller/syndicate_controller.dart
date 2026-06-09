@@ -1709,16 +1709,65 @@ class SyndicatePlotController extends GetxController {
     }
   }
 
-  Future<void> cancelSyndicateBuyingRequest(int buyingId) async {
+  void showCancelErrorDialog(String message) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.cancel_outlined, color: Colors.red.shade600, size: 36),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Cancellation Failed',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              message,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Get.back(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade600,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                ),
+                child: const Text('OK', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  Future<String?> cancelSyndicateBuyingRequest(int buyingId) async {
     try {
       isLoadingCancelRequest(true);
 
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
         print('❌ No token found for syndicate cancellation');
-        SnackBarHelper.showError('Please login');
         isLoadingCancelRequest(false);
-        return;
+        return 'Please login to continue';
       }
 
       final url = '${ApiUrl.syndicateBuyingCancelRequest}/$buyingId';
@@ -1734,9 +1783,6 @@ class SyndicatePlotController extends GetxController {
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == true) {
-          SnackBarHelper.showSuccess(responseData['message'] ??
-              'Syndicate cancellation request submitted successfully');
-
           final index = buyingDetailList.indexWhere((item) => item.id == buyingId);
           if (index != -1) {
             final updatedDetail = buyingDetailList[index];
@@ -1775,29 +1821,22 @@ class SyndicatePlotController extends GetxController {
               transaction: updatedTransaction,
               property: updatedDetail.property,
             );
-
             buyingDetailList.refresh();
-            print('✅ Updated syndicate detail $buyingId with cancellation status');
           }
+          return null;
         } else {
-          SnackBarHelper.showError(responseData['message'] ??
-              'Failed to submit syndicate cancellation request');
+          return responseData['message'] as String? ??
+              'Failed to submit syndicate cancellation request';
         }
-      } else if (response.statusCode == 403) {
-        SnackBarHelper.showError(
-            "You don't have permission to cancel this syndicate plot");
-      } else if (response.statusCode == 404) {
-        SnackBarHelper.showError("Syndicate plot not found");
-      } else if (response.statusCode == 422) {
-        SnackBarHelper.showError("Invalid request. Please check the details");
       } else {
-        SnackBarHelper.showError(
-            "Failed to cancel syndicate plot: ${response.statusCode}");
+        final errorData = response.data;
+        final apiMessage = errorData is Map ? errorData['message'] as String? : null;
         print('❌ Error cancelling syndicate plot: ${response.data}');
+        return apiMessage ?? "Failed to cancel syndicate plot: ${response.statusCode}";
       }
     } catch (e) {
-      SnackBarHelper.showError("Network error: $e");
       print('❌ Network error cancelling syndicate plot: $e');
+      return "Network error. Please try again.";
     } finally {
       isLoadingCancelRequest(false);
     }

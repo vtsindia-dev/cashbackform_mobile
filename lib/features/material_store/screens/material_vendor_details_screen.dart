@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../common/widget/loader.dart';
-import '../model/material_model.dart' as vendorModel;
+import '../model/material_model.dart' as vendor_model;
 
 class MaterialVendorDetailScreen extends StatefulWidget {
   final String vendorId;
@@ -62,6 +62,24 @@ class _MaterialVendorDetailScreenState
   void dispose() { _scroll.dispose(); super.dispose(); }
 
   // ── URL helpers ───────────────────────────────────────────────────────────
+  String _maskPhone(String phone) {
+    if (phone.length < 6) return phone;
+    const edge = 2;
+    final mid = 'X' * (phone.length - edge * 2);
+    return '${phone.substring(0, edge)}$mid${phone.substring(phone.length - edge)}';
+  }
+
+  String _maskEmail(String email) {
+    if (!email.contains('@')) return email;
+    final parts = email.split('@');
+    final name = parts[0];
+    final domain = parts[1];
+    if (name.length <= 4) return '${name[0]}XXX@$domain';
+    const edge = 2;
+    final mid = 'X' * (name.length - edge * 2);
+    return '${name.substring(0, edge)}$mid${name.substring(name.length - edge)}@$domain';
+  }
+
   Future<void> _call(String p) async => launchUrl(Uri(scheme: 'tel',    path: p));
   Future<void> _mail(String e) async => launchUrl(Uri(scheme: 'mailto', path: e));
   Future<void> _map(String a)  async => launchUrl(Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(a)}'), mode: LaunchMode.externalApplication);
@@ -153,7 +171,7 @@ class _MaterialVendorDetailScreenState
     });
   }
   
-  Widget _hero(vendorModel.Vendor v, String imgUrl, double rating, String initials) {
+  Widget _hero(vendor_model.Vendor v, String imgUrl, double rating, String initials) {
     return Stack(fit: StackFit.expand, children: [
       imgUrl.isNotEmpty
           ? Image.network(imgUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _heroGrad())
@@ -185,16 +203,16 @@ class _MaterialVendorDetailScreenState
                 Text(v.name, style: const TextStyle(color: Colors.white, fontSize: 18,
                     fontWeight: FontWeight.w800), maxLines: 1, overflow: TextOverflow.ellipsis)
                     .animate().fadeIn(delay: 100.ms, duration: 450.ms),
-                if (v.address?.isNotEmpty ?? false) ...[
-                  const SizedBox(height: 3),
-                  Row(children: [
-                    const Icon(Icons.location_on_rounded, color: _gold, size: 11),
-                    const SizedBox(width: 3),
-                    Expanded(child: Text(v.address!, style: TextStyle(
-                        color: Colors.white.withValues(alpha:0.6), fontSize: 11),
-                        maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  ]).animate().fadeIn(delay: 180.ms, duration: 400.ms),
-                ],
+                // if (v.address?.isNotEmpty ?? false) ...[
+                //   const SizedBox(height: 3),
+                //   Row(children: [
+                //     const Icon(Icons.location_on_rounded, color: _gold, size: 11),
+                //     const SizedBox(width: 3),
+                //     Expanded(child: Text(v.address!, style: TextStyle(
+                //         color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                //         maxLines: 1, overflow: TextOverflow.ellipsis)),
+                //   ]).animate().fadeIn(delay: 180.ms, duration: 400.ms),
+                // ],
               ])),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -216,7 +234,7 @@ class _MaterialVendorDetailScreenState
       gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
           colors: [_h1, _h2])));
   
-  Widget _infoStrip(vendorModel.Vendor v) => Container(
+  Widget _infoStrip(vendor_model.Vendor v) => Container(
     color: _card,
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
     child: Row(children: [
@@ -248,8 +266,8 @@ class _MaterialVendorDetailScreenState
     ]),
   );
 
-  // ── Contact card ──────────────────────────────────────────────────────────
-  Widget _contactCard(vendorModel.Vendor v) {
+
+  Widget _contactCard(vendor_model.Vendor v) {
     final socials = <_Soc>[];
     if (v.instagram?.isNotEmpty ?? false) socials.add(_Soc('assets/images/instagram.png', const Color(0xFFE1306C), () => _url(v.instagram)));
     if (v.x?.isNotEmpty        ?? false) socials.add(_Soc('assets/images/twitter.png',   const Color(0xFF1DA1F2), () => _url(v.x)));
@@ -261,9 +279,9 @@ class _MaterialVendorDetailScreenState
       child: Column(children: [
         _head(Icons.contacts_rounded, 'Contact & Reach'),
         const Divider(height: 1, color: _border),
-        if (v.phone.isNotEmpty)       _cRow(Icons.phone_rounded,    v.phone,     const Color(0xFF16A34A), const Color(0xFFDCFCE7), () => _call(v.phone)),
-        if (v.address?.isNotEmpty??false) _cRow(Icons.location_on_rounded, v.address!,  const Color(0xFFEA580C), const Color(0xFFFFEDD5), () => _map(v.address!)),
-        if (v.email.isNotEmpty)   _cRow(Icons.email_rounded,       v.email,    const Color(0xFFDC2626), const Color(0xFFFEE2E2), () => _mail(v.email)),
+        if (v.phone.isNotEmpty) _cRow(Icons.phone_rounded, _maskPhone(v.phone), const Color(0xFF16A34A), const Color(0xFFDCFCE7), () => _call(v.phone)),
+        // if (v.address?.isNotEmpty ?? false) _cRow(Icons.location_on_rounded, v.address!, const Color(0xFFEA580C), const Color(0xFFFFEDD5), () => _map(v.address!)),
+        if (v.email.isNotEmpty) _cRow(Icons.email_rounded, _maskEmail(v.email), const Color(0xFFDC2626), const Color(0xFFFEE2E2), () => _mail(v.email)),
         if (v.website?.isNotEmpty??false) _cRow(Icons.language_rounded,    v.website!,  const Color(0xFF4F46E5), const Color(0xFFE0E7FF), () => _web(v.website!)),
         if (socials.isNotEmpty) ...[
           const Divider(height: 1, color: _border),
@@ -395,7 +413,7 @@ class _MaterialVendorDetailScreenState
   }
 
   // ── Section dispatcher ────────────────────────────────────────────────────
-  Widget _activeSection(vendorModel.Vendor v, List<vendorModel.Brand>? brands,
+  Widget _activeSection(vendor_model.Vendor v, List<vendor_model.Brand>? brands,
       double rating, MaterialController ctrl) {
     // Build ordered index list same as _secs
     final offsets = <int>[];
@@ -429,7 +447,7 @@ class _MaterialVendorDetailScreenState
     }
   }
   
-  Widget _productsSection(vendorModel.Vendor v) {
+  Widget _productsSection(vendor_model.Vendor v) {
     final items = v.vendorMaterials ?? [];
     if (items.isEmpty) return _empty('No products listed', Icons.inventory_2_outlined);
     return Column(children: items.asMap().entries.map((e) {
@@ -466,7 +484,7 @@ class _MaterialVendorDetailScreenState
   }
 
   // ══ SERVICES ══════════════════════════════════════════════════════════════
-  Widget _servicesSection(vendorModel.Vendor v) {
+  Widget _servicesSection(vendor_model.Vendor v) {
     final items = v.vendorServices ?? [];
     if (items.isEmpty) return _empty('No services listed', Icons.build_circle_outlined);
     return Column(children: items.asMap().entries.map((e) {
@@ -496,7 +514,7 @@ class _MaterialVendorDetailScreenState
   }
 
   // ══ ABOUT ═════════════════════════════════════════════════════════════════
-  Widget _aboutSection(vendorModel.Vendor? v) => Container(
+  Widget _aboutSection(vendor_model.Vendor? v) => Container(
     decoration: _box(), padding: const EdgeInsets.all(16),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // Header band
@@ -540,7 +558,7 @@ class _MaterialVendorDetailScreenState
   );
 
   // ══ REVIEWS ═══════════════════════════════════════════════════════════════
-  Widget _reviewsSection(vendorModel.Vendor? v, double rating) {
+  Widget _reviewsSection(vendor_model.Vendor? v, double rating) {
     final reviews = v?.reviews ?? [];
     final dist    = _ratingDist(reviews);
     return Column(children: [
@@ -619,7 +637,7 @@ class _MaterialVendorDetailScreenState
   }
 
   // ══ PHOTOS ════════════════════════════════════════════════════════════════
-  Widget _photosSection(vendorModel.Vendor v) {
+  Widget _photosSection(vendor_model.Vendor v) {
     final imgs = v.image;
     if (imgs.isEmpty) return _empty('No photos available', Icons.photo_library_outlined);
     return Container(
@@ -642,10 +660,11 @@ class _MaterialVendorDetailScreenState
     ).animate().fadeIn(delay: 60.ms, duration: 350.ms);
   }
 
-  // ══ BRANDS ════════════════════════════════════════════════════════════════
-  Widget _brandsSection(List<vendorModel.Brand>? brands) {
-    if (brands == null || brands.isEmpty)
+
+  Widget _brandsSection(List<vendor_model.Brand>? brands) {
+    if (brands == null || brands.isEmpty) {
       return _empty('No brands listed', Icons.branding_watermark_outlined);
+    }
     return Container(
       decoration: _box(), padding: const EdgeInsets.all(10),
       child: GridView.builder(
@@ -677,7 +696,7 @@ class _MaterialVendorDetailScreenState
     ).animate().fadeIn(delay: 60.ms);
   }
 
-  // ── Product enquiry dialog ────────────────────────────────────────────────
+
   void _productDialog(String title, String materialId, String userId) {
     showDialog(context: context, builder: (_) => GetBuilder<MaterialController>(
       builder: (ctrl) => Dialog(
@@ -754,7 +773,6 @@ class _MaterialVendorDetailScreenState
     ));
   }
 
-  // ── Service sheet ─────────────────────────────────────────────────────────
   void _serviceSheet(String serviceId) {
     Get.bottomSheet(GetBuilder<MaterialController>(builder: (ctrl) => Container(
       padding: EdgeInsets.only(left: 18, right: 18, top: 10,
@@ -808,7 +826,6 @@ class _MaterialVendorDetailScreenState
     )), isScrollControlled: true);
   }
 
-  // ── Full image viewer ──────────────────────────────────────────────────────
   void _viewImg(String url) {
     if (url.isEmpty) return;
     final tc = TransformationController();
@@ -827,7 +844,6 @@ class _MaterialVendorDetailScreenState
     );
   }
 
-  // ── Micro helpers ─────────────────────────────────────────────────────────
   AppBar _miniBar(String t) => AppBar(backgroundColor: _h1, elevation: 0,
     leading: GestureDetector(onTap: () => Get.back(),
         child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16)),
@@ -887,7 +903,7 @@ class _MaterialVendorDetailScreenState
     ])),
   );
 
-  Map<int, double> _ratingDist(List<vendorModel.Review> reviews) {
+  Map<int, double> _ratingDist(List<vendor_model.Review> reviews) {
     final m = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
     for (final r in reviews) {
       final s = (double.tryParse(r.rating) ?? 0).round().clamp(1, 5);

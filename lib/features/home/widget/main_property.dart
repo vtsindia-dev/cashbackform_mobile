@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import '../../../common/colours.dart';
 import '../../../common/images.dart';
 import '../../../common/route/router.dart';
+import '../../plot_market/screens/add_plot.dart';
+import '../../residential_plots/view/add_residential.dart';
 
 
 class PropertyMain extends StatelessWidget {
@@ -62,7 +64,64 @@ class PropertyMain extends StatelessWidget {
         Row(
           children: [
             Text(
-              "Plot ",
+              "Buy & Add ",
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColor.textMain,
+              ),
+            ),
+            Text(
+              "Properties",
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFFC107),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16.h),
+        Row(
+          children: [
+            Expanded(child: _buildAnimateCard(properties[0], 0)),
+            SizedBox(width: 12.w),
+            Expanded(child: _buildAnimateCard(properties[1], 1)),
+          ],
+        ),
+        SizedBox(height: 16.h),
+        Row(
+          children: [
+            Expanded(
+              child: addPropertyCard(
+                title: "Add My Land",
+                subtitle: "Plot / Agricultural",
+                bgColor: const Color(0xFFE2FBE9),
+                iconBgColor: const Color(0xff92AF5D),
+                image: "assets/images/home-categories-1.png",
+                onTap: () => Get.to(() => MarketPlotForm()),
+              ),
+            ),
+
+            SizedBox(width: 12.w),
+
+            Expanded(
+              child: addPropertyCard(
+                title: "Add My Flats",
+                subtitle: "Residential Property",
+                bgColor: const Color(0xFFFFE3EE),
+                iconBgColor: const Color(0xFFE54788),
+                image: "assets/images/home-categories-2.png",
+                onTap: () => Get.to(() => const AddEditPropertyScreen()),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12.h),
+        Row(
+          children: [
+            Text(
+              "Gio Properties ",
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.bold,
@@ -82,14 +141,6 @@ class PropertyMain extends StatelessWidget {
         SizedBox(height: 16.h),
         Row(
           children: [
-            Expanded(child: _buildAnimateCard(properties[0], 0)),
-            SizedBox(width: 12.w),
-            Expanded(child: _buildAnimateCard(properties[1], 1)),
-          ],
-        ),
-        SizedBox(height: 12.h),
-        Row(
-          children: [
             Expanded(child: _buildAnimateCard(properties[2], 2)),
             SizedBox(width: 10.w),
             Expanded(child: _buildAnimateCard(properties[3], 3)),
@@ -98,6 +149,84 @@ class PropertyMain extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  Widget addPropertyCard({
+    required String title,
+    required String subtitle,
+    required Color bgColor,
+    required Color iconBgColor,
+    required String image,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 70.h,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          child: Row(
+            children: [
+              Image.asset(image,height: 42.h, width: 42.h,),
+              SizedBox(width: 5 .w),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                          color: iconBgColor,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 7.sp,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(width: 5.w),
+              Container(
+                height: 34.h,
+                width: 34.h,
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -130,9 +259,9 @@ class PropertyMain extends StatelessWidget {
           borderRadius: BorderRadius.circular(14.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 6,
-              offset: const Offset(0, 3),
+              offset: const Offset(0, 2),
             ),
           ],
         ),

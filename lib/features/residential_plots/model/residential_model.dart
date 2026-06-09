@@ -1,9 +1,6 @@
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
 
-// ======================================================
-// SAFE TYPE CAST HELPERS
-// ======================================================
 
 int safeIntCast(dynamic value) {
   if (value == null) return 0;
@@ -52,19 +49,11 @@ bool safeBoolCast(dynamic value) {
   return false;
 }
 
-// Returns the value as String only when it actually IS a String.
-// Returns null for List, Map, int, bool, or any other non-String type.
-// Needed because the API returns `"documents": []` (a List) when empty,
-// but a String path when a document exists.
 String? _safeStringFromJson(dynamic value) {
   if (value == null) return null;
   if (value is String) return value.isEmpty ? null : value;
   return null;
 }
-
-// ======================================================
-// PROPERTY LIST RESPONSE
-// ======================================================
 
 class PropertyListResponse {
   final bool status;
@@ -120,10 +109,6 @@ class PropertyListData {
   }
 }
 
-// ======================================================
-// PROPERTY DETAIL RESPONSE
-// ======================================================
-
 class PropertyDetailResponse {
   final bool status;
   final Property data;
@@ -141,9 +126,6 @@ class PropertyDetailResponse {
   }
 }
 
-// ======================================================
-// MAIN PROPERTY MODEL
-// ======================================================
 
 class Property {
   final int id;
@@ -154,7 +136,7 @@ class Property {
   final String location;
   final int? city;
   final int? state;
-  final int? country; // FIX: Added country field (present in API response)
+  final int? country;
   final int? plotCount;
   final int? subCategoryId;
   final String? lat;
@@ -196,21 +178,11 @@ class Property {
   final List<AmenityItem> amenitiesAll;
   final PropertyCategory? category;
 
-
-  // FIX: Added sold_status and sold_amount fields from API response
   final int soldStatus;
   final double? soldAmount;
-
-  // FIX: Added blueprint field (API returns 'blueprint' key)
   final String? blueprint;
-
-  // FIX: Added featured field
   final int featured;
-
-  // FIX: Added map_set field for nearby properties on map
   final List<MapSetItem> mapSet;
-
-  // API key: 'doucment_verficaiton' (typo in API) — true means docs verified
   final bool documentVerification;
   final String? youtubeLink;
 
@@ -287,12 +259,10 @@ class Property {
       location: json['location'] as String? ?? '',
       city: safeNullableIntCast(json['city']),
       state: safeNullableIntCast(json['state']),
-      // FIX: Parse country from API response
       country: safeNullableIntCast(json['country']),
       lat: json['lat'] as String?,
       lng: json['lng'] as String?,
       price: safeDoubleCast(json['price']),
-      // FIX: was 'plot_count' key, now correctly mapped
       plotCount: safeNullableIntCast(json['plot_count']),
       areaSqft: safeIntCast(json['area_sqft']),
       areaSqftPrice: safeNullableDoubleCast(json['area_sqft_price']),
@@ -329,8 +299,6 @@ class Property {
       verifyStatus: safeIntCast(json['verify_status']),
       userType: json['user_type'] as String? ?? 'customer',
       customerId: safeNullableIntCast(json['customer_id']),
-      // API has a typo 'docuents'; also 'documents' may be a List<dynamic>
-      // when empty ([]) — never cast directly, always guard with is-check.
       documents: _safeStringFromJson(json['docuents']) ??
           _safeStringFromJson(json['documents']),
       isActive: safeBoolCast(json['is_active']),
@@ -348,7 +316,6 @@ class Property {
       category: json['cate'] != null
           ? PropertyCategory.fromJson(json['cate'] as Map<String, dynamic>)
           : null,
-      // FIX: Parse sold_status and sold_amount from API
       soldStatus: safeIntCast(json['sold_status']),
       soldAmount: safeNullableDoubleCast(json['sold_amount']),
       blueprint: json['blueprint'] as String?,
@@ -389,7 +356,6 @@ class Property {
   String blueprintUrl(String baseUrl) {
     if (blueprint == null || blueprint!.isEmpty) return '';
     if (blueprint!.startsWith('http')) return blueprint!;
-    // Remove trailing slash from base, add leading slash to path if missing
     final base = baseUrl.endsWith('/') ? baseUrl : '$baseUrl/';
     final path = blueprint!.startsWith('/') ? blueprint!.substring(1) : blueprint!;
     return '$base$path';
@@ -418,14 +384,15 @@ class Property {
     }
     return null;
   }
+
   List<Map<String, String>> get amenitiesWithImages {
     return amenitiesAll
         .map((amenity) => {
       'title': amenity.title,
       'image': amenity.image,
-    })
-        .toList();
+    }).toList();
   }
+
   List<Map<String, dynamic>> get nearbyLocationsWithDistance {
     return nearbyLocations
         .map((location) => {
@@ -855,7 +822,6 @@ class NearbyLocation {
 class LocationPivot {
   final int plotId;
   final int nearbyLocationId;
-  // FIX: distance comes as String "2.0" in API, not int
   final double distance;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -872,7 +838,6 @@ class LocationPivot {
     return LocationPivot(
       plotId: safeIntCast(json['plot_id']),
       nearbyLocationId: safeIntCast(json['nearby_location_id']),
-      // FIX: was safeIntCast — API returns "2.0" string, use double
       distance: safeDoubleCast(json['distance']),
       createdAt:
       DateTime.parse(json['created_at']?.toString() ?? '1970-01-01'),
@@ -946,9 +911,6 @@ class AmenityPivot {
   }
 }
 
-// ======================================================
-// FORM BUILDER MODELS
-// ======================================================
 
 class CityModel {
   final int id;
@@ -1086,9 +1048,6 @@ class Coordinates {
   LatLng toLatLng() => LatLng(latitude, longitude);
 }
 
-// ======================================================
-// API RESPONSE MODELS
-// ======================================================
 
 class CategoryResponse {
   final bool status;
@@ -1231,9 +1190,6 @@ class FormSubmissionResponse {
   }
 }
 
-// ======================================================
-// FORM DATA MODEL
-// ======================================================
 
 class PropertyFormData {
   final String propertyName;

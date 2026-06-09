@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math';
-
 import 'package:action_slider/action_slider.dart';
 import 'package:cashback_farms/common/model/logger_model.dart';
 import 'package:cashback_farms/common/widget/sessionhandler.dart';
@@ -53,7 +51,7 @@ class GiooPlotController extends GetxController {
   var states = <AppState>[].obs;
   var cities = <City>[].obs;
 
-  // Properties for filtering
+
   var propertyTypes = <PropertyType>[].obs;
   var priceMin = 0.0.obs;
   var priceMax = 5000000.0.obs;
@@ -71,8 +69,6 @@ class GiooPlotController extends GetxController {
   var totalBuyingDetailPages = 1.obs;
 
   var selectedTransactionId = Rxn<int>();
-
-  // City loading state
   var isLoadingCities = false.obs;
   final Map<int, List<City>> _citiesCache = {};
 
@@ -520,8 +516,6 @@ class GiooPlotController extends GetxController {
     }
 
     print('📊 Graph data updated for $type');
-    print('   Weekly Profit: ${weeklyProfit.value}');
-    print('   Weekly Profit %: ${weeklyProfitPercent.value}');
     print('   Overall Profit: ${overallProfit.value}');
     print('   Overall Profit %: ${overallProfitPercent.value}');
     print('   Booked values: ${bookedValues.length} items');
@@ -1496,41 +1490,29 @@ class GiooPlotController extends GetxController {
     }
   }
 
-  Future<void> cancelGiooBuyingRequest(int buyingId) async {
+  Future<bool> cancelGiooBuyingRequest(int buyingId) async {
     try {
       isLoadingCancelRequest(true);
-
-      // Get the token using SessionManager
       final token = await SessionManager.getToken();
       if (token == null || token.isEmpty) {
         print('❌ No token found for cancellation');
         SnackBarHelper.showError('Please login');
         isLoadingCancelRequest(false);
-        return;
+        return false;
       }
-
       final url = '${ApiUrl.giooBuyingCancelRequest}/$buyingId';
-      print('🌐 Cancelling Gioo Buying Request URL: $url');
-
-      // Add headers with token for GET request
       final Map<String, String> headers = {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       };
-
-      // Use GET method for cancel API
       final response = await ApiService.getRequest(url, headers: headers);
-
       if (response.statusCode == 200) {
         final responseData = response.data;
         if (responseData['status'] == true) {
           SnackBarHelper.showSuccess(responseData['message'] ??
               'Cancellation request submitted successfully');
-
-          // Update the item in the list
           final index = buyingList.indexWhere((item) => item.id == buyingId);
           if (index != -1) {
-            // Create a copy with updated status from response
             final updatedItem = buyingList[index];
             final data = responseData['data'] ?? {};
 
@@ -1567,34 +1549,40 @@ class GiooPlotController extends GetxController {
               ),
               property: updatedItem.property,
             );
-
-            // Refresh the list
             buyingList.refresh();
             print('✅ Updated item $buyingId with cancellation status');
           }
+          return true;
         } else {
           SnackBarHelper.showError(responseData['message'] ??
               'Failed to submit cancellation request');
+          return false;
         }
       } else if (response.statusCode == 403) {
         SnackBarHelper.showError(
             "You don't have permission to cancel this booking");
+        return false;
       } else if (response.statusCode == 404) {
         SnackBarHelper.showError("Booking not found");
+        return false;
       } else if (response.statusCode == 422) {
         SnackBarHelper.showError("Invalid request. Please check the details");
+        return false;
       } else {
         SnackBarHelper.showError(
             "Failed to cancel request: ${response.statusCode}");
         print('❌ Error cancelling request: ${response.data}');
+        return false;
       }
     } catch (e) {
       SnackBarHelper.showError("Network error: $e");
       print('❌ Network error cancelling request: $e');
+      return false;
     } finally {
       isLoadingCancelRequest(false);
     }
   }
+
 
   Future<void> fetchGioTerms()
   async {

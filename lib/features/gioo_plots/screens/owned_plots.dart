@@ -1815,22 +1815,20 @@ class GiooBuyingDetailsWidget extends StatelessWidget {
     );
 
     try {
-      // Call the cancel API for the specific plot unit
-      await controller.cancelGiooBuyingRequest(detail.id);
 
-      // Close dialog
+      final resultData = await controller.cancelGiooBuyingRequest(detail.id);
       Navigator.of(Get.context!).pop();
 
-      // Show success message
-      Get.showSnackbar(
-        GetSnackBar(
-          message: 'Plot unit ${detail.unit} cancellation request submitted successfully!',
-          duration: const Duration(seconds: 3),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if(resultData == true){
+        Get.showSnackbar(
+          GetSnackBar(
+            message: 'Plot unit ${detail.unit} cancellation request submitted successfully!',
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
 
-      // Refresh the details
       final result = await controller.fetchGiooBuyingListDetails();
 
       if(result == true){

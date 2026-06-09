@@ -105,4 +105,5 @@ class ApiUrl {
   static const String bankDetails = '$baseUrl/api/v2/bank-details';
   static const String listOfBankDetails = '$baseUrl/api/v2/admin/bank-details';
   static const String serviceMaterialBanners = '$baseUrl/api/v2/services_material_banner';
+  static const String submitGeneralEnquiry = '$baseUrl/api/v2/submit-enquiry';
 }

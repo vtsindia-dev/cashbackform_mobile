@@ -1,6 +1,5 @@
 import 'package:cashback_farms/common/colours.dart';
 import 'package:cashback_farms/common/route/router.dart';
-import 'package:cashback_farms/common/widget/appbar.dart';
 import 'package:cashback_farms/common/widget/loader.dart';
 import 'package:cashback_farms/features/material_store/controller/material_store_controller.dart';
 import 'package:flutter/material.dart';
@@ -30,8 +29,6 @@ class _MaterialVendorListState extends State<MaterialVendorList>
   @override
   void initState() {
     super.initState();
-
-    // Header entrance animation
     _headerAnim = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -41,8 +38,6 @@ class _MaterialVendorListState extends State<MaterialVendorList>
       begin: const Offset(0, -0.12),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _headerAnim, curve: Curves.easeOutCubic));
-
-    // FAB pulse animation
     _fabAnim = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -98,13 +93,12 @@ class _MaterialVendorListState extends State<MaterialVendorList>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Handle
                     Center(
                       child: Container(
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: AppColor.primary.withOpacity(0.3),
+                          color: AppColor.primary.withValues(alpha:0.3),
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
@@ -232,7 +226,7 @@ class _MaterialVendorListState extends State<MaterialVendorList>
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColor.primary.withOpacity(0.35),
+                                  color: AppColor.primary.withValues(alpha:0.35),
                                   blurRadius: 14,
                                   offset: const Offset(0, 6),
                                 ),
@@ -310,7 +304,7 @@ class _MaterialVendorListState extends State<MaterialVendorList>
         border: Border.all(color: AppColor.lightGrey),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha:0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -339,17 +333,12 @@ class _MaterialVendorListState extends State<MaterialVendorList>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // BUILD
-  // ─────────────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F2EC),
       body: Column(
         children: [
-          // ── Animated premium header ──────────────────────────────────────
           FadeTransition(
             opacity: _headerFade,
             child: SlideTransition(
@@ -357,8 +346,6 @@ class _MaterialVendorListState extends State<MaterialVendorList>
               child: _buildHeader(),
             ),
           ),
-
-          // ── Content ──────────────────────────────────────────────────────
           Expanded(
             child: GetBuilder<MaterialController>(
               builder: (ctrl) {
@@ -423,8 +410,6 @@ class _MaterialVendorListState extends State<MaterialVendorList>
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
-
   Widget _buildHeader() {
     return Container(
       decoration: const BoxDecoration(
@@ -445,7 +430,7 @@ class _MaterialVendorListState extends State<MaterialVendorList>
               height: 160,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.06),
+                color: Colors.white.withValues(alpha:0.06),
               ),
             ),
           ),
@@ -457,7 +442,7 @@ class _MaterialVendorListState extends State<MaterialVendorList>
               height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha:0.05),
               ),
             ),
           ),
@@ -469,11 +454,10 @@ class _MaterialVendorListState extends State<MaterialVendorList>
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.04),
+                color: Colors.white.withValues(alpha:0.04),
               ),
             ),
           ),
-          // Orange accent dot
           Positioned(
             top: 50,
             left: 60,
@@ -494,7 +478,6 @@ class _MaterialVendorListState extends State<MaterialVendorList>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Back + filter row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -503,10 +486,10 @@ class _MaterialVendorListState extends State<MaterialVendorList>
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha:0.15),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.25),
+                              color: Colors.white.withValues(alpha:0.25),
                             ),
                           ),
                           child: const Icon(
@@ -516,7 +499,6 @@ class _MaterialVendorListState extends State<MaterialVendorList>
                           ),
                         ),
                       ),
-                      // Filter button with pulse
                       AnimatedBuilder(
                         animation: _fabAnim,
                         builder: (context, child) {
@@ -525,7 +507,7 @@ class _MaterialVendorListState extends State<MaterialVendorList>
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColor.orange.withOpacity(
+                                  color: AppColor.orange.withValues(alpha:
                                       0.2 + 0.15 * _fabAnim.value),
                                   blurRadius: 12 + 6 * _fabAnim.value,
                                   spreadRadius: 1,
@@ -581,7 +563,7 @@ class _MaterialVendorListState extends State<MaterialVendorList>
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
-                                color: Colors.white.withOpacity(0.65),
+                                color: Colors.white.withValues(alpha:0.65),
                                 letterSpacing: 3.5,
                               ),
                             ),
@@ -606,10 +588,10 @@ class _MaterialVendorListState extends State<MaterialVendorList>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
+                            color: Colors.white.withValues(alpha:0.18),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha:0.3),
                             ),
                           ),
                           child: Text(
@@ -642,7 +624,7 @@ class _MaterialVendorListState extends State<MaterialVendorList>
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: AppColor.primary.withOpacity(0.08),
+              color: AppColor.primary.withValues(alpha:0.08),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -676,9 +658,6 @@ class _MaterialVendorListState extends State<MaterialVendorList>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Animated Vendor Card Widget
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _AnimatedVendorCard extends StatefulWidget {
   final vendorModel.Vendor vendor;
@@ -697,6 +676,13 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
   late Animation<Offset> _slide;
   bool _pressed = false;
 
+  String _maskPhone(String phone) {
+    if (phone.length < 6) return phone;
+    const edge = 2;
+    final mid = 'X' * (phone.length - edge * 2);
+    return '${phone.substring(0, edge)}$mid${phone.substring(phone.length - edge)}';
+  }
+  
   @override
   void initState() {
     super.initState();
@@ -747,7 +733,7 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(_pressed ? 0.03 : 0.07),
+                    color: Colors.black.withValues(alpha:_pressed ? 0.03 : 0.07),
                     blurRadius: _pressed ? 8 : 20,
                     offset: Offset(0, _pressed ? 2 : 8),
                   ),
@@ -786,7 +772,7 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.65),
+                                    color: Colors.black.withValues(alpha:0.65),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Row(
@@ -878,7 +864,7 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
                                 Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: AppColor.green.withOpacity(0.1),
+                                    color: AppColor.green.withValues(alpha:0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(Icons.phone_rounded,
@@ -887,7 +873,7 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
-                                    v.phone,
+                                    _maskPhone(v.phone),
                                     style: const TextStyle(
                                       color: AppColor.textSecondary,
                                       fontSize: 12,
@@ -929,7 +915,7 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColor.primary.withOpacity(0.35),
+                                    color: AppColor.primary.withValues(alpha:0.35),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -957,34 +943,33 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
                       ),
                     ),
 
-                    // Address strip
-                    if (v.address != null && v.address!.isNotEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF8F5F0),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on_rounded,
-                                size: 13, color: AppColor.grey),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                v.address!,
-                                style: const TextStyle(
-                                  color: AppColor.grey,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    // if (v.address != null && v.address!.isNotEmpty)
+                    //   Container(
+                    //     width: double.infinity,
+                    //     padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                    //     decoration: const BoxDecoration(
+                    //       color: Color(0xFFF8F5F0),
+                    //     ),
+                    //     child: Row(
+                    //       children: [
+                    //         const Icon(Icons.location_on_rounded,
+                    //             size: 13, color: AppColor.grey),
+                    //         const SizedBox(width: 6),
+                    //         Expanded(
+                    //           child: Text(
+                    //             v.address!,
+                    //             style: const TextStyle(
+                    //               color: AppColor.grey,
+                    //               fontSize: 11,
+                    //               fontWeight: FontWeight.w400,
+                    //             ),
+                    //             maxLines: 1,
+                    //             overflow: TextOverflow.ellipsis,
+                    //           ),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
                   ],
                 ),
               ),
@@ -1001,7 +986,7 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
       child: Center(
         child: Icon(
           Icons.store_rounded,
-          color: AppColor.primary.withOpacity(0.25),
+          color: AppColor.primary.withValues(alpha:0.25),
           size: 36,
         ),
       ),
@@ -1012,7 +997,7 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -1045,7 +1030,7 @@ class _AnimatedVendorCardState extends State<_AnimatedVendorCard>
               color: AppColor.orange, size: 14);
         } else {
           return Icon(Icons.star_border_rounded,
-              color: AppColor.orange.withOpacity(0.4), size: 14);
+              color: AppColor.orange.withValues(alpha:0.4), size: 14);
         }
       }),
     );

@@ -1,5 +1,6 @@
 import 'package:cashback_farms/common/api_constant.dart';
 import 'package:cashback_farms/common/widget/share_action_button_widget.dart';
+import 'package:cashback_farms/common/widget/view_on_map_button.dart';
 import 'package:cashback_farms/features/rental_yeild/widget/rental_overview.dart';
 import 'package:cashback_farms/features/syndicate_plot/widget/about_plot.dart';
 import 'package:flutter/material.dart';
@@ -911,55 +912,21 @@ class AboutPlot extends StatelessWidget {
               color: AppColor.textMain,
             ),
           ),
-          GestureDetector(
+          ViewOnMapButton(
             onTap: () async {
               final uri = Uri.parse(mapsUrl);
               if (await canLaunchUrl(uri)) {
-                await launchUrl(uri,
-                    mode: LaunchMode.externalApplication);
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } else {
+                debugPrint('Could not launch $mapsUrl');
               }
             },
-            child: Container(
-              padding:
-              EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
-              decoration: BoxDecoration(
-                color: AppColor.primary.withValues(alpha:0.7),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.map_outlined,
-                      size: 14.sp, color: Colors.white),
-                  SizedBox(width: 4.w),
-                  Text(
-                    'View on Map',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            )
-                .animate()
-                .fadeIn(duration: 600.ms)
-                .scale(
-                begin: const Offset(0.8, 0.8),
-                end: const Offset(1, 1))
-                .then()
-                .shimmer(
-                duration: 800.ms,
-                color: Colors.white.withValues(alpha:0.3)),
-          ),
+          )
         ],
       ),
     );
   }
 
-  // ==========================================================================
-  // AMENITIES
-  // ==========================================================================
 
   Widget _buildAmenitiesSection(List<AmenityModel> amenities) {
     final scrollController = ScrollController();

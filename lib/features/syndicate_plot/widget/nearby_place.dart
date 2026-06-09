@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../common/colours.dart';
+import '../../../common/widget/view_on_map_button.dart';
 import '../controller/syndicate_controller.dart';
 import '../model/syndicate_model.dart';
 
@@ -231,32 +232,11 @@ class _MapRow extends StatelessWidget {
               color: AppColor.textMain,
             ),
           ),
-          GestureDetector(
+          ViewOnMapButton(
+            active: active,
             onTap: active
-                ? onTap
+                ? onTap!
                 : () => Get.snackbar("Location Not Available", "Coordinates not available"),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: active ? AppColor.primary.withOpacity(0.8) : Colors.grey.shade400,
-                borderRadius: BorderRadius.circular(7.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.map_outlined, size: 12.sp, color: Colors.white),
-                  4.w.horizontalSpace,
-                  Text(
-                    "View Map",
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),

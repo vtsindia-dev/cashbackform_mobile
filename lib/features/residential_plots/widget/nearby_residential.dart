@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../common/colours.dart';
+import '../../../common/widget/view_on_map_button.dart';
 import '../controller/residential_controller.dart';
 import '../model/residential_model.dart';
 
@@ -126,36 +127,12 @@ class _NearbyProjectState extends State<NearbyProject> with SingleTickerProvider
                           style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w900, color: Colors.black),
                         ),
                         const Spacer(),
-                        InkWell(
+                        ViewOnMapButton(
                           onTap: () => _launchGoogleMaps(property.lat, property.lng),
-                          borderRadius: BorderRadius.circular(8.r),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                            decoration: BoxDecoration(
-                              color: AppColor.primary.withOpacity(0.1), // Light background tint
-                              borderRadius: BorderRadius.circular(15.r),
-                              border: Border.all(
-                                  color: AppColor.primary.withOpacity(0.3),
-                                  width: 1
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "Show Map",
-                                  style: TextStyle(
-                                      fontSize: 11.sp,
-                                      fontWeight: FontWeight.w900,
-                                      color: AppColor.primary
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                       ],
                     ),
+                    SizedBox(height: 10.h),
                     Text(
                       _safeString(property.location),
                       style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade700, fontWeight: FontWeight.w500),

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../model/service_model.dart' as svcModel;
+import '../model/service_model.dart' as svc_model;
 
 class VendorDataDetailScreen extends StatefulWidget {
   final String vendorId;
@@ -22,8 +22,7 @@ class VendorDataDetailScreen extends StatefulWidget {
 
 class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
   final ServiceController controller = Get.put(ServiceController());
-
-  // ── Design tokens ──────────────────────────────────────────────────────────
+  
   static const _bg      = Color(0xFFF4F1EB);
   static const _card    = Color(0xFFFFFFFF);
   static const _ink     = Color(0xFF1A1A1A);
@@ -38,7 +37,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
   static const _h1      = Color(0xFF1A2E12);
   static const _h2      = Color(0xFF2E5020);
 
-  // ── State ──────────────────────────────────────────────────────────────────
+
   int  _active     = 0;
   // true  = vendor has products  (show Products tab)
   // false = service-only vendor  (hide Products tab)
@@ -66,12 +65,30 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
     super.dispose();
   }
 
-  // ── URL helpers ────────────────────────────────────────────────────────────
+
+  String _maskPhone(String phone) {
+    if (phone.length < 6) return phone;
+    const edge = 2;
+    final mid = 'X' * (phone.length - edge * 2);
+    return '${phone.substring(0, edge)}$mid${phone.substring(phone.length - edge)}';
+  }
+
+  String _maskEmail(String email) {
+    if (!email.contains('@')) return email;
+    final parts = email.split('@');
+    final name = parts[0];
+    final domain = parts[1];
+    if (name.length <= 4) return '${name[0]}XXX@$domain';
+    const edge = 2;
+    final mid = 'X' * (name.length - edge * 2);
+    return '${name.substring(0, edge)}$mid${name.substring(name.length - edge)}@$domain';
+  }
+
   Future<void> _call(String p) async => launchUrl(Uri(scheme: 'tel',    path: p));
   Future<void> _mail(String e) async => launchUrl(Uri(scheme: 'mailto', path: e));
-  Future<void> _map(String a)  async => launchUrl(
-      Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(a)}'),
-      mode: LaunchMode.externalApplication);
+  // Future<void> _map(String a)  async => launchUrl(
+  //     Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(a)}'),
+  //     mode: LaunchMode.externalApplication);
   Future<void> _web(String u)  async {
     if (!u.startsWith('http')) u = 'https://$u';
     launchUrl(Uri.parse(u), mode: LaunchMode.externalApplication);
@@ -125,13 +142,11 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
           .map((w) => w[0].toUpperCase()).join();
 
       return Scaffold(
-        // KEY: matches header colour → zero black flash
         backgroundColor: _h1,
         body: CustomScrollView(
           controller: _scroll,
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // ── Hero sliver ──────────────────────────────────────────────────
             SliverAppBar(
               expandedHeight: 240,
               pinned: true,
@@ -144,7 +159,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
                 child: Container(
                   margin: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.14),
+                    color: Colors.white.withValues(alpha:0.14),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.arrow_back_ios_new_rounded,
@@ -156,8 +171,6 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
                 background: _buildHero(v, imgUrl, rating, initials),
               ),
             ),
-
-            // ── All body content in one bg-coloured container ────────────────
             SliverToBoxAdapter(
               child: Container(
                 color: _bg,
@@ -187,34 +200,26 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
       );
     });
   }
-
-  // ── Hero ───────────────────────────────────────────────────────────────────
-  Widget _buildHero(svcModel.Vendor v, String imgUrl,
+  
+  Widget _buildHero(svc_model.Vendor v, String imgUrl,
       double rating, String initials) {
     return Stack(fit: StackFit.expand, children: [
       imgUrl.isNotEmpty
           ? Image.network(imgUrl, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => _heroGrad())
           : _heroGrad(),
-
-      // Green-tinted scrim — NO pure black
       Container(decoration: const BoxDecoration(gradient: LinearGradient(
         begin: Alignment.topCenter, end: Alignment.bottomCenter,
         colors: [Color(0x44000000), Color(0xE6122007)], stops: [0.1, 1.0],
       ))),
-
-      // Gold accent line
       Positioned(top: 0, left: 0, right: 0,
         child: Container(height: 3,
             decoration: const BoxDecoration(gradient: LinearGradient(
               colors: [Color(0xFFD4921A), Color(0xFFF5C842), Color(0xFFD4921A)],
             ))),
       ),
-
-      // Vendor info
       Positioned(bottom: 18, left: 16, right: 16,
         child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          // Monogram avatar
           Container(width: 54, height: 54,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -222,7 +227,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
                 begin: Alignment.topLeft, end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: _gold.withOpacity(0.55),
+              boxShadow: [BoxShadow(color: _gold.withValues(alpha:0.55),
                   blurRadius: 14, offset: const Offset(0, 6))],
             ),
             child: Center(child: Text(initials, style: const TextStyle(
@@ -237,23 +242,21 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
                     fontSize: 18, fontWeight: FontWeight.w800),
                     maxLines: 1, overflow: TextOverflow.ellipsis)
                     .animate().fadeIn(delay: 100.ms, duration: 450.ms),
-                if (v.address?.isNotEmpty ?? false) ...[
-                  const SizedBox(height: 3),
-                  Row(children: [
-                    const Icon(Icons.location_on_rounded, color: _gold, size: 11),
-                    const SizedBox(width: 3),
-                    Expanded(child: Text(v.address!,
-                        style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11),
-                        maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  ]).animate().fadeIn(delay: 180.ms, duration: 400.ms),
-                ],
+                // if (v.address?.isNotEmpty ?? false) ...[
+                //   const SizedBox(height: 3),
+                //   Row(children: [
+                //     const Icon(Icons.location_on_rounded, color: _gold, size: 11),
+                //     const SizedBox(width: 3),
+                //     Expanded(child: Text(v.address!,
+                //         style: TextStyle(color: Colors.white.withValues(alpha:0.6), fontSize: 11),
+                //         maxLines: 1, overflow: TextOverflow.ellipsis)),
+                //   ]).animate().fadeIn(delay: 180.ms, duration: 400.ms),
+                // ],
               ])),
-
-          // Rating pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(color: _gold, borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: _gold.withOpacity(0.45),
+                boxShadow: [BoxShadow(color: _gold.withValues(alpha:0.45),
                     blurRadius: 10, offset: const Offset(0, 4))]),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.star_rounded, color: Colors.white, size: 13),
@@ -271,9 +274,8 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
     gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
         colors: [_h1, _h2]),
   ));
-
-  // ── Info strip ─────────────────────────────────────────────────────────────
-  Widget _buildInfoStrip(svcModel.Vendor v) => Container(
+  
+  Widget _buildInfoStrip(svc_model.Vendor v) => Container(
     color: _card,
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
     child: Row(children: [
@@ -284,7 +286,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(color: _greenBg, borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _green.withOpacity(0.2))),
+            border: Border.all(color: _green.withValues(alpha: 0.2))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Container(width: 5, height: 5,
               decoration: const BoxDecoration(color: _green, shape: BoxShape.circle)),
@@ -299,25 +301,27 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
   Widget _chip(IconData icon, String label, Color c, Color bg) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.withOpacity(0.15))),
+        border: Border.all(color: c.withValues(alpha:0.15))),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 10, color: c), const SizedBox(width: 4),
       Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: c)),
     ]),
   );
 
-  // ── Contact card ───────────────────────────────────────────────────────────
-  Widget _buildContactCard(svcModel.Vendor v) {
-    // Only add social buttons for links that actually exist
+  Widget _buildContactCard(svc_model.Vendor v) {
     final socials = <_Soc>[];
-    if (v.instagram?.isNotEmpty ?? false)
+    if (v.instagram?.isNotEmpty ?? false) {
       socials.add(_Soc('assets/images/instagram.png', const Color(0xFFE1306C), () => _url(v.instagram)));
-    if (v.x?.isNotEmpty ?? false)
+    }
+    if (v.x?.isNotEmpty ?? false) {
       socials.add(_Soc('assets/images/twitter.png',   const Color(0xFF1DA1F2), () => _url(v.x)));
-    if (v.youtube?.isNotEmpty ?? false)
+    }
+    if (v.youtube?.isNotEmpty ?? false) {
       socials.add(_Soc('assets/images/youtube.png',   const Color(0xFFFF0000), () => _url(v.youtube)));
-    if (v.whatsapp?.isNotEmpty ?? false)
+    }
+    if (v.whatsapp?.isNotEmpty ?? false) {
       socials.add(_Soc('assets/images/whatsapp.png',  const Color(0xFF25D366), () => _url(v.whatsapp)));
+    }
 
     return Container(
       decoration: _box(),
@@ -326,15 +330,14 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
         const Divider(height: 1, color: _border),
 
         if (v.phone.isNotEmpty)
-          _cRow(Icons.phone_rounded,    v.phone,     const Color(0xFF16A34A), const Color(0xFFDCFCE7), () => _call(v.phone)),
-        if (v.address?.isNotEmpty ?? false)
-          _cRow(Icons.location_on_rounded, v.address!, const Color(0xFFEA580C), const Color(0xFFFFEDD5), () => _map(v.address!)),
-        if (v.email?.isNotEmpty ?? false)
-          _cRow(Icons.email_rounded,    v.email!,    const Color(0xFFDC2626), const Color(0xFFFEE2E2), () => _mail(v.email!)),
+          _cRow(Icons.phone_rounded, _maskPhone(v.phone), const Color(0xFF16A34A), const Color(0xFFDCFCE7), () => _call(v.phone)),
+        // if (v.address?.isNotEmpty ?? false)
+        //   _cRow(Icons.location_on_rounded, v.address!, const Color(0xFFEA580C), const Color(0xFFFFEDD5), () => _map(v.address!)),
+        if (v.email.isNotEmpty)
+          _cRow(Icons.email_rounded, _maskEmail(v.email), const Color(0xFFDC2626), const Color(0xFFFEE2E2), () => _mail(v.email)),
         if (v.website?.isNotEmpty ?? false)
           _cRow(Icons.language_rounded, v.website!,  const Color(0xFF4F46E5), const Color(0xFFE0E7FF), () => _web(v.website!)),
-
-        // Social row only if at least one social link exists
+        
         if (socials.isNotEmpty) ...[
           const Divider(height: 1, color: _border),
           Padding(
@@ -349,9 +352,9 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
                   onTap: e.value.onTap,
                   child: Container(width: 32, height: 32,
                     decoration: BoxDecoration(
-                        color: e.value.color.withOpacity(0.1),
+                        color: e.value.color.withValues(alpha:0.1),
                         shape: BoxShape.circle,
-                        border: Border.all(color: e.value.color.withOpacity(0.3))),
+                        border: Border.all(color: e.value.color.withValues(alpha:0.3))),
                     child: Center(child: Image.asset(e.value.asset,
                         width: 15, height: 15,
                         errorBuilder: (_, __, ___) =>
@@ -382,7 +385,6 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
         ]),
       ));
 
-  // ── Write review card ──────────────────────────────────────────────────────
   Widget _buildWriteReviewCard(ServiceController ctrl) => Container(
     decoration: _box(),
     child: Column(children: [
@@ -440,7 +442,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
     ]),
   ).animate().fadeIn(delay: 160.ms, duration: 400.ms).slideY(begin: 0.05);
 
-  // ── Pill nav ───────────────────────────────────────────────────────────────
+
   Widget _buildPillNav() {
     final secs = _secs;
     return SizedBox(
@@ -464,7 +466,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
                 border: Border.all(
                     color: active ? _gold : _border, width: active ? 0 : 1),
                 boxShadow: active
-                    ? [BoxShadow(color: _gold.withOpacity(0.4),
+                    ? [BoxShadow(color: _gold.withValues(alpha:0.4),
                     blurRadius: 10, offset: const Offset(0, 4))]
                     : [],
               ),
@@ -484,13 +486,10 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
     );
   }
 
-  // ── Active section dispatcher ──────────────────────────────────────────────
-  Widget _buildActiveSection(svcModel.Vendor v,
-      List<svcModel.Brand>? brands, double rating,
+  Widget _buildActiveSection(svc_model.Vendor v,
+      List<svc_model.Brand>? brands, double rating,
       ServiceController ctrl) {
-    // Index offset depends on whether Products tab exists
     if (_hasProducts) {
-      // 0=Products 1=Services 2=About 3=Reviews 4=Photos 5=Brands
       switch (_active) {
         case 0: return _productsSection(v);
         case 1: return _servicesSection(v);
@@ -500,7 +499,6 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
         case 5: return _brandsSection(brands);
       }
     } else {
-      // 0=Services 1=About 2=Reviews 3=Photos 4=Brands
       switch (_active) {
         case 0: return _servicesSection(v);
         case 1: return _aboutSection(v);
@@ -511,12 +509,11 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
     }
     return const SizedBox.shrink();
   }
-
-  // ══ PRODUCTS ══════════════════════════════════════════════════════════════
-  Widget _productsSection(svcModel.Vendor v) {
+  Widget _productsSection(svc_model.Vendor v) {
     final items = v.vendorMaterials ?? [];
-    if (items.isEmpty)
+    if (items.isEmpty) {
       return _empty('No products listed', Icons.inventory_2_outlined);
+    }
 
     return Column(children: items.asMap().entries.map((e) {
       final i = e.key;
@@ -564,10 +561,11 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
   }
 
   // ══ SERVICES ══════════════════════════════════════════════════════════════
-  Widget _servicesSection(svcModel.Vendor v) {
+  Widget _servicesSection(svc_model.Vendor v) {
     final items = v.vendorServices ?? [];
-    if (items.isEmpty)
+    if (items.isEmpty) {
       return _empty('No services listed', Icons.build_circle_outlined);
+    }
 
     return Column(children: items.asMap().entries.map((e) {
       final i = e.key;
@@ -603,7 +601,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
   }
 
   // ══ ABOUT ═════════════════════════════════════════════════════════════════
-  Widget _aboutSection(svcModel.Vendor? v) => Container(
+  Widget _aboutSection(svc_model.Vendor? v) => Container(
     decoration: _box(), padding: const EdgeInsets.all(16),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Container(
@@ -644,7 +642,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: c.withOpacity(0.2))),
+            border: Border.all(color: c.withValues(alpha:0.2))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 12, color: c), const SizedBox(width: 5),
           Text('$label: $val', style: TextStyle(fontSize: 11,
@@ -653,7 +651,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
       );
 
   // ══ REVIEWS ═══════════════════════════════════════════════════════════════
-  Widget _reviewsSection(svcModel.Vendor? v, double rating) {
+  Widget _reviewsSection(svc_model.Vendor? v, double rating) {
     final reviews = v?.reviews ?? [];
     final dist    = _ratingDist(reviews);
 
@@ -684,7 +682,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
                   child: LinearProgressIndicator(value: frac, minHeight: 5,
                       backgroundColor: Colors.grey.shade100,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                          frac > 0.4 ? _gold : _gold.withOpacity(0.5))),
+                          frac > 0.4 ? _gold : _gold.withValues(alpha:0.5))),
                 )),
               ]),
             );
@@ -751,10 +749,11 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
   }
 
   // ══ PHOTOS ════════════════════════════════════════════════════════════════
-  Widget _photosSection(svcModel.Vendor v) {
+  Widget _photosSection(svc_model.Vendor v) {
     final imgs = v.image;
-    if (imgs.isEmpty)
+    if (imgs.isEmpty) {
       return _empty('No photos available', Icons.photo_library_outlined);
+    }
 
     return Container(
       decoration: _box(), padding: const EdgeInsets.all(10),
@@ -778,9 +777,10 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
   }
 
   // ══ BRANDS ════════════════════════════════════════════════════════════════
-  Widget _brandsSection(List<svcModel.Brand>? brands) {
-    if (brands == null || brands.isEmpty)
+  Widget _brandsSection(List<svc_model.Brand>? brands) {
+    if (brands == null || brands.isEmpty) {
       return _empty('No brands listed', Icons.branding_watermark_outlined);
+    }
 
     return Container(
       decoration: _box(), padding: const EdgeInsets.all(10),
@@ -1047,7 +1047,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
 
   BoxDecoration _box() => BoxDecoration(
     color: _card, borderRadius: BorderRadius.circular(16),
-    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05),
+    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.05),
         blurRadius: 12, offset: const Offset(0, 4))],
   );
 
@@ -1065,7 +1065,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: c.withOpacity(0.4))),
+                border: Border.all(color: c.withValues(alpha:0.4))),
             child: Text(label, style: TextStyle(fontSize: 11,
                 fontWeight: FontWeight.w700, color: c)),
           ));
@@ -1108,7 +1108,7 @@ class _VendorDataDetailScreenState extends State<VendorDataDetailScreen> {
     ])),
   );
 
-  Map<int, double> _ratingDist(List<svcModel.Review> reviews) {
+  Map<int, double> _ratingDist(List<svc_model.Review> reviews) {
     final m = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
     for (final r in reviews) {
       final s = (double.tryParse(r.rating) ?? 0).round().clamp(1, 5);

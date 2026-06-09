@@ -18,6 +18,8 @@ class VendorStoreModel {
   final String? instagram;
   final String? facebook;
   final String? whatsapp;
+  final String? x;
+  final String? youtube;
   final String? thumbnail;
   final List<String>? images;
   final String? createdAt;
@@ -45,6 +47,8 @@ class VendorStoreModel {
     this.instagram,
     this.facebook,
     this.whatsapp,
+    this.x,
+    this.youtube,
     this.thumbnail,
     this.images,
     this.createdAt,
@@ -74,6 +78,8 @@ class VendorStoreModel {
       instagram: json['instagram']?.toString(),
       facebook: json['facebook']?.toString(),
       whatsapp: json['whatsapp']?.toString(),
+      x: json['x']?.toString(),
+      youtube: json['youtube']?.toString(),
       thumbnail: json['thumbnail']?.toString(),
       images: json['image'] != null
           ? _parseImages(json['image'])
@@ -144,6 +150,8 @@ class VendorStoreModel {
       'instagram': instagram,
       'facebook': facebook,
       'whatsapp': whatsapp,
+      'x': x,
+      'youtube': youtube,
       'thumbnail': thumbnail,
       'images': images,
       'fax': fax,

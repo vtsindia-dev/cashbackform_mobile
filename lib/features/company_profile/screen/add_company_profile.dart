@@ -187,23 +187,33 @@ class _VendorStoreViewState extends State<VendorStoreView> {
                     _StyledTextField(
                       controller: controller.instagramController,
                       label: 'Instagram',
-                      hint: 'instagram.com/yourstore',
+                      hint: 'https://instagram.com/yourstore',
                       icon: Icons.camera_alt_rounded,
+                      keyboardType: TextInputType.url,
                     ),
                     const SizedBox(height: 16),
                     _StyledTextField(
                       controller: controller.facebookController,
                       label: 'Facebook',
-                      hint: 'facebook.com/yourstore',
+                      hint: 'https://facebook.com/yourstore',
                       icon: Icons.facebook_rounded,
+                      keyboardType: TextInputType.url,
                     ),
                     const SizedBox(height: 16),
                     _StyledTextField(
-                      controller: controller.whatsappController,
-                      label: 'WhatsApp',
-                      hint: '+91 98765 43210',
-                      icon: Icons.chat_rounded,
-                      keyboardType: TextInputType.phone,
+                      controller: controller.xController,
+                      label: 'X (Twitter)',
+                      hint: 'https://x.com/yourstore',
+                      icon: Icons.close_rounded,
+                      keyboardType: TextInputType.url,
+                    ),
+                    const SizedBox(height: 16),
+                    _StyledTextField(
+                      controller: controller.youtubeController,
+                      label: 'YouTube',
+                      hint: 'https://youtube.com/@yourchannel',
+                      icon: Icons.play_circle_outline_rounded,
+                      keyboardType: TextInputType.url,
                     ),
                   ],
                 ),
@@ -479,6 +489,7 @@ class _StyledTextField extends StatelessWidget {
   final bool required;
   final int? maxLength;
   final TextCapitalization textCapitalization;
+  final String? Function(String?)? validator;
 
   const _StyledTextField({
     required this.controller,
@@ -488,8 +499,9 @@ class _StyledTextField extends StatelessWidget {
     this.maxLines = 1,
     this.keyboardType,
     this.required = false,
-  this.maxLength,
-  this.textCapitalization = TextCapitalization.none,
+    this.maxLength,
+    this.textCapitalization = TextCapitalization.none,
+    this.validator,
   });
 
   @override
@@ -519,8 +531,9 @@ class _StyledTextField extends StatelessWidget {
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
-          maxLength: maxLength,  // 🆕
+          maxLength: maxLength,
           textCapitalization: textCapitalization,
+          validator: validator,
           style: const TextStyle(
             fontSize: 14,
             color: AppColor.textMain,

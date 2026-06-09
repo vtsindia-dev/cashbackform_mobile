@@ -121,8 +121,8 @@ class _HomeState extends State<Home> {
                   const SizedBox(height: 10),
                   PropertyMain(),
                   const SizedBox(height: 20),
-                  _buildAddMyPropertySection(),
-                  const SizedBox(height: 20),
+                  // _buildAddMyPropertySection(),
+                  // const SizedBox(height: 20),
                   Column(
                     children: [
                       SubtitleWidget(
@@ -148,8 +148,6 @@ class _HomeState extends State<Home> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // ── Featured Gio Rental Yield ─────────────────────────
                   Column(
                     children: [
                       SubtitleWidget(
@@ -163,8 +161,6 @@ class _HomeState extends State<Home> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // ── Featured GIOO Nano Plots ──────────────────────────
                   Column(
                     children: [
                       SubtitleWidget(
@@ -177,8 +173,6 @@ class _HomeState extends State<Home> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // ── Featured Syndicate ────────────────────────────────
                   Column(
                     children: [
                       SubtitleWidget(
@@ -192,8 +186,6 @@ class _HomeState extends State<Home> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // ── Top Professional Services ─────────────────────────
                   Column(
                     children: [
                       SubtitleWidget(
@@ -272,12 +264,10 @@ class _HomeState extends State<Home> {
     );
   }
 
-  // ── Add My Property Section ─────────────────────────────────────────────
   Widget _buildAddMyPropertySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section title
         Row(
           children: [
             Container(
@@ -308,11 +298,8 @@ class _HomeState extends State<Home> {
           ),
         ),
         const SizedBox(height: 12),
-
-        // Two cards side by side
         Row(
           children: [
-            // Add My Land card
             Expanded(
               child: _buildAddCard(
                 icon: Icons.terrain_rounded,
@@ -326,7 +313,6 @@ class _HomeState extends State<Home> {
               ),
             ),
             const SizedBox(width: 12),
-            // Add My Flat/Villas card
             Expanded(
               child: _buildAddCard(
                 icon: Icons.apartment_rounded,
@@ -374,7 +360,6 @@ class _HomeState extends State<Home> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icon circle
             Container(
               width: 44,
               height: 44,
@@ -385,8 +370,6 @@ class _HomeState extends State<Home> {
               child: Icon(icon, color: Colors.white, size: 24),
             ),
             const SizedBox(height: 12),
-
-            // Title
             Text(
               title,
               style: const TextStyle(
@@ -396,8 +379,6 @@ class _HomeState extends State<Home> {
               ),
             ),
             const SizedBox(height: 3),
-
-            // Subtitle
             Text(
               subtitle,
               style: TextStyle(
@@ -407,8 +388,6 @@ class _HomeState extends State<Home> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Button row
             Row(
               children: [
                 Container(

@@ -798,6 +798,33 @@ class PlotMarketController extends GetxController {
     Get.to(() => MarketPlotForm(plot: plot));
   }
 
+  Future<void> renewMarketPlot(int id) async {
+    try {
+      final token = await SessionManager.getToken();
+      if (token == null || token.isEmpty) {
+        SnackBarHelper.showError('Session expired. Please login again.');
+        return;
+      }
+      final dioInstance = dio.Dio();
+      final response = await dioInstance.get(
+        '${ApiUrl.baseUrl}/api/v2/renew_market/$id',
+        options: dio.Options(headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        }),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        SnackBarHelper.showSuccess('Property renewed successfully!');
+        await refreshMyPlots();
+      } else {
+        final msg = response.data?['message'] ?? 'Renewal failed. Please try again.';
+        SnackBarHelper.showError(msg.toString());
+      }
+    } catch (e) {
+      SnackBarHelper.showError('Failed to renew property');
+    }
+  }
+
   Future<void> initiateVerificationPayment(MarketPlot plot) async {
     try {
       final razorpayController = Get.put(RazorpayController());

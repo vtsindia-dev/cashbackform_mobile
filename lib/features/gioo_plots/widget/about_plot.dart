@@ -11,6 +11,7 @@ import '../../../common/colours.dart';
 import '../../../common/widget/carousel.dart';
 import '../../../common/widget/media_carousel_widget.dart';
 import '../../../common/widget/share_action_button_widget.dart';
+import '../../../common/widget/view_on_map_button.dart';
 
 class AboutGiooPlot extends StatelessWidget {
    AboutGiooPlot({super.key});
@@ -841,31 +842,10 @@ class AboutGiooPlot extends StatelessWidget {
                           detail?.lat,
                           detail?.long,
                         ),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10.w, vertical: 6.h),
-                          decoration: BoxDecoration(
-                            color: AppColor.primary.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.map_outlined,
-                                size: 14.sp,
-                                color: Colors.white,
-                              ),
-                              4.w.horizontalSpace,
-                              Text(
-                                "View on Map",
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                        child: ViewOnMapButton(
+                          onTap: () => _launchGoogleMaps(
+                            detail?.lat,
+                            detail?.long,
                           ),
                         ),
                       ),

@@ -49,7 +49,7 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
 
   String _fmt(double n) => '₹${NumberFormat('#,##,###').format(n.toInt())}';
 
-  bool get _isInsufficient => _isWalletTab && walletAmount < amount;
+  bool get _isInsufficient => _isWalletTab && totalAmount > 0 && walletAmount < totalAmount;
 
   bool get _isValidAmount =>
       amount >= minCouponValAmount &&

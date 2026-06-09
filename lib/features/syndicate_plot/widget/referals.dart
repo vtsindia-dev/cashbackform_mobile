@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:flutter/services.dart';
 import '../../../common/colours.dart';
 import '../../../common/widget/toster.dart';
 import '../controller/syndicate_controller.dart';
-import '../model/syndicate_model.dart';
 
 class Referrals extends StatefulWidget {
   const Referrals({super.key, required this.reservePlotsKey});
@@ -21,7 +19,7 @@ class _ReferralsState extends State<Referrals> {
   final TextEditingController _referralEmailController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  var _isLoading = false.obs;
+  final _isLoading = false.obs;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +32,7 @@ class _ReferralsState extends State<Referrals> {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withValues(alpha:0.3),
             blurRadius: 15.r,
             offset: const Offset(0, 4),
           ),
@@ -72,8 +70,6 @@ class _ReferralsState extends State<Referrals> {
             style: TextStyle(fontSize: 12.sp, color: AppColor.black),
           ),
           SizedBox(height: 10.h),
-
-          // Email Input Field ONLY
           _buildEmailInputField(),
         ],
       ),
@@ -142,7 +138,7 @@ class _ReferralsState extends State<Referrals> {
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha:0.1),
                   blurRadius: 4.r,
                   offset: const Offset(0, 2),
                 ),
@@ -182,32 +178,27 @@ class _ReferralsState extends State<Referrals> {
       SnackBarHelper.showError('Property details not available');
       return;
     }
-
     _isLoading.value = true;
 
     try {
-      // Call the controller method with friend's email and property ID
       final result = await controller.fetchStoreReferral(
         _referralEmailController.text.trim(),
         detail.id,
       );
 
       if (result['success'] == true) {
-        // Controller already shows success message
         _referralEmailController.clear();
       } else {
-        // Controller already shows error message
-        print('Referral failed: ${result['message']}');
+        debugPrint('Referral failed: ${result['message']}');
       }
     } catch (e) {
-      // Fallback error handling
       SnackBarHelper.showError('Error: $e');
     } finally {
       _isLoading.value = false;
     }
   }
 
-  // The rest of your existing methods remain EXACTLY THE SAME...
+  
   Widget _buildBookedSlotsSection(SyndicatePlotController controller) {
     final detail = controller.syndicateDetail.value;
     final totalPlots = detail?.unitSpilt ?? 0;
@@ -391,7 +382,7 @@ class _ReferralsState extends State<Referrals> {
         Container(
           padding: EdgeInsets.all(6.w),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8.r),
           ),
           child: Icon(icon, size: 16.sp, color: color),
@@ -514,7 +505,7 @@ class _ReferralsState extends State<Referrals> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 10.r,
             offset: const Offset(0, 4),
           ),
@@ -534,7 +525,7 @@ class _ReferralsState extends State<Referrals> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey[400]!.withOpacity(0.3),
+                  color: Colors.grey[400]!.withValues(alpha:0.3),
                   blurRadius: 8.r,
                   offset: const Offset(0, 3),
                 ),
@@ -595,7 +586,7 @@ class _ReferralsState extends State<Referrals> {
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: AppColor.primary.withOpacity(0.3),
+                  color: AppColor.primary.withValues(alpha:0.3),
                   blurRadius: 8.r,
                   offset: const Offset(0, 4),
                 ),
@@ -679,22 +670,10 @@ class _ReferralsState extends State<Referrals> {
 
     for (final booking in detail.bookings) {
       final userId = booking.userId;
-      final user = detail.users.firstWhere(
-            (u) => u.id == userId,
-        orElse: () => User(
-          id: userId,
-          role: 0,
-          name: 'Unknown User',
-          email: 'No email',
-          dob: '',
-          avatar: '',
-          pin: '',
-          gender: 0,
-          address: '',
-          phone: '',
-          status: 0,
-        ),
-      );
+      final matchIndex = detail.users.indexWhere((u) => u.id == userId);
+      if (matchIndex == -1) continue;
+
+      final user = detail.users[matchIndex];
 
       if (!userMap.containsKey(userId)) {
         userMap[userId] = {
@@ -722,7 +701,7 @@ class _ReferralsState extends State<Referrals> {
         }
       }
     } catch (e) {
-      print('Error parsing unit IDs: $e');
+      debugPrint('Error parsing unit IDs: $e');
     }
     return unitIds;
   }
