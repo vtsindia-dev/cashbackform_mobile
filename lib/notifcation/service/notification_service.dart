@@ -18,7 +18,7 @@ class LocalNotificationService {
     const InitializationSettings initializationSettings =
     InitializationSettings(android: androidInitializationSettings);
     await _flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
+      settings : initializationSettings,
       onDidReceiveNotificationResponse:
           (NotificationResponse notificationResponse) async {
         try {
@@ -102,10 +102,10 @@ class LocalNotificationService {
         android: androidNotificationDetails,
       );
       await _flutterLocalNotificationsPlugin.show(
-        notificationId,
-        message.notification?.title ?? "Notification",
-        message.notification?.body ?? "",
-        notificationDetails,
+        id: notificationId,
+        title: message.notification?.title ?? "Notification",
+        body: message.notification?.body ?? "",
+        notificationDetails: notificationDetails,
         payload: jsonEncode(message.data),
       );
       debugPrint("Notification Displayed Successfully ID: $notificationId");
