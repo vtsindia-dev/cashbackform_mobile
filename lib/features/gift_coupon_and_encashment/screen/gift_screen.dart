@@ -129,6 +129,7 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
       giftController.isLoading = true;
       giftController.update();
       final amt = _amountController.text.trim();
+      final total = totalAmount.toStringAsFixed(2);
       await giftController.giftVouchersBuyPostApi(
         amount: amt,
         transactionId: r.paymentId ?? '',
@@ -137,11 +138,12 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
         isFromWallet: false,
       );
       await dashboardController.fetchDashboard();
+      _amountController.clear();
       final res = await Get.to(
         () => PaymentStatusScreen(
           isSuccess: true,
           paymentId: r.paymentId,
-          amount: amt,
+          amount: total,
         ),
       );
       if (res == true) _refreshWallet();
@@ -193,6 +195,7 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
         giftController.isLoading = true;
         giftController.update();
         final amt = _amountController.text.trim();
+        final total = totalAmount.toStringAsFixed(2);
         await giftController.giftVouchersBuyPostApi(
           amount: amt,
           isFromWallet: true,
@@ -201,11 +204,12 @@ class _GiftScreenState extends State<GiftScreen> with TickerProviderStateMixin {
           transactionDetails: 'wallet_payment',
         );
         await dashboardController.fetchDashboard();
+        _amountController.clear();
         final res = await Get.to(
           () => PaymentStatusScreen(
             isSuccess: true,
             paymentId: 'WALLET',
-            amount: amt,
+            amount: total,
           ),
         );
         if (res == true) _refreshWallet();

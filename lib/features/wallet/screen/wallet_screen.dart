@@ -1,3 +1,4 @@
+import 'package:cashback_farms/features/menu/controller/dashboard_menu_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,7 +9,7 @@ import '../../../common/colours.dart';
 import '../../../common/widget/appbar.dart';
 import '../../../common/widget/toster.dart';
 import '../controller/wallet_controller.dart';
-import '../model/wallet_model.dart';
+import 'package:intl/intl.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -20,6 +21,7 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   final WalletController controller = Get.put(WalletController());
   final ScrollController _scrollController = ScrollController();
+  DashboardController dashboardController = Get.put(DashboardController());
 
   @override
   void initState() {
@@ -59,15 +61,12 @@ class _WalletScreenState extends State<WalletScreen> {
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // --- Premium Animated Balance Card ---
               SliverToBoxAdapter(
                 child: _buildBalanceCard()
                     .animate()
                     .fadeIn(duration: 500.ms)
                     .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
               ),
-
-              // --- Recent Activity Header ---
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(24.w, 10.h, 24.w, 15.h),
@@ -81,13 +80,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                 ),
               ),
-
-              // --- Transaction List ---
               _buildTransactionList(),
-
               if (controller.hasMore.value)
                 SliverToBoxAdapter(child: _buildLoadingMoreIndicator()),
-
               const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
             ],
           ),
@@ -97,19 +92,19 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildBalanceCard() {
-    return Container(
+    return Obx(()=>Container(
       margin: EdgeInsets.all(20.w),
       padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32.r),
         gradient: const LinearGradient(
-          colors: [AppColor.grey, AppColor.primary], // Your Green to Purple
+          colors: [AppColor.grey, AppColor.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColor.primary.withOpacity(0.3),
+            color: AppColor.primary.withValues(alpha:0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -126,14 +121,19 @@ class _WalletScreenState extends State<WalletScreen> {
                   Text(
                     "Available Balance",
                     style: TextStyle(
-                      color: AppColor.white.withOpacity(0.7),
+                      color: AppColor.white.withValues(alpha:0.7),
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    "₹${controller.walletBalance.value.toStringAsFixed(2)}",
+                    "₹${NumberFormat('#,##,##0.##').format(
+                      double.tryParse(
+                        dashboardController.profile.value?.walletBalance?.toString() ?? '0',
+                      ) ??
+                          0,
+                    )}",
                     style: TextStyle(
                       color: AppColor.white,
                       fontSize: 32.sp,
@@ -143,7 +143,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 ],
               ),
               CircleAvatar(
-                backgroundColor: AppColor.white.withOpacity(0.2),
+                backgroundColor: AppColor.white.withValues(alpha:0.2),
                 child: Icon(Icons.wallet, color: AppColor.white, size: 20.sp),
               ),
             ],
@@ -152,22 +152,22 @@ class _WalletScreenState extends State<WalletScreen> {
           Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: AppColor.black.withOpacity(0.1),
+              color: AppColor.black.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(color: AppColor.white.withOpacity(0.1)),
+              border: Border.all(color: AppColor.white.withValues(alpha:0.1)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildStatItem("Income", controller.transactions.fold(0.0, (s, i) => s + i.credit), AppColor.primarylite, Icons.arrow_downward),
-                Container(width: 1, height: 25.h, color: AppColor.white.withOpacity(0.2)),
+                Container(width: 1, height: 25.h, color: AppColor.white.withValues(alpha:0.2)),
                 _buildStatItem("Spent", controller.transactions.fold(0.0, (s, i) => s + i.debit), AppColor.orangeAccent, Icons.arrow_upward),
               ],
             ),
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildStatItem(String label, double amount, Color color, IconData icon) {
@@ -178,7 +178,7 @@ class _WalletScreenState extends State<WalletScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(color: AppColor.white.withOpacity(0.6), fontSize: 10.sp)),
+            Text(label, style: TextStyle(color: AppColor.white.withValues(alpha:0.6), fontSize: 10.sp)),
             Text("₹${amount.toStringAsFixed(0)}", style: TextStyle(color: AppColor.white, fontWeight: FontWeight.bold, fontSize: 14.sp)),
           ],
         ),
@@ -208,7 +208,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 color: AppColor.white,
                 borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
-                  BoxShadow(color: AppColor.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(color: AppColor.black.withValues(alpha:0.03), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -218,7 +218,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       Container(
                         padding: EdgeInsets.all(10.w),
                         decoration: BoxDecoration(
-                          color: (isCredit ? AppColor.green : AppColor.red).withOpacity(0.1),
+                          color: (isCredit ? AppColor.green : AppColor.red).withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(tx.transactionIcon, color: isCredit ? AppColor.green : AppColor.red, size: 20.sp),
@@ -229,7 +229,8 @@ class _WalletScreenState extends State<WalletScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(tx.formattedTransactionType, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp, color: AppColor.textMain)),
-                            Text(_formatDate(tx.createdAt), style: TextStyle(color: AppColor.textSecondary, fontSize: 11.sp)),
+                            SizedBox(height: 5),
+                            Text(formatDate(tx.createdAt), style: TextStyle(color: AppColor.textSecondary, fontSize: 11.sp)),
                           ],
                         ),
                       ),
@@ -240,6 +241,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             tx.formattedAmount,
                             style: TextStyle(fontWeight: FontWeight.w900, color: isCredit ? AppColor.green : AppColor.red, fontSize: 16.sp),
                           ),
+                          SizedBox(height: 5),
                           Text("Bal: ₹${tx.balance.toStringAsFixed(2)}", style: TextStyle(fontSize: 10.sp, color: AppColor.textSecondary)),
                         ],
                       ),
@@ -282,10 +284,10 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    if (now.day == date.day && now.month == date.month) return "Today";
-    return "${date.day}/${date.month}";
+  String formatDate(DateTime? date) {
+    if (date == null) return '-';
+
+    return DateFormat('dd MMM yyyy hh:mm a').format(date);
   }
 
   Widget _buildLoadingShimmer() {

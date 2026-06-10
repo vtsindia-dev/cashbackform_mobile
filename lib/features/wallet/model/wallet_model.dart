@@ -85,6 +85,8 @@ class WalletTransaction {
         return 'Refund';
       case 'purchase':
         return 'Purchase';
+      case 'purchase_coupon':
+        return 'Coupon Purchase';
       default:
         return transactionType;
     }
@@ -102,6 +104,8 @@ class WalletTransaction {
         return Icons.refresh;
       case 'purchase':
         return Icons.shopping_cart;
+      case 'purchase_coupon':
+        return Icons.confirmation_num_outlined;
       default:
         return Icons.account_balance_wallet;
     }
