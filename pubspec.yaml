@@ -60,13 +60,11 @@ dependencies:
   shimmer: ^3.0.0
   iconsax: ^0.0.8
   latlong2: ^0.9.1
-  flutter_map: ^8.2.2
   cached_network_image: ^3.4.1
   flutter_3d_controller: ^2.3.0
   google_maps_flutter: any
   html: any
   panorama_viewer: ^2.0.7
-  location: ^8.0.1
   video_player: ^2.8.1
   video_thumbnail: ^0.5.6
   fluttertoast: ^8.2.4

@@ -1,7 +1,7 @@
 import 'dart:core';
 class Images {
   static const String logo = 'assets/images/app_icon.png';
-  static const String loginBackground = 'assets/images/login-background.png';
+  static const String loginBackground = 'assets/images/login-background.jpg';
   static const String home = 'assets/images/home.png';
   static const String plot = 'assets/images/plot.png';
   static const String profile = 'assets/images/Profile.png';
